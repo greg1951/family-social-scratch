@@ -1,5 +1,13 @@
 import { JSX } from "react";
+import db from "../db/drizzle";
+
+const result = await db.execute('select * from users');
+
 export const MainTablet = (): JSX.Element => {
+
+  console.log('action->registerUser->result: ', result);
+
+
   const leftColumnImages = [
     {
       src: "/images/tv-junkies-tablet.png",
