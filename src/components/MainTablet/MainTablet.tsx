@@ -7,7 +7,7 @@ import leftImg3 from "@/public/images/book-besties-tablet.png";
 import leftImg4 from "@/public/images/family-foodies-tablet.png";
 import leftImg5 from "@/public/images/poetry-cafe-tablet.png";
 import leftImg6 from "@/public/images/mx-train-tablet.png";
-import leftImg7 from "@/public/images/ai-family-threads-tablet.png";
+import leftImg7 from "@/public/images/family-threads-tablet.png";
 import Link from "next/link";
 
 export function MainTablet() {
