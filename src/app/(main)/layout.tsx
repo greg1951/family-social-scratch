@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Merienda } from "next/font/google";
 import "@/app/globals.css";
+import { Merienda } from "next/font/google";
 
 const merienda = Merienda({
   subsets: ["latin"],

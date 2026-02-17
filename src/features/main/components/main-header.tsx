@@ -3,7 +3,6 @@ import Image from "next/image";
 import logoImg from "@/public/images/family-social-icon-only.png";
 import burgerImg from "@/public/icons/hamburger.png";
 import NavLink from "./nav-link";
-import { Button } from "@/components/ui/button";
 
 export default function MainHeader() {
   return (
