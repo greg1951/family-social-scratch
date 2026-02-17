@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import { auth } from "@/auth";
+import { redirect } from "next/navigation";
 import { Merienda } from "next/font/google";
 import "@/app/globals.css";
 
@@ -8,19 +9,22 @@ const merienda = Merienda({
   variable: "--font-merienda",
 });
 
-export const metadata: Metadata = {
-  title: "Family Social",
-  description: "Share with your family in one place",
-};
-
-export default function RootLayout({
+export default async function LoggedOutLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
+
+  const session = await auth();
+  if (!!session?.user?.id) {
+    redirect("/my-account");
+  }
   return (
     <html lang="en">
       <body className={ merienda.variable }>{ children }</body>
     </html>
-  );
+    // <div>
+    //   { children }
+    // </div>
+  )
 }
