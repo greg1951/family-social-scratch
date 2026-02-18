@@ -5,7 +5,6 @@ export type RegisteredReturnType = {
   mfaSecret: string;
   mfaActivated: boolean;
 }
-export type RegisteredTypeof = ReturnType<RegisteredReturnType>;
 
 export type ErrorReturnType = {
   error: boolean;

@@ -4,14 +4,14 @@ import { count, eq } from 'drizzle-orm';
 import { users } from './schema';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
-import { RegisteredTypeof, 
-         ErrorReturnType, 
+import { ErrorReturnType, 
          UserPasswordReturnType, 
          GetFullUserCredsReturnType, 
          GetUser2faReturnType,
          Update2faSecretRecordType,
          Update2faActivatedRecordType,
-         EmailByIdReturnType, } from "@/features/auth/types/users"
+         EmailByIdReturnType,
+         RegisteredReturnType, } from "@/features/auth/types/users"
 
 
 export async function isUserRegistered(email: string) {
@@ -29,7 +29,7 @@ export async function isUserRegistered(email: string) {
 }
 
 export async function insertRegisteredUser(email: string, password: string)
-: Promise<RegisteredTypeof> {
+: Promise<RegisteredReturnType> {
     const hashedPassword = hashUserPassword(password);
     
     const result = await db.insert(users).values({
