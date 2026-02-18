@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import { Merienda } from "next/font/google";
+// import { Merienda } from "next/font/google";
 
-const merienda = Merienda({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-merienda",
-});
+// const merienda = Merienda({
+//   subsets: ["latin"],
+//   weight: ["300", "400", "500", "700", "900"],
+//   variable: "--font-meridien",
+// });
 
 export const metadata: Metadata = {
   title: "Family Social",
@@ -20,7 +20,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={ merienda.variable }>{ children }</body>
+      <head>
+        <style>
+          @import url(&apos;https://fonts.googleapis.com/css2?family=Merienda:wght@300..900&display=swap&apos;);
+        </style>
+      </head>
+      <body>{ children }</body>
     </html>
   );
 }

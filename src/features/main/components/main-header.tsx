@@ -8,15 +8,15 @@ export default function MainHeader() {
   return (
     <>
 
-      <header className="flex justify-between align-middle h-[70px] bg-[#59cdf7]">
+      <header className="flex justify-between align-middle h-[90px] font-app bg-[#59cdf7]">
         <Link href="/" className="flex justify-between">
           <div className="min-[70] max-[70]">
-            <Image src={ logoImg } alt="Family Social Icon" width={ 70 } height={ 70 } />
+            <Image src={ logoImg } alt="Family Social Icon" width={ 90 } height={ 90 } />
           </div>
         </Link>
 
-        <nav className="font-extrabold">
-          <ul className="flex absolute top-[20] left-[100] space-x-5">
+        <nav className=" font-app font-extrabold">
+          <ul className="flex absolute top-[27] left-[100] space-x-5">
             <NavLink href="/tv-junkies">
               TV Junkies
             </NavLink>

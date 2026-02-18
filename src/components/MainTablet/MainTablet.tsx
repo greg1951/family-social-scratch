@@ -8,6 +8,7 @@ import leftImg4 from "@/public/images/family-foodies-tablet.png";
 import leftImg5 from "@/public/images/poetry-cafe-tablet.png";
 import leftImg6 from "@/public/images/mx-train-tablet.png";
 import leftImg7 from "@/public/images/family-threads-tablet.png";
+import infoImg from "@/public/icons/investigation.png";
 import Link from "next/link";
 
 export function MainTablet() {
@@ -15,38 +16,44 @@ export function MainTablet() {
   return (
     <>
       <MainHeader />
-      <section className="flex align-middle">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-3">
+      <section className="flex align-middle font-app">
+        <div className="grid sm:grid-cols-2 gap-x-1 gap-y-2">
           <Card className="bg-red-500 rounded-lg shadow-xl min-h-50">
             <Image src={ leftImg1 } alt="TV Junkies" height={ 500 } />
           </Card>
-          <Card className="bg-orange-500 rounded-lg shadow">
+          <Card className="bg-orange-500 rounded-lg ">
             <p className="text-center leading-snug">
-              <span className="text-[#002400] font-body-bold-16 [font-style:var(--body-bold-16-font-style)] font-[number:var(--body-bold-24-font-weight)] tracking-[var(--body-bold-16-letter-spacing)] leading-[var(--body-bold-16-line-height)] text-[length:var(--body-bold-16-font-size)]">
+              <span className="text-[#002400] font-app ">
                 Post pictures, announcements, TV show, movie, book reviews and
                 much more,&nbsp;&nbsp;with your family members, right here, in one
                 place,{ " " } your very own Family Social website.
               </span>
             </p>
-            <div className="space-y-1 leading-snug font-body-bold-16 [font-style:var(--body-bold-16-font-style)] font-[number:var(--body-bold-24-font-weight)] tracking-[var(--body-bold-16-letter-spacing)] leading-[var(--body-bold-16-line-height)] text-[length:var(--body-bold-16-font-size)]">
-              <p className="text-center underline">
-                <Link href="/help/about-family-social" className="text-amber-800 text-center">
-                  More information about Family Social?
-                </Link>
-              </p>
-              <p className="text-center underline">
-                <Link href="/trial" className="text-amber-800 text-center">
-                  Start a Family Social trial account!
-                </Link>
-              </p>
-              <p className="text-center underline">
-                <Link href="/trial" className="text-amber-800 text-center">
-                  Information about Family Social subscriptions
-                </Link>
-              </p>
+            <div className=" flex justify-center items-center p-3">
+              <div className="bg-orange-500 flex items-center">
+                <Image src={ infoImg } alt="More Information" height={ 50 } width={ 50 } />
+              </div>
+              <div className="bg-orange-500 flex items-center p-3">
+                <div className="leading-snug">
+                  <p className="text-center underline">
+                    <Link href="/help/about-family-social" className="text-amber-800 text-center">
+                      What is Family Social?
+                    </Link>
+                  </p>
+                  <p className="text-center underline">
+                    <Link href="/trial" className="text-amber-800 text-center">
+                      Start a trial!
+                    </Link>
+                  </p>
+                  <p className="text-center underline">
+                    <Link href="/help-subscribe" className="text-amber-800 text-center">
+                      Our reasonable subscriptions
+                    </Link>
+                  </p>
+                </div>
+              </div>
 
             </div>
-
           </Card>
           <Card className="bg-yellow-500 rounded-lg shadow min-h-50">
             <Image src={ leftImg2 } alt="Movie Maniacs" height={ 400 } />

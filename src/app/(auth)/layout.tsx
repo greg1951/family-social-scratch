@@ -6,7 +6,7 @@ import "@/app/globals.css";
 const merienda = Merienda({
   subsets: ["latin"],
   weight: ["400", "700"],
-  variable: "--font-merienda",
+  variable: "--font-app",
 });
 
 export default async function LoggedOutLayout({
