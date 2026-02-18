@@ -61,7 +61,7 @@ export const changeUserPassword = async({
       };
     
     } catch (e: unknown) {
-      if (e instanceof Error && e.code === "23505") {
+      if (e instanceof Error) {
         return {
           error: true,
           message: "An account is already registered with that email"
