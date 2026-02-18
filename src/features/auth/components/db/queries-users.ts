@@ -12,6 +12,7 @@ import { ErrorReturnType,
          Update2faActivatedRecordType,
          EmailByIdReturnType,
          RegisteredReturnType, } from "@/features/auth/types/users"
+import { Result } from 'pg';
 
 
 export async function isUserRegistered(email: string) {
@@ -36,7 +37,13 @@ export async function insertRegisteredUser(email: string, password: string)
       email: email,
       password: hashedPassword,
     }).returning();
-    return result;
+    return {
+      id: result[0].id,
+      email: result[0].email!,
+      password: result[0].password,
+      mfaSecret: result[0].twoFactorSecret!,
+      mfaActivated: result[0].twoFactorActivated!
+    }
 
 }
 
