@@ -15,28 +15,28 @@ export default function MainHeader() {
           </div>
         </Link>
 
-        <nav className="font-bold">
+        <nav className="font-extrabold">
           <ul className="flex absolute top-[20] left-[100] space-x-5">
             <NavLink href="/tv-junkies">
-              TV
+              TV Junkies
             </NavLink>
             <NavLink href="/movie-maniacs">
-              Movies
+              Movie Maniacs
             </NavLink>
             <NavLink href="/book-besties">
-              Books
+              Book Besties
             </NavLink>
             <NavLink href="/family-foodies">
-              Foodies
+              Family Foodies
             </NavLink>
             <NavLink href="/poetry-cafe">
-              Poetry
+              Poetry Club
             </NavLink>
             <NavLink href="/mx-train">
-              Train
+              MX Train
             </NavLink>
             <NavLink href="/family-threads">
-              Threads
+              Family Threads
             </NavLink>
           </ul>
         </nav>

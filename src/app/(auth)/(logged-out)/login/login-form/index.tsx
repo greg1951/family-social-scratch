@@ -94,7 +94,7 @@ export default function LoginForm() {
   return (
     <main className="flex justify-center items-center min-h-screen">
       { step === 1 &&
-        <Card className="w-[350]">
+        <Card className=" gap-y-2">
           <CardHeader>
             <CardTitle>Login</CardTitle>
             <CardDescription>Login to your account.</CardDescription>
