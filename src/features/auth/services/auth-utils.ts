@@ -8,6 +8,7 @@ import { generate } from "otplib";
 
 export async function getSessionEmail() {
   const session = await auth();
+  console.log("auth-utils->getSessionEmail->session: ", session);
   if (!session) {
     return {
       found: false,

@@ -10,8 +10,16 @@ import leftImg6 from "@/public/images/mx-train-tablet.png";
 import leftImg7 from "@/public/images/family-threads-tablet.png";
 import infoImg from "@/public/icons/investigation.png";
 import Link from "next/link";
+import { getSessionEmail } from "@/features/auth/services/auth-utils";
 
-export function MainTablet() {
+export default async function MainTablet() {
+  const session = await getSessionEmail();
+  console.log("MainTablet->session: ", session);
+
+  if (!session.found) {
+    console.log('MainTablet->session: ', session);
+  }
+
 
   return (
     <>

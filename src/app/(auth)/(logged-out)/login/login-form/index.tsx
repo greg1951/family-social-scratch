@@ -71,7 +71,7 @@ export default function LoginForm() {
         });
       }
       else {
-        router.push('/my-account');
+        router.push('/');
       }
     }
   };
@@ -92,7 +92,7 @@ export default function LoginForm() {
   };
 
   return (
-    <main className="flex justify-center items-center min-h-screen">
+    <main className="flex justify-center items-center h-screen">
       { step === 1 &&
         <Card className=" gap-y-2">
           <CardHeader>

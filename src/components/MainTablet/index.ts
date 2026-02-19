@@ -1,1 +1,0 @@
-export { MainTablet } from "./MainTablet";

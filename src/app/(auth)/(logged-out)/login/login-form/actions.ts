@@ -24,14 +24,14 @@ export const fullLoginUser = async({email, password, token}: {email: string, pas
       }
       /* Kickoff the auth authentication here to the auth.ts Credentials provider */
       try {
-        // console.info('fullLoginUser->Starting Credentails signIn...');
+        console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${token}`);
         const signInResult = await signIn("credentials", {
           email,
           password,
           token,
           redirect: false
         })
-        // console.info('fullLoginUser->signInResult: ', signInResult);
+        console.info('fullLoginUser->signInResult: ', signInResult);
       } catch(e) {
         return {
           error: true,

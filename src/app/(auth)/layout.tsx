@@ -16,9 +16,10 @@ export default async function LoggedOutLayout({
 }) {
 
   const session = await auth();
-  if (!!session?.user?.id) {
-    redirect("/my-account");
-  }
+  console.log('LoggedOutLayout->REMOVED REDIRECT /MY-ACCOUNT HERE!');
+  // if (!!session?.user?.id) {
+  //   redirect("/my-account");
+  // }
   return (
     <html lang="en">
       <body className={ merienda.variable }>{ children }</body>

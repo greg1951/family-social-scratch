@@ -36,7 +36,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token: credentials.token as string,
         };
 
+        console.log('auth->authorize->authRecord', authRecord);
+
         const validationResult = await authValidation(authRecord);
+        console.log('auth->authorize->validationResult: ', validationResult);
         if (validationResult.error) {
           return null;
         }

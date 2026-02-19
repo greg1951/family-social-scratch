@@ -41,12 +41,14 @@ export default function MainHeader() {
           </ul>
         </nav>
 
-        <div className="flex align-middle">
-          <Image width={ 50 } height={ 50 }
-            src={ burgerImg }
-            alt="Hamburger"
-          />
-        </div>
+        <Link href="/my-account" className="flex justify-between">
+          <div className="flex align-middle">
+            <Image width={ 50 } height={ 50 }
+              src={ burgerImg }
+              alt="Hamburger"
+            />
+          </div>
+        </Link>
       </header >
       <div className="p-1"></div>
     </>
