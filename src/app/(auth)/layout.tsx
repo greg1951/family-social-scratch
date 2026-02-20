@@ -16,10 +16,10 @@ export default async function LoggedOutLayout({
 }) {
 
   const session = await auth();
-  console.log('LoggedOutLayout->REMOVED REDIRECT /MY-ACCOUNT HERE!');
-  // if (!!session?.user?.id) {
-  //   redirect("/my-account");
-  // }
+  if (session?.user?.id) {
+    console.error('LoggedOutLayout->session found but REDIRECT to /my-account has been REMOVED to prevent 307 loop...');
+    //   redirect("/my-account");
+  }
   return (
     <html lang="en">
       <body className={ merienda.variable }>{ children }</body>

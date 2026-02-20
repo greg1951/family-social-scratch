@@ -1,54 +1,68 @@
 import Link from "next/link";
 import Image from "next/image";
-import logoImg from "@/public/images/family-social-icon-only.png";
-import burgerImg from "@/public/icons/hamburger.png";
+import logoImg from "images/family-social-icon-only.png";
+import burgerImg from "icons/hamburger.png";
 import NavLink from "./nav-link";
+import { getSessionEmail } from "@/features/auth/services/auth-utils";
 
-export default function MainHeader() {
+export default async function MainHeader() {
+  const session = await getSessionEmail();
+  let email;
+  if (session.found) {
+    console.log('MainHeader->session: ', session);
+    email = session.userEmail;
+  }
+
   return (
     <>
 
-      <header className="flex justify-between align-middle h-[90px] font-app bg-[#59cdf7]">
+      <header className=" font-app bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[100]">
         <Link href="/" className="flex justify-between">
-          <div className="min-[70] max-[70]">
-            <Image src={ logoImg } alt="Family Social Icon" width={ 90 } height={ 90 } />
+          <div className="h-10 w-10 pt-[20] md:h-15 md:w-15 md:pt[0]">
+            <img src="images/family-social-icon-only.png" alt="Family Social Icon" />
           </div>
         </Link>
 
-        <nav className=" font-app font-extrabold">
-          <ul className="flex absolute top-[27] left-[100] space-x-5">
-            <NavLink href="/tv-junkies">
-              TV Junkies
-            </NavLink>
-            <NavLink href="/movie-maniacs">
-              Movie Maniacs
-            </NavLink>
-            <NavLink href="/book-besties">
-              Book Besties
-            </NavLink>
-            <NavLink href="/family-foodies">
-              Family Foodies
-            </NavLink>
-            <NavLink href="/poetry-cafe">
-              Poetry Club
-            </NavLink>
-            <NavLink href="/mx-train">
-              MX Train
-            </NavLink>
-            <NavLink href="/family-threads">
-              Family Threads
-            </NavLink>
-          </ul>
-        </nav>
+        <div className="flex justify-center">
+          <nav className=" font-app">
+            <ul className="flex absolute pt-[45] md:pt[15] left-[60] md:left-[100] space-x-2 lg:space-x-5 font-extrabold">
+              <NavLink href="/tv-junkies">
+                TV
+              </NavLink>
+              <NavLink href="/movie-maniacs">
+                Movies
+              </NavLink>
+              <NavLink href="/book-besties">
+                Books
+              </NavLink>
+              <NavLink href="/family-foodies">
+                Foodies
+              </NavLink>
+              <NavLink href="/poetry-cafe">
+                Poetry
+              </NavLink>
+              <NavLink href="/mx-train">
+                Games
+              </NavLink>
+              <NavLink href="/family-threads">
+                Threads
+              </NavLink>
+            </ul>
+            <main className="flex justify-end align-middle">
+              <div className="pt-[19] md:pt-[30]">
+                <p className="text-xs md:text-base">{ email }</p>
+              </div>
+              <div className="pt-[5]">
+                <Link href="/my-account" className="flex justify-between">
+                  <div className="h-5 w-5 pt-[15] md:h-10 md:w-10 md:pt[5]">
+                    <img src="icons/hamburger.png" alt="account" />
+                  </div>
+                </Link>
+              </div>
+            </main>
+          </nav>
+        </div>
 
-        <Link href="/my-account" className="flex justify-between">
-          <div className="flex align-middle">
-            <Image width={ 50 } height={ 50 }
-              src={ burgerImg }
-              alt="Hamburger"
-            />
-          </div>
-        </Link>
       </header >
       <div className="p-1"></div>
     </>

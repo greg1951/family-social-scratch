@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 export default function NavLink({ href, children }: { href: string, children: string }) {
   const pathName = usePathname();
   return (
-    <li className='text-amber-800 text-center'>
+    <li className='text-amber-800 text-center text-xs md:text-base'>
       <Link
         href={ href }
         className={ pathName.startsWith(href) ? "active:active" : undefined }>
