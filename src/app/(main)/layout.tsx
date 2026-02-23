@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <style>
-          @import url(&apos;https://fonts.googleapis.com/css2?family=Merienda:wght@300..900&display=swap&apos;);
+          @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&family=Oswald:wght@200..700&display=swap');
         </style>
       </head>
       <body>{ children }</body>
