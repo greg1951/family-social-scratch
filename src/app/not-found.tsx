@@ -6,21 +6,25 @@ import notFoundImg from "@/public/images/page-under-construction.png";
 ;
 export default function NotFound() {
   return (
-    <main className="grid grid-cols-1 gap-5 font-app">
-      <Card className="flex items-center shadow-2xl">
-        <p className="text-center text-3xl font-extrabold text-red-900 w-[350]">
+    <main className="grid grid-cols-1 gap-2 font-app ">
+      <div className="flex items-center">
+        <p className="text-center text-2xl md:text-3xl font-extrabold text-red-900">
           Page Not Found!
         </p>
-      </Card>
-      <Card className="flex items-center shadow-2xl">
-        <Image src={ notFoundImg } alt="Not Found" height={ 200 } width={ 200 } />
-      </Card>
-      <Card className="flex items-center shadow-2xl">
-        <p className="text-center font-extrabold text-red-900 w-[600]">
-          Pardon the dust, Family Social is under construction.<br></br>
-          Use the browser <b>Back</b> to return to previous page.
-        </p>
-      </Card>
+      </div>
+      <div className="flex items-center align-middle p-3">
+        {/* <div className="md:h-[75] md:w-[75] h-[50] w-[50] p-2"> */ }
+        <div className="md:h-[75] md:w-[75] h-[50] w-[50] p-2">
+          <img src="images/page-under-construction.png" alt="Not Found" />
+        </div>
+        <div className="flex align-middle">
+          <p className="font-extrabold text-red-900 text-xs md:text-base">
+            Pardon the dust, Family Social is under construction.<br></br>
+            Use the browser <b>Back</b> to return to previous page.
+          </p>
+        </div>
+
+      </div>
     </main>
   );
 }
