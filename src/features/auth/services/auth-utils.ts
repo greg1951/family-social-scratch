@@ -23,47 +23,56 @@ export async function getSessionEmail() {
 }
 
 /* Common function below is used in auth.ts as well as the login  */
-export const authValidation = async ({email, password, family, token}:{email: string; password: string; family:string; token?: string}) => {
-  const selectedUser = await getFullUserCredsByEmail(email as string, family as string);
+export const authValidation = async ({email, password, family, token}
+  :{email: string; password: string; family:string; token?: string})
+  :Promise<{
+    id?: string;
+    email?: string;
+    family?: string;
+    error?: boolean;
+    message?: string;
+    }> => {
 
-  if (!selectedUser) {
-    throw new Error("Incorrect credentials");
-  }
-  else {
-    const hashedInputPassword = hashPasswordWithSalt(password as string, selectedUser.salt as string);
-    // console.log("auth-utils->authValidation->db password: ",selectedUser.password, ", hashed input: ",hashedInputPassword);
-    const passwordCorrect = selectedUser.password === hashedInputPassword? true : false;
-    if (!passwordCorrect) {
-      // throw new Error("Invalid credentials");
-      return {
-        error: true,
-        message: "Invalid credentials"
-      }
-    };
-  
-    if (selectedUser.isActivated && token) {
-      const secret = selectedUser.secret ?? "";
-      const generatedToken = await generate({secret});
-    
-      // console.log('authValidation->token: ', token, ' generatedToken:', generatedToken);
-      if (token !== generatedToken && token) {
+    const selectedUser = await getFullUserCredsByEmail(email as string, family as string);
+
+    if (!selectedUser) {
+      throw new Error("Incorrect credentials");
+    }
+    else {
+      const hashedInputPassword = hashPasswordWithSalt(password as string, selectedUser.salt as string);
+      // console.log("auth-utils->authValidation->db password: ",selectedUser.password, ", hashed input: ",hashedInputPassword);
+      const passwordCorrect = selectedUser.password === hashedInputPassword? true : false;
+      if (!passwordCorrect) {
+        // throw new Error("Invalid credentials");
         return {
           error: true,
-          message: "Invalid one-time passcode"
+          message: "Invalid credentials"
         }
-      }
-    };  
-  };
-  /* returning "id" of type string is expected to get a JWT token */
-  const validatedUser = {
-    id: selectedUser.id?.toString(),
-    email: selectedUser.email,
-    family: family,
-    isActive: selectedUser.isActivated,
-    secret: selectedUser.secret 
-  };
-  // console.log("auth-utils->authValidation->validatedUser: ", validatedUser);
-  return validatedUser;
+      };
+    
+      if (selectedUser.isActivated && token) {
+        const secret = selectedUser.secret ?? "";
+        const generatedToken = await generate({secret});
+      
+        // console.log('authValidation->token: ', token, ' generatedToken:', generatedToken);
+        if (token !== generatedToken && token) {
+          return {
+            error: true,
+            message: "Invalid one-time passcode"
+          }
+        }
+      };  
+      /* returning "id" of type string is expected to get a JWT token */
+      const validatedUser = {
+        id: selectedUser.id?.toString(),
+        email: selectedUser.email,
+        family: family,
+        // isActive: selectedUser.isActivated,
+        // secret: selectedUser.secret 
+      };
+      // console.log("auth-utils->authValidation->validatedUser: ", validatedUser);
+      return validatedUser;
+    };
 };
 
 type PreLoginReturnType = {

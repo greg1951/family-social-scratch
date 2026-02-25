@@ -6,7 +6,7 @@ import { familySchema } from "@/features/auth/components/validation/familySchema
 import { signIn } from "@/auth";
 import { preLoginAuthValidation } from "@/features/auth/services/auth-utils";
 import { generate } from "otplib";
-import { getUser2fa } from "@/features/auth/components/db/legacy/queries-users";
+import { getUser2fa } from "@/features/auth/components/db/queries-user";
 
 export const fullLoginUser = async({email, password, family, token}: {email: string, password: string, family: string, token?: string}) => {
     console.log('fullLoginUser->email: ',email, 'family: ',family, 'token: ', token);

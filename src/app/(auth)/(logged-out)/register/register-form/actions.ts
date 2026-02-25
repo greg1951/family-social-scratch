@@ -57,7 +57,7 @@ export const registerUser = async({
     }
     
     } catch (e: unknown) {
-      if (e instanceof Error && e.code === "23505") {
+      if (e instanceof Error) {
         return {
           error: true,
           message: "An accound is already registered with that email"

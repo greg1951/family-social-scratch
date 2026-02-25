@@ -1,9 +1,9 @@
 "use server";
 
-import { passwordResetTokens } from './legacy/schema';
+import { passwordReset } from './family-social-schema-tables';
 import db from '../../../../components/db/drizzle';
 import { eq } from 'drizzle-orm';
-import { getEmailByUserId } from './legacy/queries-users';
+import { getEmailByUserId } from './queries-user';
 import { InsertRecordType,
          InsertReturnType, 
          PasswordTokenRecordType,
@@ -13,13 +13,13 @@ import { InsertRecordType,
 export async function insertPasswordToken(arg: InsertRecordType)
 : Promise<InsertReturnType> {
   try {
-    const result = await db.insert(passwordResetTokens).values({
+    const result = await db.insert(passwordReset).values({
       userId: arg.userId,
       token: arg.token,
       tokenExpiry: arg.tokenExpiry
     }).returning()
       .onConflictDoUpdate({
-        target: passwordResetTokens.userId,
+        target: passwordReset.userId,
         set: {
           token: arg.token, 
           tokenExpiry: arg.tokenExpiry
@@ -49,8 +49,8 @@ export async function getPasswordToken(arg: PasswordTokenRecordType)
 : Promise<GetPasswordTokenReturnType> {
   const [passwordResetToken] = await db
     .select()
-    .from(passwordResetTokens)
-    .where(eq(passwordResetTokens.token,arg.token));
+    .from(passwordReset)
+    .where(eq(passwordReset.token,arg.token));
 
     if (!passwordResetToken) {
       return {
@@ -87,8 +87,8 @@ export async function getPasswordToken(arg: PasswordTokenRecordType)
 export async function removePasswordToken(userId: number)
 : Promise<RemoveReturnType> {
   const result = await db
-    .delete(passwordResetTokens)
-    .where(eq(passwordResetTokens.userId,userId));
+    .delete(passwordReset)
+    .where(eq(passwordReset.userId,userId));
 
     if (!result) {
       return {

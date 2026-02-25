@@ -31,7 +31,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token: {},
       },
       async authorize(credentials) {
-
+        // const { token, email, family, password } = credentials as CustomCredentials;
         const authRecord:AuthRecord = {
           email: credentials.email as string,
           family: credentials.family as string,
@@ -43,10 +43,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const validationResult = await authValidation(authRecord);
         console.log('auth->authorize->validationResult: ', validationResult);
-        if (!validationResult) {
+        if (validationResult.error) {
           return null;
         }
-        return  validationResult;      
+        return {
+          id: validationResult.id,
+          email: validationResult.email,
+          family: validationResult.family,
+        }
       }
     })
   ],
