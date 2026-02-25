@@ -15,9 +15,13 @@ export default async function LoggedInLayout({
   const session = await getSessionEmail();
   // console.log("LoggedInLayout->session: ", session);
 
+  let isLoggedIn: boolean = false;
   if (!session.found) {
     redirect('/login');
   }
+  else
+    isLoggedIn = true;
+
 
   return (
     <>
@@ -32,8 +36,8 @@ export default async function LoggedInLayout({
           <nav className="flex justify-center">
             <div className="text-amber-800 font-extrabold text-center text-xs md:text-base">
               <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
-                <NavBar href="/my-account" src="icons/account.png" title="My Account" />
-                <NavBar href="/change-password" src="icons/change-password.png" title="Change Password" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/my-account" src="icons/account.png" title="My Account" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/change-password" src="icons/change-password.png" title="Change Password" />
               </ul>
 
             </div>

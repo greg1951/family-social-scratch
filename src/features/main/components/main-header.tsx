@@ -3,7 +3,7 @@ import NavBar from "@/components/common/nav-bar";
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
 import HeaderImage from "@/components/common/header-img";
 
-export default async function MainHeader() {
+export default async function MainHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   const session = await getSessionEmail();
   let email;
   if (session.found) {
@@ -26,13 +26,13 @@ export default async function MainHeader() {
         <div className="flex justify-center">
           <nav className="font-app font-extrabold text-xs md:text-base">
             <ul className="flex absolute pt-[30] md:pt-[25] left-[65] md:left-[250] space-x-2 md:space-x-5">
-              <NavBar href="/tv-junkies" src="icons/tv.png" title="TV Junkies" />
-              <NavBar href="/movie-maniacs" src="icons/movies.png" title="Movie Maniacs" />
-              <NavBar href="/book-besties" src="icons/book.png" title="Book Besties" />
-              <NavBar href="/poetry-cafe" src="icons/poetry.png" title="Poetry Cafe" />
-              <NavBar href="/family-foodies" src="icons/food.png" title="Family Foodies" />
-              <NavBar href="/mx-train" src="icons/games.png" title="MX Train" />
-              <NavBar href="/family-threads" src="icons/family.png" title="Family Threads" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/tv-junkies" src="icons/tv.png" title="TV Junkies" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="icons/movies.png" title="Movie Maniacs" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/book-besties" src="icons/book.png" title="Book Besties" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="icons/poetry.png" title="Poetry Cafe" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/family-foodies" src="icons/food.png" title="Family Foodies" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/mx-train" src="icons/games.png" title="MX Train" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/family-threads" src="icons/family.png" title="Family Threads" />
             </ul>
             <main className="flex pr-8 items-center gap-x-2 pt-5">
               <div>

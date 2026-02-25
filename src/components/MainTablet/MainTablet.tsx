@@ -3,12 +3,18 @@ import { Card } from "../ui/card";
 import Image from "next/image";
 import infoImg from "@/public/icons/investigation.png";
 import Link from "next/link";
+import { auth } from "@/auth";
+import MainLinkCard from "../common/main-link-card";
 
 export default async function MainTablet() {
+  const session = await auth();
+  let isLoggedIn: boolean = false;
+  if (session)
+    isLoggedIn = true;
 
   return (
     <>
-      <MainHeader />
+      <MainHeader isLoggedIn={ isLoggedIn } />
       <section className="flex align-middle font-app">
         <div className="grid sm:grid-cols-2 gap-x-1 gap-y-1">
           <Card className="bg-orange-500 rounded-lg p-1 aspect-auto w-full object-cover">
@@ -37,41 +43,18 @@ export default async function MainTablet() {
               </div>
             </div>
           </Card>
-          <Link href="/tv-junkies" >
-            <Card className="bg-red-500 rounded-lg p-2 shadow-xl relative">
-              <img src="images/tv-junkies-tablet.png" alt="TV Junkies" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/movie-maniacs" >
-            <Card className="bg-yellow-500 rounded-lg p-2 shadow relative">
-              <img src="images/movies-maniacs-tablet.png" alt="Movie Maniacs" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/book-besties" >
-            <Card className="bg-blue-500 rounded-lg p-2 shadow relative">
-              <img src="images/book-besties-tablet.png" alt="Book Besties" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/family-foodies" >
-            <Card className="bg-green-500 rounded-lg p-2 shadow relative">
-              <img src="images/family-foodies-tablet.png" alt="Family Foodies" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/poetry-cafe" >
-            <Card className="bg-cyan-500 rounded-lg p-2 shadow relative">
-              <img src="images/poetry-cafe-tablet.png" alt="Poetry Cafe" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/mx-train" >
-            <Card className="bg-amber-500 rounded-lg p-2 shadow relative">
-              <img src="images/mx-train-tablet.png" alt="MX Train" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link>
-          <Link href="/family-threads" >
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/tv-junkies" src="images/tv-junkies-tablet.png" title="TV Junkies" tw="bg-red-500 rounded-lg p-2 shadow-xl relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="bg-yellow-500 rounded-lg p-2 shadow relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/book-besties" src="images/book-besties-tablet.png" title="Book Besties" tw="bg-blue-500 rounded-lg p-2 shadow relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-foodies" src="images/family-foodies-tablet.png" title="Family Foodies" tw="bg-green-500 rounded-lg p-2 shadow relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="bg-cyan-500 rounded-lg p-2 shadow relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/mx-train" src="images/mx-train-tablet.png" title="MX Train" tw="bg-amber-500 rounded-lg p-2 shadow relative" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-threads" src="images/family-threads-tablet.png" title="Family Threads" tw="bg-fuchsia-500 rounded-lg p-2 shadow relative" />
+          {/* <Link href="/family-threads" >
             <Card className="bg-fuchsia-500 rounded-lg p-2 shadow relative">
               <img src="images/family-threads-tablet.png" alt="Family Threads" className="aspect-auto w-full object-cover" />
             </Card>
-          </Link>
+          </Link> */}
         </div>
       </section>
     </>
