@@ -4,6 +4,8 @@ import Link from "next/link"
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import logoImg from "@/public/images/family-social-icon-only.png";
+import NavBar from "@/components/common/nav-bar";
+import HeaderImage from "@/components/common/header-img";
 
 export default async function LoggedInLayout({
   children,
@@ -19,35 +21,31 @@ export default async function LoggedInLayout({
 
   return (
     <>
-      <div className="min-h-screen flex flex-col drop-shadow-lg">
-        <header className=" font-app bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[100]">
-          <Link href="/" className="flex justify-between">
-            <div className="h-10 w-10 pt-[20] md:h-15 md:w-15 md:pt[0]">
+      <div className="font-app min-h-screen flex flex-col">
+        <header className=" font-app font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[70] md:h-[100]">
+          <HeaderImage href="/" src="images/family-social-icon-only.png" title="Family Social Home" tw="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]" />
+
+          {/* <Link href="/" className="flex justify-between">
+            <div className="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]">
               <img src="images/family-social-icon-only.png" alt="Family Social Icon" />
-            </div>
-          </Link>
+            </div> */}
           <nav className="flex justify-center">
-            <div className="text-amber-800 text-center text-xs md:text-base">
-              <ul className="flex absolute pt-[45] md:pt[15] left-[60] md:left-[100] space-x-2 lg:space-x-5 font-extrabold">
-                <li>
-                  <Link href="/my-account">My Account</Link>
-                </li>
-                <li>
-                  <Link href="/change-password">Change Password</Link>
-                </li>
+            <div className="text-amber-800 font-extrabold text-center text-xs md:text-base">
+              <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
+                <NavBar href="/my-account" src="icons/account.png" title="My Account" />
+                <NavBar href="/change-password" src="icons/change-password.png" title="Change Password" />
               </ul>
 
             </div>
-            <main className="flex items-center pt-0">
-              <div className="pt-[15] md:pt-[10] p-1">
-                <p className="text-xs md:text-base">{ session.userEmail }</p>
+            <main className="flex justify-end items-center">
+              <div className="pb-0">
+                <p className="font-extralight text-xs md:text-base">{ session.userEmail }</p>
               </div>
-              <div className="pt-0 h-5 w-20 ">
+              <div className="pb-5 p-5">
                 <LogoutButton />
               </div>
             </main>
           </nav>
-
         </header>
 
         <div className="flex-1 flex justify-center items-center ">

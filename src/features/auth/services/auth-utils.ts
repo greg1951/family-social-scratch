@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from "@/auth";
-import { getFullUserCredsByEmail } from "../components/db/queries-users";
+import { getFullUserCredsByEmail } from "@/features/auth/components/db/queries-user";
 import { hashPasswordWithSalt } from "./hash";
 import { generate } from "otplib";
 
@@ -23,15 +23,16 @@ export async function getSessionEmail() {
 }
 
 /* Common function below is used in auth.ts as well as the login  */
-export const authValidation = async ({email, password, token}:{email: string; password: string; token?: string}) => {
-  const user = await getFullUserCredsByEmail(email as string);
+export const authValidation = async ({email, password, family, token}:{email: string; password: string; family:string; token?: string}) => {
+  const selectedUser = await getFullUserCredsByEmail(email as string, family as string);
 
-  if (!user) {
+  if (!selectedUser) {
     throw new Error("Incorrect credentials");
   }
   else {
-    const hashedInputPassword = hashPasswordWithSalt(password as string, user.salt);
-    const passwordCorrect = user.password === hashedInputPassword? true : false;
+    const hashedInputPassword = hashPasswordWithSalt(password as string, selectedUser.salt as string);
+    // console.log("auth-utils->authValidation->db password: ",selectedUser.password, ", hashed input: ",hashedInputPassword);
+    const passwordCorrect = selectedUser.password === hashedInputPassword? true : false;
     if (!passwordCorrect) {
       // throw new Error("Invalid credentials");
       return {
@@ -40,8 +41,8 @@ export const authValidation = async ({email, password, token}:{email: string; pa
       }
     };
   
-    if (user.isActivated && token) {
-      const secret = user.secret ?? "";
+    if (selectedUser.isActivated && token) {
+      const secret = selectedUser.secret ?? "";
       const generatedToken = await generate({secret});
     
       // console.log('authValidation->token: ', token, ' generatedToken:', generatedToken);
@@ -54,12 +55,15 @@ export const authValidation = async ({email, password, token}:{email: string; pa
     };  
   };
   /* returning "id" of type string is expected to get a JWT token */
-  return {
-    id: user.id.toString(),
-    email: user.email,
-    isActive: user.isActivated,
-    secret: user.secret 
+  const validatedUser = {
+    id: selectedUser.id?.toString(),
+    email: selectedUser.email,
+    family: family,
+    isActive: selectedUser.isActivated,
+    secret: selectedUser.secret 
   };
+  // console.log("auth-utils->authValidation->validatedUser: ", validatedUser);
+  return validatedUser;
 };
 
 type PreLoginReturnType = {
@@ -70,20 +74,27 @@ type PreLoginReturnType = {
 
 export const preLoginAuthValidation = async ({
   email, 
-  password}
-  :{
+  password,
+  family
+}:{
     email: string; 
-    password: string;}
-  )
+    password: string;
+    family: string;
+  })
   :(Promise<PreLoginReturnType>) => {
 
-    const user = await getFullUserCredsByEmail(email as string);
-
-    if (!user) {
-      throw new Error("Incorrect credentials");
+    const user = await getFullUserCredsByEmail(email as string, family);
+    // console.log("auth-utils->getFullUserCredsByEmail->user: ",user);
+    if (!user.success) {
+      // throw new Error("Incorrect credentials");
+       return {
+          error: true,
+          message: user.message
+        }
     }
     else {
-      const hashedInputPassword = hashPasswordWithSalt(password as string, user.salt);
+      const hashedInputPassword = hashPasswordWithSalt(password as string, user.salt as string);
+      // console.log("auth-utils->getFullUserCredsByEmail->hashedInputPassword: ",hashedInputPassword, ", user.password: ", user.password);
       const passwordCorrect = user.password === hashedInputPassword? true : false;
       if (!passwordCorrect) {
         // throw new Error("Invalid credentials");

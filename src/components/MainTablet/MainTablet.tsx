@@ -1,22 +1,10 @@
 import MainHeader from "@/features/main/components/main-header";
 import { Card } from "../ui/card";
 import Image from "next/image";
-import leftImg1 from "@/public/images/tv-junkies-tablet.png";
-import leftImg2 from "@/public/images/movies-maniacs-tablet.png";
-import leftImg3 from "@/public/images/book-besties-tablet.png";
-import leftImg4 from "@/public/images/family-foodies-tablet.png";
-import leftImg5 from "@/public/images/poetry-cafe-tablet.png";
-import leftImg6 from "@/public/images/mx-train-tablet.png";
-import leftImg7 from "@/public/images/family-threads-tablet.png";
 import infoImg from "@/public/icons/investigation.png";
 import Link from "next/link";
-import { getSessionEmail } from "@/features/auth/services/auth-utils";
 
 export default async function MainTablet() {
-  // const session = await getSessionEmail();
-  // if (!session.found) {
-  //   console.log('MainTablet->session: ', session);
-  // }
 
   return (
     <>

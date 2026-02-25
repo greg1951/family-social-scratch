@@ -2,19 +2,23 @@
 
 import z from "zod";
 import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
+import { familySchema } from "@/features/auth/components/validation/familySchema";
 import { signIn } from "@/auth";
 import { preLoginAuthValidation } from "@/features/auth/services/auth-utils";
 import { generate } from "otplib";
-import { getUser2fa } from "@/features/auth/components/db/queries-users";
+import { getUser2fa } from "@/features/auth/components/db/legacy/queries-users";
 
-export const fullLoginUser = async({email, password, token}: {email: string, password: string, token?: string}) => {
-    // console.log('fullLoginUser->email: ',email, 'token: ', token);
+export const fullLoginUser = async({email, password, family, token}: {email: string, password: string, family: string, token?: string}) => {
+    console.log('fullLoginUser->email: ',email, 'family: ',family, 'token: ', token);
     const userSchema = z.object({
       email: z.email(),
+      family: familySchema,
       password: passwordSchema
     });
     
-    const userValidation = userSchema.safeParse({email, password});
+    const userValidation = userSchema.safeParse({email, password, family});
+    console.log("fullLoginUser->userValidation: ", userValidation);
+    
     if (!userValidation.success) {
       return {
         error: true,
@@ -24,10 +28,11 @@ export const fullLoginUser = async({email, password, token}: {email: string, pas
       }
       /* Kickoff the auth authentication here to the auth.ts Credentials provider */
       try {
-        console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${token}`);
+        console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${family}, ${token}`);
         const signInResult = await signIn("credentials", {
           email,
           password,
+          family,
           token,
           redirect: false
         })
@@ -43,13 +48,13 @@ export const fullLoginUser = async({email, password, token}: {email: string, pas
 /*
   Confirm the email/password credentials and returns the isActive property for 2fa logic
 */  
-export const emailLoginCheck = async ({email, password}:{email:string; password: string;}) => {
+export const emailLoginCheck = async ({email, password, family}:{email:string; password: string; family: string;}) => {
   
-  // if (email) {console.log('emailLoginCheck->email: ',email);}
+  if (email) {console.log('actions->emailLoginCheck->email: ',email, ', family: ', family);}
   
-  const validationResult = await preLoginAuthValidation({email, password});
+  const validationResult = await preLoginAuthValidation({email, password, family});
 
-  // console.log('emailLoginCheck->validationResult: ', validationResult);
+  console.log('actions->emailLoginCheck->validationResult: ', validationResult);
   return validationResult;
 };
 

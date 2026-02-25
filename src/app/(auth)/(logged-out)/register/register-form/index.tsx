@@ -1,57 +1,54 @@
 'use client';
-
-import z from "zod";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
-import { passwordMatchSchema } from "@/features/auth/components/validation/passwordMatchSchema";
+import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { passwordMatchSchema } from "@/features/auth/components/validation/passwordMatchSchema";
+import { familySchema } from "@/features/auth/components/validation/familySchema";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { changeUserPassword } from "./actions";
-import { toast } from "sonner";
+import { registerUser } from "./actions";
+import { useRouter } from "next/navigation";
 
-const formSchema = z.object({
-  currentPassword: passwordSchema,
-}).and(passwordMatchSchema);
+// const formSchema = z
+//   .object({ email: z.email(), password: passwordSchema, family: familySchema });
 
-type UserEmailProp = {
-  userEmail: string;
-}
+const formSchema = z
+  .object({
+    email: z.email(),
+    family: familySchema,
+  })
+  .and(passwordMatchSchema);
 
-export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
+export default function RegisterAccountForm() {
+  const router = useRouter();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      currentPassword: "",
+      email: "",
       password: "",
-      passwordConfirm: ""
-    }
+      passwordConfirm: "",
+      family: ""
+    },
   });
 
   const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.info('Starting changeUserPassword for: ', userEmail);
-    const response = await changeUserPassword({
-      email: userEmail,
-      currentPassword: data.currentPassword,
+    const response = await registerUser({
+      email: data.email,
+      family: data.family,
       password: data.password,
-      passwordConfirm: data.passwordConfirm
+      passwordConfirm: data.passwordConfirm,
     });
 
     if (response?.error) {
-      form.setError("root", {
+      form.setError("email", {
         message: response?.message,
       });
     }
     else {
-      toast.success("Your password has been updated.", {
-        position: "bottom-center",
-        duration: 2000,
-        className: "bg-green-500 text-white",
-      });
-      form.reset();
+      router.push(`/login${ form.getValues("email") ? `?email=${ encodeURIComponent(form.getValues("email")) }` : "" }`)
     }
-  };
+  }
 
   return (
     <Form { ...form }>
@@ -59,12 +56,12 @@ export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
         <fieldset disabled={ form.formState.isSubmitting } className="flex flex-col gap-2">
           <FormField
             control={ form.control }
-            name="currentPassword"
+            name="email"
             render={ ({ field }) => (
               <FormItem>
-                <FormLabel>Current Password</FormLabel>
+                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input { ...field } type="password" />
+                  <Input { ...field } type="email" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -75,7 +72,7 @@ export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
             name="password"
             render={ ({ field }) => (
               <FormItem>
-                <FormLabel>New Password</FormLabel>
+                <FormLabel>Password</FormLabel>
                 <FormControl>
                   <Input { ...field } type="password" />
                 </FormControl>
@@ -88,7 +85,7 @@ export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
             name="passwordConfirm"
             render={ ({ field }) => (
               <FormItem>
-                <FormLabel>Confirm New Password</FormLabel>
+                <FormLabel>Confirm Password</FormLabel>
                 <FormControl>
                   <Input { ...field } type="password" />
                 </FormControl>
@@ -96,14 +93,9 @@ export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
               </FormItem>
             ) }
           />
-          { !!form.formState.errors.root?.message &&
-            <FormMessage>
-              { form.formState.errors.root.message }
-            </FormMessage>
-          }
-          <Button type="submit">Change Password</Button>
+          <Button type="submit">Register</Button>
         </fieldset>
       </form>
     </Form>
   )
-}
+};

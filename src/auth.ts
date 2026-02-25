@@ -4,6 +4,7 @@ import { authValidation } from "./features/auth/services/auth-utils";
 
 type AuthRecord = {
   email: string;
+  family: string;
   password: string;
   token?: string;
 }
@@ -25,6 +26,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Credentials({
       credentials: {
         email: {},
+        family: {},
         password: {},
         token: {},
       },
@@ -32,15 +34,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const authRecord:AuthRecord = {
           email: credentials.email as string,
+          family: credentials.family as string,
           password: credentials.password as string,
           token: credentials.token as string,
         };
 
-        console.log('auth->authorize->authRecord', authRecord);
+        // console.log('auth->authorize->authRecord', authRecord);
 
         const validationResult = await authValidation(authRecord);
         console.log('auth->authorize->validationResult: ', validationResult);
-        if (validationResult.error) {
+        if (!validationResult) {
           return null;
         }
         return  validationResult;      

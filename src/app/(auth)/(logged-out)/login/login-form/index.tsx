@@ -1,6 +1,7 @@
 'use client';
 
 import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
+import { familySchema } from "@/features/auth/components/validation/familySchema";
 import z from "zod";
 import { useForm } from "react-hook-form";
 
@@ -16,7 +17,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const formSchema = z
-  .object({ email: z.email(), password: passwordSchema });
+  .object({ email: z.email(), password: passwordSchema, family: familySchema });
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
@@ -32,7 +33,8 @@ export default function LoginForm() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: email,
-      password: ""
+      password: "",
+      family: ""
     },
   });
 
@@ -44,11 +46,11 @@ export default function LoginForm() {
 
   const handleEmailSubmit = async (data: z.infer<typeof formSchema>) => {
     setEmail(data.email);
-    const precheckResult = await emailLoginCheck({ email: data.email, password: data.password });
-    // console.log('Login->handleEmailSubmit->precheckResult: ', precheckResult);
+    const precheckResult = await emailLoginCheck({ email: data.email, password: data.password, family: data.family });
+    console.log('Login->handleEmailSubmit->precheckResult: ', precheckResult);
 
     if (precheckResult.error) {
-      // console.log('Login->handleEmailSubmit->precheckResult.error! ', precheckResult.error);
+      console.log('Login->handleEmailSubmit->precheckResult.error! ', precheckResult.error);
       form.setError("root", {
         message: precheckResult.message,
       });
@@ -62,8 +64,10 @@ export default function LoginForm() {
     else {
       const response = await fullLoginUser({
         email: data.email,
+        family: data.family,
         password: data.password
       });
+      console.log("index->response: ", response);
 
       if (response?.error) {
         form.setError("root", {
@@ -71,6 +75,7 @@ export default function LoginForm() {
         });
       }
       else {
+        console.log("index->push to /my-account!")
         router.push('/my-account');
       }
     }
@@ -80,6 +85,7 @@ export default function LoginForm() {
     e.preventDefault();
     const loginResult = await fullLoginUser({
       email: email,
+      family: form.getValues("family"),
       password: form.getValues("password"),
       token: otp
     });
@@ -92,14 +98,14 @@ export default function LoginForm() {
   };
 
   return (
-    <main className="flex justify-center items-center h-screen">
+    <main className="font-app flex justify-center items-center h-2/12">
       { step === 1 &&
         <Card className=" gap-y-2">
-          <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>Login to your account.</CardDescription>
+          <CardHeader className=" text-base md:text-2xl bg-blue-300 rounded-2xl pt-2 text-center ">
+            <CardTitle>Family Social Login</CardTitle>
+            <CardDescription className="text-xs">Enter email, password and family name below.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-2">
             <Form { ...form }>
               <form onSubmit={ form.handleSubmit(handleEmailSubmit) }>
                 <fieldset disabled={ form.formState.isSubmitting } className="flex flex-col gap-2">
@@ -108,9 +114,9 @@ export default function LoginForm() {
                     name="email"
                     render={ ({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel className="font-extrabold text-sm md:text-base">Email</FormLabel>
                         <FormControl>
-                          <Input { ...field } type="email" />
+                          <Input { ...field } type="email" placeholder="Email used in Family Social" className="text-xs" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -121,9 +127,22 @@ export default function LoginForm() {
                     name="password"
                     render={ ({ field }) => (
                       <FormItem>
-                        <FormLabel>Password</FormLabel>
+                        <FormLabel className="font-extrabold text-sm md:text-base">Password</FormLabel>
                         <FormControl>
-                          <Input { ...field } type="password" />
+                          <Input { ...field } type="password" placeholder="At least 5 characters" className="text-xs" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    ) }
+                  />
+                  <FormField
+                    control={ form.control }
+                    name="family"
+                    render={ ({ field }) => (
+                      <FormItem>
+                        <FormLabel className="font-extrabold text-sm md:text-base">Family Name</FormLabel>
+                        <FormControl>
+                          <Input { ...field } type="text" placeholder="Family name 10-30 characters" className="text-xs" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -140,17 +159,18 @@ export default function LoginForm() {
             </Form>
           </CardContent>
           <CardFooter className="flex-col gap-2">
-            <div className="text-muted-foreground text-sm">
-              Don&apos;t have an account?{ "   " }
-              <Link href="/register" className="underline">
-                Register
-              </Link>
-            </div>
-            <div className="text-muted-foreground text-sm">
+            <div className="text-muted-foreground text-xs">
               Forgot password?{ "   " }
               <Link className="underline"
                 href={ `/password-reset${ form.getValues("email") ? `?email=${ encodeURIComponent(form.getValues("email")) }` : "" }` }>
                 Reset my password
+              </Link>
+            </div>
+            <div className="text-muted-foreground text-xs">
+              Forgot Family Name?{ "   " }
+              <Link className="underline"
+                href={ `/family-reminder-email${ form.getValues("email") ? `?email=${ encodeURIComponent(form.getValues("email")) }` : "" }` }>
+                Send Email with Family Name
               </Link>
             </div>
           </CardFooter>

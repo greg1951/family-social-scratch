@@ -7,6 +7,7 @@ export function hashUserPassword(password:string) {
 }
 
 export function hashPasswordWithSalt(password:string, salt: string) {
+  // console.log("hash->hashPasswordWithSalt->password: ", password, ', salt: ', salt);
   const hashedPassword = crypto.scryptSync(password, salt, 64);
   return hashedPassword.toString('hex');
 }

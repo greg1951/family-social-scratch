@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import TwoFactorAuthForm from "./two-factor-auth-form";
-import { getUser2fa } from "@/features/auth/components/db/queries-users";
+import { getUser2fa } from "@/features/auth/components/db/queries-user";
 import { redirect } from "next/navigation";
 
 export default async function MyAccount() {
@@ -13,6 +13,7 @@ export default async function MyAccount() {
   }
 
   const email = session?.user?.email as string;
+  const familyName = session?.user?.name as string;
   const result2fa = await getUser2fa(email);
 
   return (
@@ -26,7 +27,7 @@ export default async function MyAccount() {
             Email Address
           </Label>
           <div className="text-muted-foreground">
-            { email }
+            { familyName }
           </div>
           <TwoFactorAuthForm isActivated={ result2fa.isActivated ?? false } email={ email } />
         </CardContent>

@@ -20,12 +20,16 @@ export type UserPasswordReturnType = {
 }
 
 export type GetFullUserCredsReturnType = {
-  id: number; 
-  email: string; 
-  password: string; 
-  salt: string;
-  isActivated: boolean;
-  secret: string;
+  success: boolean,
+  message?: string,
+  id?: number; 
+  email?: string; 
+  password?: string; 
+  salt?: string;
+  isActivated?: boolean;
+  secret?: string;
+  familyId?: number;
+  memberId?: number;
 }
 
 export type GetUser2faReturnType = {

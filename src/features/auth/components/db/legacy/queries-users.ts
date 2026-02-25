@@ -11,7 +11,7 @@ import { ErrorReturnType,
          Update2faSecretRecordType,
          Update2faActivatedRecordType,
          EmailByIdReturnType,
-         RegisteredReturnType, } from "@/features/auth/types/users"
+         RegisteredReturnType, } from "@/features/auth/types/user"
 import { Result } from 'pg';
 
 

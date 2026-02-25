@@ -1,14 +1,14 @@
 "use server";
 
 import { passwordResetTokens } from './schema';
-import db from '../../../../components/db/drizzle';
+import db from '../../../../../components/db/drizzle';
 import { eq } from 'drizzle-orm';
 import { getEmailByUserId } from './queries-users';
 import { InsertRecordType,
          InsertReturnType, 
          PasswordTokenRecordType,
          GetPasswordTokenReturnType,
-         RemoveReturnType } from "@/features/auth/types/passwordResetTokens";
+         RemoveReturnType } from "@/features/auth/types/passwordReset";
 
 export async function insertPasswordToken(arg: InsertRecordType)
 : Promise<InsertReturnType> {

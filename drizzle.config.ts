@@ -8,8 +8,8 @@ dotenv.config({
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/features/auth/components/db/schema.ts",
+  schema: "./src/features/auth/components/db/new-schema.ts",
   dbCredentials: {
-    url: process.env.NEON_DATABASE_URL!
+    url: process.env.FAMILY_SOCIAL_DATABASE_URL!
   }
 });
