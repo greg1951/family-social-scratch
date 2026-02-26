@@ -8,7 +8,7 @@ dotenv.config({
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/features/auth/components/db/new-schema.ts",
+  schema: "./src/components/db/schema/family-social-schema.ts",
   dbCredentials: {
     url: process.env.FAMILY_SOCIAL_DATABASE_URL!
   }

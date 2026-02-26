@@ -1,7 +1,7 @@
 "use server";
 
 import { count, eq, and } from 'drizzle-orm';
-import { user } from './family-social-schema-tables';
+import { user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -11,7 +11,7 @@ import { ErrorReturnType,
          Update2faSecretRecordType,
          Update2faActivatedRecordType,
          EmailByIdReturnType,
-         RegisteredReturnType, } from "@/features/auth/types/user"
+         RegisteredReturnType, } from "@/components/db/types/user"
 import { Result } from 'pg';
 import { findRegisteredFamily } from './queries-family-member';
 
@@ -82,11 +82,8 @@ export async function getFullUserCredsByEmail(email: string, family: string)
   
   const findFamilyResult = await findRegisteredFamily(family);
   console.log("queries-user->findRegisteredFamily->findFamilyResult: ", findFamilyResult);
-  if (findFamilyResult.error) {
-    return {
-      success: false,
-      message: "The family name is not registered"
-    };
+  if (!findFamilyResult.success) {
+    return findFamilyResult;
   }
 
   const [selectedUser] = await db

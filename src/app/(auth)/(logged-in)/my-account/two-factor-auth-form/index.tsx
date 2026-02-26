@@ -99,37 +99,39 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
           ) }
           { step === 3 && (
             <form onSubmit={ handleSubmit }>
-              <p className="text-xm">
-                Please enter the one-time passcode from the authenticator app.
-              </p>
-              <InputOTP maxLength={ 6 } value={ otp } onChange={ setOtp }>
-                <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
-                  <InputOTPSlot index={ 0 } />
-                  <InputOTPSlot index={ 1 } />
-                  <InputOTPSlot index={ 2 } />
-                </InputOTPGroup>
-                <InputOTPSeparator className="mx-2" />
-                <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
-                  <InputOTPSlot index={ 3 } />
-                  <InputOTPSlot index={ 4 } />
-                  <InputOTPSlot index={ 5 } />
-                </InputOTPGroup>
-              </InputOTP>
-              { otpError &&
-                <div>
-                  <p className="text-sm text-red-600 text-center">{ otpError }</p>
-                </div>
-              }
-              { !activated && (
-                <>
-                  <Button disabled={ otp.length != 6 } type="submit" className="w-full my-2">
-                    Submit and activate 2FA
-                  </Button>
-                  <Button onClick={ () => setStep(2) } className="w-full bg-gray-400">
-                    Cancel
-                  </Button>
-                </>
-              ) }
+              <div className="max-w-max">
+                <p className="text-xs md:text-base">
+                  Please enter the one-time passcode from the authenticator app.
+                </p>
+                <InputOTP maxLength={ 6 } value={ otp } onChange={ setOtp } className="max-w-max">
+                  <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
+                    <InputOTPSlot index={ 0 } />
+                    <InputOTPSlot index={ 1 } />
+                    <InputOTPSlot index={ 2 } />
+                  </InputOTPGroup>
+                  <InputOTPSeparator className="mx-2" />
+                  <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
+                    <InputOTPSlot index={ 3 } />
+                    <InputOTPSlot index={ 4 } />
+                    <InputOTPSlot index={ 5 } />
+                  </InputOTPGroup>
+                </InputOTP>
+                { otpError &&
+                  <div>
+                    <p className="text-sm text-red-600 text-center">{ otpError }</p>
+                  </div>
+                }
+                { !activated && (
+                  <>
+                    <Button disabled={ otp.length != 6 } type="submit" className="w-full my-2">
+                      Submit and activate 2FA
+                    </Button>
+                    <Button onClick={ () => setStep(2) } className="w-full bg-gray-400">
+                      Cancel
+                    </Button>
+                  </>
+                ) }
+              </div>
             </form>
           ) }
         </div>

@@ -3,8 +3,8 @@
 import { passwordMatchSchema } from "@/features/auth/components/validation/passwordMatchSchema";
 import { familySchema } from "@/features/auth/components/validation/familySchema";
 import z from "zod";
-import { insertRegisteredUser, isUserRegistered } from "@/features/auth/components/db/queries-user";
-import { findRegisteredFamily, findFamilyMember } from "@/features/auth/components/db/queries-family-member";
+import { insertRegisteredUser, isUserRegistered } from "@/components/db/sql/queries-user";
+import { findRegisteredFamily, findFamilyMember } from "@/components/db/sql/queries-family-member";
 
 export const registerUser = async({
   email, 
@@ -32,7 +32,7 @@ export const registerUser = async({
     };
 
     const findFamilyResult = await findRegisteredFamily(family);
-    if (findFamilyResult.error) {
+    if (!findFamilyResult.success) {
       return {
         error: true,
         message: 'Family name is not registered in Family Social'

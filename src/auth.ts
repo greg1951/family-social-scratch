@@ -32,6 +32,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
       async authorize(credentials) {
         // const { token, email, family, password } = credentials as CustomCredentials;
+
         const authRecord:AuthRecord = {
           email: credentials.email as string,
           family: credentials.family as string,

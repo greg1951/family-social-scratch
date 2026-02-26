@@ -1,7 +1,7 @@
 'use server';
 
 import { auth } from "@/auth";
-import { getFullUserCredsByEmail } from "@/features/auth/components/db/queries-user";
+import { getFullUserCredsByEmail } from "@/components/db/sql/queries-user";
 import { hashPasswordWithSalt } from "./hash";
 import { generate } from "otplib";
 

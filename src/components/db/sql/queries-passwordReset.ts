@@ -1,14 +1,14 @@
 "use server";
 
-import { passwordReset } from './family-social-schema-tables';
-import db from '../../../../components/db/drizzle';
+import { passwordReset } from '../schema/family-social-schema-tables';
+import db from '../drizzle';
 import { eq } from 'drizzle-orm';
 import { getEmailByUserId } from './queries-user';
 import { InsertRecordType,
          InsertReturnType, 
          PasswordTokenRecordType,
          GetPasswordTokenReturnType,
-         RemoveReturnType } from "@/features/auth/types/passwordReset";
+         RemoveReturnType } from "@/components/db/types/passwordReset";
 
 export async function insertPasswordToken(arg: InsertRecordType)
 : Promise<InsertReturnType> {

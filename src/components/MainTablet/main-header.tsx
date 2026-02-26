@@ -14,17 +14,11 @@ export default async function MainHeader({ isLoggedIn }: { isLoggedIn: boolean }
   return (
     <>
 
-      <header className=" font-app font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[100]">
+      <header className=" font-app rounded font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[100]">
         <HeaderImage href="/my-account" src="images/family-social-icon-only.png" title="Family Social Home" tw="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]" />
 
-        {/* <Link href="/" className="flex justify-between">
-          <div className="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]">
-            <img src="images/family-social-icon-only.png" alt="Family Social" />
-          </div>
-        </Link> */}
-
-        <div className="flex justify-center">
-          <nav className="font-app font-extrabold text-xs md:text-base">
+        <div className="flex justify-center ">
+          <nav className="font-app font-extrabold text-xs md:text-base w-max-[100vh]">
             <ul className="flex absolute pt-[30] md:pt-[25] left-[65] md:left-[250] space-x-2 md:space-x-5">
               <NavBar isLoggedIn={ isLoggedIn } href="/tv-junkies" src="icons/tv.png" title="TV Junkies" />
               <NavBar isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="icons/movies.png" title="Movie Maniacs" />

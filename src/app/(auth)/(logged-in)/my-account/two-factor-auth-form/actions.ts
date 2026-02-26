@@ -3,9 +3,9 @@
 import { getUser2fa, 
          updateUser2faSecret, 
          updateUser2faActivated,   
-        } from "@/features/auth/components/db/queries-user";
+        } from "@/components/db/sql/queries-user";
 import { Update2faSecretRecordType, 
-         Update2faActivatedRecordType } from "@/features/auth/types/user"
+         Update2faActivatedRecordType } from "@/components/db/types/user"
 
 import { generateSecret, generateURI, generate } from 'otplib';
 
