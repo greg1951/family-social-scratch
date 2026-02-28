@@ -8,7 +8,7 @@ import { generate } from "otplib";
 
 export async function getSessionEmail() {
   const session = await auth();
-  console.log("auth-utils->getSessionEmail->session: ", session);
+  // console.log("auth-utils->getSessionEmail->session: ", session);
   if (!session) {
     return {
       found: false,
@@ -70,7 +70,6 @@ export const authValidation = async ({email, password, family, token}
         // isActive: selectedUser.isActivated,
         // secret: selectedUser.secret 
       };
-      // console.log("auth-utils->authValidation->validatedUser: ", validatedUser);
       return validatedUser;
     };
 };
@@ -93,9 +92,7 @@ export const preLoginAuthValidation = async ({
   :(Promise<PreLoginReturnType>) => {
 
     const user = await getFullUserCredsByEmail(email as string, family);
-    // console.log("auth-utils->getFullUserCredsByEmail->user: ",user);
     if (!user.success) {
-      // throw new Error("Incorrect credentials");
        return {
           error: true,
           message: user.message
@@ -103,10 +100,8 @@ export const preLoginAuthValidation = async ({
     }
     else {
       const hashedInputPassword = hashPasswordWithSalt(password as string, user.salt as string);
-      // console.log("auth-utils->getFullUserCredsByEmail->hashedInputPassword: ",hashedInputPassword, ", user.password: ", user.password);
       const passwordCorrect = user.password === hashedInputPassword? true : false;
       if (!passwordCorrect) {
-        // throw new Error("Invalid credentials");
         return {
           error: true,
           message: "Invalid credentials"

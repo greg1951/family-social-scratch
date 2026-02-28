@@ -1,7 +1,7 @@
 import { auth } from "@/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { redirect } from "next/navigation";
-import { Merienda } from "next/font/google";
+import { Merienda, Tangerine } from "next/font/google";
 import "@/app/globals.css";
 
 const merienda = Merienda({
@@ -23,7 +23,11 @@ export default async function LoggedOutLayout({
   }
   return (
     <html lang="en">
-      <body className={ merienda.variable }>
+      <head>
+        <link href="https://fonts.googleapis.com" rel="stylesheet"></link>
+
+      </head>
+      <body>
         <Toaster />
         { children }
       </body>

@@ -11,6 +11,7 @@ export default async function MainTablet() {
   let isLoggedIn: boolean = false;
   if (session)
     isLoggedIn = true;
+  console.log("MainTablet->session: ", session);
 
   return (
     <>

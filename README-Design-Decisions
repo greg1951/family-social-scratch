@@ -1,0 +1,87 @@
+1. [Overview](#overview)
+2. [Database Design](#database-design)
+   1. [Family Social Schema](#family-social-schema)
+   2. [Family Social Queries](#family-social-queries)
+3. [State Management](#state-management)
+4. [Capturing the Family Name](#capturing-the-family-name)
+
+---
+# Overview
+This markdown describes the design decisions implemented in the project and provides some insight into how various features were implemented.
+
+# Database Design
+Each feature will have tables to support it, beginning with the authentication tables, of which there were two. Going forward a brand new schema was created for Family Social. Currently **all** of the schema is defined in `@/features/auth/components/db/family-social-schema-tables.ts`. It made sense to put the (drizzle) schema definition in one place (in the `auth` folder). 
+
+During development all schema is pushed to the Neon `family-social-dev` branch. Currently the production branch is empty. The original auth tables were still retained, to support the Auth.js template project. The `FAMILY_SOCIAL_DATABASE_URL` property is defined in the `@/.env.local` file.
+
+## Family Social Schema
+The ERD to support the login and family registration process is shown below (notes follow). 
+
+![](./docs/new-schema.png)
+
+- The tables shown above are color coded where the **blue tables** are related to the authentication process and the **yellow tables** related to the family registration process.
+- The `user` table is referenced for the login process but as the `family_name` is required as a part of the login, a foreign key to retrieve the `family_name` in the `family` table was added to the `user` table. 
+- The `email` address exists in several tables and was denormalized for convenience. It is generally unique, except in the `member` table. An email address could exists for a member if they belong to more than one family.
+- To not embed notifications and other options, they've been separated out to the `member_option` table. 
+  - It is the result of a M:M implementation between `member` and `option_reference` tables.
+  - When a family member initially registers, all of the options will be inserted into the `member option` table. Thereafter, only if an option is checked or unchecked wlll the table be updated.
+  - The member profile prototype dialog is shown below to provide a picture of the data the tables must support.
+
+    ![](./docs/member-profile.png)
+
+## Family Social Queries
+
+The queries related to authentication reside in `@/features/auth/components/db` and have a `queries-` prefix. 
+
+# State Management
+
+I implemented the React Context feature in the project (reference the `@/component/store/users-context.tsx` file).  It is not a viable option when using route groups which are absolute necessity to properly structuer this next.js app.
+
+- The provider was added to the root `layout.tsx` file in the app folder. The login was executed, displaying the state correctly. However, when it switched to `/my-account` in another route group, the state was lost.
+
+- It only worked in the root layout and not in the route groups, so it will not be implemented.
+
+- It was hard lesson but moved forward with querying the data based on email and the id captured in the session object.
+
+# Capturing the Family Name
+After fumbling around with how to add the family name used during authentication which entailed trying to configure NextAuth, I came up with the solution. When the authorized method in `auth.ts` finishes, the returned values constitute a `user` object that is then configured in the jwt and session callbacks, as shown below.
+
+```tsx
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  callbacks: {
+    jwt({token, user}) {
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+      }
+      return token;
+    },
+    session({session, token}) {
+        session.user.id = token.id as string;
+        session.user.name = token.name;
+        return session;
+    }
+  }, //end callbacks
+  ```
+  The key was to return the following payload from authorize which then could be implemented in the above. 
+
+  ```tsx
+    return {
+    id: validationResult.id,
+    email: validationResult.email,
+    name: validationResult.family,
+```
+
+I added a console.log message to display the session which produced the following output.
+
+```bash
+MainTablet->session:  {
+  user: { name: 'HughlettFamily', email: 'aaa@whocares.com', id: '1' },
+  expires: '2026-03-29T02:13:46.106Z'
+```
+
+
+
+
+
+

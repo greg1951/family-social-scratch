@@ -14,11 +14,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     jwt({token, user}) {
       if (user) {
         token.id = user.id;
+        token.name = user.name;
       }
       return token;
     },
     session({session, token}) {
         session.user.id = token.id as string;
+        session.user.name = token.name;
         return session;
     }
   }, //end callbacks
@@ -50,7 +52,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         return {
           id: validationResult.id,
           email: validationResult.email,
-          family: validationResult.family,
+          name: validationResult.family,
         }
       }
     })

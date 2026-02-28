@@ -38,6 +38,7 @@ export default async function LoggedInLayout({
               <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
                 <NavBar isLoggedIn={ isLoggedIn } href="/my-account" src="icons/account.png" title="My Account" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/change-password" src="icons/change-password.png" title="Change Password" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/my-account/two-factor-auth-form" src="icons/mfa.png" title="Update 2FA" />
               </ul>
 
             </div>
