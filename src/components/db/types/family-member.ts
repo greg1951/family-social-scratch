@@ -8,8 +8,6 @@ export type GetFamilyReturn = {
 export type GetMemberDetailsReturn = {
   success: boolean,
   message?: string,
-  email?: string; 
-  familyName?: string;
   familyId?: number;
   memberId?: number;
   userId?: number; 
@@ -18,4 +16,5 @@ export type GetMemberDetailsReturn = {
   nickName?: string;
   birthday?: string;
   cellPhone?: string;
+  mfaActive?: boolean;
 }

@@ -2,24 +2,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import ChangePasswordForm from "./change-password-form";
 import { redirect } from "next/navigation";
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
+import { auth } from "@/auth";
 
 export default async function ChangePassword() {
 
-  const session = await getSessionEmail();
-  if (!session.found) {
+  const session = await auth();
+  if (!session) {
     redirect('/login');
   }
-  const userEmail = session.userEmail as string;
+  const name: string = session.user?.name!;
+  const email: string = session.user?.email!;
 
   return (
-    <main className="font-app flex justify-center items-center h-2/12 w-max">
-      <Card className=" gap-y-2 w-max">
-        <CardHeader className=" text-base bg-blue-300 rounded-2xl pt-2 text-center p-2">
+    <main className="font-app h-[80vh]">
+      <Card className=" gap-y-2 w-[300] md:w-[800]">
+        <CardHeader className=" text-base bg-[#59cdf7] rounded-2xl pt-2 text-center p-2">
           <CardTitle>Change Password</CardTitle>
-          <CardDescription className="text-xs">Enter current password, new password and new password confirmation below.</CardDescription>
+          <CardDescription className="text-xs">{ name }</CardDescription>
         </CardHeader>
+        <CardDescription className="text-xs text-center">Enter current password, new password and new password confirmation below.</CardDescription>
         <CardContent >
-          <ChangePasswordForm userEmail={ userEmail } />
+          <ChangePasswordForm userEmail={ email } />
         </CardContent>
       </Card>
     </main>

@@ -15,14 +15,12 @@ import { ErrorReturnType,
 import { Result } from 'pg';
 import { findRegisteredFamily } from './queries-family-member';
 
-
+/* Validate the user exists in the user table */
 export async function isUserRegistered(email: string) {
   const result = await db
     .select({count: count()})
     .from(user)
     .where(eq(user.email, email)); 
-
-  console.log('isUserRegistered->count: ',result[0].count);
   
   if (result[0].count > 0)
     return true;
@@ -30,6 +28,10 @@ export async function isUserRegistered(email: string) {
     return false;
 }
 
+/* 
+  insert user into the user table 
+  IMPORTANT: The insert must also handle the member table insert
+*/
 export async function insertRegisteredUser(email: string, password: string, familyId: number)
 : Promise<RegisteredReturnType> {
     const hashedPassword = hashUserPassword(password);

@@ -8,7 +8,7 @@ export const user = pgTable("user", {
   twoFactorSecret: text("2fa_secret"),
   twoFactorActivated: boolean("2fa_activated").default(false),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  memberId: integer("fk_member_id").references(() => member.id),
 });
 
 export const passwordReset = pgTable("password_reset", {

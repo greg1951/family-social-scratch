@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { sourceMapsEnabled } from 'process';
 
 export default function NavBar({ isLoggedIn, href, src, title }
   : { isLoggedIn: boolean, href: string, src: string, title: string }) {

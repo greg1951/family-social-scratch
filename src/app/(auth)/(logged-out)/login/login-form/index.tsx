@@ -101,10 +101,10 @@ export default function LoginForm() {
     <main className="font-app flex justify-center items-center h-2/12">
       { step === 1 &&
         <Card className=" gap-y-2">
-          <CardHeader className=" text-base md:text-2xl bg-blue-300 rounded-2xl pt-2 text-center ">
+          <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl pt-2 text-center ">
             <CardTitle>Family Social Login</CardTitle>
-            <CardDescription className="text-xs">Enter email, password and family name below.</CardDescription>
           </CardHeader>
+          <CardDescription className="text-xs text-center">Enter email, password and family name below.</CardDescription>
           <CardContent className="p-2">
             <Form { ...form }>
               <form onSubmit={ form.handleSubmit(handleEmailSubmit) }>

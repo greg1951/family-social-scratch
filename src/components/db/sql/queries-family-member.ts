@@ -1,9 +1,10 @@
 "use server";
 
 import { count, eq, and } from 'drizzle-orm';
-import { family, member } from '../schema/family-social-schema-tables';
+import { family, member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn } from '../types/family-member';
+import { success } from 'zod';
 
 /*
   Using family name, return the familyId 
@@ -63,23 +64,42 @@ export async function findFamilyMember(familyId: number, memberEmail: string) {
 /*
   Get member details using one SQL statement on family and member tables
 */
-export async function getMemberDetailsByEmail(memberEmail:string)
+export async function getMemberDetailsByUserId(userId:number)
   :(Promise<GetMemberDetailsReturn>) {
 
+  const [selectResult] = await db.select(
+    {
+      memberId: member.id,
+      familyId: user.familyId,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      nickName: member.nickName,
+      birthday: member.birthday,
+      cellPhone: member.cellPhone,
+      mfaActive: user.twoFactorActivated,
+    })
+    .from(user).innerJoin(member, eq(user.memberId, member.id))
+    .where(eq(user.id, userId)
+  );
 
+  if (!selectResult) {
+    return {
+      success: false,
+      message: `Member details NOT FOUND on ${userId}`
+    }
+  }
 
   const memberDetails:GetMemberDetailsReturn = {
     success: true,
-    email: "", 
-    familyName: "",
-    familyId: 1,
-    memberId: 1,
-    userId: 1, 
-    firstName: "", 
-    lastName: "",
-    nickName: "",
-    birthday: "",
-    cellPhone: "",
+    familyId: selectResult.familyId,
+    memberId: selectResult.memberId,
+    userId: userId, 
+    firstName: selectResult.firstName, 
+    lastName: selectResult.lastName,
+    nickName: selectResult?.nickName!,
+    birthday: selectResult.birthday,
+    cellPhone: selectResult?.cellPhone!,
+    mfaActive: selectResult.mfaActive!,
   }  
   return memberDetails;
 }

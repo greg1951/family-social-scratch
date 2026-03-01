@@ -70,25 +70,27 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
   return (
     <div>
       { activated && (
-        <div className="flex py-2">
+        <div className="flex justify-center py-2">
           <Button onClick={ handleDisableClick }>
             Disable 2FA Authentication
           </Button>
         </div>
       ) }
       { !activated &&
-        <div className="flex py-2">
+        <div className="flex justify-center py-1">
           { step === 1 && (
             <Button onClick={ handleEnableClick }>
               Enable 2FA Authentication
             </Button>
           ) }
           { step === 2 && (
-            <div>
-              <p className="text-xs text-muted-foreground py-2">
-                Scan the QR code below in the Authenticator app to activate 2FA.
+            <div className="">
+              <p className="text-xs">
+                Step 1: Scan the QR code below in the Authenticator app and retrieve a token from the app.
               </p>
+              <div className="py-2"></div>
               <QRCodeSVG value={ code } />
+              <div className="py-2"></div>
               <Button onClick={ () => setStep(3) } className="w-full my-2">
                 I have scanned the QR Code
               </Button>
@@ -100,10 +102,10 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
           { step === 3 && (
             <form onSubmit={ handleSubmit }>
               <div className="max-w-max">
-                <p className="text-xs md:text-base">
-                  Please enter the one-time passcode from the authenticator app.
+                <p className="text-xs p-3">
+                  Step 2: Please enter the one-time passcode from the authenticator app.
                 </p>
-                <InputOTP maxLength={ 6 } value={ otp } onChange={ setOtp } className="max-w-max">
+                <InputOTP maxLength={ 6 } value={ otp } onChange={ setOtp } className="  max-w-max">
                   <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
                     <InputOTPSlot index={ 0 } />
                     <InputOTPSlot index={ 1 } />
@@ -121,6 +123,9 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
                     <p className="text-sm text-red-600 text-center">{ otpError }</p>
                   </div>
                 }
+
+                <div className="py-2"></div>
+
                 { !activated && (
                   <>
                     <Button disabled={ otp.length != 6 } type="submit" className="w-full my-2">

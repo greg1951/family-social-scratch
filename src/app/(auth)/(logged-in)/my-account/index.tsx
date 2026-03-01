@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { getMemberDetails } from "./actions";
 
 
 const formSchema = z
@@ -50,9 +51,6 @@ interface AccountDetails {
 export default function AccountDetailsForm(props: AccountDetails) {
   const [open, setOpen] = useState(false);
   const { userId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = props.accountDetails;
-  console.log("birthday", birthday);
-  const birthdate = new Date("01/07/1951");
-  console.log("Date format: ", birthdate.toLocaleDateString());
 
   const [date, setDate] = useState<Date>(new Date(birthday));
   const form = useForm<z.infer<typeof formSchema>>({
@@ -169,7 +167,7 @@ export default function AccountDetailsForm(props: AccountDetails) {
                 <FormItem>
                   <FormLabel className="font-extrabold">2FA</FormLabel>
                   <FormControl>
-                    <Checkbox disabled checked={ mfaActive } className="h-7 w-7" />
+                    <Input disabled value={ mfaActive ? "Activated" : "Not Activated" } className="text-xs" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

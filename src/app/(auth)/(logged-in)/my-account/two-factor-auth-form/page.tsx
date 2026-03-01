@@ -18,11 +18,12 @@ export default async function MfaChange() {
 
   return (
     <main className="font-app h-[80vh]">
-      <Card className="flex align-top w-[450]">
-        <CardHeader className=" text-base md:text-2xl bg-blue-300 rounded-2xl pt-2 text-center ">
+      <Card className="flex align-top w-[500]">
+        <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl p-2 text-center ">
           <CardTitle className="text-center font-bold size-1.2">My Account</CardTitle>
           <CardDescription className="text-xs">{ session.user?.name }</CardDescription>
         </CardHeader>
+        <CardDescription className="text-xs text-center">To enable 2FA, first scan the QR code into your Authenticator app and then confirm with a code.</CardDescription>
         <CardContent>
           <TwoFactorAuthForm isActivated={ result2fa.isActivated ?? false } email={ email } />
         </CardContent>

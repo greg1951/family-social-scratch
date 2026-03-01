@@ -56,53 +56,57 @@ export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
   return (
     <Form { ...form }>
       <form onSubmit={ form.handleSubmit(handleSubmit) }>
-        <fieldset disabled={ form.formState.isSubmitting } className="flex flex-col gap-2">
-          <FormField
-            control={ form.control }
-            name="currentPassword"
-            render={ ({ field }) => (
-              <FormItem>
-                <FormLabel>Current Password</FormLabel>
-                <FormControl>
-                  <Input { ...field } type="password" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            ) }
-          />
-          <FormField
-            control={ form.control }
-            name="password"
-            render={ ({ field }) => (
-              <FormItem>
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input { ...field } type="password" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            ) }
-          />
-          <FormField
-            control={ form.control }
-            name="passwordConfirm"
-            render={ ({ field }) => (
-              <FormItem>
-                <FormLabel>Confirm New Password</FormLabel>
-                <FormControl>
-                  <Input { ...field } type="password" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            ) }
-          />
-          { !!form.formState.errors.root?.message &&
-            <FormMessage>
-              { form.formState.errors.root.message }
-            </FormMessage>
-          }
-          <Button type="submit">Change Password</Button>
-        </fieldset>
+        <div className="grid sm:grid-cols-1">
+          <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl p-3">
+            <FormField
+              control={ form.control }
+              name="currentPassword"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-extrabold">Current Password</FormLabel>
+                  <FormControl>
+                    <Input { ...field } type="password" className="text-xs font-extralight" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+            <FormField
+              control={ form.control }
+              name="password"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-extrabold">New Password</FormLabel>
+                  <FormControl>
+                    <Input { ...field } type="password" className="text-xs font-extralight" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+            <FormField
+              control={ form.control }
+              name="passwordConfirm"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-extrabold">Confirm New Password</FormLabel>
+                  <FormControl>
+                    <Input { ...field } type="password" className="text-xs font-extralight" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+            { !!form.formState.errors.root?.message &&
+              <FormMessage>
+                { form.formState.errors.root.message }
+              </FormMessage>
+            }
+          </fieldset>
+          <div className="flex justify-center p-2 gap-2 ">
+            <Button type="submit">Change Password</Button>
+          </div>
+        </div>
       </form>
     </Form>
   )
