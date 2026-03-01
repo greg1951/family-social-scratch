@@ -124,7 +124,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
         isActivated: selectedUser.isActivated as boolean,
         secret: selectedUser.secret as string,
         familyId: findFamilyResult.familyId,
-        memberId: selectedUser.memberId,
+        memberId: selectedUser?.memberId!,
     }
     return returnedUser;
   }
