@@ -56,3 +56,11 @@ export type EmailByIdReturnType = {
   message?: string
 }
 
+export type UserFamilyReturn = {
+  success: boolean; 
+  message?: string;
+  email?: string;
+  userId?: number;
+  familyName?: string; 
+  familyId?: number;
+}

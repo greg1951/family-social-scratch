@@ -61,9 +61,7 @@ export async function findFamilyMember(familyId: number, memberEmail: string) {
     }
   }
 
-/*
-  Get member details using one SQL statement on family and member tables
-*/
+/* Get member details using one SQL statement on family and member tables */
 export async function getMemberDetailsByUserId(userId:number)
   :(Promise<GetMemberDetailsReturn>) {
 

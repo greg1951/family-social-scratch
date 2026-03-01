@@ -2,6 +2,7 @@
 
 import { count, eq, and } from 'drizzle-orm';
 import { user } from '../schema/family-social-schema-tables';
+import { family } from "../schema/family-social-schema-tables";
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -11,7 +12,8 @@ import { ErrorReturnType,
          Update2faSecretRecordType,
          Update2faActivatedRecordType,
          EmailByIdReturnType,
-         RegisteredReturnType, } from "@/components/db/types/user"
+         RegisteredReturnType,
+         UserFamilyReturn, } from "@/components/db/types/user"
 import { Result } from 'pg';
 import { findRegisteredFamily } from './queries-family-member';
 
@@ -132,6 +134,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
   return selectedUser;
 }
 
+/* Retrieve user credential info by email */
 export async function getUserByEmail(email: string) 
   : Promise<UserPasswordReturnType>  {
   const [selectedUser] = await db
@@ -169,6 +172,7 @@ export async function getUserByEmail(email: string)
     }
 }
 
+/* Retrieve only user 2FA info */
 export async function getUser2fa(email: string) 
   : Promise<GetUser2faReturnType>  {
   const [selectedUser] = await db
@@ -193,6 +197,7 @@ export async function getUser2fa(email: string)
   }
 };
 
+/* Update user's 2FA secret */
 export async function updateUser2faSecret(args: Update2faSecretRecordType) 
   : Promise<ErrorReturnType>  {
   const updateResult = await db
@@ -211,6 +216,7 @@ export async function updateUser2faSecret(args: Update2faSecretRecordType)
   }
 };
 
+/* Update the user's 2FA activated status */
 export async function updateUser2faActivated(args: Update2faActivatedRecordType) 
   : Promise<ErrorReturnType>  {
 
@@ -230,6 +236,7 @@ export async function updateUser2faActivated(args: Update2faActivatedRecordType)
   }
 };
 
+/* Retrieve user details by id */
 export async function getEmailByUserId(userId: number) 
   : Promise<EmailByIdReturnType>  {
   const [selectedUser] = await db

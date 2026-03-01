@@ -153,7 +153,7 @@ export default function LoginForm() {
                       { emailAuthError }
                     </FormMessage>
                   }
-                  <Button type="submit">Login</Button>
+                  <Button className="text-base" type="submit">Login</Button>
                 </fieldset>
               </form>
             </Form>
