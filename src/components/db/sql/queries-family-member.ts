@@ -5,6 +5,7 @@ import { family, member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn } from '../types/family-member';
 import { success } from 'zod';
+import { AccountDetails, UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
 
 /*
   Using family name, return the familyId 
@@ -100,4 +101,30 @@ export async function getMemberDetailsByUserId(userId:number)
     mfaActive: selectResult.mfaActive!,
   }  
   return memberDetails;
+}
+
+export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccountDetails)
+  : Promise<UpdateMemberReturn> {
+
+  // console.log("queries-family-member-udateMemberDetailsDml->memberDetails: ", updateAccountDetails);
+  const updateResult = await db.update(member)
+     .set({
+        firstName: updateAccountDetails.firstName,
+        lastName: updateAccountDetails.lastName,
+        nickName: updateAccountDetails.nickName!,
+        birthday: updateAccountDetails.birthday,
+        cellPhone: updateAccountDetails.cellPhone!,
+    })
+    .where(eq(member.id, updateAccountDetails.memberId));
+
+  if (!updateResult) {
+    return {
+      success: false,
+      message: "Account update failed",
+    }
+  }
+
+  return {
+    success: true,
+  }
 }

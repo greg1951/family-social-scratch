@@ -1,17 +1,15 @@
-import MainHeader from "@/components/MainTablet/main-header";
-import { Card } from "../ui/card";
-import Image from "next/image";
-import infoImg from "@/public/icons/investigation.png";
+import MainHeader from "@/app/(main)/main-header";
+import { Card } from "../../components/ui/card";
 import Link from "next/link";
 import { auth } from "@/auth";
-import MainLinkCard from "../common/main-link-card";
+import MainLinkCard from "../../components/common/main-link-card";
 
 export default async function MainTablet() {
   const session = await auth();
   let isLoggedIn: boolean = false;
   if (session)
     isLoggedIn = true;
-  console.log("MainTablet->session: ", session);
+  // console.log("MainTablet->session: ", session);
 
   return (
     <>
@@ -19,12 +17,12 @@ export default async function MainTablet() {
         <MainHeader isLoggedIn={ isLoggedIn } />
         <section className="flex align-middle font-app">
           <div className="grid sm:grid-cols-2 gap-x-1 gap-y-1 w-screen h-screen">
-            <Card className="bg-orange-500 rounded-lg p-1 aspect-auto w-full object-cover">
+            <Card className="bg-gray-300 rounded-lg aspect-auto w-full object-cover">
               <div className=" flex justify-center items-baseline-last">
-                <div className="bg-orange-500 flex items-center">
-                  <Image src={ infoImg } alt="More Information" height={ 50 } width={ 50 } />
+                <div className=" flex items-center">
+                  <img src="icons/investigation.png" alt="More Information" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
                 </div>
-                <div className="bg-orange-500 flex items-center p-1 md:p-5">
+                <div className="flex items-center p-1 md:p-5">
                   <div className="text-1xl md:text-2xl leading-snug">
                     <p className="text-center underline">
                       <Link href="/help/about-family-social" className="text-amber-800 text-center">
@@ -32,7 +30,7 @@ export default async function MainTablet() {
                       </Link>
                     </p>
                     <p className="text-center underline">
-                      <Link href="/trial" className="text-amber-800 text-center">
+                      <Link href="/trial-home" className="text-amber-800 text-center">
                         Start a trial!
                       </Link>
                     </p>

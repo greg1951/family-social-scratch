@@ -5,26 +5,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { cn } from "@/lib/utils"
-import { getMemberDetails } from "./actions";
-
+import { AccountDetails, UpdateAccountDetails } from "@/features/auth/auth-types";
+import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
+import { toast } from "sonner";
+import { Router } from "next/router";
+import { useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
-    email: z.email(),
-    family: z.string(),
     firstName: z.string(),
     lastName: z.string(),
     nickName: z.string(),
@@ -33,26 +24,14 @@ const formSchema = z
     mfaActive: z.boolean(),
   });
 
-interface AccountDetails {
-  accountDetails: {
-    email: string;
-    familyName: string;
-    userId: number;
-    firstName: string;
-    lastName: string;
-    nickName: string;
-    birthday: string;
-    cellPhone: string;
-    mfaActive: boolean;
-  }
-}
+export default function AccountDetailsForm({ accountDetails }: AccountDetails) {
 
-
-export default function AccountDetailsForm(props: AccountDetails) {
   const [open, setOpen] = useState(false);
-  const { userId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = props.accountDetails;
+  const [dateNotDirty, setDateNotDirty] = useState(true);
+  const { userId, memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = accountDetails;
+  const [date, setDate] = useState<Date>(new Date(birthday as string));
+  const router = useRouter();
 
-  const [date, setDate] = useState<Date>(new Date(birthday));
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,14 +43,45 @@ export default function AccountDetailsForm(props: AccountDetails) {
       mfaActive: mfaActive,
     },
   });
-  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
-    // console.log("submitted->data: ", data);
-  }
+  const { formState: { isDirty, dirtyFields } } = form;
+  // console.log("AccountDetailsForm->isDirty? ", isDirty, ", dirtyFields: ", dirtyFields);
 
+  const handleFormSubmit = async (data: z.infer<typeof formSchema>) => {
+    const calendarBirthday = date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    // console.log("AccountDetailsForm->handleFormSubmit->data: ", data, ", calendarBirthday: ", calendarBirthday);
+    const updateAccountDetails: UpdateAccountDetails = {
+      userId: userId,
+      memberId: memberId as number,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      nickName: data.nickName!,
+      cellPhone: data.cellPhone!,
+      birthday: calendarBirthday!,
+    }
+    const updateMemberResult = await updateMemberDetailsDml(updateAccountDetails);
+    if (!updateMemberResult.success) {
+      toast.error(updateMemberResult.message, {
+        position: "bottom-center",
+        duration: 3000,
+      });
+      return;
+    }
+    // router.push('/');
+    toast.success("Your account details have been updated", {
+      position: "bottom-center",
+      duration: 3000,
+    });
+    resetForm();
+  };
+
+  function resetForm() {
+    form.reset()
+    setDateNotDirty(true);
+  }
 
   return (
     <Form { ...form }>
-      <form onSubmit={ form.handleSubmit(handleSubmit) }>
+      <form onSubmit={ form.handleSubmit(handleFormSubmit) }>
         <div className="grid sm:grid-cols-1">
           <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl p-3">
             <FormField
@@ -81,7 +91,7 @@ export default function AccountDetailsForm(props: AccountDetails) {
                 <FormItem>
                   <FormLabel className="font-extrabold">First Name</FormLabel>
                   <FormControl>
-                    <Input { ...field } type="text" className="text-xs font-extralight" />
+                    <Input { ...field } value={ field.value } type="text" className="text-xs font-extralight" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -138,9 +148,8 @@ export default function AccountDetailsForm(props: AccountDetails) {
                   <FormLabel className="font-extrabold text-center">Birthday</FormLabel>
                   <Popover open={ open } onOpenChange={ setOpen }>
                     <PopoverTrigger className="flex justify-start">
-                      <Button variant="outline" id="date" className="justify-start font-normal">{ date ? date.toLocaleDateString('en-US', {
-                        year: 'numeric', month: '2-digit', day: '2-digit'
-                      }) : "Select date" }
+                      <Button type="button" variant="outline" id="date" className="justify-start font-normal">
+                        { date ? date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : "Select date" }
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto overflow-hidden p-0" align="start">
@@ -151,7 +160,8 @@ export default function AccountDetailsForm(props: AccountDetails) {
                         captionLayout="dropdown"
                         onSelect={ (date) => {
                           setDate(date as Date)
-                          setOpen(true)
+                          setDateNotDirty(false)
+                          setOpen(false)
                         } }
                       />
                     </PopoverContent>
@@ -174,11 +184,11 @@ export default function AccountDetailsForm(props: AccountDetails) {
               ) }
             />
           </fieldset>
+          <div className="flex justify-center p-2 gap-2 ">
+            <Button disabled={ (!isDirty && dateNotDirty) ? true : false } className=" text-xs" type="reset" onClick={ resetForm }>Reset</Button>
+            <Button disabled={ (!isDirty && dateNotDirty) ? true : false } className=" text-xs" type="submit">Update Your Details</Button>
+          </div>
 
-        </div>
-        <div className="flex justify-center p-2 gap-2 ">
-          <Button className=" text-xs" type="reset">Cancel</Button>
-          <Button className=" text-xs" type="submit">Update</Button>
         </div>
       </form>
     </Form >

@@ -5,7 +5,7 @@ export default function ResetPassword() {
   return (
     <div className="flex justify-center">
       <main className="font-app h-[80vh]">
-        <Card className="flex align-middle w-[300] md:w-[500]">
+        <Card className="flex align-middle w-[400] md:w-[800]">
           <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
             <CardTitle className="text-center font-bold size-1.2 pt-0">Reset Password</CardTitle>
           </CardHeader>

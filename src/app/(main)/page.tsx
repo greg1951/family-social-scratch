@@ -1,4 +1,4 @@
-import MainTablet from "@/components/MainTablet/MainTablet";
+import MainTablet from "@/app/(main)/MainTablet";
 
 export default function Home() {
   return <MainTablet />;

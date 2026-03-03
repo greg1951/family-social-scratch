@@ -13,6 +13,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = passwordMatchSchema;
 
@@ -21,6 +22,8 @@ type UserEmailProp = {
 }
 
 export default function UpdateResetPasswordForm({ userEmail }: UserEmailProp) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -70,32 +73,56 @@ export default function UpdateResetPasswordForm({ userEmail }: UserEmailProp) {
     <Form { ...form }>
       <form onSubmit={ form.handleSubmit(handleSubmit) }>
         <fieldset disabled={ form.formState.isSubmitting } className="flex flex-col gap-2">
-          <FormField
-            control={ form.control }
-            name="password"
-            render={ ({ field }) => (
-              <FormItem>
-                <FormLabel className="font-extrabold text-sm md:text-base">New Password</FormLabel>
-                <FormControl>
-                  <Input { ...field } placeholder="Enter new password here..." type="password" className="text-xs" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            ) }
-          />
-          <FormField
-            control={ form.control }
-            name="passwordConfirm"
-            render={ ({ field }) => (
-              <FormItem>
-                <FormLabel className="font-extrabold text-sm md:text-base">Confirm New Password</FormLabel>
-                <FormControl>
-                  <Input { ...field } placeholder="Confirm new password here..." type="password" className="text-xs" />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            ) }
-          />
+          <div className="relative">
+            <FormField
+              control={ form.control }
+              name="password"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-extrabold text-sm md:text-base">New Password</FormLabel>
+                  <FormControl>
+                    <Input { ...field } placeholder={ showPassword ? "text" : "password" } type={ showPassword ? "text" : "password" } className="text-xs" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+            <Button type="button" variant="ghost" size="sm"
+              className="absolute right-0 top-3.5 h-full px-3 py-2 hover:bg-transparent"
+              onClick={ () => setShowPassword((prev) => !prev) }
+            >
+              { showPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              ) }
+            </Button>
+          </div>
+          <div className="relative">
+            <FormField
+              control={ form.control }
+              name="passwordConfirm"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-extrabold text-sm md:text-base">Confirm New Password</FormLabel>
+                  <FormControl>
+                    <Input { ...field } placeholder="Confirm new password here..." type={ showConfirmPassword ? "text" : "password" } className="text-xs" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+            <Button type="button" variant="ghost" size="sm"
+              className="absolute right-0 top-3.5 h-full px-3 py-2 hover:bg-transparent"
+              onClick={ () => setShowConfirmPassword((prev) => !prev) }
+            >
+              { showConfirmPassword ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              ) }
+            </Button>
+          </div>
           { !!form.formState.errors.root?.message &&
             <FormMessage>
               { form.formState.errors.root.message }

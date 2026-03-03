@@ -15,11 +15,13 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Eye, EyeOff } from "lucide-react";
 
 const formSchema = z
   .object({ email: z.email(), password: passwordSchema, family: familySchema });
 
 export default function LoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const urlEmail = decodeURIComponent(searchParams.get("email") ?? "") as string
   const [email, setEmail] = useState(urlEmail);
@@ -122,19 +124,32 @@ export default function LoginForm() {
                       </FormItem>
                     ) }
                   />
-                  <FormField
-                    control={ form.control }
-                    name="password"
-                    render={ ({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-extrabold text-sm md:text-base">Password</FormLabel>
-                        <FormControl>
-                          <Input { ...field } type="password" placeholder="At least 5 characters" className="text-xs" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    ) }
-                  />
+                  <div className="relative">
+                    <FormField
+                      control={ form.control }
+                      name="password"
+                      render={ ({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-extrabold text-sm md:text-base">Password</FormLabel>
+                          <FormControl>
+                            <Input { ...field } type={ showPassword ? "text" : "password" } placeholder="At least 5 characters" className="text-xs" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      ) }
+                    />
+                    <Button type="button" variant="ghost" size="sm"
+                      className="absolute right-0 top-4 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={ () => setShowPassword((prev) => !prev) }
+                    >
+                      { showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      ) }
+                    </Button>
+
+                  </div>
                   <FormField
                     control={ form.control }
                     name="family"
