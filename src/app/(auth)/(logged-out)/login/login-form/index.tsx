@@ -77,8 +77,7 @@ export default function LoginForm() {
         });
       }
       else {
-        console.log("index->push to /my-account!")
-        router.push('/my-account');
+        router.push('/');
       }
     }
   };

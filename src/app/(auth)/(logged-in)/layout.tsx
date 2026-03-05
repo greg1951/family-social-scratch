@@ -1,11 +1,8 @@
-import LogoutButton from "@/app/(auth)/(logged-in)/auth-components"
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
-import Link from "next/link"
 import { redirect } from "next/navigation";
-import Image from "next/image";
-import logoImg from "@/public/images/family-social-icon-only.png";
 import NavBar from "@/components/common/nav-bar";
 import HeaderImage from "@/components/common/header-img";
+import MainDropMenu from "@/components/common/main-dropmenu";
 
 export default async function LoggedInLayout({
   children,
@@ -26,7 +23,7 @@ export default async function LoggedInLayout({
   return (
     <>
       <div className="font-app min-h-screen flex flex-col">
-        <header className=" font-app font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[70] md:h-[100]">
+        <header className=" font-app font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[60] md:h-[100]">
           <HeaderImage href="/" src="images/family-social-icon-only.png" title="Family Social Home" tw="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]" />
 
           {/* <Link href="/" className="flex justify-between">
@@ -47,7 +44,9 @@ export default async function LoggedInLayout({
                 <p className="font-extralight text-xs md:text-base">{ session.userEmail }</p>
               </div>
               <div className="pb-5 p-5">
-                <LogoutButton />
+                {/* <LogoutButton /> */ }
+                <MainDropMenu sessionFound={ session.found } />
+
               </div>
             </main>
           </nav>

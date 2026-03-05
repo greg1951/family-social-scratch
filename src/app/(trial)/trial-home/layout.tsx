@@ -1,27 +1,23 @@
-import LogoutButton from "@/app/(auth)/(logged-in)/auth-components"
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
 import Link from "next/link"
 import { redirect } from "next/navigation";
-import Image from "next/image";
-import logoImg from "@/public/images/family-social-icon-only.png";
 import NavBar from "@/components/common/nav-bar";
 import HeaderImage from "@/components/common/header-img";
+import MainDropMenu from "@/components/common/main-dropmenu";
 
-export default async function LoggedInLayout({
+export default async function TrialLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const session = await getSessionEmail();
-  // console.log("LoggedInLayout->session: ", session);
-
+  let userEmail: string = "";
   let isLoggedIn: boolean = false;
-  if (!session.found) {
-    redirect('/login');
-  }
-  else
+  const session = await getSessionEmail();
+  if (session.found) {
+    console.log("TrialLayout->session: ", session.userEmail);
+    userEmail = session.userEmail as string;
     isLoggedIn = true;
-
+  }
 
   return (
     <>
@@ -41,12 +37,16 @@ export default async function LoggedInLayout({
 
             </div>
             <main className="flex justify-end items-center">
-              <div className="pb-0 pr-5">
-                <p className="font-extralight text-xs md:text-base">{ session.userEmail }</p>
+              { isLoggedIn ? (
+                <div className="pb-0 pr-5">
+                  <p className="font-extralight text-xs md:text-base">{ session.userEmail }</p>
+                </div>)
+                : (
+                  <div></div>
+                ) }
+              <div className="pb-5 p-5">
+                <MainDropMenu sessionFound={ isLoggedIn } />
               </div>
-              {/* <div className="pb-5 p-5">
-                <HeaderImage href="/my-account" src="icons/account.png" title="My Account" tw="h-7 w-7 pb-0 md:h-12 md:w-12" />
-              </div> */}
             </main>
           </nav>
         </header>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import NavBar from "@/components/common/nav-bar";
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
 import HeaderImage from "@/components/common/header-img";
+import MainDropMenu from "../../components/common/main-dropmenu";
 
 export default async function MainHeader({ isLoggedIn }: { isLoggedIn: boolean }) {
   const session = await getSessionEmail();
@@ -31,8 +32,9 @@ export default async function MainHeader({ isLoggedIn }: { isLoggedIn: boolean }
               <div>
                 <p className="font-app font-extralight text-xs md:text-base pt-1">{ email }</p>
               </div>
-              <div className="h-4 w-4 pt-0 md:h-10 md:w-10 md:pt[5]">
-                <HeaderImage href="/my-account" src="icons/account.png" title="My Account" tw="h-6 w-6 pb-0 md:h-12 md:w-12" />
+              <div>
+                <MainDropMenu sessionFound={ session.found } />
+                {/* <HeaderImage href="/my-account" src="icons/account.png" title="My Account" tw="h-6 w-6 pb-0 md:h-12 md:w-12" /> */ }
               </div>
             </main>
           </nav>
