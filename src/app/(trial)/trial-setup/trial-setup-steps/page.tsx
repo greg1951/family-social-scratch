@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { CircleArrowLeft, CircleArrowRight, Eye, EyeOff } from "lucide-react";
+import { CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff } from "lucide-react";
 import { TrialFormSchema } from '@/features/trial/components/validation/schema';
 import { trialSteps } from '@/features/trial/components/trial-steps';
 import { FamilyMember, InviteFamilyDialog } from '../trial-invite-family/invite-family-dialog';
@@ -103,7 +103,7 @@ export default function Step1CreateAccount() {
 
   return (
     <>
-      <div className="font-app py-2 px-4 sm:px-6 md:px-8">
+      <div className="font-app py-2 px-4 sm:px-6 md:px-8 h-[90vh]">
         <div className="max-w-2xl mx-auto">
           <Card className="flex align-top w-[400] md:w-[800]">
             <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center p-2">
@@ -120,9 +120,7 @@ export default function Step1CreateAccount() {
                     <div className="flex items-center justify-center gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
-                            Step 1
-                          </div>
+                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">1</div>
                           <h3 className="font-extrabold inline p-0 ">
                             Define Family Founder
                           </h3>
@@ -318,14 +316,11 @@ export default function Step1CreateAccount() {
                     <div className="grid grid-cols-1 gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
-                            Step 2
-                          </div>
+                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">2</div>
                           <h3 className="font-extrabold inline p-0">
                             Assign Family Name
                           </h3>
-                          <p className='text-sm'>All Family member data will be kept separately and securely in Family Social.<br></br><br></br>
-                            Here find a unique family name. It must be 10-30 letters long, <u>no number, special characters or spaces</u></p>
+                          <p className='text-sm'>Here find a unique family name. It must be 10-30 letters long, <u>no number, special characters or spaces</u></p>
                         </div>
                       </CardDescription>
                       <CardContent className="flex items-center justify-center gap-4">
@@ -380,9 +375,7 @@ export default function Step1CreateAccount() {
                     <div className="grid grid-cols-1 gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
-                            Step 3
-                          </div>
+                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">3</div>
                           <h3 className="font-extrabold inline p-0">
                             Invite Family
                           </h3>
@@ -390,10 +383,6 @@ export default function Step1CreateAccount() {
                         </div>
                       </CardDescription>
                       <CardContent className="space-y-4 pt-5">
-                        {/* <div className="flex items-center justify-between rounded-md border bg-neutral-50 px-4 py-3">
-                          <p className="text-sm font-medium text-neutral-700">Current invite count</p>
-                          <p className="text-lg font-bold text-neutral-900">{ members.length }</p>
-                        </div> */}
 
                         <InviteFamilyDialog
                           members={ members }
@@ -436,13 +425,86 @@ export default function Step1CreateAccount() {
 
                   </>) }
                 { currentStep === STEP_4_CREATE_FAMILY_SITE && (
-                  <CardDescription className="text-white/90 ">
+                  <div className="font-app py-2 px-4 sm:px-6 md:px-8 font-sm">
+                    <div className="max-w-2xl mx-auto">
+                      <CardDescription className="text-neutral-800 text-xs px-4">
+                        The information you provided is summarized below. Please review for accuracy before confirming to create your family site and send invitations.
+                      </CardDescription>
 
-                  </CardDescription>
+                      <CardContent className="space-y-4 pt-5">
+                        <div className="rounded-md border p-4">
+                          <div className="mb-3 flex items-center gap-2">
+                            <div className="flex items-center h-4 w-4 md:h-8 md:w-12 justify-center rounded-full bg-[#005472] text-white text-xs font-bold">1</div>
+                            <p>
+                              <span className="text-sm font-semibold text-neutral-800" >Family Founder Info: <br></br></span>
+                              <span className="text-xs font-light text-neutral-800">
+                                { form.getValues('email') }, { " " }
+                                { form.getValues('firstName') } { " " } { form.getValues('lastName') }, { " " }
+                                { form.getValues('nickName') ? `(${ form.getValues('nickName') })` : '' }
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border p-4">
+                          <div className="mb-3 flex items-center gap-2">
+                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#005472] text-white text-xs font-bold">2</div>
+                            <p>
+                              <span className="text-sm font-semibold text-neutral-800" >Selected Family Name: <br></br></span>
+                              <span className="text-xs font-light text-neutral-800">{ form.getValues('familyName') }</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="rounded-md border p-4">
+                          <div className="mb-3 flex items-center gap-2">
+                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#005472] text-white text-xs font-bold">3</div>
+                            <p className="text-sm font-semibold text-neutral-800">Invited Family Members ({ members.length })</p>
+                          </div>
+
+                          { members.length === 0 ? (
+                            <p className="text-sm text-neutral-500">No members invited yet.</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              { members.map((member) => (
+                                <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
+                                  <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
+                                  <p className="text-xs text-neutral-600">{ member.email }</p>
+                                </li>
+                              )) }
+                            </ul>
+                          ) }
+                        </div>
+
+                        <div className="rounded-md border border-[#59cdf7] bg-[#e8f8ff] p-4">
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#59cdf7] text-black text-xs font-bold">4</div>
+                            <p className="text-sm font-semibold text-neutral-900">Final Confirmation</p>
+                          </div>
+
+                          <p className="text-xs text-neutral-800">
+                            If corrections need to be made use the <b>Back</b> button to navigate to the appropriate step and update the information.<br></br><br></br>
+                            Otherwise, <b>Confirm</b> these details to create your new Family Social site and send family invitations.
+                          </p>
+                        </div>
+
+                        <div className="flex justify-center p-2 gap-2">
+                          <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                            <CircleArrowLeft className="mr-1 h-4 w-4" />
+                            Back
+                          </Button>
+
+                          <Button onClick={ next } className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
+                            Confirm and Create Family Site
+                            <CircleCheckBig className="ml-1 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </div>
+                  </div>
                 ) }
               </form>
             </Form>
-
           </Card>
 
         </div >
