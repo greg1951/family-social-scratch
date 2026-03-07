@@ -1,0 +1,11 @@
+Using the trial-home page as a guide, create a react page in the trial-setup folder for the first step. Create a new shadcn form in a new index.tsx react page that contains a form consist of First Name, Last Name, Nickname, Founder's Email, Password and Confirm Password. Provide Back and Next shadcn buttons for navigation.
+
+Generate a new page in the trial-invite-family folder that consists of a shadcn Dialog that prompts for a family email address and family member name. The result of the dialog submission should be to add it to a list of family members that will be rendered in the page.tsx file in the trial-invite-family folder.
+
+Generate a new page in the trial-invite-family folder that is styled like the page.tsx in the trial-setup-steps folder. This new page should provide a confirmation of the first three steps in that page.tsx and which provides a confirmation in Step 4 of the new family to be created. 
+
+See what you can do to improve the look and feel and navigation in the src/app/(main)/MainTablet.tsx file.
+
+See what you can do to improve the look and feel and navigation in the src/app/(trial)/trial-home/page.tsx file.
+
+See what you can do to improve the look and feel and navigation in the src/app/(trial)/trial-setup-steps/page.tsx file.

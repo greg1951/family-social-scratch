@@ -3,61 +3,74 @@ import { Card } from "../../components/ui/card";
 import Link from "next/link";
 import { auth } from "@/auth";
 import MainLinkCard from "../../components/common/main-link-card";
+import Image from "next/image";
 
 export default async function MainTablet() {
   const session = await auth();
-  let isLoggedIn: boolean = false;
-  if (session)
-    isLoggedIn = true;
-  // console.log("MainTablet->session: ", session);
+  const isLoggedIn: boolean = !!session;
 
   return (
-    <>
-      <div>
-        <MainHeader isLoggedIn={ isLoggedIn } />
-        <section className="flex align-middle font-app">
-          <div className="grid sm:grid-cols-2 gap-x-1 gap-y-1 w-screen h-screen">
-            <Card className="bg-gray-300 rounded-lg aspect-auto w-full object-cover">
-              <div className=" flex justify-center items-baseline-last">
-                <div className=" flex items-center">
-                  <img src="icons/investigation.png" alt="More Information" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
+      <MainHeader isLoggedIn={ isLoggedIn } />
+
+      <section className="font-app px-2 pb-3 md:px-4 md:pb-4">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-2 sm:grid-cols-2 md:gap-3">
+          <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#d8f4ff] to-[#eef9ff] p-3 shadow-sm md:p-4">
+            <div className="flex flex-col items-center justify-between gap-3 md:flex-row md:items-start">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-white/80 p-2 shadow-sm">
+                  <Image
+                    src="/icons/investigation.png"
+                    alt="More Information"
+                    width={ 56 }
+                    height={ 56 }
+                    className="h-10 w-10 object-contain md:h-14 md:w-14"
+                  />
                 </div>
-                <div className="flex items-center p-1 md:p-5">
-                  <div className="text-1xl md:text-2xl leading-snug">
-                    <p className="text-center underline">
-                      <Link href="/help/about-family-social" className="text-amber-800 text-center">
-                        What is Family Social?
-                      </Link>
-                    </p>
-                    <p className="text-center underline">
-                      <Link href="/trial-home" className="text-amber-800 text-center">
-                        Start a trial!
-                      </Link>
-                    </p>
-                    <p className="text-center underline">
-                      <Link href="/help-subscribe" className="text-amber-800 text-center">
-                        Our reasonable subscriptions
-                      </Link>
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-base font-extrabold text-slate-800 md:text-lg">Welcome to Family Social</p>
+                  <p className="text-xs text-slate-600 md:text-sm">Choose a channel below or learn more first.</p>
                 </div>
               </div>
-            </Card>
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/tv-junkies" src="images/tv-junkies-tablet.png" title="TV Junkies" tw="bg-red-500 rounded-lg p-2 shadow-xl relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="bg-yellow-500 rounded-lg p-2 shadow relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/book-besties" src="images/book-besties-tablet.png" title="Book Besties" tw="bg-blue-500 rounded-lg p-2 shadow relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-foodies" src="images/family-foodies-tablet.png" title="Family Foodies" tw="bg-green-500 rounded-lg p-2 shadow relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="bg-cyan-500 rounded-lg p-2 shadow relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/mx-train" src="images/mx-train-tablet.png" title="MX Train" tw="bg-amber-500 rounded-lg p-2 shadow relative" />
-            <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-threads" src="images/family-threads-tablet.png" title="Family Threads" tw="bg-fuchsia-500 rounded-lg p-2 shadow relative" />
-            {/* <Link href="/family-threads" >
-            <Card className="bg-fuchsia-500 rounded-lg p-2 shadow relative">
-              <img src="images/family-threads-tablet.png" alt="Family Threads" className="aspect-auto w-full object-cover" />
-            </Card>
-          </Link> */}
-          </div>
-        </section>
-      </div>
-    </>
+
+              <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3">
+                <Link
+                  href="/help/about-family-social"
+                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                >
+                  What is Family Social?
+                </Link>
+                <Link
+                  href="/trial-home"
+                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                >
+                  Start a trial!
+                </Link>
+                <Link
+                  href="/help-subscribe"
+                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                >
+                  Our reasonable subscriptions
+                </Link>
+              </div>
+            </div>
+
+            { !isLoggedIn && (
+              <p className="mt-3 text-center text-xs text-slate-600 md:text-left">
+                Sign in to open channels directly from this page.
+              </p>
+            ) }
+          </Card>
+
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/tv-junkies" src="images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/book-besties" src="images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-foodies" src="images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/mx-train" src="images/mx-train-tablet.png" title="MX Train" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-threads" src="images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+        </div>
+      </section>
+    </div>
   );
 };

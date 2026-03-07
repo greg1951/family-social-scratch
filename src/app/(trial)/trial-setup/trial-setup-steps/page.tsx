@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff } from "lucide-react";
 import { TrialFormSchema } from '@/features/trial/components/validation/schema';
 import { trialSteps } from '@/features/trial/components/trial-steps';
 import { FamilyMember, InviteFamilyDialog } from '../trial-invite-family/invite-family-dialog';
@@ -27,12 +27,11 @@ export default function Step1CreateAccount() {
   const [isLoading, setIsLoading] = useState(false);
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
-  const delta = currentStep - previousStep;
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { register, handleSubmit, watch, reset, trigger, formState: { errors } } = useForm<FormValues>({
+  const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(TrialFormSchema)
   });
 
@@ -100,21 +99,58 @@ export default function Step1CreateAccount() {
     setMembers((prev) => prev.filter((member) => member.id !== id))
   }
 
+  const stepProgress = Math.round(((currentStep + 1) / steps.length) * 100)
+
 
   return (
     <>
-      <div className="font-app py-2 px-4 sm:px-6 md:px-8 h-[90vh]">
-        <div className="max-w-2xl mx-auto">
-          <Card className="flex align-top w-[400] md:w-[800]">
-            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center p-2">
-              <div className="flex items-center justify-center gap-4">
-                <CardTitle className="text-2xl md:text-3xl inline">
-                  Trial Account Setup
-                </CardTitle>
+      <div className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
+        <div className="mx-auto w-full max-w-4xl">
+          <Card className="w-full border-slate-200 shadow-lg">
+            <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-5">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <CardTitle className="text-2xl font-extrabold text-slate-900 md:text-3xl">
+                    Trial Account Setup
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-sm text-slate-800">
+                    Step { currentStep + 1 } of { steps.length } • { steps[currentStep]?.title }
+                  </CardDescription>
+                </div>
+
+                <div className="min-w-44 rounded-lg border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-700 md:text-sm">
+                  Progress: { stepProgress }%
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/80">
+                    <div
+                      className="h-full rounded-full bg-[#005472] transition-all"
+                      style={ { width: `${ stepProgress }%` } }
+                    />
+                  </div>
+                </div>
               </div>
             </CardHeader>
             <Form { ...form }>
-              <form onSubmit={ handleSubmit(processForm) } className="space-y-6">
+              <form onSubmit={ handleSubmit(processForm) } className="space-y-4">
+                <div className="px-4 pt-4 md:px-6">
+                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                    { steps.map((step, index) => (
+                      <div
+                        key={ step.number }
+                        className={ `rounded-md border px-2 py-2 text-center text-xs font-semibold md:text-sm ${ index === currentStep
+                          ? 'border-[#59cdf7] bg-[#e6f8ff] text-[#005472]'
+                          : index < currentStep
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'border-slate-200 bg-white text-slate-500'
+                          }` }
+                      >
+                        <span className="inline-flex items-center gap-1">
+                          { index < currentStep && <CheckCircle2 className="h-3.5 w-3.5" /> }
+                          Step { step.number }
+                        </span>
+                      </div>
+                    )) }
+                  </div>
+                </div>
                 { currentStep === STEP_1_FOUNDER && (
                   <>
                     <div className="flex items-center justify-center gap-4">
@@ -290,9 +326,9 @@ export default function Step1CreateAccount() {
                             </div>
                           </div>
                         </fieldset>
-                        <div className="flex justify-center p-2 gap-2 ">
+                        <div className="flex justify-center p-2 gap-2">
                           <Link href="/trial-home">
-                            <Button variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                            <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
                               <CircleArrowLeft className="mr-1 h-4 w-4" />
                               Back
                             </Button>
@@ -300,7 +336,7 @@ export default function Step1CreateAccount() {
 
                           <Button
                             onClick={ next }
-                            className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+                            className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
                             disabled={ currentStep === steps.length - 1 || isLoading }
                           >
                             { isLoading ? 'Saving Founder info...' : 'Next' }
@@ -353,16 +389,16 @@ export default function Step1CreateAccount() {
 
                       </CardContent>
                     </div>
-                    <div className="flex justify-center p-2 gap-2 ">
+                    <div className="flex justify-center p-2 gap-2">
                       {/* <Link href="/trial-home"> */ }
-                      <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                      <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
                         <CircleArrowLeft className="mr-1 h-4 w-4" />
                         Back
                       </Button>
                       {/* </Link> */ }
                       <Button
                         onClick={ next }
-                        className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+                        className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
                         disabled={ currentStep === steps.length - 1 || isLoading }
                       >
                         { isLoading ? 'Saving Founder info...' : 'Next' }
@@ -407,13 +443,13 @@ export default function Step1CreateAccount() {
                         </div>
 
                         <div className="flex justify-center p-2 gap-2">
-                          <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
                           <Button
                             onClick={ next }
-                            className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+                            className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
                             disabled={ members.length === 0 }
                           >
                             Next
@@ -489,12 +525,12 @@ export default function Step1CreateAccount() {
                         </div>
 
                         <div className="flex justify-center p-2 gap-2">
-                          <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
 
-                          <Button onClick={ next } className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
+                          <Button onClick={ next } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto">
                             Confirm and Create Family Site
                             <CircleCheckBig className="ml-1 h-4 w-4" />
                           </Button>
