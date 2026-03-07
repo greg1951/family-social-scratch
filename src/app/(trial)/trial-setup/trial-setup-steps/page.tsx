@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,188 +9,443 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { CheckCircle2 } from 'lucide-react';
+import { CircleArrowLeft, CircleArrowRight, Eye, EyeOff } from "lucide-react";
+import { TrialFormSchema } from '@/features/trial/components/validation/schema';
+import { trialSteps } from '@/features/trial/components/trial-steps';
+import { FamilyMember, InviteFamilyDialog } from '../trial-invite-family/invite-family-dialog';
 
-// Validation Schema
-const formSchema = z.object({
-  firstName: z.string().min(1, 'First name is required').min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(1, 'Last name is required').min(2, 'Last name must be at least 2 characters'),
-  nickname: z.string().optional(),
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+type FormValues = z.infer<typeof TrialFormSchema>;
+const steps = trialSteps;
 
-type FormValues = z.infer<typeof formSchema>;
+// Define constants for step indices for better readability
+const STEP_1_FOUNDER: number = 0; // Founder info
+const STEP_2_FAMILY_NAME: number = 1; // Family Name
+const STEP_3_INVITE_MEMBERS: number = 2; // Invite family members
+const STEP_4_CREATE_FAMILY_SITE: number = 3; // Create family site
 
 export default function Step1CreateAccount() {
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [previousStep, setPreviousStep] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
+  const delta = currentStep - previousStep;
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      firstName: '',
-      lastName: '',
-      nickname: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const { register, handleSubmit, watch, reset, trigger, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(TrialFormSchema)
   });
 
-  async function onSubmit(values: FormValues) {
-    setIsLoading(true);
-    try {
-      // TODO: Handle form submission
-      console.log(values);
-      // Redirect to next step
-      // router.push('/trial-setup/step-2');
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+  type FieldName = keyof FormValues
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(TrialFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      passwordConfirm: "",
+      familyName: "",
+      familyMembers: [],
+    }
+  });
+
+  const processForm: SubmitHandler<FormValues> = async (values) => {
+    console.log("processForm->values: ", values);
+    reset();
+  }
+
+  const next = async () => {
+    reset(form.getValues());
+    console.log("next->currentStep: ", currentStep);
+    const fields = steps[currentStep].fields;
+    console.log("next->fields: ", fields);
+    const output = await trigger(fields as FieldName[], { shouldFocus: true })
+    console.log("next->output: ", output);
+
+    if (!output) return
+
+    if (currentStep < steps.length - 1) {
+      if (currentStep === steps.length - 2) {
+        await handleSubmit(processForm)()
+      }
+      setPreviousStep(currentStep)
+      setCurrentStep(step => step + 1)
     }
   }
 
+  const prev = () => {
+    if (currentStep > 0) {
+      setPreviousStep(currentStep)
+      setCurrentStep(step => step - 1)
+    }
+  }
+
+  const [members, setMembers] = useState<FamilyMember[]>([])
+
+  const handleAddMember = (values: Pick<FamilyMember, 'firstName' | 'lastName' | 'email'>) => {
+    setMembers((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+      },
+    ])
+  }
+
+  const handleRemoveMember = (id: string) => {
+    setMembers((prev) => prev.filter((member) => member.id !== id))
+  }
+
+
   return (
-    <div className="font-app min-h-screen bg-linear-to-b from-neutral-50 to-neutral-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-2xl mx-auto">
-        <Card className="flex align-top w-[350] md:w-[800]">
-          <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center p-2">
-            <div className="flex items-center justify-center gap-4">
-              <div className="shrink-0 mr-6">
-                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[#005472] text-white font-bold text-sm">
-                  Step 1
-                </div>
+    <>
+      <div className="font-app py-2 px-4 sm:px-6 md:px-8">
+        <div className="max-w-2xl mx-auto">
+          <Card className="flex align-top w-[400] md:w-[800]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center p-2">
+              <div className="flex items-center justify-center gap-4">
+                <CardTitle className="text-2xl md:text-3xl inline">
+                  Trial Account Setup
+                </CardTitle>
               </div>
-              <CardTitle className="text-2xl md:text-3xl inline">
-                Register Family Founder
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardDescription className="text-white/90 ">
-            Register yourself as the family founder by providing your information and login credentials.
-          </CardDescription>
-          { step === 1 && (
-            <CardContent className="pt-1 ">
-              <Form { ...form }>
-                <form onSubmit={ form.handleSubmit(onSubmit) } className="space-y-6">
-                  <div className="grid sm:grid-cols-1 ">
-                    <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl p-3">
-                      <FormField
-                        control={ form.control }
-                        name="firstName"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">First Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="John" { ...field } className="text-xs font-extralight" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
-                      <FormField
-                        control={ form.control }
-                        name="lastName"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">Last Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Doe" { ...field } />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
+            </CardHeader>
+            <Form { ...form }>
+              <form onSubmit={ handleSubmit(processForm) } className="space-y-6">
+                { currentStep === STEP_1_FOUNDER && (
+                  <>
+                    <div className="flex items-center justify-center gap-4">
+                      <CardDescription>
+                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
+                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
+                            Step 1
+                          </div>
+                          <h3 className="font-extrabold inline p-0 ">
+                            Define Family Founder
+                          </h3>
+                          <p className='text-sm'>Register yourself as the family founder by providing your information and login credentials.</p>
+                        </div>
+                      </CardDescription>
+                    </div>
+                    <CardContent className="pt-1 ">
+                      <div className="grid sm:grid-cols-1 ">
+                        <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl  p-[35]">
+                          <div className='pb-5'>
+                            <FormField
+                              control={ form.control }
+                              name="firstName"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold">First Name</FormLabel>
+                                  <FormControl>
+                                    <Input { ...field } placeholder="John" className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            <div className="absolute bottom">
+                              { errors.firstName?.message && (
+                                <p className='mt-2 text-xs text-center text-red-400'>
+                                  { errors.firstName.message }
+                                </p>
+                              ) }
+                            </div>
+                          </div>
+                          <div className='pb-5'>
+                            <FormField
+                              control={ form.control }
+                              name="lastName"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold">Last Name</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Doe" { ...field } className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            <div className="absolute bottom">
+                              { errors.lastName?.message && (
+                                <p className='mt-2 text-xs text-center text-red-400'>
+                                  { errors.lastName.message }
+                                </p>
+                              ) }
+                            </div>
+                          </div>
 
-                      <FormField
-                        control={ form.control }
-                        name="nickname"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">Nickname (Optional)</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Johnny" { ...field } className="text-xs font-extralight" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
-                    </fieldset>
-                  </div>
+                          <div>
+                            <FormField
+                              control={ form.control }
+                              name="nickName"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold italic">Nickname</FormLabel>
+                                  <FormControl>
+                                    <Input placeholder="Optional" { ...field } className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            { errors.nickName?.message && (
+                              <p className='mt-2 text-sm text-red-400'>
+                                { errors.nickName.message }
+                              </p>
+                            ) }
+                          </div>
+                        </fieldset>
+                      </div>
 
-                  <div className="grid sm:grid-cols-1">
-                    <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl p-3">
-                      <FormField
-                        control={ form.control }
-                        name="email"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">Founder's Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="john@example.com" { ...field } className="text-xs font-extralight" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
+                      <div className="grid sm:grid-cols-1">
+                        <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 border-[1] rounded-2xl p-[35]">
+                          <div className='pb-7'>
+                            <FormField
+                              control={ form.control }
+                              name="email"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold">Founder's Email</FormLabel>
+                                  <FormControl>
+                                    <Input type="email" placeholder="john@example.com" { ...field } className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            <div className="absolute bottom">
+                              { errors.email?.message && (
+                                <p className='mt-1 text-xs text-center text-red-400'>
+                                  { errors.email.message }
+                                </p>
+                              ) }
+                            </div>
+                          </div>
+                          <div className="relative pb-7">
+                            <FormField
+                              control={ form.control }
+                              name="password"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold">Password</FormLabel>
+                                  <FormControl>
+                                    <Input type={ showNewPassword ? "text" : "password" } placeholder="5 or more letters" { ...field } className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            <div className="absolute bottom">
+                              { errors.password?.message && (
+                                <p className='mt-1 text-xs text-center text-red-400'>
+                                  { errors.password.message }
+                                </p>
+                              ) }
+                            </div>
 
-                      <FormField
-                        control={ form.control }
-                        name="password"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="5 or more letters" { ...field } className="text-xs font-extralight" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
+                            <Button type="button" variant="ghost" size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={ () => setShowNewPassword((prev) => !prev) }
+                            >
+                              { showNewPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              ) }
+                            </Button>
+                          </div>
 
-                      <FormField
-                        control={ form.control }
-                        name="confirmPassword"
-                        render={ ({ field }) => (
-                          <FormItem>
-                            <FormLabel className="font-extrabold">Confirm Password</FormLabel>
-                            <FormControl>
-                              <Input type="password" placeholder="Must match password" { ...field } className="text-xs font-extralight" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        ) }
-                      />
-                    </fieldset>
+                          <div className="relative pb-7">
+                            <FormField
+                              control={ form.control }
+                              name="passwordConfirm"
+                              render={ ({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="font-extrabold">Confirm Password</FormLabel>
+                                  <FormControl>
+                                    <Input type={ showConfirmPassword ? "text" : "password" } placeholder="Must match password" { ...field } className="text-xs font-extralight" />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              ) }
+                            />
+                            <Button type="button" variant="ghost" size="sm"
+                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              onClick={ () => setShowConfirmPassword((prev) => !prev) }
+                            >
+                              { showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              ) }
+                            </Button>
+                            <div className="absolute bottom">
+                              { errors.passwordConfirm?.message && (
+                                <p className='mt-1 text-xs text-center text-red-400'>
+                                  { errors.passwordConfirm.message }
+                                </p>
+                              ) }
+                            </div>
+                          </div>
+                        </fieldset>
+                        <div className="flex justify-center p-2 gap-2 ">
+                          <Link href="/trial-home">
+                            <Button variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                              <CircleArrowLeft className="mr-1 h-4 w-4" />
+                              Back
+                            </Button>
+                          </Link>
+
+                          <Button
+                            onClick={ next }
+                            className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+                            disabled={ currentStep === steps.length - 1 || isLoading }
+                          >
+                            { isLoading ? 'Saving Founder info...' : 'Next' }
+                            <CircleArrowRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+
+                    </CardContent>
+                  </>) }
+                { currentStep === STEP_2_FAMILY_NAME && (
+                  <>
+                    <div className="grid grid-cols-1 gap-4">
+                      <CardDescription>
+                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
+                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
+                            Step 2
+                          </div>
+                          <h3 className="font-extrabold inline p-0">
+                            Assign Family Name
+                          </h3>
+                          <p className='text-sm'>All Family member data will be kept separately and securely in Family Social.<br></br><br></br>
+                            Here find a unique family name. It must be 10-30 letters long, <u>no number, special characters or spaces</u></p>
+                        </div>
+                      </CardDescription>
+                      <CardContent className="flex items-center justify-center gap-4">
+                        <div>
+                          <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl  p-[35]">
+                            <div className='relative pb-3'>
+                              <FormField
+                                control={ form.control }
+                                name="familyName"
+                                render={ ({ field }) => (
+                                  <FormItem>
+                                    <FormLabel className="font-extrabold">Family Name</FormLabel>
+                                    <FormControl>
+                                      <Input { ...field } placeholder="Will be checked for uniqueness" className="text-xs text-center font-extralight w-[340]" />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                ) }
+                              />
+                              <div className="absolute bottom">
+                                { errors.familyName?.message && (
+                                  <p className='mt-2 text-xs text-center text-red-400'>
+                                    { errors.familyName.message }
+                                  </p>
+                                ) }
+                              </div>
+                            </div>
+                          </fieldset>
+                        </div>
+
+                      </CardContent>
+                    </div>
                     <div className="flex justify-center p-2 gap-2 ">
-                      <Link href="/trial-home">
-                        <Button variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
-                          Back
-                        </Button>
-                      </Link>
-
+                      {/* <Link href="/trial-home"> */ }
+                      <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                        <CircleArrowLeft className="mr-1 h-4 w-4" />
+                        Back
+                      </Button>
+                      {/* </Link> */ }
                       <Button
-                        type="submit"
+                        onClick={ next }
                         className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
-                        disabled={ isLoading }
+                        disabled={ currentStep === steps.length - 1 || isLoading }
                       >
-                        { isLoading ? 'Registering Founder...' : 'Next' }
+                        { isLoading ? 'Saving Founder info...' : 'Next' }
+                        <CircleArrowRight className="ml-1 h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
+                  </>) }
+                { currentStep === STEP_3_INVITE_MEMBERS && (
+                  <>
+                    <div className="grid grid-cols-1 gap-4">
+                      <CardDescription>
+                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
+                          <div className="flex items-center h-0 w-0 md:h-13 md:w-15 rounded-full md:bg-[#005472] text-white font-bold text-xs md:text-sm text-center p-1">
+                            Step 3
+                          </div>
+                          <h3 className="font-extrabold inline p-0">
+                            Invite Family
+                          </h3>
+                          <p className='text-sm'>Emails will be used to send invitations to family and friends. You will add them to the list below and when done, proceed to the confirmation step.</p>
+                        </div>
+                      </CardDescription>
+                      <CardContent className="space-y-4 pt-5">
+                        {/* <div className="flex items-center justify-between rounded-md border bg-neutral-50 px-4 py-3">
+                          <p className="text-sm font-medium text-neutral-700">Current invite count</p>
+                          <p className="text-lg font-bold text-neutral-900">{ members.length }</p>
+                        </div> */}
 
-                </form>
-              </Form>
-            </CardContent>
-          ) }
-        </Card>
-      </div>
-    </div>
+                        <InviteFamilyDialog
+                          members={ members }
+                          onAddMember={ handleAddMember }
+                          onRemoveMember={ handleRemoveMember }
+                        />
+
+                        <div className="rounded-md border p-4">
+                          <p className="mb-3 text-sm font-semibold text-neutral-800">Invited Members ({ members.length })</p>
+                          { members.length === 0 ? (
+                            <p className="text-sm text-neutral-500">No family members added yet.</p>
+                          ) : (
+                            <ul className="space-y-2">
+                              { members.map((member) => (
+                                <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
+                                  <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
+                                  <p className="text-xs text-neutral-600">{ member.email }</p>
+                                </li>
+                              )) }
+                            </ul>
+                          ) }
+                        </div>
+
+                        <div className="flex justify-center p-2 gap-2">
+                          <Button onClick={ prev } variant="outline" className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe]">
+                            <CircleArrowLeft className="mr-1 h-4 w-4" />
+                            Back
+                          </Button>
+                          <Button
+                            onClick={ next }
+                            className="md:w-auto bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+                            disabled={ members.length === 0 }
+                          >
+                            Next
+                            <CircleArrowRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </div>
+
+                  </>) }
+                { currentStep === STEP_4_CREATE_FAMILY_SITE && (
+                  <CardDescription className="text-white/90 ">
+
+                  </CardDescription>
+                ) }
+              </form>
+            </Form>
+
+          </Card>
+
+        </div >
+      </div ></>
   );
 }

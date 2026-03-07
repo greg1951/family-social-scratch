@@ -3,31 +3,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2 } from 'lucide-react';
+import { trialSteps } from '@/features/trial/components/trial-steps';
 import Link from 'next/link';
 
 export default function TrialSetup() {
-  const steps = [
-    {
-      number: 1,
-      title: 'Register the Family Founder',
-      description: 'Register yourself as the family founder by providing your information and login credentials.',
-    },
-    {
-      number: 2,
-      title: 'Assign a Family Name',
-      description: 'Family information is kept secure and is identified by a unique family name of your choosing.',
-    },
-    {
-      number: 3,
-      title: 'Invite Family Members',
-      description: 'Share your family social site with family and friends by adding them to your family network.',
-    },
-    {
-      number: 4,
-      title: 'Create the Family Social Site',
-      description: 'Begin sharing updates, photos, and memories with your family members securely.',
-    },
-  ];
+  const steps = trialSteps;
 
   return (
     <Card className="flex align-top w-[350] md:w-[800]">
@@ -47,8 +27,8 @@ export default function TrialSetup() {
             { title: 'Easy to Use', description: 'Intuitive interface for all ages' },
             { title: 'Always Connected', description: 'Access from any device, anytime' },
           ].map((benefit) => (
-            <Card key={ benefit.title } className="p-2 text-center">
-              <h3 className="font-semibold text-base text-neutral-900 mb-1">
+            <Card key={ benefit.title } className="p-2 text-center gap-y-2">
+              <h3 className="font-semibold text-base text-neutral-900">
                 { benefit.title }
               </h3>
               <p className="text-sm text-neutral-600">
@@ -57,7 +37,7 @@ export default function TrialSetup() {
             </Card>
           )) }
         </div>
-        <div className="space-y-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 space-x-4 space-y-6 mb-6">
           { steps.map((step, index) => (
             <Card
               key={ step.number }
@@ -66,13 +46,13 @@ export default function TrialSetup() {
               <div className="flex items-start p-3">
                 {/* Step Number Circle */ }
                 <div className="shrink-0 mr-6">
-                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[#59cdf7] text-white font-bold text-lg">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[#59cdf7] text-white font-bold text-base md:text-lg">
                     { step.number }
                   </div>
                 </div>
 
                 <div className="flex-1">
-                  <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
+                  <h2 className="text-base md:text-lg font-bold text-neutral-900 mb-2">
                     { step.title }
                   </h2>
                   <p className="text-neutral-600">
@@ -93,7 +73,7 @@ export default function TrialSetup() {
             Ready to get started?
           </h2>
           <p className="text-neutral-600 mb-8">
-            Join the many families who are staying connected with Family Social
+            Join our network of families who stay connected with Family Social!
           </p>
           <Link href="/trial-setup/trial-setup-steps">
             <Button size="lg" className="bg-[#59cdf7] hover:bg-[#9de4fe]">
