@@ -1,12 +1,9 @@
 import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import TwoFactorAuthForm from "./two-factor-auth-form";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { redirect } from "next/navigation";
 import AccountDetailsForm from "./index";
-import { family } from "@/components/db/schema/family-social-schema-tables";
-import { get2faDetails, getMemberDetails } from "./actions";
+import { getMemberDetails } from "./actions";
 import { AccountDetails } from "@/features/auth/auth-types";
 
 // interface AccountDetails {

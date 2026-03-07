@@ -120,7 +120,7 @@ export default function Step1CreateAccount() {
                     <div className="flex items-center justify-center gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">1</div>
+                          <img src="/icons/bluering1.png" alt="step 1" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
                           <h3 className="font-extrabold inline p-0 ">
                             Define Family Founder
                           </h3>
@@ -316,7 +316,7 @@ export default function Step1CreateAccount() {
                     <div className="grid grid-cols-1 gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">2</div>
+                          <img src="/icons/bluering2.png" alt="step 2" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
                           <h3 className="font-extrabold inline p-0">
                             Assign Family Name
                           </h3>
@@ -375,7 +375,7 @@ export default function Step1CreateAccount() {
                     <div className="grid grid-cols-1 gap-4">
                       <CardDescription>
                         <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <div className="flex items-center justify-center h-8 w-12 rounded-full md:bg-[#005472] text-white text-xs font-bold">3</div>
+                          <img src="/icons/bluering3.png" alt="step 3" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
                           <h3 className="font-extrabold inline p-0">
                             Invite Family
                           </h3>
@@ -434,7 +434,7 @@ export default function Step1CreateAccount() {
                       <CardContent className="space-y-4 pt-5">
                         <div className="rounded-md border p-4">
                           <div className="mb-3 flex items-center gap-2">
-                            <div className="flex items-center h-4 w-4 md:h-8 md:w-12 justify-center rounded-full bg-[#005472] text-white text-xs font-bold">1</div>
+                            <img src="/icons/bluering1.png" alt="step 1" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-70 " />
                             <p>
                               <span className="text-sm font-semibold text-neutral-800" >Family Founder Info: <br></br></span>
                               <span className="text-xs font-light text-neutral-800">
@@ -448,7 +448,7 @@ export default function Step1CreateAccount() {
 
                         <div className="rounded-md border p-4">
                           <div className="mb-3 flex items-center gap-2">
-                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#005472] text-white text-xs font-bold">2</div>
+                            <img src="/icons/bluering2.png" alt="step 2" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-70 " />
                             <p>
                               <span className="text-sm font-semibold text-neutral-800" >Selected Family Name: <br></br></span>
                               <span className="text-xs font-light text-neutral-800">{ form.getValues('familyName') }</span>
@@ -458,7 +458,7 @@ export default function Step1CreateAccount() {
 
                         <div className="rounded-md border p-4">
                           <div className="mb-3 flex items-center gap-2">
-                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#005472] text-white text-xs font-bold">3</div>
+                            <img src="/icons/bluering3.png" alt="step 3" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-70 " />
                             <p className="text-sm font-semibold text-neutral-800">Invited Family Members ({ members.length })</p>
                           </div>
 
@@ -478,12 +478,12 @@ export default function Step1CreateAccount() {
 
                         <div className="rounded-md border border-[#59cdf7] bg-[#e8f8ff] p-4">
                           <div className="mb-2 flex items-center gap-2">
-                            <div className="flex items-center justify-center h-4 w-4 md:h-8 md:w-12 rounded-full bg-[#59cdf7] text-black text-xs font-bold">4</div>
+                            <img src="/icons/bluering4.png" alt="step 4" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
                             <p className="text-sm font-semibold text-neutral-900">Final Confirmation</p>
                           </div>
 
                           <p className="text-xs text-neutral-800">
-                            If corrections need to be made use the <b>Back</b> button to navigate to the appropriate step and update the information.<br></br><br></br>
+                            If corrections need to be made use the <b>Back</b> button to return to the appropriate step and update the information.<br></br><br></br>
                             Otherwise, <b>Confirm</b> these details to create your new Family Social site and send family invitations.
                           </p>
                         </div>
