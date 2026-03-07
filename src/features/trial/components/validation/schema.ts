@@ -15,7 +15,7 @@ export const TrialFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.email('Invalid email address'),
-  nickName: z.string().nullable().optional(),
+  nickName: z.string().optional(),
   password: passwordSchema,
   passwordConfirm: z.string(),
   familyName: z
