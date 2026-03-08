@@ -50,7 +50,7 @@ export default async function MainTablet() {
                   href="/help-subscribe"
                   className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
                 >
-                  Our reasonable subscriptions
+                  Our Reasonable Subscriptions
                 </Link>
               </div>
             </div>

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -52,6 +52,7 @@ export default function Step1CreateAccount() {
 
   const processForm: SubmitHandler<FormValues> = async (values) => {
     console.log("processForm->values: ", values);
+    console.log("processForm->members: ", members);
     reset();
   }
 
@@ -326,26 +327,28 @@ export default function Step1CreateAccount() {
                             </div>
                           </div>
                         </fieldset>
-                        <div className="flex justify-center p-2 gap-2">
-                          <Link href="/trial-home">
-                            <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
-                              <CircleArrowLeft className="mr-1 h-4 w-4" />
-                              Back
-                            </Button>
-                          </Link>
-
-                          <Button
-                            onClick={ next }
-                            className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
-                            disabled={ currentStep === steps.length - 1 || isLoading }
-                          >
-                            { isLoading ? 'Saving Founder info...' : 'Next' }
-                            <CircleArrowRight className="ml-1 h-4 w-4" />
-                          </Button>
-                        </div>
                       </div>
-
                     </CardContent>
+                    <CardFooter className="flex justify-center">
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                        <Link href="/trial-home">
+                          <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                            <CircleArrowLeft className="mr-1 h-4 w-4" />
+                            Back
+                          </Button>
+                        </Link>
+                        <Button
+                          onClick={ next }
+                          className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
+                          disabled={ currentStep === steps.length - 1 || isLoading }
+                        >
+                          { isLoading ? 'Saving Founder info...' : 'Next' }
+                          <CircleArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
+
+                      </div>
+                    </CardFooter>
+
                   </>) }
                 { currentStep === STEP_2_FAMILY_NAME && (
                   <>
@@ -389,22 +392,23 @@ export default function Step1CreateAccount() {
 
                       </CardContent>
                     </div>
-                    <div className="flex justify-center p-2 gap-2">
-                      {/* <Link href="/trial-home"> */ }
-                      <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
-                        <CircleArrowLeft className="mr-1 h-4 w-4" />
-                        Back
-                      </Button>
-                      {/* </Link> */ }
-                      <Button
-                        onClick={ next }
-                        className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
-                        disabled={ currentStep === steps.length - 1 || isLoading }
-                      >
-                        { isLoading ? 'Saving Founder info...' : 'Next' }
-                        <CircleArrowRight className="ml-1 h-4 w-4" />
-                      </Button>
-                    </div>
+                    <CardFooter className="flex justify-center">
+                      <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                        <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                          <CircleArrowLeft className="mr-1 h-4 w-4" />
+                          Back
+                        </Button>
+                        <Button
+                          onClick={ next }
+                          className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
+                          disabled={ currentStep === steps.length - 1 || isLoading }
+                        >
+                          { isLoading ? 'Saving Founder info...' : 'Next' }
+                          <CircleArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardFooter>
+
                   </>) }
                 { currentStep === STEP_3_INVITE_MEMBERS && (
                   <>
@@ -442,21 +446,23 @@ export default function Step1CreateAccount() {
                           ) }
                         </div>
 
-                        <div className="flex justify-center p-2 gap-2">
-                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
+                      </CardContent>
+                      <CardFooter className="flex justify-center">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
                           <Button
                             onClick={ next }
-                            className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto"
+                            className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
                             disabled={ members.length === 0 }
                           >
                             Next
                             <CircleArrowRight className="ml-1 h-4 w-4" />
                           </Button>
                         </div>
-                      </CardContent>
+                      </CardFooter>
                     </div>
 
                   </>) }
@@ -476,8 +482,25 @@ export default function Step1CreateAccount() {
                               <span className="text-xs font-light text-neutral-800">
                                 { form.getValues('email') }, { " " }
                                 { form.getValues('firstName') } { " " } { form.getValues('lastName') }, { " " }
-                                { form.getValues('nickName') ? `(${ form.getValues('nickName') })` : '' }
+                                { form.getValues('nickName') ? `(${ form.getValues('nickName') })` : '(no nickname)' }
                               </span>
+                              <p>
+                                <span className="text-sm font-semibold text-neutral-800" >Family Founder Password: <br></br></span>
+                                <div className='relative'>
+                                  <input className='text-xs font-light text-neutral-800 ' type={ showNewPassword ? "text" : "password" } id="password" name="password" value={ form.getValues('password') } disabled></input>
+                                  <Button type="button" variant="ghost" size="sm"
+                                    className="absolute left-40 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                    onClick={ () => setShowNewPassword((prev) => !prev) }
+                                  >
+                                    { showNewPassword ? (
+                                      <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                      <Eye className="h-4 w-4" />
+                                    ) }
+                                  </Button>
+
+                                </div>
+                              </p>
                             </p>
                           </div>
                         </div>
@@ -519,23 +542,25 @@ export default function Step1CreateAccount() {
                           </div>
 
                           <p className="text-xs text-neutral-800">
-                            If corrections need to be made use the <b>Back</b> button to return to the appropriate step and update the information.<br></br><br></br>
-                            Otherwise, <b>Confirm</b> these details to create your new Family Social site and send family invitations.
+                            If corrections need to be made, use the <b>Back</b> button to return to the step and update the information.<br></br><br></br>
+                            Otherwise, <b>Confirm</b> these setup that will create your new Family Social site and send invitations to invited members.
                           </p>
                         </div>
 
-                        <div className="flex justify-center p-2 gap-2">
-                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto">
+                      </CardContent>
+                      <CardFooter className="flex justify-center">
+                        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
 
-                          <Button onClick={ next } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto">
-                            Confirm and Create Family Site
+                          <Button onClick={ next } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
+                            Create Family
                             <CircleCheckBig className="ml-1 h-4 w-4" />
                           </Button>
                         </div>
-                      </CardContent>
+                      </CardFooter>
                     </div>
                   </div>
                 ) }
