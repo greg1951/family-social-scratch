@@ -21,5 +21,9 @@ Remove the status dialog from the step 2 invite family member form submission.
 *** prompted me for more info on the problem I was seeing
 When I add a family member in the step 2 dialog, it immediately shows me the update status dialog you just implemented.
 
-*** It took four prompts but the status dialog is working nicely. 
+*** It took four prompts but the status dialog is working nicely. A bit of cleanup was performed below.
+
+Move the new status dialog component to trial-setup-dialogs/status-update-dialog.tsx and import the new dialog component into the index.tsx where it is run.
+
+
 

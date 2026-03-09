@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { passwordMatchSchema } from '@/features/auth/components/validation/passwordMatchSchema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
-import { FamilyMember } from '@/app/(trial)/trial-setup/trial-invite-family/invite-family-dialog';
+import { FamilyMember } from '@/app/(trial)/trial-setup/trial-setup-dialogs/invite-family-dialog';
 
 const FamilyMemberSchema = z.object({
   firstName: z.string(),
