@@ -9,3 +9,17 @@ See what you can do to improve the look and feel and navigation in the src/app/(
 See what you can do to improve the look and feel and navigation in the src/app/(trial)/trial-home/page.tsx file.
 
 See what you can do to improve the look and feel and navigation in the src/app/(trial)/trial-setup-steps/page.tsx file.
+
+suggest a fix for the trial-setup-steps/page.tsx mismatch error on familyNames parameter for CreateTrialAccountSteps component.
+
+When the form in the src/app/(trial)/trial-setup-steps/index.tsx file is submitted, create a dialog to show the status of the 5 update steps performed by the form submission: 1. Add new family name, 2. Create new Member entry, 3. Add Founder credentials, 4. Add invited family members, and 5. Send emails to join new Family Social family. When the Close button on the new dialog is selected, the user will be redirected back to the MainTablet home page.
+
+The status dialog is being triggered when a family member is added in step 2. It should instead be triggered on the step 4 next button.
+
+Remove the status dialog from the step 2 invite family member form submission. 
+
+*** prompted me for more info on the problem I was seeing
+When I add a family member in the step 2 dialog, it immediately shows me the update status dialog you just implemented.
+
+*** It took four prompts but the status dialog is working nicely. 
+

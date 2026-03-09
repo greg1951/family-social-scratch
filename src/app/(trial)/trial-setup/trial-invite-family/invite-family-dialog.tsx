@@ -54,6 +54,11 @@ export function InviteFamilyDialog({ members, onAddMember, onRemoveMember }: Inv
     form.reset()
   }
 
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.stopPropagation()
+    form.handleSubmit(onSubmit)(e)
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -72,7 +77,7 @@ export function InviteFamilyDialog({ members, onAddMember, onRemoveMember }: Inv
         </DialogHeader>
 
         <Form { ...form }>
-          <form onSubmit={ form.handleSubmit(onSubmit) } className="space-y-4">
+          <form onSubmit={ handleFormSubmit } className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <FormField
                 control={ form.control }

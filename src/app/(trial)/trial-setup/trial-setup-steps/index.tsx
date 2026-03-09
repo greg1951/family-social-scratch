@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import Link from 'next/link';
-import { Circle, CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
+import { Circle, CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck, Loader2 } from "lucide-react";
+import { useRouter } from 'next/navigation';
 import { trialSteps } from '@/features/trial/components/trial-steps';
 import { FamilyMember, InviteFamilyDialog } from '../trial-invite-family/invite-family-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
@@ -27,7 +29,15 @@ const STEP_4_CREATE_FAMILY_SITE: number = 3; // Create family site
 // Family name RegEx: only letters, no spaces, numbers, or special characters allowed.
 const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
 
+type SubmissionStep = {
+  id: number;
+  label: string;
+  status: 'pending' | 'inProgress' | 'completed' | 'error';
+  errorMessage?: string;
+};
+
 export default function CreateTrialAccountSteps({ familyNames }: { familyNames: string[] }) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
@@ -35,6 +45,16 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Status dialog state
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [submissionSteps, setSubmissionSteps] = useState<SubmissionStep[]>([
+    { id: 1, label: 'Add new family name', status: 'pending' },
+    { id: 2, label: 'Create new Member entry', status: 'pending' },
+    { id: 3, label: 'Add Founder credentials', status: 'pending' },
+    { id: 4, label: 'Add invited family members', status: 'pending' },
+    { id: 5, label: 'Send emails to join new Family Social family', status: 'pending' },
+  ]);
 
   const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(TrialFormSchema)
@@ -55,10 +75,62 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
     }
   });
 
+  const updateStepStatus = (stepId: number, status: SubmissionStep['status'], errorMessage?: string) => {
+    setSubmissionSteps(prev =>
+      prev.map(step =>
+        step.id === stepId
+          ? { ...step, status, errorMessage }
+          : step
+      )
+    );
+  };
+
   const processForm: SubmitHandler<FormValues> = async (values) => {
     console.log("Form submitted->processForm->values: ", values);
     console.log("Form submitted->processForm->members: ", members);
-    reset();
+
+    // Show status dialog
+    setShowStatusDialog(true);
+
+    try {
+      // Step 1: Add new family name
+      updateStepStatus(1, 'inProgress');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // TODO: Implement actual family name creation logic
+      updateStepStatus(1, 'completed');
+
+      // Step 2: Create new Member entry
+      updateStepStatus(2, 'inProgress');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // TODO: Implement actual member creation logic
+      updateStepStatus(2, 'completed');
+
+      // Step 3: Add Founder credentials
+      updateStepStatus(3, 'inProgress');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // TODO: Implement actual founder credentials logic
+      updateStepStatus(3, 'completed');
+
+      // Step 4: Add invited family members
+      updateStepStatus(4, 'inProgress');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // TODO: Implement actual invited members logic
+      updateStepStatus(4, 'completed');
+
+      // Step 5: Send emails to join new Family Social family
+      updateStepStatus(5, 'inProgress');
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      // TODO: Implement actual email sending logic
+      updateStepStatus(5, 'completed');
+
+    } catch (error) {
+      console.error('Error during form submission:', error);
+      // Mark current step as error
+      const currentStepInProgress = submissionSteps.find(s => s.status === 'inProgress');
+      if (currentStepInProgress) {
+        updateStepStatus(currentStepInProgress.id, 'error', 'An error occurred during this step');
+      }
+    }
   }
 
   const next = async () => {
@@ -72,12 +144,15 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
     if (!output) return
 
     if (currentStep < steps.length - 1) {
-      if (currentStep === steps.length - 2) {
-        console.log("Submitting form at final step...");
-        await handleSubmit(processForm)()
-      }
       setPreviousStep(currentStep)
       setCurrentStep(step => step + 1)
+    }
+  }
+
+  const submitForm = async () => {
+    if (currentStep === STEP_4_CREATE_FAMILY_SITE) {
+      console.log("Submitting form from final step...");
+      await handleSubmit(processForm)()
     }
   }
 
@@ -625,7 +700,7 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
                             Back
                           </Button>
 
-                          <Button onClick={ next } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
+                          <Button onClick={ submitForm } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
                             Create Family
                             <CircleCheckBig className="ml-1 h-4 w-4" />
                           </Button>
@@ -639,6 +714,65 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
           </Card>
 
         </div >
-      </div ></>
+      </div >
+
+      {/* Status Dialog */ }
+      <Dialog open={ showStatusDialog } onOpenChange={ setShowStatusDialog }>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Setting Up Your Family Social Account</DialogTitle>
+            <DialogDescription>
+              Please wait while we complete the following steps...
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-4">
+            { submissionSteps.map((step) => (
+              <div key={ step.id } className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  { step.status === 'pending' && (
+                    <Circle className="h-5 w-5 text-slate-300" />
+                  ) }
+                  { step.status === 'inProgress' && (
+                    <Loader2 className="h-5 w-5 animate-spin text-[#59cdf7]" />
+                  ) }
+                  { step.status === 'completed' && (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                  ) }
+                  { step.status === 'error' && (
+                    <CircleSlash2 className="h-5 w-5 text-red-500" />
+                  ) }
+                </div>
+                <div className="flex-1">
+                  <p className={ `text-sm font-medium ${ step.status === 'completed' ? 'text-emerald-700' :
+                    step.status === 'error' ? 'text-red-700' :
+                      step.status === 'inProgress' ? 'text-[#005472]' :
+                        'text-slate-500'
+                    }` }>
+                    { step.label }
+                  </p>
+                  { step.status === 'error' && step.errorMessage && (
+                    <p className="text-xs text-red-600 mt-1">{ step.errorMessage }</p>
+                  ) }
+                </div>
+              </div>
+            )) }
+          </div>
+
+          <DialogFooter>
+            <Button
+              onClick={ () => {
+                setShowStatusDialog(false);
+                router.push('/');
+              } }
+              disabled={ submissionSteps.some(s => s.status === 'inProgress') }
+              className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"
+            >
+              { submissionSteps.every(s => s.status === 'completed') ? 'Close' : 'Please wait...' }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
