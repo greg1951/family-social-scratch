@@ -12,27 +12,24 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { Circle, CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { trialSteps } from '@/features/trial/components/trial-steps';
+import { noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE, trialSteps } from '@/features/trial/constants/trial-steps';
 import { FamilyMember, InviteFamilyDialog } from '../trial-setup-dialogs/invite-family-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../trial-setup-dialogs/status-update-dialog';
+import { insertFamily } from '@/components/db/sql/queries-family-user';
+import { initialSubmissionSteps } from '@/features/trial/constants/trial-steps';
+import { SubmissionStep } from '@/features/trial/types/trial-steps';
+
 type FormValues = z.infer<typeof TrialFormSchema>;
 const steps = trialSteps;
 
 // Define constants for step indices for better readability
-const STEP_1_FOUNDER: number = 0; // Founder info
-const STEP_2_FAMILY_NAME: number = 1; // Family Name
-const STEP_3_INVITE_MEMBERS: number = 2; // Invite family members
-const STEP_4_CREATE_FAMILY_SITE: number = 3; // Create family site
+// const STEP_1_FOUNDER: number = 0; // Founder info
+// const STEP_2_FAMILY_NAME: number = 1; // Family Name
+// const STEP_3_INVITE_MEMBERS: number = 2; // Invite family members
+// const STEP_4_CREATE_FAMILY_SITE: number = 3; // Create family site
 
 // Family name RegEx: only letters, no spaces, numbers, or special characters allowed.
-const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
-
-type SubmissionStep = {
-  id: number;
-  label: string;
-  status: 'pending' | 'inProgress' | 'completed' | 'error';
-  errorMessage?: string;
-};
+// const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
 
 export default function CreateTrialAccountSteps({ familyNames }: { familyNames: string[] }) {
   const router = useRouter();
@@ -46,13 +43,8 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
 
   // Status dialog state
   const [showStatusDialog, setShowStatusDialog] = useState(false);
-  const [submissionSteps, setSubmissionSteps] = useState<SubmissionStep[]>([
-    { id: 1, label: 'Add new family name', status: 'pending' },
-    { id: 2, label: 'Create new Member entry', status: 'pending' },
-    { id: 3, label: 'Add Founder credentials', status: 'pending' },
-    { id: 4, label: 'Add invited family members', status: 'pending' },
-    { id: 5, label: 'Send emails to join new Family Social family', status: 'pending' },
-  ]);
+  const [submissionSteps, setSubmissionSteps] =
+    useState<SubmissionStep[]>(initialSubmissionSteps);
 
   const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(TrialFormSchema)
@@ -84,16 +76,18 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
   };
 
   const processForm: SubmitHandler<FormValues> = async (values) => {
-    console.log("Form submitted->processForm->values: ", values);
-    console.log("Form submitted->processForm->members: ", members);
-
     // Show status dialog
     setShowStatusDialog(true);
 
     try {
       // Step 1: Add new family name
       updateStepStatus(1, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
+      const insertResult = await insertFamily(values.familyName);
+      if (!insertResult.success) {
+        updateStepStatus(1, 'error', insertResult.message);
+        throw new Error(insertResult.message);
+      }
+      // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       // TODO: Implement actual family name creation logic
       updateStepStatus(1, 'completed');
 
@@ -133,24 +127,14 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
 
   const next = async () => {
     reset(form.getValues());
-    // console.log("next->currentStep: ", currentStep);
     const fields = steps[currentStep].fields;
-    // console.log("next->fields: ", fields);
     const output = await trigger(fields as FieldName[], { shouldFocus: true })
-    // console.log("next->output: ", output);
 
     if (!output) return
 
     if (currentStep < steps.length - 1) {
       setPreviousStep(currentStep)
       setCurrentStep(step => step + 1)
-    }
-  }
-
-  const submitForm = async () => {
-    if (currentStep === STEP_4_CREATE_FAMILY_SITE) {
-      console.log("Submitting form from final step...");
-      await handleSubmit(processForm)()
     }
   }
 
@@ -698,7 +682,11 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
                             Back
                           </Button>
 
-                          <Button onClick={ submitForm } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
+                          {/* <Button onClick={ submitForm } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
+                            Create Family
+                            <CircleCheckBig className="ml-1 h-4 w-4" />
+                          </Button> */}
+                          <Button type="submit" className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
                             Create Family
                             <CircleCheckBig className="ml-1 h-4 w-4" />
                           </Button>

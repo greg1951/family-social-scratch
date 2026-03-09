@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, CheckCircle2, CirclePlay, Home, ShieldCheck, Sparkles, Users } from 'lucide-react';
-import { trialSteps } from '@/features/trial/components/trial-steps';
+import { trialSteps } from '@/features/trial/constants/trial-steps';
 import Link from 'next/link';
 
 export default function TrialSetup() {

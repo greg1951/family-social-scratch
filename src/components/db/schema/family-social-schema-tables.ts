@@ -26,9 +26,7 @@ export const family = pgTable("family", {
   id: serial("id").primaryKey(),
   name: text("family_name").notNull().unique(),
   createdAt: timestamp("created_at").defaultNow(),
-}, (table) => ({
-  nameIdx: index('family_name_idx').on(table.name),
-}));
+});
 
 export const familyInvitation = pgTable("family_invitation", {
   id: serial("id").primaryKey(),

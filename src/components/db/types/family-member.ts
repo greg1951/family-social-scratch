@@ -23,3 +23,10 @@ export type GetMemberDetailsReturn = {
   cellPhone?: string;
   mfaActive?: boolean;
 }
+export type InsertFamilyReturn = {
+  success: boolean,
+  message?: string,
+  id?: number;
+  name?: string;
+  createdAt?: Date; 
+}
