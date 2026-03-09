@@ -4,6 +4,11 @@ export type GetFamilyReturn = {
   familyId?: number;
   familyName?: string; 
 }
+export type GetAllFamiliesReturn = {
+  success: boolean,
+  message?: string,
+  familyNames?: string[],
+}
 
 export type GetMemberDetailsReturn = {
   success: boolean,

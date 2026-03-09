@@ -1,10 +1,5 @@
-import NavLink from "@/components/common/nav-link";
-import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import LogoutButton from "../../app/(auth)/(logged-in)/auth-components";
-import { LogOut } from "lucide-react";
-import { logout } from "../../app/(auth)/(logged-in)/auth-components/actions";
 import { mainLogout } from "../../app/(main)/actions";
 import { SettingsIcon } from 'lucide-react';
 

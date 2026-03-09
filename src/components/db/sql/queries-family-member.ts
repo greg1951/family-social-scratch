@@ -3,9 +3,8 @@
 import { count, eq, and } from 'drizzle-orm';
 import { family, member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
-import { GetMemberDetailsReturn, GetFamilyReturn } from '../types/family-member';
-import { success } from 'zod';
-import { AccountDetails, UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
+import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn } from '../types/family-member';
+import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
 
 /*
   Using family name, return the familyId 
@@ -31,6 +30,29 @@ export async function findRegisteredFamily(familyName: string)
     return {
       success: false,
       message: "Family name was not found",
+    }
+  }
+}
+/*
+  Return all family names (for search purposes in the trial account setup)
+*/
+export async function getAllFamilies()
+  :(Promise<GetAllFamiliesReturn>) {
+
+  const result = 
+    await db
+    .select({name: family.name})
+    .from(family);
+  
+  if (result[0]) 
+    return {
+      success: true,
+      familyNames: result.map(r => r.name),
+    }
+  else {
+    return {
+      success: false,
+      message: "No families found",
     }
   }
 }
