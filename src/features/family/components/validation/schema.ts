@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { passwordMatchSchema } from '@/features/auth/components/validation/passwordMatchSchema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
-import { FamilyMember } from '@/app/(trial)/trial-setup/trial-setup-dialogs/invite-family-dialog';
+import { FamilyMember } from '@/app/(family)/family-setup/family-setup-dialogs/invite-family-dialog';
 
 const FamilyMemberSchema = z.object({
   firstName: z.string(),
@@ -11,7 +11,7 @@ const FamilyMemberSchema = z.object({
 
 const FamilyMembersSchema = z.array(FamilyMemberSchema);
 
-export const TrialFormSchema = z.object({
+export const FamilyFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   email: z.email('Invalid email address'),

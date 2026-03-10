@@ -1,5 +1,5 @@
-import MainTablet from "@/app/(main)/MainTablet";
+import MainPage from "@/app/(main)/main-page";
 
 export default function Home() {
-  return <MainTablet />;
+  return <MainPage />;
 }

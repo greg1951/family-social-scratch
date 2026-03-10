@@ -4,7 +4,7 @@ import { Circle, CheckCircle2, CircleSlash2, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { SubmissionStep } from '@/features/trial/types/trial-steps';
+import { SubmissionStep } from '@/features/family/types/family-steps';
 
 
 type StatusUpdateDialogProps = {

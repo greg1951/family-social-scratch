@@ -9,9 +9,7 @@ export const user = pgTable("user", {
   twoFactorActivated: boolean("2fa_activated").default(false),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   memberId: integer("fk_member_id").references(() => member.id),
-}, (table) => ({
-  emailIdx: index('user_email_idx').on(table.email),
-}));
+});
 
 export const passwordReset = pgTable("password_reset", {
   id: serial("id").primaryKey(),
@@ -31,8 +29,8 @@ export const family = pgTable("family", {
 export const familyInvitation = pgTable("family_invitation", {
   id: serial("id").primaryKey(),
   email: text("invited_email").notNull(),
-  first_name: text("first_name").notNull(),
-  last_name: text("last_name").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   hasJoined: boolean("has_joined").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
@@ -47,8 +45,8 @@ export const member = pgTable("member", {
   lastName: text("last_name").notNull(),
   nickName: text("nick_name"),
   email: text("email").notNull(),
-  birthday: text("birthday").notNull(),
-  cellPhone: text("cell_phone"),
+  birthday: text("birthday").notNull().default("01/01/1970"),
+  cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   isFounder: boolean("is_family_founder").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),

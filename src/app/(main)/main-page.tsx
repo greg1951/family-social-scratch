@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import MainLinkCard from "../../components/common/main-link-card";
 import Image from "next/image";
 
-export default async function MainTablet() {
+export default async function MainPage() {
   const session = await auth();
   const isLoggedIn: boolean = !!session;
 
@@ -41,10 +41,10 @@ export default async function MainTablet() {
                   What is Family Social?
                 </Link>
                 <Link
-                  href="/trial-home"
+                  href="/family-home"
                   className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
                 >
-                  Start a trial!
+                  Start a Family!
                 </Link>
                 <Link
                   href="/help-subscribe"

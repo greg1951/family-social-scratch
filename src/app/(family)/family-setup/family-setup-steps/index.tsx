@@ -4,34 +4,25 @@ import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { TrialFormSchema } from '@/features/trial/components/validation/schema';
+import { FamilyFormSchema } from '@/features/family/components/validation/schema';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { Circle, CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
+import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE, trialSteps } from '@/features/trial/constants/trial-steps';
-import { FamilyMember, InviteFamilyDialog } from '../trial-setup-dialogs/invite-family-dialog';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../trial-setup-dialogs/status-update-dialog';
-import { insertFamily } from '@/components/db/sql/queries-family-user';
-import { initialSubmissionSteps } from '@/features/trial/constants/trial-steps';
-import { SubmissionStep } from '@/features/trial/types/trial-steps';
+import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE, trialSteps } from '@/features/family/constants/family-steps';
+import { FamilyMember, InviteFamilyDialog } from '../family-setup-dialogs/invite-family-dialog';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../family-setup-dialogs/status-update-dialog';
+import { insertFamily, insertInvites, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
+import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
+import { SubmissionStep } from '@/features/family/types/family-steps';
 
-type FormValues = z.infer<typeof TrialFormSchema>;
-const steps = trialSteps;
+type FormValues = z.infer<typeof FamilyFormSchema>;
+const steps = familySteps;
 
-// Define constants for step indices for better readability
-// const STEP_1_FOUNDER: number = 0; // Founder info
-// const STEP_2_FAMILY_NAME: number = 1; // Family Name
-// const STEP_3_INVITE_MEMBERS: number = 2; // Invite family members
-// const STEP_4_CREATE_FAMILY_SITE: number = 3; // Create family site
-
-// Family name RegEx: only letters, no spaces, numbers, or special characters allowed.
-// const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
-
-export default function CreateTrialAccountSteps({ familyNames }: { familyNames: string[] }) {
+export default function CreateFamilyAccountSteps({ familyNames }: { familyNames: string[] }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [previousStep, setPreviousStep] = useState(0);
@@ -47,13 +38,13 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
     useState<SubmissionStep[]>(initialSubmissionSteps);
 
   const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(TrialFormSchema)
+    resolver: zodResolver(FamilyFormSchema)
   });
 
   type FieldName = keyof FormValues
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(TrialFormSchema),
+    resolver: zodResolver(FamilyFormSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -80,33 +71,64 @@ export default function CreateTrialAccountSteps({ familyNames }: { familyNames: 
     setShowStatusDialog(true);
 
     try {
+
       // Step 1: Add new family name
       updateStepStatus(1, 'inProgress');
-      const insertResult = await insertFamily(values.familyName);
-      if (!insertResult.success) {
-        updateStepStatus(1, 'error', insertResult.message);
-        throw new Error(insertResult.message);
+      const insertFamilyResult = await insertFamily(values.familyName);
+      if (!insertFamilyResult.success) {
+        updateStepStatus(1, 'error', insertFamilyResult.message);
+        throw new Error(insertFamilyResult.message);
       }
       // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      // TODO: Implement actual family name creation logic
       updateStepStatus(1, 'completed');
 
       // Step 2: Create new Member entry
       updateStepStatus(2, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      // TODO: Implement actual member creation logic
+      const insertMemberResult = await insertMember({
+        email: values.email as string,
+        firstName: values.firstName as string,
+        lastName: values.lastName as string,
+        nickName: values.nickName as string | undefined,
+        familyId: insertFamilyResult.id as number,
+        isFounder: true,
+      });
+
+      if (!insertMemberResult.success) {
+        updateStepStatus(2, 'error', insertMemberResult.message);
+        throw new Error(insertMemberResult.message);
+      }
       updateStepStatus(2, 'completed');
 
       // Step 3: Add Founder credentials
       updateStepStatus(3, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      // TODO: Implement actual founder credentials logic
+      const insertUserResult = await insertUser({
+        email: values.email as string,
+        password: values.password as string,
+        memberId: insertMemberResult.id as number,
+        familyId: insertFamilyResult.id as number,
+      });
+
+      if (!insertUserResult.success) {
+        updateStepStatus(3, 'error', insertUserResult.message);
+        throw new Error(insertUserResult.message);
+      }
       updateStepStatus(3, 'completed');
 
       // Step 4: Add invited family members
+      const invitesInput = members.map((member) => (
+        {
+          firstName: member.firstName,
+          lastName: member.lastName,
+          email: member.email,
+          familyId: insertFamilyResult.id as number
+        }));
+
       updateStepStatus(4, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      // TODO: Implement actual invited members logic
+      const insertInvitesResult = await insertInvites(invitesInput);
+      if (!insertInvitesResult.success) {
+        updateStepStatus(4, 'error', insertInvitesResult.message);
+        throw new Error(insertInvitesResult.message);
+      }
       updateStepStatus(4, 'completed');
 
       // Step 5: Send emails to join new Family Social family

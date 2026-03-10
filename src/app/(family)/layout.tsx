@@ -32,7 +32,7 @@ export default async function TrialLayout({
           <nav className="flex justify-center">
             <div className="text-amber-800 font-extrabold text-center text-xs md:text-base">
               <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
-                <NavBar isLoggedIn={ isLoggedIn } href="/trial" src="icons/free-trial.png" title="Trial Account Home" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/family-home" src="icons/free-trial.png" title="Family Account Home" />
               </ul>
 
             </div>

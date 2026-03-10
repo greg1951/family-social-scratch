@@ -1,4 +1,4 @@
-  export const trialSteps = [
+  export const familySteps = [
     {
       number: 1,
       title: 'Register the Family Founder',
@@ -24,7 +24,7 @@
     },
   ];
 
-  import { SubmissionStep } from "../types/trial-steps";
+  import { SubmissionStep } from "../types/family-steps";
   
   export const initialSubmissionSteps: SubmissionStep[] = [
       { id: 1, label: 'Add new family name', status: 'pending' },
