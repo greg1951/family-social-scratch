@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE, trialSteps } from '@/features/family/constants/family-steps';
+import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
 import { FamilyMember, InviteFamilyDialog } from '../family-setup-dialogs/invite-family-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../family-setup-dialogs/status-update-dialog';
 import { insertFamily, insertInvites, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
