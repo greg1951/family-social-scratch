@@ -4,14 +4,19 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import MainLinkCard from "../../components/common/main-link-card";
 import Image from "next/image";
+import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
+import { getMemberPageDetails } from "@/features/family/services/family-services";
 
 export default async function MainPage() {
-  const session = await auth();
-  const isLoggedIn: boolean = !!session;
+  const memberKeyDetails = await getMemberPageDetails();
+  let title: string = "Welcome to Family Social!";
+  if (memberKeyDetails.isLoggedIn) {
+    title = `Welcome back, ${ memberKeyDetails.firstName }!`;
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
-      <MainHeader isLoggedIn={ isLoggedIn } />
+      <MainHeader isLoggedIn={ memberKeyDetails.isLoggedIn } isFounder={ memberKeyDetails.isFounder } firstName={ memberKeyDetails.firstName } />
 
       <section className="font-app px-2 pb-3 md:px-4 md:pb-4">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-2 sm:grid-cols-2 md:gap-3">
@@ -28,7 +33,7 @@ export default async function MainPage() {
                   />
                 </div>
                 <div>
-                  <p className="text-base font-extrabold text-slate-800 md:text-lg">Welcome to Family Social</p>
+                  <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
                   <p className="text-xs text-slate-600 md:text-sm">Choose a channel below or learn more first.</p>
                 </div>
               </div>
@@ -40,12 +45,22 @@ export default async function MainPage() {
                 >
                   What is Family Social?
                 </Link>
-                <Link
-                  href="/family-home"
-                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
-                >
-                  Start a Family!
-                </Link>
+                { memberKeyDetails.isFounder ? (
+                  <Link
+                    href="/family-account"
+                    className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                  >
+                    My Family Account
+                  </Link>
+                ) : (
+                  <Link
+                    href="/family-home"
+                    className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                  >
+                    Start a Family!
+                  </Link>
+
+                ) }
                 <Link
                   href="/help-subscribe"
                   className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
@@ -55,20 +70,20 @@ export default async function MainPage() {
               </div>
             </div>
 
-            { !isLoggedIn && (
+            { !memberKeyDetails.isLoggedIn && (
               <p className="mt-3 text-center text-xs text-slate-600 md:text-left">
                 Sign in to open channels directly from this page.
               </p>
             ) }
           </Card>
 
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/tv-junkies" src="images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/book-besties" src="images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-foodies" src="images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/mx-train" src="images/mx-train-tablet.png" title="MX Train" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ isLoggedIn } href="/family-threads" src="images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv-junkies" src="images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movie-maniacs" src="images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/book-besties" src="images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-foodies" src="images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry-cafe" src="images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/mx-train" src="images/mx-train-tablet.png" title="MX Train" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-threads" src="images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
         </div>
       </section>
     </div>

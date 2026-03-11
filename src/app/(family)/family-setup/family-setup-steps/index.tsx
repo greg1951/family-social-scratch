@@ -195,7 +195,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <CardTitle className="text-2xl font-extrabold text-slate-900 md:text-3xl">
-                    Trial Account Setup
+                    Family Account Setup
                   </CardTitle>
                   <CardDescription className="mt-1 text-sm text-slate-800">
                     Step { currentStep + 1 } of { steps.length } • { steps[currentStep]?.title }
@@ -703,11 +703,6 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
-
-                          {/* <Button onClick={ submitForm } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
-                            Create Family
-                            <CircleCheckBig className="ml-1 h-4 w-4" />
-                          </Button> */}
                           <Button type="submit" className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
                             Create Family
                             <CircleCheckBig className="ml-1 h-4 w-4" />

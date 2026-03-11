@@ -1,4 +1,9 @@
-import { serial, pgTable, index, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum } from "drizzle-orm/pg-core";
+import {sql } from 'drizzle-orm';
+
+export const familyStatus = pgEnum('status', ['trial', 'active', 'expired']);
+export const inviteStatus = pgEnum('status', ['invited', 'joined', 'resent', 'declined']);
+export const memberStatus = pgEnum('status', ['active', 'resigned']);
 
 export const user = pgTable("user", {
   id: serial("id").primaryKey(),
@@ -13,9 +18,7 @@ export const user = pgTable("user", {
 
 export const passwordReset = pgTable("password_reset", {
   id: serial("id").primaryKey(),
-  userId: integer("fk_user_id").notNull().references(() => user.id, {
-    onDelete: "cascade"
-  }).unique(),
+  userId: integer("fk_user_id").notNull().references(() => user.id, {onDelete: "cascade"}).unique(),
   token: text("token").notNull(),
   tokenExpiry: timestamp("token_expiry"),
 });
@@ -23,6 +26,8 @@ export const passwordReset = pgTable("password_reset", {
 export const family = pgTable("family", {
   id: serial("id").primaryKey(),
   name: text("family_name").notNull().unique(),
+  status: text("status").notNull().default("trial"),
+  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '14 days'`),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -31,8 +36,10 @@ export const familyInvitation = pgTable("family_invitation", {
   email: text("invited_email").notNull(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  familyId: integer("fk_family_id").notNull().references(() => family.id),
-  hasJoined: boolean("has_joined").notNull().default(false),
+  status: text("status").notNull().default("invited"),
+  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '7 days'`),
+  inviteToken: text("invite_token").notNull(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
   createdAt: timestamp("created_at").defaultNow(),
   statusUpdate: timestamp("status_update"),
 }, (table) => ({
@@ -48,6 +55,7 @@ export const member = pgTable("member", {
   birthday: text("birthday").notNull().default("01/01/1970"),
   cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
+  status: text("status").notNull().default("active"),
   isFounder: boolean("is_family_founder").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => ({
@@ -57,8 +65,8 @@ export const member = pgTable("member", {
 
 export const memberOption = pgTable("member_option", {
   id: serial("id").primaryKey(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
-  optionId: integer("fk_option_id").notNull().references(() => optionReference.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  optionId: integer("fk_option_id").notNull().references(() => optionReference.id, {onDelete: 'cascade'}),
   isSelected: boolean("is_selected").notNull().default(false),
 });
 

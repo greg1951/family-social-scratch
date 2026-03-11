@@ -1,6 +1,8 @@
 export type GetFamilyReturn = {
   success: boolean,
   message?: string,
+  status?: string;
+  expirationDate?: Date;
   familyId?: number;
   familyName?: string; 
 }
@@ -13,14 +15,17 @@ export type GetAllFamiliesReturn = {
 export type GetMemberDetailsReturn = {
   success: boolean,
   message?: string,
-  familyId?: number;
-  memberId?: number;
   userId?: number; 
+  email? : string;
+  status?: string;
   firstName?: string; 
   lastName?: string;
   nickName?: string;
   birthday?: string;
   cellPhone?: string;
+  isFounder?: boolean;
+  familyId?: number;
+  memberId?: number;
   mfaActive?: boolean;
 }
 
@@ -81,9 +86,28 @@ export type InsertInvitesReturn = {
     id: number;
     email: string;
     firstName: string;
+    status?: string;
+    inviteToken?: string;
+    expirationDate?: Date;
     lastName: string;
     familyId: number;
     createdAt: Date;
-    }[]
-}
+  }[]
+};
+
+export type GetAllFamilyMembersReturn = {
+  success: boolean,
+  message?: string,
+  members?: {
+    id: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    status?: string;
+    inviteToken?: string;
+    expirationDate?: Date;
+    createdAt: Date;
+    familyId: number;
+  }[]
+};
 

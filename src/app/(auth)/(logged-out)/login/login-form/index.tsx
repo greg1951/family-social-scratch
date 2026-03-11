@@ -187,6 +187,13 @@ export default function LoginForm() {
                 Send Email with Family Name
               </Link>
             </div>
+            <div className="text-muted-foreground text-xs">
+              Take Me Home{ "   " }
+              <Link className="underline"
+                href="/" >
+                Go to the Family Social Home Page
+              </Link>
+            </div>
           </CardFooter>
         </Card>
       }

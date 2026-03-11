@@ -1,9 +1,9 @@
 "use server";
 
 import { count, eq, and } from 'drizzle-orm';
-import { family, member, user } from '../schema/family-social-schema-tables';
+import { family, familyInvitation, member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
-import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn } from '../types/family-member';
+import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
 
 /*
@@ -13,16 +13,18 @@ export async function findRegisteredFamily(familyName: string)
   :(Promise<GetFamilyReturn>) {
 
   // console.log("queries-family-members->findRegisteredFamily->familyName: ", familyName)
-  const result = 
+  const [result] = 
     await db
-    .select({familyId: family.id})
+    .select()
     .from(family)
     .where(eq(family.name, familyName)); 
   
-  if (result[0]) 
+  if (result) 
     return {
       success: true,
-      familyId: result[0].familyId,
+      familyId: result.id,
+      status: result.status,
+      expirationDate: result.expirationDate as Date,
       familyName: familyName,
     }
   else {
@@ -90,16 +92,18 @@ export async function getMemberDetailsByUserId(userId:number)
 
   const [selectResult] = await db.select(
     {
-      memberId: member.id,
-      familyId: user.familyId,
       firstName: member.firstName,
       lastName: member.lastName,
       nickName: member.nickName,
       birthday: member.birthday,
       cellPhone: member.cellPhone,
+      isFounder: member.isFounder,
+      status: member.status,
+      memberId: member.id,
+      familyId: user.familyId,
       mfaActive: user.twoFactorActivated,
     })
-    .from(user).innerJoin(member, eq(user.memberId, member.id))
+    .from(user).rightJoin(member, eq(user.memberId, member.id))
     .where(eq(user.id, userId)
   );
 
@@ -112,15 +116,63 @@ export async function getMemberDetailsByUserId(userId:number)
 
   const memberDetails:GetMemberDetailsReturn = {
     success: true,
-    familyId: selectResult.familyId,
+    familyId: selectResult.familyId!,
     memberId: selectResult.memberId,
     userId: userId, 
+    status: selectResult.status,
     firstName: selectResult.firstName, 
     lastName: selectResult.lastName,
     nickName: selectResult?.nickName!,
     birthday: selectResult.birthday,
     cellPhone: selectResult?.cellPhone!,
-    mfaActive: selectResult.mfaActive!,
+    isFounder: selectResult.isFounder,
+    mfaActive: selectResult.mfaActive as boolean,
+  }  
+  return memberDetails;
+}
+
+/* Get member details using one SQL statement on family and member tables */
+export async function getMemberDetailsByEmail(email:string)
+  :(Promise<GetMemberDetailsReturn>) {
+
+  const [selectResult] = await db.select(
+    {
+      memberId: member.id,
+      familyId: user.familyId,
+      userId: user.id,
+      status: member.status,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      nickName: member.nickName,
+      birthday: member.birthday,
+      cellPhone: member.cellPhone,
+      isFounder: member.isFounder,
+      mfaActive: user.twoFactorActivated,
+    })
+    .from(user).rightJoin(member, eq(user.memberId, member.id))
+    .where(eq(user.email, email)
+  );
+
+  if (!selectResult) {
+    return {
+      success: false,
+      message: `Member details NOT FOUND for email ${email}`
+    }
+  }
+
+  const memberDetails:GetMemberDetailsReturn = {
+    success: true,
+    userId: selectResult.userId!, 
+    status: selectResult.status,
+    firstName: selectResult.firstName, 
+    lastName: selectResult.lastName,
+    nickName: selectResult?.nickName!,
+    birthday: selectResult.birthday,
+    cellPhone: selectResult?.cellPhone!,
+    familyId: selectResult.familyId!,
+    memberId: selectResult.memberId,
+    isFounder: selectResult.isFounder,
+    mfaActive: selectResult.mfaActive as boolean,
   }  
   return memberDetails;
 }
@@ -150,3 +202,36 @@ export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccount
     success: true,
   }
 }
+
+export async function getAllFamilyMembers(familyId: number)
+  :(Promise<GetAllFamilyMembersReturn>) {
+
+  const result = await db
+    .select()
+    .from(familyInvitation)
+    .where(eq(familyInvitation.familyId, familyId));
+  
+  if (result[0]) 
+    return {
+      success: true,
+      members: result.map(member => ({
+        id: member.id as number,
+        email: member.email as string,
+        firstName: member.firstName as string,
+        lastName: member.lastName as string,
+        status: member.status as string,
+        inviteToken: member.inviteToken as string,
+        expirationDate: member.expirationDate as Date,
+        createdAt: member.createdAt as Date,
+        familyId: member.familyId as number,
+      }))
+
+    }
+  else {
+    return {
+      success: true,
+      members: [],
+    }
+  }
+}
+
