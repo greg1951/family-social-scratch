@@ -1,10 +1,11 @@
 "use server";
 
 import { count, eq, and } from 'drizzle-orm';
-import { family, familyInvitation, member, user } from '../schema/family-social-schema-tables';
+import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
-import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn } from '../types/family-member';
+import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetMemberNotificationsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
+import { NotificationFDirtyields, NotificationsFormValues } from "@/features/family/types/family-steps";
 
 /*
   Using family name, return the familyId 
@@ -139,6 +140,8 @@ export async function getMemberDetailsByEmail(email:string)
     {
       memberId: member.id,
       familyId: user.familyId,
+      email: member.email,
+      familyName: family.name,
       userId: user.id,
       status: member.status,
       firstName: member.firstName,
@@ -149,7 +152,7 @@ export async function getMemberDetailsByEmail(email:string)
       isFounder: member.isFounder,
       mfaActive: user.twoFactorActivated,
     })
-    .from(user).rightJoin(member, eq(user.memberId, member.id))
+    .from(user).rightJoin(member, eq(user.memberId, member.id)).leftJoin(family, eq(member.familyId, family.id))
     .where(eq(user.email, email)
   );
 
@@ -170,6 +173,7 @@ export async function getMemberDetailsByEmail(email:string)
     birthday: selectResult.birthday,
     cellPhone: selectResult?.cellPhone!,
     familyId: selectResult.familyId!,
+    familyName: selectResult.familyName!,
     memberId: selectResult.memberId,
     isFounder: selectResult.isFounder,
     mfaActive: selectResult.mfaActive as boolean,
@@ -232,6 +236,105 @@ export async function getAllFamilyMembers(familyId: number)
       success: true,
       members: [],
     }
+  }
+}
+
+export async function getMemberNotifications(memberId: number)
+  :(Promise<GetMemberNotificationsReturn>) {
+
+  const notificationResult = await db
+    .select()
+    .from(memberOption).innerJoin(optionReference, eq(memberOption.optionId, optionReference.id))
+    .where(eq(memberOption.memberId, memberId));
+  
+  if (notificationResult[0]) 
+    return {
+      success: true,
+      memberId: memberId,
+      notifications: notificationResult.map(notification => ({
+        memberOptionId: notification.member_option.id as number,
+        optionId: notification.member_option.optionId as number,
+        optionName: notification.option_reference.optionName as string,
+        optionDesc: notification.option_reference.optionDesc as string,
+        isSelected: notification.member_option.isSelected as boolean,
+      }))
+
+    }
+  else {
+    return {
+      success: true,
+      memberId: memberId,
+      notifications: [],
+    }
+  }
+}
+
+export async function updateMemberNotifications({notificationFormValues, notificationDirtyFields}
+  : { notificationFormValues: NotificationsFormValues, notificationDirtyFields: NotificationFDirtyields }  ) {
+
+    console.log("queries-family-member->updateMemberNotifications->notificationFormValues: ", notificationFormValues  ); 
+    console.log("queries-family-member->updateMemberNotifications->notificationDirtyFields: ", notificationDirtyFields  );
+
+    type UpdateNotification = {
+      memberOptionId: number;
+      isSelected: boolean;
+    }
+
+    const dirtyNotifications = notificationDirtyFields.notifications ?? [];
+    const updatedNotifications: UpdateNotification[] = 
+      dirtyNotifications.flatMap((dirtyField, index) => {
+        if (dirtyField?.isSelected === undefined) {
+          return [];
+        }
+
+        const formValue = notificationFormValues.notifications[index];
+        if (!formValue) {
+          return [];
+        }
+
+        return [{
+          memberOptionId: formValue.memberOptionId,
+          isSelected: formValue.isSelected,
+        }];
+    });
+
+  console.log("queries-family-member->updateMemberNotifications->updatedNotifications: ", updatedNotifications  );
+  
+  if (updatedNotifications.length > 0) {
+    for (let ix=0; ix < updatedNotifications.length; ix++) {
+
+      const updateResult = await db
+        .update(memberOption)
+        .set({isSelected: updatedNotifications[ix].isSelected})
+        .where(eq(memberOption.id, updatedNotifications[ix].memberOptionId));
+
+      if (!updateResult) {
+        console.error("queries-family-member->updateMemberNotifications->FAILED to update notification with memberOptionId: ", updatedNotifications[ix].memberOptionId);
+        return {
+          success: false,
+          message: `Failed to update notification with memberOptionId ${updatedNotifications[ix].memberOptionId}`, 
+        }
+      }
+    }
+    return {
+      success: true,
+    }
+  }
+  
+
+  // console.log("queries-family-member-udateMemberDetailsDml->memberDetails: ", updateAccountDetails);
+
+  // if (!updateResult) {
+  //   return {
+  //     success: false,
+  //     message: "Account update failed",
+  //   }
+  // }
+
+
+
+  return {
+    success: true,
   }
 }
 

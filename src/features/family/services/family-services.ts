@@ -14,21 +14,21 @@ export async function getMemberPageDetails(): Promise<MemberKeyDetails> {
       isFounder: false,
       firstName: "",
       familyId: 0,
+      familyName: "",
       memberId: 0,
     }
   }
   
-  console.log("getMemberPageDetails: Session found");
+  // console.log("getMemberPageDetails: Session found");
   const memberDetails = await getMemberDetailsByEmail(session.user?.email as string);
-  let isFounder: boolean = false;
-  let firstName: string = "";
   if (memberDetails.success) {
     const memberKeyDetails: MemberKeyDetails = {
       isLoggedIn: true,
-      email: memberDetails.email as string,
+      email: memberDetails.email!,
       isFounder: memberDetails.isFounder!,
       firstName: memberDetails.firstName!,
       familyId: memberDetails.familyId!,
+      familyName: memberDetails.familyName as string,
       memberId: memberDetails.memberId!,
     }
     return memberKeyDetails;
@@ -39,6 +39,7 @@ export async function getMemberPageDetails(): Promise<MemberKeyDetails> {
     isFounder: false,
     firstName: "",
     familyId: 0,
+    familyName: "",
     memberId: 0,
   }
 }

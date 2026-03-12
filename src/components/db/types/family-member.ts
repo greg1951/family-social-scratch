@@ -25,6 +25,7 @@ export type GetMemberDetailsReturn = {
   cellPhone?: string;
   isFounder?: boolean;
   familyId?: number;
+  familyName?: string;
   memberId?: number;
   mfaActive?: boolean;
 }
@@ -75,6 +76,7 @@ export type InsertInvitesInput = {
     email: string;
     firstName: string; 
     lastName: string;
+    inviteToken?: string;
     familyId: number;
   }[];
 
@@ -87,9 +89,9 @@ export type InsertInvitesReturn = {
     email: string;
     firstName: string;
     status?: string;
+    lastName: string;
     inviteToken?: string;
     expirationDate?: Date;
-    lastName: string;
     familyId: number;
     createdAt: Date;
   }[]
@@ -111,3 +113,15 @@ export type GetAllFamilyMembersReturn = {
   }[]
 };
 
+export type GetMemberNotificationsReturn = {
+  success: boolean,
+  message?: string,
+  memberId?: number;
+  notifications?: {
+    memberOptionId: number;
+    optionId: number;
+    optionName: string;
+    optionDesc: string;
+    isSelected: boolean;
+  }[]
+};

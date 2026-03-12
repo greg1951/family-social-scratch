@@ -1,5 +1,3 @@
-import { getSessionEmail } from "@/features/auth/services/auth-utils";
-import { redirect } from "next/navigation";
 import NavBar from "@/components/common/nav-bar";
 import HeaderImage from "@/components/common/header-img";
 import MainDropMenu from "@/components/common/main-dropmenu";
@@ -19,23 +17,16 @@ export default async function LoggedInLayout({
         <header className=" font-app font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[100]">
           <HeaderImage href="/" src="images/family-social-icon-only.png" title="Family Social Home" tw="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]" />
 
-          {/* <Link href="/" className="flex justify-between">
-              <div className="h-10 w-10 pt-[15] md:h-15 md:w-15 md:pt[5]">
-                <img src="images/family-social-icon-only.png" alt="Family Social Icon" />
-              </div> */}
           <nav className="flex justify-center">
             <div className="text-amber-800 font-extrabold text-center text-xs md:text-base">
               <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
-                <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/my-account" src="icons/account.png" title="My Account" />
+                {/* <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/my-account" src="icons/account.png" title="My Account" /> */ }
                 <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/change-password" src="icons/change-password.png" title="Change Password" />
-                <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/my-account/two-factor-auth-form" src="icons/mfa.png" title="Update 2FA" />
+                <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/two-factor-auth-form" src="icons/mfa.png" title="Update 2FA" />
               </ul>
 
             </div>
             <main className="flex justify-end items-center">
-              {/* <div className="pb-0">
-                <p className="font-extralight text-xs md:text-base">{ session.userEmail }</p>
-              </div> */}
               <div className="pb-5 p-5">
                 <MainDropMenu firstName={ memberKeyDetails.firstName } email={ memberKeyDetails.email } sessionFound={ memberKeyDetails.isLoggedIn } isFounder={ memberKeyDetails.isFounder } />
               </div>

@@ -12,7 +12,7 @@ import { AccountDetails, UpdateAccountDetails } from "@/features/auth/auth-types
 import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
 import { toast } from "sonner";
 import { Router } from "next/router";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -44,11 +44,9 @@ export default function AccountDetailsForm({ accountDetails }: AccountDetails) {
     },
   });
   const { formState: { isDirty, dirtyFields } } = form;
-  // console.log("AccountDetailsForm->isDirty? ", isDirty, ", dirtyFields: ", dirtyFields);
 
   const handleFormSubmit = async (data: z.infer<typeof formSchema>) => {
     const calendarBirthday = date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    // console.log("AccountDetailsForm->handleFormSubmit->data: ", data, ", calendarBirthday: ", calendarBirthday);
     const updateAccountDetails: UpdateAccountDetails = {
       userId: userId,
       memberId: memberId as number,
@@ -71,7 +69,6 @@ export default function AccountDetailsForm({ accountDetails }: AccountDetails) {
       position: "bottom-center",
       duration: 3000,
     });
-    resetForm();
   };
 
   function resetForm() {

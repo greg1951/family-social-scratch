@@ -25,5 +25,20 @@ When I add a family member in the step 2 dialog, it immediately shows me the upd
 
 Move the new status dialog component to trial-setup-dialogs/status-update-dialog.tsx and import the new dialog component into the index.tsx where it is run.
 
+*** During testing the family was getting inserted twice. Asked AI about that.
 
+Would the state updates in the form submission for the status dialog cause the SubmitHandler to run more than once?
+
+*** It came back with No, the state update would not do that. It came back with this.
+Since a <button> inside a form defaults to submit, that click can trigger both paths.
+
+AI Recommended fix: use only one submit path.
+
+EITHER set “Create Family” to type="button" and keep onClick={submitForm}
+OR set it to type="submit" and remove onClick={submitForm}/submitForm() entirely.
+
+*** changed the button to remove onClick and set the type to submit.
+
+
+Create a new react page.tsx that uses the forms in the src/app/(auth)/(logged-in)/my-account folder with the form contained in src/app/(family)/family-account folder. The new page should use the shadcn Tabs component which is installed in the project. The new page.tsx should be created in src/app/(family)/family-my-account folder.
 

@@ -47,7 +47,7 @@ export default async function MainPage() {
                 </Link>
                 { memberKeyDetails.isFounder ? (
                   <Link
-                    href="/family-account"
+                    href="/family-my-account"
                     className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
                   >
                     My Family Account

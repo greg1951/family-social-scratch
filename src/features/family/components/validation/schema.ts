@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import { passwordMatchSchema } from '@/features/auth/components/validation/passwordMatchSchema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
-import { FamilyMember } from '@/app/(family)/family-setup/family-setup-dialogs/invite-family-dialog';
-import { family } from '@/components/db/schema/family-social-schema-tables';
 
 const FamilyMemberSchema = z.object({
   firstName: z.string(),
@@ -32,3 +29,16 @@ export const FamilyFormSchema = z.object({
 export const AddMembersFormSchema = z.object({
   familyMembers: FamilyMembersSchema,
 });
+
+const MemberNotificationSchema = z.object({
+  memberOptionId: z.number(),
+  optionId: z.number(),
+  optionName: z.string(),
+  isSelected: z.boolean(),
+});
+const MemberNotificationsSchema = z.array(MemberNotificationSchema);
+
+export const NotificationsFormSchema = z.object({
+  notifications: MemberNotificationsSchema,
+});
+

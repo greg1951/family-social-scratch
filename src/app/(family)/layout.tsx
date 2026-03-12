@@ -1,29 +1,15 @@
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
-import Link from "next/link"
-import { redirect } from "next/navigation";
 import NavBar from "@/components/common/nav-bar";
 import HeaderImage from "@/components/common/header-img";
 import MainDropMenu from "@/components/common/main-dropmenu";
-import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
+import { getMemberPageDetails } from "@/features/family/services/family-services";
 
 export default async function TrialLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  let email: string = "";
-  let isLoggedIn: boolean = false;
-  let isFounder: boolean = false;
-  let firstName: string = "";
-  const session = await getSessionEmail();
-  if (session.found) {
-    email = session.userEmail as string;
-    const memberDetails = await getMemberDetailsByEmail(email);
-    if (memberDetails.success && memberDetails.isFounder) {
-      isFounder = true;
-      firstName = memberDetails.firstName!;
-    }
-  }
+  const memberKeyDetails = await getMemberPageDetails();
 
   return (
     <>
@@ -33,13 +19,19 @@ export default async function TrialLayout({
           <nav className="flex justify-center">
             <div className="text-amber-800 font-extrabold text-center text-xs md:text-base">
               <ul className="flex absolute pt-[25] md:pt[15] left-[70] md:left-[100] space-x-5 md:space-x-5 ">
-                <NavBar isLoggedIn={ isLoggedIn } href="/family-home" src="icons/free-trial.png" title="Family Account Home" />
+                <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/change-password" src="icons/change-password.png" title="Change Password" />
+                <NavBar isLoggedIn={ memberKeyDetails.isLoggedIn } href="/two-factor-auth-form" src="icons/mfa.png" title="Update 2FA" />
               </ul>
 
             </div>
             <main className="flex justify-end items-center">
               <div className="pb-5 p-5">
-                <MainDropMenu firstName={ firstName } email={ email } sessionFound={ session.found } isFounder={ isFounder } />
+                <MainDropMenu
+                  firstName={ memberKeyDetails.firstName }
+                  email={ memberKeyDetails.email }
+                  sessionFound={ memberKeyDetails.isLoggedIn }
+                  isFounder={ memberKeyDetails.isFounder }
+                />
               </div>
             </main>
           </nav>

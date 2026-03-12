@@ -1,0 +1,86 @@
+'use client';
+
+import { updateMemberNotifications } from "@/components/db/sql/queries-family-member";
+import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { NotificationsFormSchema } from "@/features/family/components/validation/schema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import z from "zod";
+
+const formSchema = NotificationsFormSchema;
+
+type FormValues = z.infer<typeof formSchema>;
+
+export default function FamilyNotificationsForm({ notifications }: { notifications: GetMemberNotificationsReturn["notifications"] }) {
+  const notificationOptions = (notifications ?? []).map((notification) => ({
+    memberOptionId: notification.memberOptionId,
+    optionId: notification.optionId,
+    optionName: notification.optionName,
+    isSelected: notification.isSelected,
+  }));
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      notifications: notificationOptions,
+    },
+  });
+
+  const { formState: { isDirty, dirtyFields } } = form;
+
+  const handleFormSubmit = async (data: z.infer<typeof formSchema>) => {
+    const notificationUpdateResult = await updateMemberNotifications({
+      notificationFormValues: data,
+      notificationDirtyFields: dirtyFields,
+    });
+
+    if (notificationUpdateResult.success) {
+      // Reset defaults to submitted values so isDirty returns to false.
+      form.reset(data);
+    }
+  }
+
+  function resetForm() {
+    form.reset()
+  }
+
+
+  return (
+    <Form { ...form }>
+      <form onSubmit={ form.handleSubmit(handleFormSubmit) }>
+        <div className="grid sm:grid-cols-1">
+          <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl p-3">
+            { notificationOptions.map((notification, index) => (
+              <FormField
+                key={ notification.optionId }
+                control={ form.control }
+                name={ `notifications.${ index }.isSelected` }
+                render={ ({ field }) => (
+                  <FormItem className="flex items-center gap-2 rounded-md border p-2">
+                    <FormControl>
+                      <Checkbox
+                        checked={ !!field.value }
+                        onCheckedChange={ (checked) => field.onChange(checked === true) }
+                        className="text-xs font-extralight"
+                      />
+                    </FormControl>
+                    <FormLabel className="font-extrabold">{ notification.optionName }</FormLabel>
+                    <FormMessage />
+                  </FormItem>
+                ) }
+              />
+            )) }
+          </fieldset>
+          <div className="flex justify-center p-2 gap-2 ">
+            <Button disabled={ !isDirty ? true : false } className=" text-xs" type="reset" onClick={ resetForm }>Reset</Button>
+            <Button type="submit" disabled={ !isDirty ? true : false } className=" text-xs">Update Notifications</Button>
+          </div>
+
+        </div>
+      </form>
+    </Form >
+  )
+}
