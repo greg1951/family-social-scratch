@@ -5,7 +5,7 @@ import { family, familyInvitation, member, optionReference, user, memberOption }
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetMemberNotificationsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
-import { NotificationFDirtyields, NotificationsFormValues } from "@/features/family/types/family-steps";
+import { NotificationFDirtyields, NotificationsFormValues, UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
 
 /*
   Using family name, return the familyId 
@@ -272,8 +272,8 @@ export async function getMemberNotifications(memberId: number)
 export async function updateMemberNotifications({notificationFormValues, notificationDirtyFields}
   : { notificationFormValues: NotificationsFormValues, notificationDirtyFields: NotificationFDirtyields }  ) {
 
-    console.log("queries-family-member->updateMemberNotifications->notificationFormValues: ", notificationFormValues  ); 
-    console.log("queries-family-member->updateMemberNotifications->notificationDirtyFields: ", notificationDirtyFields  );
+    // console.log("queries-family-member->updateMemberNotifications->notificationFormValues: ", notificationFormValues  ); 
+    // console.log("queries-family-member->updateMemberNotifications->notificationDirtyFields: ", notificationDirtyFields  );
 
     type UpdateNotification = {
       memberOptionId: number;
@@ -298,7 +298,7 @@ export async function updateMemberNotifications({notificationFormValues, notific
         }];
     });
 
-  console.log("queries-family-member->updateMemberNotifications->updatedNotifications: ", updatedNotifications  );
+  // console.log("queries-family-member->updateMemberNotifications->updatedNotifications: ", updatedNotifications  );
   
   if (updatedNotifications.length > 0) {
     for (let ix=0; ix < updatedNotifications.length; ix++) {
@@ -321,20 +321,19 @@ export async function updateMemberNotifications({notificationFormValues, notific
     }
   }
   
-
-  // console.log("queries-family-member-udateMemberDetailsDml->memberDetails: ", updateAccountDetails);
-
-  // if (!updateResult) {
-  //   return {
-  //     success: false,
-  //     message: "Account update failed",
-  //   }
-  // }
-
-
-
   return {
     success: true,
   }
 }
+
+export async function updateFamilyInviteToken({inviteToken }: { inviteToken: UpdateInviteTokenInput })
+: (Promise<UpdateInviteTokenResult>) {
+
+
+
+  return {
+    error: false,
+  }
+  }
+
 

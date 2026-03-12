@@ -17,7 +17,8 @@ import { FamilyMember, InviteFamilyDialog } from '../family-setup-dialogs/invite
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../family-setup-dialogs/status-update-dialog';
 import { insertFamily, insertInvites, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
-import { SubmissionStep } from '@/features/family/types/family-steps';
+import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
+import { sendFamilyMemberEmails } from './actions';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -82,17 +83,17 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       // await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
       updateStepStatus(1, 'completed');
 
-      // Step 2: Create new Member entry
+      // Step 2: Create Member entry for the Founder
       updateStepStatus(2, 'inProgress');
-      const insertMemberResult = await insertMember({
+      const founderDetails: FounderDetails = {
         email: values.email as string,
         firstName: values.firstName as string,
         lastName: values.lastName as string,
         nickName: values.nickName as string | undefined,
         familyId: insertFamilyResult.id as number,
         isFounder: true,
-      });
-
+      }
+      const insertMemberResult = await insertMember(founderDetails);
       if (!insertMemberResult.success) {
         updateStepStatus(2, 'error', insertMemberResult.message);
         throw new Error(insertMemberResult.message);
@@ -133,8 +134,11 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 5: Send emails to join new Family Social family
       updateStepStatus(5, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API call
-      // TODO: Implement actual email sending logic
+      const sendMemberEmailResult = await sendFamilyMemberEmails(insertInvitesResult.invites, values.familyName, founderDetails);
+      if (!sendMemberEmailResult.error) {
+        updateStepStatus(5, 'error', sendMemberEmailResult.message);
+        throw new Error(sendMemberEmailResult.message);
+      };
       updateStepStatus(5, 'completed');
 
     } catch (error) {

@@ -29,3 +29,23 @@ export type NotificationsFormValues = {
     isSelected: boolean;
   }[];
 }
+
+export type FounderDetails = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  nickName?: string;
+  familyId: number;
+  isFounder: boolean;
+};
+
+export type UpdateInviteTokenInput = {
+  inviteId: number;
+  token: string;
+  expiry: Date;
+}
+
+export type UpdateInviteTokenResult = {
+  error: boolean;
+  message?: string;
+}
