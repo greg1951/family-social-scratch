@@ -44,6 +44,16 @@ export const sendFamilyMemberEmails = async (familyInvites: InsertInvitesReturn[
             link: registerLink, 
           }),
       });
+      if (!sendResult) {
+        return {
+          error: true,
+          message: `Failed to send invite email to ${invite.email}`
+        }
+      }
+      return {
+        error: false,
+        message: `Invite email sent successfully to ${invite.email}`
+      }
     }  
   }
 

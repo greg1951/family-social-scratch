@@ -74,8 +74,9 @@ export async function insertFamily(familyName: string)
 export async function insertMember(memberArg: InsertMemberInput)
 : Promise<InsertMemberReturn> {
 
-    console.log("insertMember-> member: ", memberArg);
+  console.log("insertMember-> member: ", memberArg);
 
+  try {
     const [insertResult] = await db.insert(member).values({
       email: memberArg.email as string,
       firstName: memberArg.firstName as string,
@@ -90,7 +91,6 @@ export async function insertMember(memberArg: InsertMemberInput)
         message: `Failed to insert member with name ${memberArg.firstName} ${memberArg.lastName}`,
       }
     } 
-    
     console.log("insertMember-> insertResult: ", insertResult);
 
     return {
@@ -102,7 +102,14 @@ export async function insertMember(memberArg: InsertMemberInput)
       nickName: insertResult.nickName!,
       isFounder: insertResult.isFounder,
       createdAt: insertResult.createdAt as Date,
+    };
+
+    } catch (e: unknown) {
+      return {
+        success: false,
+        message: `Failed to insert member with name ${memberArg.firstName} ${memberArg.lastName}`,
     }
+  }
 }
 
 export async function insertUser(userArg: InsertUserInput)

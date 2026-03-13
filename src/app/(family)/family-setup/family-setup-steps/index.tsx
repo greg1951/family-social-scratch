@@ -135,7 +135,10 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       // Step 5: Send emails to join new Family Social family
       updateStepStatus(5, 'inProgress');
       const sendMemberEmailResult = await sendFamilyMemberEmails(insertInvitesResult.invites, values.familyName, founderDetails);
-      if (!sendMemberEmailResult.error) {
+
+      console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
+
+      if (sendMemberEmailResult.error) {
         updateStepStatus(5, 'error', sendMemberEmailResult.message);
         throw new Error(sendMemberEmailResult.message);
       };
@@ -149,6 +152,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         updateStepStatus(currentStepInProgress.id, 'error', 'An error occurred during this step');
       }
     }
+    // finally {
+    //   setShowStatusDialog(false);
+    // }
   }
 
   const next = async () => {

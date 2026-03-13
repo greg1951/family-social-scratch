@@ -329,11 +329,23 @@ export async function updateMemberNotifications({notificationFormValues, notific
 export async function updateFamilyInviteToken({inviteToken }: { inviteToken: UpdateInviteTokenInput })
 : (Promise<UpdateInviteTokenResult>) {
 
+  const updateResult = await db
+    .update(familyInvitation)
+    .set({
+      inviteToken: inviteToken.token,
+      expirationDate: inviteToken.expiry
+    })
+    .where(eq(familyInvitation.id, inviteToken.inviteId));
 
+  if (!updateResult) {
+    return {
+      error: true,
+      message: `Failed to update invite token for inviteId ${inviteToken.inviteId}`
+    }
+  }
 
-  return {
-    error: false,
-  }
-  }
+  return {error: false, message: "Invite token updated successfully"}
+}
+
 
 

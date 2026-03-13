@@ -51,7 +51,7 @@ export const member = pgTable("member", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
-  nickName: text("nick_name"),
+  nickName: text("nick_name").notNull().default(""),
   email: text("email").notNull(),
   birthday: text("birthday").notNull().default("01/01/1970"),
   cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),

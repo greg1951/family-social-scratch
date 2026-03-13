@@ -2,7 +2,6 @@
 
 import { count, eq, and } from 'drizzle-orm';
 import { user } from '../schema/family-social-schema-tables';
-import { family } from "../schema/family-social-schema-tables";
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -12,9 +11,7 @@ import { ErrorReturnType,
          Update2faSecretRecordType,
          Update2faActivatedRecordType,
          EmailByIdReturnType,
-         RegisteredReturnType,
-         UserFamilyReturn, } from "@/components/db/types/user"
-import { Result } from 'pg';
+         RegisteredReturnType} from "@/components/db/types/user"
 import { findRegisteredFamily } from './queries-family-member';
 
 /* Validate the user exists in the user table */
@@ -82,55 +79,59 @@ export async function updateUserPassword(email: string, password: string)
 /* This function is used by the Auth.js Credentials provider */
 export async function getFullUserCredsByEmail(email: string, family: string)
   : Promise<GetFullUserCredsReturnType> {
-  
-  const findFamilyResult = await findRegisteredFamily(family);
-  console.log("queries-user->findRegisteredFamily->findFamilyResult: ", findFamilyResult);
-  if (!findFamilyResult.success) {
-    return findFamilyResult;
-  }
-
-  const [selectedUser] = await db
-    .select({
-      id: user.id,
-      email: user.email,
-      password: user.password,
-      isActivated: user.twoFactorActivated,
-      secret: user.twoFactorSecret,
-      memberId: user.memberId,
-    })
-    .from(user)
-    .where(
-      and(
-        eq(user.email, email),
-        eq(user.familyId, findFamilyResult.familyId as number)
-      )
-    ); 
-     
-    /* 
-      The stored password contains two elements that are separated by colon.
-        1. The user's actual password but hashed
-        2. The "salt" used to hash the password; used to hash the clear-text password for comparison to hashed password
-    */
-    
-    if (selectedUser) {
-      const passwordParts = selectedUser.password.split(':');
-      // console.log('authenticateUserByEmail->passwordParts: ', passwordParts);
-  
-      const returnedUser = {
-        success: true,
-        id: selectedUser.id,
-        email: selectedUser.email as string,
-        password: passwordParts[0],
-        salt: passwordParts[1],
-        isActivated: selectedUser.isActivated as boolean,
-        secret: selectedUser.secret as string,
-        familyId: findFamilyResult.familyId,
-        memberId: selectedUser?.memberId!,
+ 
+  try {
+    const findFamilyResult = await findRegisteredFamily(family);
+    console.log("queries-user->findRegisteredFamily->findFamilyResult: ", findFamilyResult);
+    if (!findFamilyResult.success) {
+      return findFamilyResult;
     }
-    return returnedUser;
+
+    const [selectedUser] = await db
+      .select({
+        id: user.id,
+        email: user.email,
+        password: user.password,
+        isActivated: user.twoFactorActivated,
+        secret: user.twoFactorSecret,
+        memberId: user.memberId,
+      })
+      .from(user)
+      .where(
+        and(
+          eq(user.email, email),
+          eq(user.familyId, findFamilyResult.familyId as number)
+        )
+      ); 
+      
+      if (selectedUser) {
+        const passwordParts = selectedUser.password.split(':');
+    
+        const returnedUser = {
+          success: true,
+          id: selectedUser.id,
+          email: selectedUser.email as string,
+          password: passwordParts[0],
+          salt: passwordParts[1],
+          isActivated: selectedUser.isActivated as boolean,
+          secret: selectedUser.secret as string,
+          familyId: findFamilyResult.familyId,
+          memberId: selectedUser?.memberId!,
+        }
+        return returnedUser;
+      }
   }
-  /* This user is null but the auth.ts will check for it */
-  return selectedUser;
+  catch (e: unknown) {
+    console.error("queries-user->getFullUserCredsByEmail->error: ", e);
+    return {
+      success:false,
+      message: 'Insert of user failed'
+    }
+  }
+  return {
+    success: false,
+    message: "There were no users found matching that email and family combination."
+  };
 }
 
 /* Retrieve user credential info by email */
