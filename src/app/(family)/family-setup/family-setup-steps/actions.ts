@@ -1,18 +1,20 @@
 'use server';
 
-import { updateFamilyInviteToken } from "@/components/db/sql/queries-family-member";
+import { updateFamilyInviteToken } from "@/components/db/sql/queries-family-invite";
 import { InsertInvitesInput, InsertInvitesReturn } from "@/components/db/types/family-member";
+
 import { MemberInviteEmail } from "@/features/family/services/member-invite-email";
 import { FounderDetails, UpdateInviteTokenInput } from "@/features/family/types/family-steps";
-import { mailer } from "@/lib/email";
 import { randomBytes } from "crypto";
 import * as React from "react";
 import { Resend } from 'resend';
+import { familySocialEmail, familySocialHostReference } from "@/features/family/constants/family-steps";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-
-export const sendFamilyMemberEmails = async (familyInvites: InsertInvitesReturn['invites'], familyName: string, founderDetails:FounderDetails ) => {
+export const sendFamilyMemberEmails = async (familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
+                                             familyName: string, 
+                                             founderDetails:FounderDetails ) => {
   
   if (familyInvites) {
     for (const invite of familyInvites) {
@@ -31,10 +33,10 @@ export const sendFamilyMemberEmails = async (familyInvites: InsertInvitesReturn[
         }
       };
 
-      const registerLink=`${process.env.SITE_BASE_URL}/family-member-registration?token=${memberInviteToken}`; 
+      const registerLink=`${familySocialHostReference}/family-member-registration?token=${memberInviteToken}`; 
   
       const sendResult = await resend.emails.send({
-        from: "admin@updates.knotboardgames.com",
+        from: familySocialEmail,
         subject: "You're Invited to Join the Family Social Platform",
         to: invite.email,
         react: React.createElement(MemberInviteEmail, 

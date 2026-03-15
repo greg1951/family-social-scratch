@@ -16,6 +16,7 @@ type StatusUpdateDialogProps = {
 export function StatusUpdateDialog({ open, onOpenChange, submissionSteps }: StatusUpdateDialogProps) {
   const router = useRouter();
   const allStepsCompleted = submissionSteps.every((s) => s.status === 'completed');
+  console.log('StatusUpdateDialog->allStepsCompleted: ', allStepsCompleted);
 
   return (
     <Dialog

@@ -8,7 +8,8 @@ import MyFamilyAccountForm from "../family-account";
 import { getMemberDetails } from "@/app/(family)/my-account/actions";
 import { AccountDetails } from "@/features/auth/auth-types";
 import { getUser2fa } from "@/components/db/sql/queries-user";
-import { getAllFamilyMembers, getMemberNotifications } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
+import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { FamilyMember } from "../family-setup/family-setup-dialogs/invite-family-dialog";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import FamilyNotificationsForm from "../family-notifications";
@@ -30,30 +31,41 @@ export default async function FamilyMyAccountPage() {
     getMemberPageDetails(),
   ]);
 
+  console.log("FamilyMyAccountPage->memberDetails: ", memberDetails);
+  console.log("FamilyMyAccountPage->result2fa: ", result2fa);
+  console.log("FamilyMyAccountPage->memberKeyDetails: ", memberKeyDetails);
+
   const memberNotificationsResult = await getMemberNotifications(memberKeyDetails.memberId);
+  const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];
 
   const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  const familyMembers = (membersResult.members ?? []).map((member) => ({
-    id: member.id.toString(),
-    firstName: member.firstName,
-    lastName: member.lastName,
-    email: member.email,
-  })) as FamilyMember[];
+  let familyMembers: FamilyMember[] = [];
+  if (membersResult.success && membersResult.members) {
+    familyMembers = membersResult.members.map((member) => ({
+      id: member.id.toString(),
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+    })) as FamilyMember[];
+  }
 
-  const accountDetails: AccountDetails = {
-    accountDetails: {
-      email,
-      familyName: familyName ?? "",
-      userId,
-      memberId: memberDetails.memberId as number,
-      firstName: memberDetails.firstName as string,
-      lastName: memberDetails.lastName as string,
-      nickName: memberDetails.nickName as string,
-      birthday: memberDetails.birthday as string,
-      cellPhone: memberDetails.cellPhone as string,
-      mfaActive: memberDetails.mfaActive as boolean,
-    },
-  };
+  let accountDetails: AccountDetails | null = null;
+  if (memberDetails.success) {
+    accountDetails = {
+      accountDetails: {
+        email: memberDetails.email as string,
+        familyName: memberDetails.familyName,
+        userId,
+        memberId: memberDetails.memberId as number,
+        firstName: memberDetails.firstName as string,
+        lastName: memberDetails.lastName as string,
+        nickName: memberDetails.nickName as string,
+        birthday: memberDetails.birthday as string,
+        cellPhone: memberDetails.cellPhone as string,
+        mfaActive: memberDetails.mfaActive as boolean,
+      }
+    }
+  }
 
   return (
     <main className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
@@ -83,11 +95,13 @@ export default async function FamilyMyAccountPage() {
               </TabsList>
 
               <TabsContent value="profile" className="mt-4">
-                <AccountDetailsForm accountDetails={ accountDetails.accountDetails } />
+                { accountDetails && (
+                  <AccountDetailsForm accountDetails={ accountDetails } />
+                ) }
               </TabsContent>
 
               <TabsContent value="notifications" className="mt-4 rounded-lg border p-4">
-                <FamilyNotificationsForm notifications={ memberNotificationsResult.notifications } />
+                <FamilyNotificationsForm notifications={ notifications } />
               </TabsContent>
 
               <TabsContent value="family" className="mt-4 rounded-lg border">

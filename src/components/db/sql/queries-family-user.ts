@@ -5,17 +5,12 @@ import { family, familyInvitation, member, user } from '../schema/family-social-
 import db from '@/components/db/drizzle';
 import { UserFamilyReturn } from '../types/user';
 import { InsertFamilyReturn, 
-         InsertInvitesInput, 
-         InsertInvitesReturn, 
          InsertMemberInput, 
          InsertMemberReturn, 
          InsertUserInput, 
          InsertUserReturn } from '../types/family-member';
 import { hashUserPassword } from '@/features/auth/services/hash';
 
-/*
-  Using family name, return the familyId 
-*/
 export async function getUserFamilyNameByEmail(email: string)
   : Promise<UserFamilyReturn> {
 
@@ -83,6 +78,7 @@ export async function insertMember(memberArg: InsertMemberInput)
       lastName: memberArg.lastName as string,
       nickName: memberArg.nickName as string | undefined,
       isFounder: memberArg.isFounder as boolean,
+      cellPhone: memberArg.phone as string | undefined,
       familyId: memberArg.familyId as number,
     }).returning();
     if (!insertResult) {
@@ -93,6 +89,7 @@ export async function insertMember(memberArg: InsertMemberInput)
     } 
     console.log("insertMember-> insertResult: ", insertResult);
 
+    /* Returning properties as they are needed */
     return {
       success: true,
       id: insertResult.id,
@@ -100,6 +97,7 @@ export async function insertMember(memberArg: InsertMemberInput)
       firstName: insertResult.firstName,
       lastName: insertResult.lastName,
       nickName: insertResult.nickName!,
+      phone: insertResult.cellPhone!,
       isFounder: insertResult.isFounder,
       createdAt: insertResult.createdAt as Date,
     };
@@ -115,61 +113,34 @@ export async function insertMember(memberArg: InsertMemberInput)
 export async function insertUser(userArg: InsertUserInput)
 : Promise<InsertUserReturn> {
 
-    console.log("insertUser-> user: ", userArg);
+    // console.log("insertUser-> user: ", userArg);
     const password = userArg.password as string;
     const hashedPassword = await hashUserPassword(password);
 
-    const [insertResult] = await db.insert(user).values({
-      email: userArg.email as string,
-      password: hashedPassword as string,
-      memberId: userArg.memberId as number,
-      familyId: userArg.familyId as number,
-    }).returning();
-    if (!insertResult) {
-      return {
-        success: false,
-        message: `Failed to insert user with email ${userArg.email}`,
-      }
-    } 
-    
-    console.log("insertUser-> insertResult: ", insertResult);
 
-    return {
-      success: true,
-      id: insertResult.id,
-      email: insertResult.email,
-      memberId: insertResult.memberId as number,
-      familyId: insertResult.familyId as number,
-      createdAt: insertResult.createdAt as Date,
+    try {
+      const [insertResult] = await db.insert(user).values({
+        email: userArg.email as string,
+        password: hashedPassword as string,
+        memberId: userArg.memberId as number,
+        familyId: userArg.familyId as number,
+      }).returning();
+
+
+      return {
+        success: true,
+        id: insertResult.id,
+        // email: insertResult.email,
+        // memberId: insertResult.memberId as number,
+        // familyId: insertResult.familyId as number,
+        createdAt: insertResult.createdAt as Date,
+      }
+    } catch (e: unknown) {
+        console.error("Error inserting user");      
+        return {
+          success: false,
+          message: `Failed to insert user with email ${userArg.email}`,
+        }
     }
 }
 
-export async function insertInvites(invitesArg: InsertInvitesInput)
-: Promise<InsertInvitesReturn> {
-
-    console.log("insertInvites-> invites: ", invitesArg);
-
-    const insertResult = await db.insert(familyInvitation).values(invitesArg).returning();
-    if (!insertResult) {
-      return {
-        success: false,
-        message: `Failed to insert invites`,
-      }
-    } 
-    
-    console.log("insertInvites-> insertResult: ", insertResult);
-    const returnInvites = insertResult.map((invite) => ({
-      id: invite.id,
-      email: invite.email,
-      firstName: invite.firstName,
-      lastName: invite.lastName,
-      familyId: invite.familyId,
-      createdAt: invite.createdAt as Date,
-    }));
-    console.log("insertInvites-> returnInvites: ", returnInvites);
-
-    return {
-      success: true,
-      invites: returnInvites,
-    }
-}

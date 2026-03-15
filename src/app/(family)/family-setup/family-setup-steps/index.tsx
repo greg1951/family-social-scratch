@@ -1,10 +1,10 @@
 'use client';
 
+import { FamilyFormSchema } from '@/features/family/components/validation/schema';
 import { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { FamilyFormSchema } from '@/features/family/components/validation/schema';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -15,15 +15,17 @@ import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
 import { FamilyMember, InviteFamilyDialog } from '../family-setup-dialogs/invite-family-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../family-setup-dialogs/status-update-dialog';
-import { insertFamily, insertInvites, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
+import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
 import { sendFamilyMemberEmails } from './actions';
+import { insertInvites } from "@/components/db/sql/queries-family-invite";
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
 
 export default function CreateFamilyAccountSteps({ familyNames }: { familyNames: string[] }) {
+
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [previousStep, setPreviousStep] = useState(0);
@@ -72,7 +74,6 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
     setShowStatusDialog(true);
 
     try {
-
       // Step 1: Add new family name
       updateStepStatus(1, 'inProgress');
       const insertFamilyResult = await insertFamily(values.familyName);
@@ -152,9 +153,6 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         updateStepStatus(currentStepInProgress.id, 'error', 'An error occurred during this step');
       }
     }
-    // finally {
-    //   setShowStatusDialog(false);
-    // }
   }
 
   const next = async () => {
@@ -177,7 +175,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
     }
   }
 
-  /* Handlers to add/remove members to the invited members list. */
+  // Handlers to add/remove members to the invited members list. 
   const [members, setMembers] = useState<FamilyMember[]>([])
   const handleAddMember = (values: Pick<FamilyMember, 'firstName' | 'lastName' | 'email'>) => {
     setMembers((prev) => [

@@ -36,35 +36,37 @@ export default async function MyAccount() {
   const memberDetails = await getMemberDetails(userId);
   // console.log("AccountDetailsForm->memberDetails: ", memberDetails);
 
-  const accountDetails: AccountDetails = {
-    accountDetails: {
-      email: session?.user?.email as string,
-      familyName: session?.user?.name as string,
-      userId: userId as number,
-      memberId: memberDetails.memberId as number,
-      firstName: memberDetails.firstName as string,
-      lastName: memberDetails.lastName as string,
-      nickName: memberDetails.nickName as string,
-      birthday: memberDetails.birthday as string,
-      cellPhone: memberDetails.cellPhone as string,
-      mfaActive: memberDetails.mfaActive as boolean,
-
+  let accountDetails: AccountDetails | null = null;
+  if (memberDetails.success) {
+    const accountDetails: AccountDetails = {
+      accountDetails: {
+        email: session?.user?.email as string,
+        familyName: session?.user?.name as string,
+        userId: userId as number,
+        memberId: memberDetails.memberId as number,
+        firstName: memberDetails.firstName as string,
+        lastName: memberDetails.lastName as string,
+        nickName: memberDetails.nickName as string,
+        birthday: memberDetails.birthday as string,
+        cellPhone: memberDetails.cellPhone as string,
+        mfaActive: memberDetails.mfaActive as boolean,
+      }
     }
-  }
 
-  return (
-    <main className="font-app h-[90vh]">
-      <Card className="flex align-top w-[400] md:w-[700]">
-        <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center ">
-          <CardTitle className="text-center font-bold size-1.2 p-2">My Account</CardTitle>
-          <div className="p-1">
-            <CardDescription className="text-xs">{ session.user?.name }</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <AccountDetailsForm accountDetails={ accountDetails.accountDetails } />
-        </CardContent>
-      </Card>
-    </main>
-  )
+    return (
+      <main className="font-app h-[90vh]">
+        <Card className="flex align-top w-[400] md:w-[700]">
+          <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center ">
+            <CardTitle className="text-center font-bold size-1.2 p-2">My Account</CardTitle>
+            <div className="p-1">
+              <CardDescription className="text-xs">{ session.user?.name }</CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-1 ">
+            <AccountDetailsForm accountDetails={ accountDetails } />
+          </CardContent>
+        </Card>
+      </main>
+    )
+  }
 }

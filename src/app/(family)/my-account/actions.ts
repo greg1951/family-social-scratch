@@ -3,9 +3,8 @@ import { getMemberDetailsByUserId, updateMemberDetailsDml } from "@/components/d
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { GetUser2faReturnType } from "@/components/db/types/user";
 import { AccountDetails, UpdateAccountDetails } from "@/features/auth/auth-types";
-/*
-  Retrieve the user's 2FA details by email
-*/
+
+/* Retrieve the user's 2FA details by email */
 export const get2faDetails = async(email:string) => {
   
   const result2fa = await getUser2fa(email);
@@ -24,9 +23,8 @@ export const get2faDetails = async(email:string) => {
   return mfaReturn;
 }
 
-/*
-  Retrieve user and member detais by userId
-*/
+
+/* Retrieve user and member details by userId */
 export const getMemberDetails = async(userId:number) => {
   const getResult = await getMemberDetailsByUserId(userId);
   // console.log("actions->getMemberDetails->getResult: ", getResult);

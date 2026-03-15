@@ -1,7 +1,7 @@
 export type RegisteredReturnType = {
   id: number;
-  email: string;
-  password: string;
+  // email: string;
+  // password: string;
   mfaSecret: string;
   mfaActivated: boolean;
 }

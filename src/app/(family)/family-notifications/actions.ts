@@ -1,6 +1,6 @@
 'use server';
 
-import { updateMemberNotifications } from "@/components/db/sql/queries-family-member";
+import { updateMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { NotificationFDirtyields, NotificationsFormValues } from "@/features/family/types/family-steps";
 
 export async function updateNotifications({notificationFormValues, notificationDirtyFields}

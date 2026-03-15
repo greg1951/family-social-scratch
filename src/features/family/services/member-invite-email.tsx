@@ -58,7 +58,7 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
             <Row>
               <Column align='left' valign='top' style={ { width: '620px', paddingRight: '20px' } }>
                 <Text className='m-0 font-app text-base leading-6'>
-                  What is Family Social you ask? It is a site dedicated to helping families stay connected and share updates, photos, movie and TV reviews,
+                  What is Family Social you ask? It is a site dedicated to helping families stay connected and share family news, photos, movie and TV reviews,
                   exchange food recipes, and more in a private and secure environment.
                 </Text>
               </Column>
@@ -81,10 +81,10 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
             To get started, click on the <b>Join Family Social</b> button below to register in the "{ familyName }" family network.
           </Text>
           <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-            If you have any questions about Family Social, reach out to 👉{ founderName }👈.
+            If you have any questions about Family Social, reach out to { founderName }.
           </Text>
           <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-            (Big Blue is valid for <b>seven</b> (7) days, so check us out! 😁 )
+            (The button below is valid for <b>seven days</b>, so check us out! 😁 )
           </Text>
           <Section className='mt-4 rounded-lg bg-imageBg px-4 py-6'>
             <Row>

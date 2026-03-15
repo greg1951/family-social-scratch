@@ -21,7 +21,9 @@ export const passwordReset = pgTable("password_reset", {
   userId: integer("fk_user_id").notNull().references(() => user.id, {onDelete: "cascade"}).unique(),
   token: text("token").notNull(),
   tokenExpiry: timestamp("token_expiry"),
-});
+}, (table) => ({
+  tokenIdx: index('reset_token_idx').on(table.token),
+}));
 
 export const family = pgTable("family", {
   id: serial("id").primaryKey(),
@@ -45,6 +47,7 @@ export const familyInvitation = pgTable("family_invitation", {
   statusUpdate: timestamp("status_update"),
 }, (table) => ({
   emailIdx: index('invite_email_idx').on(table.email),
+  tokenIdx: index('invite_token_idx').on(table.inviteToken),
 }));
 
 export const member = pgTable("member", {

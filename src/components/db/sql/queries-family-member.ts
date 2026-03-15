@@ -3,9 +3,9 @@
 import { count, eq, and } from 'drizzle-orm';
 import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
-import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetMemberNotificationsReturn } from '../types/family-member';
+import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
-import { NotificationFDirtyields, NotificationsFormValues, UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
+import { email } from 'zod';
 
 /*
   Using family name, return the familyId 
@@ -93,6 +93,9 @@ export async function getMemberDetailsByUserId(userId:number)
 
   const [selectResult] = await db.select(
     {
+      email: member.email,
+      userId: user.id,
+      familyName: family.name,
       firstName: member.firstName,
       lastName: member.lastName,
       nickName: member.nickName,
@@ -104,7 +107,7 @@ export async function getMemberDetailsByUserId(userId:number)
       familyId: user.familyId,
       mfaActive: user.twoFactorActivated,
     })
-    .from(user).rightJoin(member, eq(user.memberId, member.id))
+    .from(user).rightJoin(member, eq(user.memberId, member.id)).innerJoin(family, eq(member.familyId, family.id))
     .where(eq(user.id, userId)
   );
 
@@ -116,19 +119,21 @@ export async function getMemberDetailsByUserId(userId:number)
   }
 
   const memberDetails:GetMemberDetailsReturn = {
-    success: true,
-    familyId: selectResult.familyId!,
-    memberId: selectResult.memberId,
-    userId: userId, 
-    status: selectResult.status,
-    firstName: selectResult.firstName, 
-    lastName: selectResult.lastName,
-    nickName: selectResult?.nickName!,
-    birthday: selectResult.birthday,
-    cellPhone: selectResult?.cellPhone!,
-    isFounder: selectResult.isFounder,
-    mfaActive: selectResult.mfaActive as boolean,
-  }  
+      success: true,
+      familyId: selectResult.familyId!,
+      familyName: selectResult.familyName!,
+      memberId: selectResult.memberId,
+      email: selectResult.email!,
+      userId: selectResult.userId!,
+      status: selectResult.status,
+      firstName: selectResult.firstName, 
+      lastName: selectResult.lastName,
+      nickName: selectResult?.nickName!,
+      birthday: selectResult.birthday!,
+      cellPhone: selectResult?.cellPhone!,
+      isFounder: selectResult.isFounder,
+      mfaActive: selectResult.mfaActive as boolean,
+    } ;
   return memberDetails;
 }
 
@@ -165,6 +170,7 @@ export async function getMemberDetailsByEmail(email:string)
 
   const memberDetails:GetMemberDetailsReturn = {
     success: true,
+    email: selectResult.email!,
     userId: selectResult.userId!, 
     status: selectResult.status,
     firstName: selectResult.firstName, 
@@ -239,112 +245,50 @@ export async function getAllFamilyMembers(familyId: number)
   }
 }
 
-export async function getMemberNotifications(memberId: number)
-  :(Promise<GetMemberNotificationsReturn>) {
 
-  const notificationResult = await db
-    .select()
-    .from(memberOption).innerJoin(optionReference, eq(memberOption.optionId, optionReference.id))
-    .where(eq(memberOption.memberId, memberId));
-  
-  if (notificationResult[0]) 
-    return {
-      success: true,
-      memberId: memberId,
-      notifications: notificationResult.map(notification => ({
-        memberOptionId: notification.member_option.id as number,
-        optionId: notification.member_option.optionId as number,
-        optionName: notification.option_reference.optionName as string,
-        optionDesc: notification.option_reference.optionDesc as string,
-        isSelected: notification.member_option.isSelected as boolean,
-      }))
+export async function getFamilyFounderDetails(familyId:number)
+  :(Promise<GetFounderDetailsReturn>) {
 
-    }
-  else {
-    return {
-      success: true,
-      memberId: memberId,
-      notifications: [],
-    }
-  }
-}
-
-export async function updateMemberNotifications({notificationFormValues, notificationDirtyFields}
-  : { notificationFormValues: NotificationsFormValues, notificationDirtyFields: NotificationFDirtyields }  ) {
-
-    // console.log("queries-family-member->updateMemberNotifications->notificationFormValues: ", notificationFormValues  ); 
-    // console.log("queries-family-member->updateMemberNotifications->notificationDirtyFields: ", notificationDirtyFields  );
-
-    type UpdateNotification = {
-      memberOptionId: number;
-      isSelected: boolean;
-    }
-
-    const dirtyNotifications = notificationDirtyFields.notifications ?? [];
-    const updatedNotifications: UpdateNotification[] = 
-      dirtyNotifications.flatMap((dirtyField, index) => {
-        if (dirtyField?.isSelected === undefined) {
-          return [];
-        }
-
-        const formValue = notificationFormValues.notifications[index];
-        if (!formValue) {
-          return [];
-        }
-
-        return [{
-          memberOptionId: formValue.memberOptionId,
-          isSelected: formValue.isSelected,
-        }];
-    });
-
-  // console.log("queries-family-member->updateMemberNotifications->updatedNotifications: ", updatedNotifications  );
-  
-  if (updatedNotifications.length > 0) {
-    for (let ix=0; ix < updatedNotifications.length; ix++) {
-
-      const updateResult = await db
-        .update(memberOption)
-        .set({isSelected: updatedNotifications[ix].isSelected})
-        .where(eq(memberOption.id, updatedNotifications[ix].memberOptionId));
-
-      if (!updateResult) {
-        console.error("queries-family-member->updateMemberNotifications->FAILED to update notification with memberOptionId: ", updatedNotifications[ix].memberOptionId);
-        return {
-          success: false,
-          message: `Failed to update notification with memberOptionId ${updatedNotifications[ix].memberOptionId}`, 
-        }
-      }
-    }
-    return {
-      success: true,
-    }
-  }
-  
-  return {
-    success: true,
-  }
-}
-
-export async function updateFamilyInviteToken({inviteToken }: { inviteToken: UpdateInviteTokenInput })
-: (Promise<UpdateInviteTokenResult>) {
-
-  const updateResult = await db
-    .update(familyInvitation)
-    .set({
-      inviteToken: inviteToken.token,
-      expirationDate: inviteToken.expiry
+  const [selectResult] = await db.select(
+    {
+      firstName: member.firstName,
+      lastName: member.lastName,
+      nickName: member.nickName,
+      birthday: member.birthday,
+      cellPhone: member.cellPhone,
+      isFounder: member.isFounder,
+      status: member.status,
+      memberId: member.id,
+      email: member.email,
+      familyId: family.id,
+      familyName: family.name,
     })
-    .where(eq(familyInvitation.id, inviteToken.inviteId));
+    .from(family).leftJoin(member, eq(family.id, member.familyId))
+    .where(eq(family.id, familyId)
+  );
 
-  if (!updateResult) {
+  if (!selectResult) {
     return {
-      error: true,
-      message: `Failed to update invite token for inviteId ${inviteToken.inviteId}`
+      success: false,
+      message: `Member details NOT FOUND for familyId ${familyId}`
     }
   }
 
-  return {error: false, message: "Invite token updated successfully"}
+  const founderDetails:GetFounderDetailsReturn = {
+    success: true,
+    familyId: familyId,
+    familyName: selectResult.familyName,
+    memberId: selectResult.memberId!,
+    email: selectResult.email!,
+    status: selectResult.status!,
+    firstName: selectResult.firstName!, 
+    lastName: selectResult.lastName!,
+    nickName: selectResult?.nickName!,
+    birthday: selectResult.birthday!,
+    cellPhone: selectResult?.cellPhone!,
+    isFounder: selectResult.isFounder!,
+  }  
+  return founderDetails;
 }
 
 

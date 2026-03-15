@@ -1,6 +1,6 @@
 'use client';
 
-import { updateMemberNotifications } from "@/components/db/sql/queries-family-member";
+import { updateMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +14,8 @@ const formSchema = NotificationsFormSchema;
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function FamilyNotificationsForm({ notifications }: { notifications: GetMemberNotificationsReturn["notifications"] }) {
+export default function FamilyNotificationsForm({ notifications }: { notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"] }) {
+
   const notificationOptions = (notifications ?? []).map((notification) => ({
     memberOptionId: notification.memberOptionId,
     optionId: notification.optionId,

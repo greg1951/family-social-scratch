@@ -13,12 +13,16 @@ export default async function MyFamilyAccount() {
   const memberKeyDetails = await getMemberPageDetails();
 
   const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  const familyMembers = membersResult.members?.map((member) => ({
-    id: member.id.toString(),
-    firstName: member.firstName,
-    lastName: member.lastName,
-    email: member.email,
-  })) as FamilyMember[];
+  let familyMembers: FamilyMember[] = [];
+  if (membersResult.success && membersResult.members) {
+    console.log('MyFamilyAccount->getAllFamilyMembers->membersResult: ', membersResult);
+    familyMembers = membersResult.members.map((member) => ({
+      id: member.id.toString(),
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+    })) as FamilyMember[];
+  }
 
 
   return (

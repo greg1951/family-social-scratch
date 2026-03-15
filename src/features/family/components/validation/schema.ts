@@ -42,3 +42,14 @@ export const NotificationsFormSchema = z.object({
   notifications: MemberNotificationsSchema,
 });
 
+export const MemberRegistrationSchema = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+  email: z.email(),
+  nickName: z.string().optional(),
+  password: passwordSchema,
+  passwordConfirm: z.string(),
+}).refine((data) => data.password === data.passwordConfirm, {
+    message: "Passwords don't match",
+    path: ["passwordConfirm"],
+  });

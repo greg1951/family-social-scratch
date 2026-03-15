@@ -4,6 +4,10 @@
    2. [Family Social Queries](#family-social-queries)
 3. [State Management](#state-management)
 4. [Capturing the Family Name](#capturing-the-family-name)
+5. [Discriminating Unions in Typescript](#discriminating-unions-in-typescript)
+   1. [Checking the Success Condition](#checking-the-success-condition)
+   2. [After Running SQL Query](#after-running-sql-query)
+   3. [Extacting the Type](#extacting-the-type)
 
 ---
 # Overview
@@ -79,6 +83,102 @@ MainTablet->session:  {
   user: { name: 'HughlettFamily', email: 'aaa@whocares.com', id: '1' },
   expires: '2026-03-29T02:13:46.106Z'
 ```
+
+# Discriminating Unions in Typescript
+After creating varioius return types simply using optional properties, e.g. show below. The justification was to be able to see and a message if `success: false`. However, if `success:true` then the other attributes aren't really optional and you have to treat them as such.
+
+```tsx
+export type InsertFamilyReturn =
+  success: false; 
+  message?: string 
+  id?: number;
+  name?: string;
+  createdAt?: Date;
+```
+
+I discovered the union feature that would allow me to be more precise in what was optional or required.
+
+```tsx
+export type InsertFamilyReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      id: number;
+      name: string;
+      createdAt: Date;
+    };
+```
+
+##  Checking the Success Condition
+
+```tsx
+const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
+  let familyMembers: FamilyMember[] = [];
+  if (membersResult.success && membersResult.members) {
+    familyMembers = membersResult.members.map((member) => ({
+      id: member.id.toString(),
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+    })) as FamilyMember[];
+  }
+```
+Another case.
+
+```tsx
+let accountDetails: AccountDetails | null = null;
+  if (memberDetails.success) {
+    const accountDetails: AccountDetails = {
+      accountDetails: {
+        email: session?.user?.email as string,
+        familyName: session?.user?.name as string,
+        userId: userId as number,
+        memberId: memberDetails.memberId as number,
+        firstName: memberDetails.firstName as string,
+        lastName: memberDetails.lastName as string,
+        nickName: memberDetails.nickName as string,
+        birthday: memberDetails.birthday as string,
+        cellPhone: memberDetails.cellPhone as string,
+        mfaActive: memberDetails.mfaActive as boolean,
+      }
+    }
+```
+
+## After Running SQL Query
+Check for null condition before assuming you can map any of the returned properties from the query.
+
+```tsx
+  if (!selectResult) {
+    return {
+      success: false,
+      message: `Member details NOT FOUND for email ${email}`
+    }
+  }
+  const memberDetails:GetMemberDetailsReturn = {
+    success: true,
+    email: selectResult.email!,
+    userId: selectResult.userId!, 
+    status: selectResult.status,
+    firstName: selectResult.firstName, 
+    lastName: selectResult.lastName,
+    nickName: selectResult?.nickName!,
+    birthday: selectResult.birthday,
+    cellPhone: selectResult?.cellPhone!,
+    familyId: selectResult.familyId!,
+    familyName: selectResult.familyName!,
+    memberId: selectResult.memberId,
+    isFounder: selectResult.isFounder,
+    mfaActive: selectResult.mfaActive as boolean,
+  }  
+  return memberDetails;
+```
+
+## Extacting the Type
+An array of `notifications` were to be passed into this form component and required the use of the `Extract<>` to test the untion success boolean and then retrieve the notifications type.
+
+```tsx
+export default function FamilyNotificationsForm({ notifications }: { notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"] }) {
+```  
 
 
 

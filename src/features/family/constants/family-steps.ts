@@ -28,10 +28,16 @@
   
   export const initialSubmissionSteps: SubmissionStep[] = [
       { id: 1, label: 'Add new family name', status: 'pending' },
-      { id: 2, label: 'Create new Member entry', status: 'pending' },
+      { id: 2, label: 'Create Founder entry', status: 'pending' },
       { id: 3, label: 'Add Founder credentials', status: 'pending' },
       { id: 4, label: 'Add invited family members', status: 'pending' },
-      { id: 5, label: 'Send emails to join new Family Social family', status: 'pending' },
+      { id: 5, label: 'Send emails to the new Family Social family', status: 'pending' },
+  ];
+  export const initialRegistrationSteps: SubmissionStep[] = [
+        { id: 1, label: 'Register member details', status: 'pending' },
+        { id: 2, label: 'Create member login credentials', status: 'pending' },
+        { id: 3, label: 'Adding member notifications', status: 'pending' },
+        { id: 4, label: 'Update member invitation status', status: 'pending' },
   ];
   
   // Define constants for step indices for better readability
@@ -42,4 +48,8 @@
   
   // Family name RegEx: only letters, no spaces, numbers, or special characters allowed.
   export const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
+
+  export const familySocialEmail="family.social@updates.knotboardgames.com";
+
+  export const familySocialHostReference = "https://kbgfamilysocial.com";
   

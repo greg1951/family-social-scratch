@@ -8,6 +8,7 @@ export default async function FamilySetup() {
   }
   const families = familyNamesResult.familyNames as string[];
   return (
+    // <p>Made it here</p>
     <CreateFamilyAccountSteps familyNames={ families } />
   );
 }

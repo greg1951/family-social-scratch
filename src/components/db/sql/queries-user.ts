@@ -36,18 +36,19 @@ export async function insertRegisteredUser(email: string, password: string, fami
     const hashedPassword = hashUserPassword(password);
 
     // console.warn('queries-user->insertRegisteredUser->THE member_id IS HARD-CODED HERE!')
-    const result = await db.insert(user).values({
+    const [insertResult] = await db.insert(user).values({
       email: email,
       password: hashedPassword,
       familyId: familyId,
       // memberId: 1, // I made it optional in the schema
     }).returning();
+
     return {
-      id: result[0].id,
-      email: result[0].email!,
-      password: result[0].password,
-      mfaSecret: result[0].twoFactorSecret!,
-      mfaActivated: result[0].twoFactorActivated!
+      id: insertResult.id,
+      // email: insertResult.email!,
+      // password: insertResult.password,
+      mfaSecret: insertResult.twoFactorSecret!,
+      mfaActivated: insertResult.twoFactorActivated!
     }
 
 }

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import FamilyNotificationsForm from ".";
-import { getMemberNotifications } from "@/components/db/sql/queries-family-member";
+import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 
@@ -26,7 +26,7 @@ export default async function FamilyNotificationSettings() {
           </div>
         </CardHeader>
         <CardContent>
-          <FamilyNotificationsForm notifications={ memberNotificationsResult.notifications } />
+          <FamilyNotificationsForm notifications={ memberNotificationsResult.success ? memberNotificationsResult.notifications : [] } />
         </CardContent>
       </Card>
     </main>
