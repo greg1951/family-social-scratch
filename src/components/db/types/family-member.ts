@@ -185,3 +185,27 @@ export type GetInviteTokenReturn =
       familyId: number;
     };
 
+export type GetInviteByMemberIdReturn =
+  | { error: true; message: string }
+  | {
+      error: false;      
+      inviteId: number;
+      familyId: number;
+    };
+
+
+export type InsertMemberNotificationsReturn = {
+  success: boolean;
+  message?: string;
+};
+
+export type GetAllOptionsRefReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      options: {
+        id: number;
+        optionName: string;
+        optionDesc: string;
+      }[];
+    };

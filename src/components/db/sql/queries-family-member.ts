@@ -4,7 +4,7 @@ import { count, eq, and } from 'drizzle-orm';
 import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
-import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/auth-types';
+import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/types/auth-types';
 import { email } from 'zod';
 
 /*

@@ -1,7 +1,7 @@
 import { count, eq, and } from 'drizzle-orm';
 import { optionReference, memberOption } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
-import { GetMemberNotificationsReturn, GetFounderDetailsReturn } from '../types/family-member';
+import { GetMemberNotificationsReturn, GetFounderDetailsReturn, InsertInvitesInput, InsertInvitesReturn, InsertMemberNotificationsReturn, GetAllOptionsRefReturn } from '../types/family-member';
 import { NotificationFDirtyields, NotificationsFormValues } from "@/features/family/types/family-steps";
 
 export async function getMemberNotifications(memberId: number)
@@ -10,7 +10,8 @@ export async function getMemberNotifications(memberId: number)
   const notificationResult = await db
     .select()
     .from(memberOption).innerJoin(optionReference, eq(memberOption.optionId, optionReference.id))
-    .where(eq(memberOption.memberId, memberId));
+    .where(eq(memberOption.memberId, memberId))
+    .orderBy(optionReference.id);
   
   if (notificationResult[0]) 
     return {
@@ -87,5 +88,65 @@ export async function updateMemberNotifications({notificationFormValues, notific
   
   return {
     success: true,
+  }
+}
+
+export async function insertMemberNotifications(memberId: number)
+: Promise<InsertMemberNotificationsReturn> {
+
+  const optionsResult = await getAllOptionsRef();
+
+  if (!optionsResult.success) {
+    return optionsResult;
+  }
+  else {
+    const options = optionsResult.options;
+    for (let ix=0; ix < options.length; ix++) {
+
+      const insertResult = await db
+        .insert(memberOption)
+        .values({
+          memberId: memberId,
+          optionId: options[ix].id,
+          isSelected: false,
+        });
+
+      if (!insertResult) {
+        console.error("queries-family-member->insertMemberNotifications->FAILED to insert notification for memberId: ", memberId, " and optionId: ", options[ix].id);
+        return {  
+          success: false,
+          message: `Failed to insert notification for memberId ${memberId} and optionId ${options[ix].id}`,
+        }
+      }
+    }
+
+    return {
+      success: true,
+    }
+  }
+}
+
+async function getAllOptionsRef()
+: Promise<GetAllOptionsRefReturn> {
+
+  const optionsResult = await db
+    .select()
+    .from(optionReference); 
+    
+    let options=[];
+    if (optionsResult) {
+      options=optionsResult.map(option => ({
+        id: option.id as number,
+        optionName: option.optionName as string,
+        optionDesc: option.optionDesc as string,
+      }))
+    return {
+      success: true,
+      options: options,
+    }
+  }
+  return {
+    success: false,
+    message: "No options found",
   }
 }

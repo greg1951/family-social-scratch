@@ -14,8 +14,8 @@ export default async function ChangePassword() {
   const email: string = session.user?.email!;
 
   return (
-    <main className="font-app h-[80vh]">
-      <Card className=" gap-y-2 w-[300] md:w-[800]">
+    <main className="font-app h-[80vh] pt-0">
+      <Card className=" gap-y-2 w-[300] md:w-[800] pt-0">
         <CardHeader className=" text-base bg-[#59cdf7] rounded-2xl pt-2 text-center p-2">
           <CardTitle>Change Password</CardTitle>
           <CardDescription className="text-xs">{ name }</CardDescription>

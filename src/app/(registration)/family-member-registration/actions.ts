@@ -1,7 +1,9 @@
 'use server';
 
+import { updateFamilyInviteStatus } from "@/components/db/sql/queries-family-invite";
+import { insertMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { insertMember, insertUser } from "@/components/db/sql/queries-family-user";
-import { InsertMemberInput, InsertMemberReturn, RegisterMemberInput } from "@/components/db/types/family-member";
+import { RegisterMemberInput } from "@/components/db/types/family-member";
 
 export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
 
@@ -33,3 +35,33 @@ export const addMemberCreds = async(memberDetails:RegisterMemberInput, newMember
     success: true,
   }
 }
+
+export const addMemberNotifications = async(newMemberId: number) => {
+
+  const insertMemberNotificationsResult = await insertMemberNotifications(newMemberId);
+
+  if (!insertMemberNotificationsResult.success) {
+    console.log('Error occurred inserting the member notifications');
+    return insertMemberNotificationsResult;
+  }
+
+  return {
+    success: true,
+  }
+}
+
+export const updateInviteStatus = async(newMemberId: number, status: string) => {
+
+  const updateInviteStatusResult = await updateFamilyInviteStatus(newMemberId, status);
+  if (updateInviteStatusResult.error) {
+    console.log('Error occurred updating the invite status');
+    return updateInviteStatusResult;
+  }
+
+  return {
+    error: false,
+  } 
+
+}
+
+

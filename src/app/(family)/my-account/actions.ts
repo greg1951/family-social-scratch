@@ -2,7 +2,7 @@
 import { getMemberDetailsByUserId, updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { GetUser2faReturnType } from "@/components/db/types/user";
-import { AccountDetails, UpdateAccountDetails } from "@/features/auth/auth-types";
+import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
 
 /* Retrieve the user's 2FA details by email */
 export const get2faDetails = async(email:string) => {

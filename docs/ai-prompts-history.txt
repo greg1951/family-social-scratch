@@ -41,5 +41,9 @@ OR set it to type="submit" and remove onClick={submitForm}/submitForm() entirely
 
 Create a new react page.tsx that uses the forms in the src/app/(auth)/(logged-in)/my-account folder with the form contained in src/app/(family)/family-account folder. The new page should use the shadcn Tabs component which is installed in the project. The new page.tsx should be created in src/app/(family)/family-my-account folder.
 
+*** Create phone number formatter
+
+Create a function to be run in a client-side form field onChange event to format a phone number using "(xxx) xxx-xxxx" format, so as the user types in the phone number it will be rendered in the phone form field.
+
 
 

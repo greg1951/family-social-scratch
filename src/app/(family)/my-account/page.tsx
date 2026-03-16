@@ -4,7 +4,7 @@ import { getUser2fa } from "@/components/db/sql/queries-user";
 import { redirect } from "next/navigation";
 import AccountDetailsForm from "./index";
 import { getMemberDetails } from "./actions";
-import { AccountDetails } from "@/features/auth/auth-types";
+import { AccountDetails } from "@/features/auth/types/auth-types";
 
 // interface AccountDetails {
 //   accountDetails: {
@@ -54,15 +54,15 @@ export default async function MyAccount() {
     }
 
     return (
-      <main className="font-app h-[90vh]">
-        <Card className="flex align-top w-[400] md:w-[700]">
+      <main className="font-app h-[90vh] gap-y-2 pt-1">
+        <Card className="flex align-top w-[400] md:w-[700] pt-0">
           <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center ">
-            <CardTitle className="text-center font-bold size-1.2 p-2">My Account</CardTitle>
+            <CardTitle className="text-center font-bold size-1.2 p-1">My Account</CardTitle>
             <div className="p-1">
               <CardDescription className="text-xs">{ session.user?.name }</CardDescription>
             </div>
           </CardHeader>
-          <CardContent className="pt-1 ">
+          <CardContent className="pt-0 ">
             <AccountDetailsForm accountDetails={ accountDetails } />
           </CardContent>
         </Card>

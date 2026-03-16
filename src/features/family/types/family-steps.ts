@@ -49,3 +49,8 @@ export type UpdateInviteTokenResult = {
   error: boolean;
   message?: string;
 }
+
+export type UpdateInviteStatusResult = {
+  error: boolean;
+  message?: string;
+}

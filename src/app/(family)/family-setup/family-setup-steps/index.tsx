@@ -20,6 +20,7 @@ import { initialSubmissionSteps } from '@/features/family/constants/family-steps
 import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
 import { sendFamilyMemberEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
+import { addMemberNotifications } from '@/app/(registration)/family-member-registration/actions';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -116,7 +117,18 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       }
       updateStepStatus(3, 'completed');
 
-      // Step 4: Add invited family members
+      // Step 4: Add founder notifications
+      updateStepStatus(4, 'inProgress');
+      const addMemberNotificationsResult = await addMemberNotifications(insertMemberResult.id);
+      if (!addMemberNotificationsResult.success) {
+        const message = "Error occurred inserting founder notifications";
+        updateStepStatus(4, 'error', message);
+        throw new Error(message);
+      }
+      updateStepStatus(4, 'completed');
+
+      // Step 5: Add invited family members
+      updateStepStatus(5, 'inProgress');
       const invitesInput = members.map((member) => (
         {
           firstName: member.firstName,
@@ -125,25 +137,22 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
           familyId: insertFamilyResult.id as number
         }));
 
-      updateStepStatus(4, 'inProgress');
       const insertInvitesResult = await insertInvites(invitesInput);
       if (!insertInvitesResult.success) {
-        updateStepStatus(4, 'error', insertInvitesResult.message);
+        updateStepStatus(5, 'error', insertInvitesResult.message);
         throw new Error(insertInvitesResult.message);
       }
-      updateStepStatus(4, 'completed');
+      updateStepStatus(5, 'completed');
 
-      // Step 5: Send emails to join new Family Social family
-      updateStepStatus(5, 'inProgress');
+      // Step 6: Send emails to join new Family Social family
+      updateStepStatus(6, 'inProgress');
       const sendMemberEmailResult = await sendFamilyMemberEmails(insertInvitesResult.invites, values.familyName, founderDetails);
-
-      console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
-
+      // console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
       if (sendMemberEmailResult.error) {
-        updateStepStatus(5, 'error', sendMemberEmailResult.message);
+        updateStepStatus(6, 'error', sendMemberEmailResult.message);
         throw new Error(sendMemberEmailResult.message);
       };
-      updateStepStatus(5, 'completed');
+      updateStepStatus(6, 'completed');
 
     } catch (error) {
       console.error('Error during form submission:', error);

@@ -2,17 +2,16 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AccountDetailsForm from "@/app/(family)/my-account";
-import TwoFactorAuthForm from "@/app/(auth)/(logged-in)/two-factor-auth-form";
-import MyFamilyAccountForm from "../family-account";
 import { getMemberDetails } from "@/app/(family)/my-account/actions";
-import { AccountDetails } from "@/features/auth/auth-types";
+import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { FamilyMember } from "../family-setup/family-setup-dialogs/invite-family-dialog";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import FamilyNotificationsForm from "../family-notifications";
+import AccountDetailsForm from "@/app/(family)/my-account";
+import MyFamilyAccountForm from "../family-account";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -70,7 +69,7 @@ export default async function FamilyMyAccountPage() {
   return (
     <main className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
-        <Card className="w-full border-slate-200 shadow-lg">
+        <Card className="w-full border-slate-200 shadow-lg pt-0">
           <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-5">
             <CardTitle className="text-center text-2xl font-bold text-slate-900 md:text-3xl">
               My Family Account

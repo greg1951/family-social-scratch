@@ -3,11 +3,13 @@
    1. [Family Social Schema](#family-social-schema)
    2. [Family Social Queries](#family-social-queries)
 3. [State Management](#state-management)
-4. [Capturing the Family Name](#capturing-the-family-name)
-5. [Discriminating Unions in Typescript](#discriminating-unions-in-typescript)
+4. [Typescript](#typescript)
+5. [Discriminated Unions](#discriminated-unions)
    1. [Checking the Success Condition](#checking-the-success-condition)
-   2. [After Running SQL Query](#after-running-sql-query)
-   3. [Extacting the Type](#extacting-the-type)
+   2. [Passing Argument to Component](#passing-argument-to-component)
+   3. [After Running SQL Query](#after-running-sql-query)
+   4. [Extacting the Type](#extacting-the-type)
+6. [Storing the Family Name in Authentication Cookie](#storing-the-family-name-in-authentication-cookie)
 
 ---
 # Overview
@@ -39,7 +41,7 @@ The queries related to authentication reside in `@/features/auth/components/db` 
 
 # State Management
 
-I implemented the React Context feature in the project (reference the `@/component/store/users-context.tsx` file).  It is not a viable option when using route groups which are absolute necessity to properly structuer this next.js app.
+I implemented the React Context feature in the project (reference the `@/component/store/users-context.tsx` file).  It is not a viable option when using route groups which are absolute necessity to properly structure this next.js app.
 
 - The provider was added to the root `layout.tsx` file in the app folder. The login was executed, displaying the state correctly. However, when it switched to `/my-account` in another route group, the state was lost.
 
@@ -47,44 +49,17 @@ I implemented the React Context feature in the project (reference the `@/compone
 
 - It was hard lesson but moved forward with querying the data based on email and the id captured in the session object.
 
-# Capturing the Family Name
-After fumbling around with how to add the family name used during authentication which entailed trying to configure NextAuth, I came up with the solution. When the authorized method in `auth.ts` finishes, the returned values constitute a `user` object that is then configured in the jwt and session callbacks, as shown below.
+# Typescript
+After going through some of the learning associated with typescript (and still more learning to go), I realize how important it is to establish some rules around it's use.
 
-```tsx
-export const { handlers, signIn, signOut, auth } = NextAuth({
-  callbacks: {
-    jwt({token, user}) {
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-      }
-      return token;
-    },
-    session({session, token}) {
-        session.user.id = token.id as string;
-        session.user.name = token.name;
-        return session;
-    }
-  }, //end callbacks
-  ```
-  The key was to return the following payload from authorize which then could be implemented in the above. 
+- Discriminated (or tagged) unions are important but require special care. I have a separate section in this markdown on cases where it requires special handling.
+- The type definitions are stored in separate `types` folder in various places.
+  - For database related use: `@/components/db/types`
+  - In each of the folders in `@/features`
+    - `@/features/auth/types`
+    - `@/features/family/types`
 
-  ```tsx
-    return {
-    id: validationResult.id,
-    email: validationResult.email,
-    name: validationResult.family,
-```
-
-I added a console.log message to display the session which produced the following output.
-
-```bash
-MainTablet->session:  {
-  user: { name: 'HughlettFamily', email: 'aaa@whocares.com', id: '1' },
-  expires: '2026-03-29T02:13:46.106Z'
-```
-
-# Discriminating Unions in Typescript
+# Discriminated Unions
 After creating varioius return types simply using optional properties, e.g. show below. The justification was to be able to see and a message if `success: false`. However, if `success:true` then the other attributes aren't really optional and you have to treat them as such.
 
 ```tsx
@@ -144,6 +119,29 @@ let accountDetails: AccountDetails | null = null;
     }
 ```
 
+## Passing Argument to Component
+This case is like the one's in the previous section except it was interesting enough to warrant highlighting here: the `notifications` argument to `FamilyNotificationsForm`.
+
+```tsx
+  ...
+  return (
+    <main className="font-app h-[90vh]">
+      <Card className="flex align-top w-[400] md:w-[700]">
+        <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center ">
+          <CardTitle className="text-center font-bold size-1.2 p-2">My Account</CardTitle>
+          <div className="p-1">
+            <CardDescription className="text-xs">{ memberKeyDetails.familyName }</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <FamilyNotificationsForm notifications={ memberNotificationsResult.success ? memberNotificationsResult.notifications : [] } />
+        </CardContent>
+      </Card>
+    </main>
+  )
+}
+```
+
 ## After Running SQL Query
 Check for null condition before assuming you can map any of the returned properties from the query.
 
@@ -179,6 +177,44 @@ An array of `notifications` were to be passed into this form component and requi
 ```tsx
 export default function FamilyNotificationsForm({ notifications }: { notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"] }) {
 ```  
+
+# Storing the Family Name in Authentication Cookie
+After fumbling around with how to add the family name used during authentication which entailed trying to configure NextAuth, I came up with the solution. When the authorized method in `auth.ts` finishes, the returned values constitute a `user` object that is then configured in the jwt and session callbacks, as shown below.
+
+```tsx
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  callbacks: {
+    jwt({token, user}) {
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+      }
+      return token;
+    },
+    session({session, token}) {
+        session.user.id = token.id as string;
+        session.user.name = token.name;
+        return session;
+    }
+  }, //end callbacks
+  ```
+  The key was to return the following payload from authorize which then could be implemented in the above. 
+
+  ```tsx
+    return {
+    id: validationResult.id,
+    email: validationResult.email,
+    name: validationResult.family,
+```
+
+I added a console.log message to display the session which produced the following output.
+
+```bash
+MainTablet->session:  {
+  user: { name: 'HughlettFamily', email: 'aaa@whocares.com', id: '1' },
+  expires: '2026-03-29T02:13:46.106Z'
+```
+
 
 
 

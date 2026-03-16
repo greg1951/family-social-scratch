@@ -101,7 +101,7 @@ export default function LoginForm() {
   return (
     <main className="font-app flex justify-center items-center h-2/12">
       { step === 1 &&
-        <Card className=" gap-y-2">
+        <Card className=" gap-y-2 pt-0">
           <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl pt-2 text-center ">
             <CardTitle>Family Social Login</CardTitle>
           </CardHeader>

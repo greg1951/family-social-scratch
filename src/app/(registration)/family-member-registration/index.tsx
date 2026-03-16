@@ -14,9 +14,9 @@ import Link from 'next/link';
 import { CircleCheck, CircleArrowRight, Eye, EyeOff, CircleX } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
-import { addMemberCreds, addRegisteredMember } from './actions';
+import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInviteStatus } from './actions';
 import { SubmissionStep } from '@/features/family/types/family-steps';
-import { initialRegistrationSteps } from '@/features/family/constants/family-steps';
+import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/constants/family-steps';
 import { StatusUpdateDialog } from '@/app/(family)/family-setup/family-setup-dialogs/status-update-dialog';
 
 const formSchema = z.object({
@@ -84,34 +84,51 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
 
       // Step 1: Create Member
       updateStepStatus(1, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      // const registeredMember = {
-      //   ...data, email, familyId: familyId, isFounder: false
-      // };
+      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      const registeredMember = {
+        ...data, email, familyId: familyId, isFounder: false
+      };
 
-      // const addMemberResult = await addRegisteredMember(registeredMember);
-      // if (!addMemberResult.success) {
-      //   const message = "Error occurred registering the new family member"
-      //   updateStepStatus(1, 'error', message);
-      //   throw new Error(message);
-      // }
+      const addMemberResult = await addRegisteredMember(registeredMember);
+      if (!addMemberResult.success) {
+        const message = "Error occurred registering the new family member"
+        updateStepStatus(1, 'error', message);
+        throw new Error(message);
+      }
       updateStepStatus(1, 'completed');
 
       // Step 2: Create Member Credentials
       updateStepStatus(2, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      // const addMemberCredsResult = await addMemberCreds(registeredMember, addMemberResult.id);
-      // if (!addMemberCredsResult.success) {
-      //   const message = "Error occurred creating member credentials";
-      //   updateStepStatus(2, 'error', message);
-      //   throw new Error(message);
-      // }
+      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      const addMemberCredsResult = await addMemberCreds(registeredMember, addMemberResult.id);
+      if (!addMemberCredsResult.success) {
+        const message = "Error occurred creating member credentials";
+        updateStepStatus(2, 'error', message);
+        throw new Error(message);
+      }
       updateStepStatus(2, 'completed');
 
+      // Step 3: Insert Member Notifications
       updateStepStatus(3, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      const addMemberNotificationsResult = await addMemberNotifications(addMemberResult.id);
+      if (!addMemberNotificationsResult.success) {
+        const message = "Error occurred inserting member notifications";
+        updateStepStatus(3, 'error', message);
+        throw new Error(message);
+      }
       updateStepStatus(3, 'completed');
 
+      // Step 4: Update the invite status to joined
+      updateStepStatus(4, 'inProgress');
+      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      const updateInviteStatusResult = await updateInviteStatus(addMemberResult.id, inviteStatusJoined);
+      if (updateInviteStatusResult.error) {
+        const message = "Error occurred updating the invite status";
+        updateStepStatus(4, 'error', message);
+        throw new Error(message);
+      }
+      updateStepStatus(4, 'completed');
 
       form.reset(data);
 

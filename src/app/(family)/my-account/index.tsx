@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
-import { AccountDetails, UpdateAccountDetails } from "@/features/auth/auth-types";
+import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
 import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
 import { toast } from "sonner";
 import { Router } from "next/router";

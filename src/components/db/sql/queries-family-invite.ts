@@ -1,10 +1,12 @@
 import db from '@/components/db/drizzle';
 import { count, eq, and } from 'drizzle-orm';
 import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
-import { UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
+import { UpdateInviteStatusResult, UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
 import { InsertInvitesInput, 
          InsertInvitesReturn, 
-         GetInviteTokenReturn } from '../types/family-member';
+         GetInviteTokenReturn, 
+         GetInviteByMemberIdReturn} from '../types/family-member';
+import { get } from 'http';
 
          
 export async function insertInvites(invitesArg: InsertInvitesInput)
@@ -97,4 +99,55 @@ export async function getInviteToken(token: string) : Promise<GetInviteTokenRetu
       familyName: inviteResetToken.family.name,
     };
 };
+
+export async function getInvitebyMemberId(memberId: number) : Promise<GetInviteByMemberIdReturn> {
+
+  const [inviteMemberResult] = await db
+    .select()
+    .from(member).innerJoin(family, eq(family.id, member.familyId)).innerJoin(familyInvitation, eq(familyInvitation.familyId, family.id))
+    .where(eq(member.id, memberId));
+
+    if (!inviteMemberResult) {
+      return {
+        error: true,
+        message: "Did not find invitation for memberId: " + memberId,
+      }
+    }
+    else {
+      return {
+        error: false,
+        inviteId: inviteMemberResult.family_invitation.id,
+        familyId: inviteMemberResult.family.id,
+      };
+    }
+};
+
+
+export async function updateFamilyInviteStatus(memberId: number, status: string)
+: (Promise<UpdateInviteStatusResult>) {
+
+  const getInviteResult = await getInvitebyMemberId(memberId);
+
+  if (getInviteResult.error) {
+    return getInviteResult;
+  }
+  else {
+    const updateResult = await db
+      .update(familyInvitation)
+      .set({
+        status: status,
+      })
+      .where(eq(familyInvitation.id, getInviteResult.inviteId));
+  
+    if (!updateResult) {
+      return {
+        error: true,
+        message: `Failed to update invite status for memberId ${memberId}`
+      }
+    }
+  
+    return {error: false}
+  }
+
+}
 

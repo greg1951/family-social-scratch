@@ -17,8 +17,8 @@ export default async function MfaChange() {
   const result2fa = await getUser2fa(email);
 
   return (
-    <main className="font-app h-[80vh]">
-      <Card className="flex align-top w-[400] md:w-[800]">
+    <main className="font-app h-[80vh] pt-0">
+      <Card className="flex align-top w-[400] md:w-[800] pt-0">
         <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl p-2 text-center ">
           <CardTitle className="text-center font-bold size-1.2">My Account</CardTitle>
           <CardDescription className="text-xs">{ session.user?.name }</CardDescription>

@@ -40,7 +40,7 @@ export default async function FamilyMemberRegistration({ searchParams }
   return (
     <div className="flex justify-center">
       <main className="font-app">
-        <Card className="flex align-middle w-[400] md:w-[900] pt-2 h-[80vh]">
+        <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[80vh]">
           <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
             <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
             { isValidExpiry && (
@@ -56,14 +56,14 @@ export default async function FamilyMemberRegistration({ searchParams }
                 <CircleX className="inline mr-2 text-red-900" size={ 20 } />
                 Your invitation token may simply have expired, which means you should ask your family founder to send you another invitation.<br></br><br></br>
                 <CircleX className="inline mr-2 text-red-900" size={ 20 } />
-                Or, you may already have registered, which invalidates the token. If you bookmarked the page with the token in the URL then it brought you back here.<br></br><br></br> 
+                Or, you may already have registered, which invalidates the token. If you bookmarked the page with the token in the URL then it brought you back here.<br></br><br></br>
               </p>
               <div className="text-muted-foreground text-xs">
                 <p className="text-green-900 pb-2">
-                <CircleCheck className="inline mr-2 text-green-900" size={ 20 } />
-                Select the link below to navigate to the Family Social home and then bookmark that page.
+                  <CircleCheck className="inline mr-2 text-green-900" size={ 20 } />
+                  Select the link below to navigate to the Family Social home and then bookmark that page.
                 </p>
-                {/* Take Me Home!{ "   " } */}
+                {/* Take Me Home!{ "   " } */ }
                 <Link className="underline"
                   href="/" >
                   Family Social Home Page
