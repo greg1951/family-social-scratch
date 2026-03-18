@@ -99,7 +99,7 @@ export default function FamilyHome() {
               </Button>
             </Link>
 
-            <Link href="/family-setup/family-setup-steps" className="w-full sm:w-auto">
+            <Link href="/family-setup-steps" className="w-full sm:w-auto">
               <Button size="lg" className="w-full bg-[#59cdf7] text-slate-900 hover:bg-[#9de4fe] sm:w-auto">
                 Step 1: Register Family Founder
                 <ArrowRight className="ml-2 h-4 w-4" />

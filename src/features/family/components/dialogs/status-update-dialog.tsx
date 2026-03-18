@@ -6,7 +6,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { SubmissionStep } from '@/features/family/types/family-steps';
 
-
 type StatusUpdateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;

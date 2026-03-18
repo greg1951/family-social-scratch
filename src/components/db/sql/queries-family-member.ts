@@ -5,11 +5,9 @@ import { family, familyInvitation, member, optionReference, user, memberOption }
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/types/auth-types';
-import { email } from 'zod';
+import { CurrentMemberDirtyFields, CurrentMembersValues, UpdateInvite } from '@/features/family/types/family-members';
 
-/*
-  Using family name, return the familyId 
-*/
+/*-------- findRegisteredFamily ------------------ */
 export async function findRegisteredFamily(familyName: string)
   :(Promise<GetFamilyReturn>) {
 
@@ -36,9 +34,8 @@ export async function findRegisteredFamily(familyName: string)
     }
   }
 }
-/*
-  Return all family names (for search purposes in the trial account setup)
-*/
+
+/*-------- getAllFamilies ------------------ */
 export async function getAllFamilies()
   :(Promise<GetAllFamiliesReturn>) {
 
@@ -60,9 +57,7 @@ export async function getAllFamilies()
   }
 }
 
-/*
-  Query member table using familyId and memberEmail related to a member must include family ID 
-*/
+/*-------- findFamilyMember ------------------ */
 export async function findFamilyMember(familyId: number, memberEmail: string) {
   const result = await db
     .select({count: count(), memberId: member.id})
@@ -87,7 +82,7 @@ export async function findFamilyMember(familyId: number, memberEmail: string) {
     }
   }
 
-/* Get member details using one SQL statement on family and member tables */
+/*-------- getMemberDetailsByUserId ------------------ */
 export async function getMemberDetailsByUserId(userId:number)
   :(Promise<GetMemberDetailsReturn>) {
 
@@ -137,7 +132,7 @@ export async function getMemberDetailsByUserId(userId:number)
   return memberDetails;
 }
 
-/* Get member details using one SQL statement on family and member tables */
+/*-------- getMemberDetailsByEmail ------------------ */
 export async function getMemberDetailsByEmail(email:string)
   :(Promise<GetMemberDetailsReturn>) {
 
@@ -187,6 +182,7 @@ export async function getMemberDetailsByEmail(email:string)
   return memberDetails;
 }
 
+/*-------- updateMemberDetailsDml ------------------ */
 export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccountDetails)
   : Promise<UpdateMemberReturn> {
 
@@ -213,6 +209,7 @@ export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccount
   }
 }
 
+/*-------- getAllFamilyMembers ------------------ */
 export async function getAllFamilyMembers(familyId: number)
   :(Promise<GetAllFamilyMembersReturn>) {
 
@@ -246,6 +243,7 @@ export async function getAllFamilyMembers(familyId: number)
 }
 
 
+/*-------- getFamilyFounderDetails ------------------ */
 export async function getFamilyFounderDetails(familyId:number)
   :(Promise<GetFounderDetailsReturn>) {
 
@@ -291,5 +289,44 @@ export async function getFamilyFounderDetails(familyId:number)
   return founderDetails;
 }
 
+/*-------- updateFamilyMemberStatus ------------------ */
+export async function updateFamilyMemberStatus({currentMemberValues, originalMemberValues}
+  : { currentMemberValues: CurrentMembersValues, originalMemberValues: CurrentMembersValues }  ) {
 
+  console.log('queries-family-member->updateFamilyMemberStatus->currentMemberValues: ', currentMemberValues);
+  console.log('queries-family-member->updateFamilyMemberStatus->originalMemberValues: ', originalMemberValues);
 
+  
+  let updatedMembers: UpdateInvite[] = [];
+  for (let i=0; i < currentMemberValues.currentMembers.length; i++) {
+    const currentMember = currentMemberValues.currentMembers[i];
+    const originalMember = originalMemberValues.currentMembers[i];
+    if (currentMember.status !== originalMember.status) {
+      updatedMembers.push({
+        id: currentMember.id,
+        status: currentMember.status,
+      });
+    }
+  };
+
+  console.log('queries-family-member->updateFamilyMemberStatus->updatedMembers: ', updatedMembers);
+
+  if (updatedMembers.length > 0) {
+    for (let ix=0; ix < updatedMembers.length; ix++) {
+  
+      const updateResult = await db
+        .update(familyInvitation)
+        .set({status: updatedMembers[ix].status})
+        .where(eq(familyInvitation.id, updatedMembers[ix].id));
+
+      if (!updateResult) {
+        console.error("queries-family-member->updateFamilyMemberStatus->FAILED to update member with memberId: ", updatedMembers[ix].id);
+        return {
+          success: false,
+          message: `Failed to update member with memberId ${updatedMembers[ix].id}`, 
+        }
+      }
+    }
+  }
+  return {success: true };
+}

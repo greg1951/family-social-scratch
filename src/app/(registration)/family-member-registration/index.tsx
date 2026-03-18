@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { CircleCheck, CircleArrowRight, Eye, EyeOff, CircleX } from "lucide-react";
+import { CircleCheck, Eye, EyeOff, CircleX } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
 import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInviteStatus } from './actions';
 import { SubmissionStep } from '@/features/family/types/family-steps';
 import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/constants/family-steps';
-import { StatusUpdateDialog } from '@/app/(family)/family-setup/family-setup-dialogs/status-update-dialog';
+import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
 
 const formSchema = z.object({
   firstName: z.string().min(2, { message: "First name is required" }),

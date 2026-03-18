@@ -1,34 +1,40 @@
 import z from "zod";
+import { redirect } from "next/navigation";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AddMembersFormSchema } from "@/features/family/components/validation/schema";
-import MyFamilyAccountForm from ".";
+import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
+import NewMembersAccountForm from "./index-new";
 import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
-import { FamilyMember } from "../family-setup/family-setup-dialogs/invite-family-dialog";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
+import { NewFamilyMember } from "@/features/family/types/family-members";
 
-type FormValues = z.infer<typeof AddMembersFormSchema>;
+type FormValues = z.infer<typeof NewMembersFormSchema>;
 
-export default async function MyFamilyAccount() {
+/* Only the form in the index.tsx file is referenced. This page is strictly for testing. Rename the page to page.tsx and the url to /family-account for testing. */
+export default async function FamilyNewMembersPage() {
   const memberKeyDetails = await getMemberPageDetails();
+  if (memberKeyDetails.isLoggedIn === false || memberKeyDetails.isFounder === false) {
+    console.warn('Unauthorized access attempt to family account members page. Redirecting to home page.');
+    redirect("/");
+  }
 
   const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  let familyMembers: FamilyMember[] = [];
+  let familyMembers: NewFamilyMember[] = [];
   if (membersResult.success && membersResult.members) {
-    console.log('MyFamilyAccount->getAllFamilyMembers->membersResult: ', membersResult);
+    // console.log('MyFamilyAccountTesting->getAllFamilyMembers->membersResult: ', membersResult);
     familyMembers = membersResult.members.map((member) => ({
       id: member.id.toString(),
       firstName: member.firstName,
       lastName: member.lastName,
       email: member.email,
-    })) as FamilyMember[];
+    })) as NewFamilyMember[];
   }
 
 
   return (
     <div className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
-        <Card className="w-full border-slate-200 shadow-lg">
+        <Card className="w-full border-slate-200 shadow-lg pt-0">
           <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-1">
             <div>
               <CardTitle className="text-2xl font-bold text-slate-900 md:text-3xl text-center">
@@ -47,7 +53,7 @@ export default async function MyFamilyAccount() {
               </div>
             </CardDescription>
           </div>
-          <MyFamilyAccountForm familyMembers={ familyMembers } />
+          <NewMembersAccountForm familyMembers={ familyMembers } />
         </Card>
 
       </div >

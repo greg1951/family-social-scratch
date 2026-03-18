@@ -10,6 +10,9 @@
    3. [After Running SQL Query](#after-running-sql-query)
    4. [Extacting the Type](#extacting-the-type)
 6. [Storing the Family Name in Authentication Cookie](#storing-the-family-name-in-authentication-cookie)
+7. [Page Protection](#page-protection)
+8. [Await All](#await-all)
+9. [Multi-Step Forms](#multi-step-forms)
 
 ---
 # Overview
@@ -88,14 +91,14 @@ export type InsertFamilyReturn =
 
 ```tsx
 const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  let familyMembers: FamilyMember[] = [];
+  let familyMembers: CurrentFamilyMember[] = [];
   if (membersResult.success && membersResult.members) {
     familyMembers = membersResult.members.map((member) => ({
-      id: member.id.toString(),
+      id: member.id,
       firstName: member.firstName,
       lastName: member.lastName,
       email: member.email,
-    })) as FamilyMember[];
+    })) as CurrentFamilyMember[];
   }
 ```
 Another case.
@@ -215,8 +218,32 @@ MainTablet->session:  {
   expires: '2026-03-29T02:13:46.106Z'
 ```
 
+# Page Protection
+In addition to checking that pages that require a user to be logged in are accessible only after signing in, another necessary precaution is to require that family-account pages are only accessible by the family founder. In other words, if you are a family member but not the founder, stay out! 
 
+Shown below is an example in the family founder pages. The `redirect` works on server-side pages (like `page.tsx`) that have some client-side component in them. 
 
+```tsx
+  const memberKeyDetails = await getMemberPageDetails();
+  if (memberKeyDetails.isLoggedIn === false || memberKeyDetails.isFounder === false) {
+    console.warn('Unauthorized access attempt to family account members page. Redirecting to home page.');
+    redirect("/");
+  }
+```
+
+# Await All
+In a page where there are a number of async functions performed, use of the `Promise.all` method will execute them a block rather than serially. It will improve performance.
+
+```tsx
+const [memberDetails, result2fa, memberKeyDetails] = await Promise.all([
+    getMemberDetails(userId),
+    getUser2fa(email),
+    getMemberPageDetails(),
+  ]);
+```
+
+# Multi-Step Forms
+Although they are user friendly they may implement very length form pages. Case in point in the Start a Family form. It consists of four steps and attempts to componentize pieces and parts of it proved harder than keeping it all withing a `form` element. Otherwise I stuck with one step forms elsewhere.
 
 
 

@@ -29,14 +29,14 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
             <DropdownMenuLabel>{ email }</DropdownMenuLabel>
             { !isFounder && (
               <DropdownMenuItem>
-                <Link href="/my-account">
+                <Link href="/family-member-account">
                   My Account
                 </Link>
               </DropdownMenuItem>
             ) }
             { isFounder && (
               <DropdownMenuItem>
-                <Link href="/family-my-account">
+                <Link href="/family-founder-account">
                   My Family Account
                 </Link>
               </DropdownMenuItem>

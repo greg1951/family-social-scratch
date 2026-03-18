@@ -5,33 +5,33 @@ import { SubmitHandler, useForm } from "react-hook-form";
 
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { FamilyMember, InviteFamilyDialog } from "../family-setup/family-setup-dialogs/invite-family-dialog";
+import { NewMembersDialog } from "../(family-members)/family-new-members/new-members-dialog";
 import { useState } from "react";
-import { AddMembersFormSchema } from "@/features/family/components/validation/schema";
+import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { CircleCheckBig } from "lucide-react";
-import { GetAllFamilyMembersReturn } from "@/components/db/types/family-member";
+import { NewFamilyMember } from "@/features/family/types/family-members";
 
-type FormValues = z.infer<typeof AddMembersFormSchema>;
+type FormValues = z.infer<typeof NewMembersFormSchema>;
 
-export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: FamilyMember[] }) {
+export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: NewFamilyMember[] }) {
 
   type FieldName = keyof FormValues
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(AddMembersFormSchema),
+    resolver: zodResolver(NewMembersFormSchema),
     defaultValues: {
-      familyMembers: familyMembers,
+      newfamilyMembers: familyMembers,
     }
   });
 
   const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(AddMembersFormSchema)
+    resolver: zodResolver(NewMembersFormSchema)
   });
 
-  const [members, setMembers] = useState<FamilyMember[]>(familyMembers)
-  const handleAddMember = (values: Pick<FamilyMember, 'firstName' | 'lastName' | 'email'>) => {
+  const [members, setMembers] = useState<NewFamilyMember[]>(familyMembers)
+  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email'>) => {
     setMembers((prev) => [
       ...prev,
       {
@@ -55,7 +55,7 @@ export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: 
       <Form { ...form }>
         <form onSubmit={ handleSubmit(processForm) } className="space-y-4">
           <div className="gap-y-2 ">
-            <InviteFamilyDialog
+            <NewMembersDialog
               members={ members }
               onAddMember={ handleAddMember }
               onRemoveMember={ handleRemoveMember }

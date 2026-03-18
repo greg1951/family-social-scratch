@@ -13,14 +13,15 @@ import Link from 'next/link';
 import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
-import { FamilyMember, InviteFamilyDialog } from '../family-setup-dialogs/invite-family-dialog';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../family-setup-dialogs/status-update-dialog';
+import { NewMembersDialog } from '../../(family-members)/family-new-members/new-members-dialog';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
 import { sendFamilyMemberEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
 import { addMemberNotifications } from '@/app/(registration)/family-member-registration/actions';
+import { NewFamilyMember } from '@/features/family/types/family-members';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -185,8 +186,8 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
   }
 
   // Handlers to add/remove members to the invited members list. 
-  const [members, setMembers] = useState<FamilyMember[]>([])
-  const handleAddMember = (values: Pick<FamilyMember, 'firstName' | 'lastName' | 'email'>) => {
+  const [members, setMembers] = useState<NewFamilyMember[]>([])
+  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email'>) => {
     setMembers((prev) => [
       ...prev,
       {
@@ -590,7 +591,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                       </CardDescription>
                       <CardContent className="space-y-4 pt-5">
 
-                        <InviteFamilyDialog
+                        <NewMembersDialog
                           members={ members }
                           onAddMember={ handleAddMember }
                           onRemoveMember={ handleRemoveMember }

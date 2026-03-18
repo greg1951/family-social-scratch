@@ -17,29 +17,23 @@ import {
 } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { NewFamilyMember, CurrentFamilyMember } from '@/features/family/types/family-members'
 
 const inviteMemberSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
+  email: z.email('Please enter a valid email address'),
 })
 
 type InviteMemberValues = z.infer<typeof inviteMemberSchema>
 
-export type FamilyMember = {
-  id: string
-  firstName: string
-  lastName: string
-  email: string
-}
-
 type InviteFamilyDialogProps = {
-  members: FamilyMember[]
+  members: NewFamilyMember[]
   onAddMember: (values: InviteMemberValues) => void
   onRemoveMember: (id: string) => void
 }
 
-export function InviteFamilyDialog({ members, onAddMember, onRemoveMember }: InviteFamilyDialogProps) {
+export function NewMembersDialog({ members, onAddMember, onRemoveMember }: InviteFamilyDialogProps) {
   const form = useForm<InviteMemberValues>({
     resolver: zodResolver(inviteMemberSchema),
     defaultValues: {
