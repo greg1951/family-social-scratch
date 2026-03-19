@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
+import { id } from 'date-fns/locale';
 
 /*------------ CurrentMemberSchema definitions below -------------- */
 
@@ -20,6 +21,7 @@ export const CurrentMembersFormSchema = z.object({
 /*------------ NewMemberSchema definitions below -------------- */
 
 const NewMemberSchema = z.object({
+  id: z.string(),
   firstName: z.string(),
   lastName: z.string(),
   email: z.email(),

@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { NewMembersDialog } from "../(family-members)/family-new-members/new-members-dialog";
+import { NewInvitesDialog } from "../(family-members)/family-new-members/new-members-dialog";
 import { useState } from "react";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -55,10 +55,10 @@ export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: 
       <Form { ...form }>
         <form onSubmit={ handleSubmit(processForm) } className="space-y-4">
           <div className="gap-y-2 ">
-            <NewMembersDialog
-              members={ members }
-              onAddMember={ handleAddMember }
-              onRemoveMember={ handleRemoveMember }
+            <NewInvitesDialog
+              newInvites={ members }
+              onAddInvite={ handleAddMember }
+              onRemoveInvite={ handleRemoveMember }
             />
 
             <div className="rounded-md border p-1">

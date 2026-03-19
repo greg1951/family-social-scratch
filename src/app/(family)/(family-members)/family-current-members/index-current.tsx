@@ -13,7 +13,7 @@ import { CircleCheckBig, Group } from "lucide-react";
 import { CurrentFamilyMember, CurrentMembersValues } from "@/features/family/types/family-members";
 import { CurrentMembersDialog } from "./current-members-dialog";
 import { toast } from "sonner";
-import { updateFamilyMemberStatus } from "@/components/db/sql/queries-family-member";
+import { updateFamilyInviteStatuses } from "@/components/db/sql/queries-family-invite";
 import { updateCurrentMembers } from "./actions";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;

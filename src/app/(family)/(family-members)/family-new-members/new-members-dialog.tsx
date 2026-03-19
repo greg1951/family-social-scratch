@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { NewFamilyMember, CurrentFamilyMember } from '@/features/family/types/family-members'
+import { NewFamilyInvite } from '@/features/family/types/family-members'
 
 const inviteMemberSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -28,12 +28,12 @@ const inviteMemberSchema = z.object({
 type InviteMemberValues = z.infer<typeof inviteMemberSchema>
 
 type InviteFamilyDialogProps = {
-  members: NewFamilyMember[]
-  onAddMember: (values: InviteMemberValues) => void
-  onRemoveMember: (id: string) => void
+  newInvites: NewFamilyInvite[]
+  onAddInvite: (values: InviteMemberValues) => void
+  onRemoveInvite: (id: string) => void
 }
 
-export function NewMembersDialog({ members, onAddMember, onRemoveMember }: InviteFamilyDialogProps) {
+export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: InviteFamilyDialogProps) {
   const form = useForm<InviteMemberValues>({
     resolver: zodResolver(inviteMemberSchema),
     defaultValues: {
@@ -44,7 +44,7 @@ export function NewMembersDialog({ members, onAddMember, onRemoveMember }: Invit
   })
 
   const onSubmit = (values: InviteMemberValues) => {
-    onAddMember(values)
+    onAddInvite(values)
     form.reset()
   }
 
@@ -58,15 +58,16 @@ export function NewMembersDialog({ members, onAddMember, onRemoveMember }: Invit
       <DialogTrigger asChild>
         <Button className="bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
           <UserPlus className="mr-2 h-4 w-4" />
-          Invite Family Member
+          Open Invitation Dialog
         </Button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Invite Family Members</DialogTitle>
+          <DialogTitle>Invite New Family Members</DialogTitle>
           <DialogDescription>
-            Add members by first name, last name, and email. You can also remove entries before moving to the next step.
+            Add members by first name, last name, and email. You can also remove entries before submitting the invitations.
+            When done, close this dialog and select the <b>Send Invitations</b> button.
           </DialogDescription>
         </DialogHeader>
 
@@ -126,29 +127,29 @@ export function NewMembersDialog({ members, onAddMember, onRemoveMember }: Invit
 
         <div className="rounded-md border p-4">
           <p className="mb-3 text-sm font-semibold text-neutral-800">
-            Invited Members ({ members.length })
+            Invited Members ({ newInvites.length })
           </p>
 
-          { members.length === 0 ? (
+          { newInvites.length === 0 ? (
             <p className="text-sm text-neutral-500">No entries yet.</p>
           ) : (
             <ul className="space-y-2">
-              { members.map((member) => (
+              { newInvites.map((invite) => (
                 <li
-                  key={ member.id }
+                  key={ invite.id }
                   className="flex items-center justify-between rounded-md border bg-neutral-50 px-3 py-2"
                 >
                   <div>
-                    <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
-                    <p className="text-xs text-neutral-600">{ member.email }</p>
+                    <p className="text-sm font-medium text-neutral-900">{ invite.firstName } { invite.lastName }</p>
+                    <p className="text-xs text-neutral-600">{ invite.email }</p>
                   </div>
 
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={ () => onRemoveMember(member.id) }
-                    aria-label={ `Remove ${ member.firstName } ${ member.lastName }` }
+                    onClick={ () => onRemoveInvite(invite.id) }
+                    aria-label={ `Remove ${ invite.firstName } ${ invite.lastName }` }
                     className="text-neutral-600 hover:text-red-600"
                   >
                     <Trash2 className="h-4 w-4" />

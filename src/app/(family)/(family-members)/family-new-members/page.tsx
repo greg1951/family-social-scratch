@@ -4,9 +4,11 @@ import { redirect } from "next/navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import NewMembersAccountForm from "./index-new";
-import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { NewFamilyMember } from "@/features/family/types/family-members";
+import { NewFamilyInvite } from "@/features/family/types/family-members";
+import { member } from "@/components/db/schema/family-social-schema-tables";
+import { AccountDetails } from "@/features/auth/types/auth-types";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
@@ -18,17 +20,29 @@ export default async function FamilyNewMembersPage() {
     redirect("/");
   }
 
-  const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  let familyMembers: NewFamilyMember[] = [];
-  if (membersResult.success && membersResult.members) {
-    // console.log('MyFamilyAccountTesting->getAllFamilyMembers->membersResult: ', membersResult);
-    familyMembers = membersResult.members.map((member) => ({
-      id: member.id.toString(),
-      firstName: member.firstName,
-      lastName: member.lastName,
-      email: member.email,
-    })) as NewFamilyMember[];
+  const [memberDetailsResult] = await Promise.all([
+    getMemberDetailsByEmail(memberKeyDetails.email),
+  ]);
+
+
+  let accountDetails: AccountDetails | null = null;
+  if (memberDetailsResult.success) {
+    accountDetails = {
+      accountDetails: {
+        userId: memberDetailsResult.userId,
+        email: memberDetailsResult.email,
+        familyName: memberDetailsResult.familyName,
+        firstName: memberDetailsResult.firstName,
+        lastName: memberDetailsResult.lastName,
+        nickName: memberDetailsResult.nickName,
+        birthday: memberDetailsResult.birthday,
+        cellPhone: memberDetailsResult.cellPhone,
+        memberId: memberDetailsResult.memberId,
+        mfaActive: memberDetailsResult.mfaActive,
+      }
+    };
   }
+
 
 
   return (
@@ -53,7 +67,7 @@ export default async function FamilyNewMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <NewMembersAccountForm familyMembers={ familyMembers } />
+          <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } />
         </Card>
 
       </div >

@@ -5,8 +5,10 @@ import { UpdateInviteStatusResult, UpdateInviteTokenInput, UpdateInviteTokenResu
 import { InsertInvitesInput, 
          InsertInvitesReturn, 
          GetInviteTokenReturn, 
-         GetInviteByMemberIdReturn} from '../types/family-member';
+         GetInviteByMemberIdReturn,
+         GenericDatabaseReturn} from '../types/family-member';
 import { get } from 'http';
+import { CurrentMembersValues, NewFamilyInvites, UpdateInvite } from '@/features/family/types/family-members';
 
          
 export async function insertInvites(invitesArg: InsertInvitesInput)
@@ -150,4 +152,87 @@ export async function updateFamilyInviteStatus(memberId: number, status: string)
   }
 
 }
+
+/*-------- updateFamilyInviteStatuses ------------------ */
+export async function updateFamilyInviteStatuses({currentMemberValues, originalMemberValues}
+  : { currentMemberValues: CurrentMembersValues, originalMemberValues: CurrentMembersValues }  ) {
+
+  // console.log('queries-family-invite->updateFamilyInviteStatuses->currentMemberValues: ', currentMemberValues);
+  // console.log('queries-family-invite->updateFamilyInviteStatuses->originalMemberValues: ', originalMemberValues);
+
+  
+  let updatedMembers: UpdateInvite[] = [];
+  for (let i=0; i < currentMemberValues.currentMembers.length; i++) {
+    const currentMember = currentMemberValues.currentMembers[i];
+    const originalMember = originalMemberValues.currentMembers[i];
+    if (currentMember.status !== originalMember.status) {
+      updatedMembers.push({
+        id: currentMember.id,
+        status: currentMember.status,
+      });
+    }
+  };
+
+  // console.log('queries-family-invite->updateFamilyInviteStatuses->updatedMembers: ', updatedMembers);
+
+  if (updatedMembers.length > 0) {
+    for (let ix=0; ix < updatedMembers.length; ix++) {
+  
+      const updateResult = await db
+        .update(familyInvitation)
+        .set({status: updatedMembers[ix].status})
+        .where(eq(familyInvitation.id, updatedMembers[ix].id));
+
+      if (!updateResult) {
+        console.error("queries-family-invite->updateFamilyInviteStatuses->FAILED to update member with memberId: ", updatedMembers[ix].id);
+        return {
+          success: false,
+          message: `Failed to update member with memberId ${updatedMembers[ix].id}`, 
+        }
+      }
+    }
+  }
+  return {success: true };
+}
+
+/*-------- addNewInvites ------------------ */
+export async function addNewInvites({newInvites, familyId}
+  : { newInvites: NewFamilyInvites, familyId: number })
+  : Promise<InsertInvitesReturn> {
+  console.log('queries-family-invite->addNewInvites->newInvites: ', newInvites); 
+
+  const invites = newInvites.newInvites.map((invite) => ({
+    firstName: invite.firstName,
+    lastName: invite.lastName,
+    email: invite.email,
+    status: 'invited',
+    familyId: familyId,
+  }));
+
+  const insertResult = await db.insert(familyInvitation).values(invites).returning();
+  if (!insertResult) {
+    console.error('queries-family-invite->addNewInvites->FAILED to insert invites: ', invites);
+    return {
+      success: false,
+      message: `Failed to insert new invites`, 
+    }
+  }
+  else {
+    console.log('queries-family-invite->addNewInvites->Successfully inserted invites: ', insertResult);
+    const returnInvites = insertResult.map((invite) => ({
+      id: invite.id,
+      email: invite.email,
+      firstName: invite.firstName,
+      lastName: invite.lastName,
+      familyId: invite.familyId,
+      createdAt: invite.createdAt as Date,
+    }));
+
+    return {
+      success: true,
+      invites: returnInvites,
+    };  
+  }
+}
+
 

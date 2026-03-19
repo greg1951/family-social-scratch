@@ -5,6 +5,17 @@ export type NewFamilyMember = {
   email: string
 }
 
+export interface NewFamilyInvite {
+  id: string
+  firstName: string
+  lastName: string
+  email: string
+}
+
+export interface NewFamilyInvites {
+  newInvites: NewFamilyInvite[];
+}
+
 export type CurrentFamilyMember = {
   id: number;
   firstName: string;

@@ -85,7 +85,7 @@ export function StatusUpdateDialog({ open, onOpenChange, submissionSteps }: Stat
             onClick={ () => {
               if (!allStepsCompleted) return;
               onOpenChange(false);
-              router.push('/');
+              // router.push('/');
             } }
             disabled={ !allStepsCompleted }
             className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"

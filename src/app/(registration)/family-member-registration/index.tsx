@@ -40,6 +40,7 @@ function formatPhoneNumber(value: string): string {
   return `(${ digits.slice(0, 3) }) ${ digits.slice(3, 6) }-${ digits.slice(6) }`;
 }
 
+//--------------- FamilyMemberRegistrationForm Component ---------------
 export default function FamilyMemberRegistrationForm({ email, firstName, lastName, familyName, familyId }
   : { email: string; firstName: string; lastName: string; familyName: string; familyId: number; }) {
 
@@ -76,10 +77,12 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
   };
 
   const handleFormSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log("MemberRegistration->SubmitHandler->Form data: ", data);
-    console.log("MemberRegistration->SubmitHandler->Dirty: ", dirtyFields);
-    // Show status dialog
+
+    // console.log("MemberRegistration->SubmitHandler->Form data: ", data);
+    // console.log("MemberRegistration->SubmitHandler->Dirty: ", dirtyFields);
+
     setShowStatusDialog(true);
+
     try {
 
       // Step 1: Create Member

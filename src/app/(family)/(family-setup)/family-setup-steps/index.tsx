@@ -13,12 +13,12 @@ import Link from 'next/link';
 import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
-import { NewMembersDialog } from '../../(family-members)/family-new-members/new-members-dialog';
+import { NewInvitesDialog } from '../../(family-members)/family-new-members/new-members-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
-import { sendFamilyMemberEmails } from './actions';
+import { sendEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
 import { addMemberNotifications } from '@/app/(registration)/family-member-registration/actions';
 import { NewFamilyMember } from '@/features/family/types/family-members';
@@ -147,7 +147,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 6: Send emails to join new Family Social family
       updateStepStatus(6, 'inProgress');
-      const sendMemberEmailResult = await sendFamilyMemberEmails(insertInvitesResult.invites, values.familyName, founderDetails);
+      const sendMemberEmailResult = await sendEmails(insertInvitesResult.invites, values.familyName, founderDetails);
       // console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
       if (sendMemberEmailResult.error) {
         updateStepStatus(6, 'error', sendMemberEmailResult.message);
@@ -591,10 +591,10 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                       </CardDescription>
                       <CardContent className="space-y-4 pt-5">
 
-                        <NewMembersDialog
-                          members={ members }
-                          onAddMember={ handleAddMember }
-                          onRemoveMember={ handleRemoveMember }
+                        <NewInvitesDialog
+                          newInvites={ members }
+                          onAddInvite={ handleAddMember }
+                          onRemoveInvite={ handleRemoveMember }
                         />
 
                         <div className="rounded-md border p-4">

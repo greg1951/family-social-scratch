@@ -10,15 +10,12 @@ import { getMemberNotifications } from "@/components/db/sql/queries-family-notif
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import FamilyNotificationsForm from "../family-notifications";
 import AccountDetailsForm from "@/app/(family)/family-member-account";
-import MyFamilyAccountForm from "../(family-members)/family-new-members/index-new";
-import { CurrentFamilyMember, NewFamilyMember } from "@/features/family/types/family-members";
-import { CirclePlusIcon, CircleCheck, MessageCircleMore, UserPenIcon, UserPlus, Users } from 'lucide-react'
+import { CurrentFamilyMember, NewFamilyInvite, NewFamilyMember } from "@/features/family/types/family-members";
+import { MessageCircleMore, UserPenIcon, UserPlus, Users } from 'lucide-react'
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
 import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
 
 export default async function FamilyMyAccountPage() {
-
-
   const session = await auth();
 
   if (!session) {
@@ -27,7 +24,6 @@ export default async function FamilyMyAccountPage() {
 
   const email = session.user?.email as string;
   const userId = Number(session.user?.id);
-  const familyName = session.user?.name as string;
 
   const [memberDetails, result2fa, memberKeyDetails] = await Promise.all([
     getMemberDetails(userId),
@@ -35,9 +31,6 @@ export default async function FamilyMyAccountPage() {
     getMemberPageDetails(),
   ]);
 
-  // console.log("FamilyMyAccountPage->memberDetails: ", memberDetails);
-  // console.log("FamilyMyAccountPage->result2fa: ", result2fa);
-  // console.log("FamilyMyAccountPage->memberKeyDetails: ", memberKeyDetails);
   if (memberKeyDetails.isLoggedIn === false || memberKeyDetails.isFounder === false) {
     console.warn('Unauthorized access attempt to family founder account page. Redirecting to home page.');
     redirect("/");
@@ -47,7 +40,7 @@ export default async function FamilyMyAccountPage() {
   const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];
 
   // const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  let newFamilyMembers: NewFamilyMember[] = [];
+  let newFamilyMembers: NewFamilyInvite[] = [];
 
   const currentMembersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
   let currentFamilyMembers: CurrentFamilyMember[] = [];
@@ -91,7 +84,7 @@ export default async function FamilyMyAccountPage() {
               My Family Account
             </CardTitle>
             <CardDescription className="text-center text-sm text-slate-800">
-              Manage the <b>{ familyName }</b> family settings here
+              Manage the <b>{ memberKeyDetails.familyName }</b> family settings here
             </CardDescription>
           </CardHeader>
 
@@ -127,7 +120,7 @@ export default async function FamilyMyAccountPage() {
               </TabsContent>
 
               <TabsContent value="new-family" className="mt-4 rounded-lg border">
-                <NewMembersAccountForm familyMembers={ newFamilyMembers } />
+                <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } />
               </TabsContent>
 
               <TabsContent value="current-family" className="mt-4 rounded-lg border">

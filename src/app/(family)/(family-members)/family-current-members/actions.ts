@@ -1,12 +1,12 @@
 'use server';
 
-import { updateFamilyMemberStatus } from "@/components/db/sql/queries-family-member";
+import { updateFamilyInviteStatuses } from "@/components/db/sql/queries-family-invite";
 import { CurrentMembersValues } from "@/features/family/types/family-members";
 
 export async function updateCurrentMembers({currentMembers, originalMembers}
   : { currentMembers: CurrentMembersValues, originalMembers: CurrentMembersValues }  ) {
 
-  const updateResult = await updateFamilyMemberStatus({
+  const updateResult = await updateFamilyInviteStatuses({
     currentMemberValues: currentMembers,
     originalMemberValues: originalMembers,
   });

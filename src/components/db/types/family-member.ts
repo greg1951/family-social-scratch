@@ -1,3 +1,9 @@
+
+export type GenericDatabaseReturn = {
+  success: boolean;
+  message?: string;
+};
+
 export type GetFamilyReturn =
   | { success: false; message: string }
   | {
