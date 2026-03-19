@@ -1,21 +1,23 @@
 'use client';
 
 import { Circle, CheckCircle2, CircleSlash2, Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { SubmissionStep } from '@/features/family/types/family-steps';
+import { on } from 'events';
 
 type StatusUpdateDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  redirectUrl: string | null;
   submissionSteps: SubmissionStep[];
 };
 
-export function StatusUpdateDialog({ open, onOpenChange, submissionSteps }: StatusUpdateDialogProps) {
+export function StatusUpdateDialog({ open, onOpenChange, redirectUrl, submissionSteps }: StatusUpdateDialogProps) {
   const router = useRouter();
   const allStepsCompleted = submissionSteps.every((s) => s.status === 'completed');
-  console.log('StatusUpdateDialog->allStepsCompleted: ', allStepsCompleted);
+  // console.log('StatusUpdateDialog->allStepsCompleted: ', allStepsCompleted);
 
   return (
     <Dialog
@@ -85,7 +87,9 @@ export function StatusUpdateDialog({ open, onOpenChange, submissionSteps }: Stat
             onClick={ () => {
               if (!allStepsCompleted) return;
               onOpenChange(false);
-              // router.push('/');
+              if (redirectUrl) {
+                router.push(redirectUrl);
+              }
             } }
             disabled={ !allStepsCompleted }
             className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold"

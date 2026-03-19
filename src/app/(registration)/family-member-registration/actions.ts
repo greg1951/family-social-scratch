@@ -9,9 +9,9 @@ export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
 
   memberDetails.isFounder = false;
   const insertMemberResult = await insertMember(memberDetails);
-  console.log("actions->addRegisteredMember->insertResult: ", insertMemberResult);
+  // console.log("actions->addRegisteredMember->insertResult: ", insertMemberResult);
   if (!insertMemberResult.success) {
-    console.log('Error occurred inserting the new family member');
+    // console.log('Error occurred inserting the new family member');
     return insertMemberResult;
   }
 
@@ -27,7 +27,7 @@ export const addMemberCreds = async(memberDetails:RegisterMemberInput, newMember
     memberId: newMemberId,
   });
   if (!insertUserResult) {
-    console.log('Error occurred inserting the new user');
+    // console.log('Error occurred inserting the new user');
     return insertUserResult;
   }
 
@@ -41,7 +41,7 @@ export const addMemberNotifications = async(newMemberId: number) => {
   const insertMemberNotificationsResult = await insertMemberNotifications(newMemberId);
 
   if (!insertMemberNotificationsResult.success) {
-    console.log('Error occurred inserting the member notifications');
+    // console.log('Error occurred inserting the member notifications');
     return insertMemberNotificationsResult;
   }
 
@@ -50,11 +50,11 @@ export const addMemberNotifications = async(newMemberId: number) => {
   }
 }
 
-export const updateInviteStatus = async(newMemberId: number, status: string) => {
-
-  const updateInviteStatusResult = await updateFamilyInviteStatus(newMemberId, status);
+export const updateInviteStatus = async(id: number, status: string) => {
+  console.log('actions->updateInviteStatus->id: ', id, 'status: ', status);
+  const updateInviteStatusResult = await updateFamilyInviteStatus(id, status);
   if (updateInviteStatusResult.error) {
-    console.log('Error occurred updating the invite status');
+    // console.log('Error occurred updating the invite status');
     return updateInviteStatusResult;
   }
 

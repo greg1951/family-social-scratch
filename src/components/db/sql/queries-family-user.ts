@@ -43,7 +43,7 @@ export async function getUserFamilyNameByEmail(email: string)
 export async function insertFamily(familyName: string)
 : Promise<InsertFamilyReturn> {
 
-    console.log("insertFamily-> familyName: ", familyName);
+    // console.log("insertFamily-> familyName: ", familyName);
 
     const [insertResult] = await db.insert(family).values({
       name: familyName,
@@ -55,7 +55,7 @@ export async function insertFamily(familyName: string)
       }
     } 
     
-    console.log("insertFamily-> insertResult: ", insertResult);
+    // console.log("insertFamily-> insertResult: ", insertResult);
 
     return {
       success: true,
@@ -69,7 +69,7 @@ export async function insertFamily(familyName: string)
 export async function insertMember(memberArg: InsertMemberInput)
 : Promise<InsertMemberReturn> {
 
-  console.log("insertMember-> member: ", memberArg);
+  // console.log("insertMember-> member: ", memberArg);
 
   try {
     const [insertResult] = await db.insert(member).values({
@@ -87,7 +87,7 @@ export async function insertMember(memberArg: InsertMemberInput)
         message: `Failed to insert member with name ${memberArg.firstName} ${memberArg.lastName}`,
       }
     } 
-    console.log("insertMember-> insertResult: ", insertResult);
+    // console.log("insertMember-> insertResult: ", insertResult);
 
     /* Returning properties as they are needed */
     return {
@@ -136,7 +136,7 @@ export async function insertUser(userArg: InsertUserInput)
         createdAt: insertResult.createdAt as Date,
       }
     } catch (e: unknown) {
-        console.error("Error inserting user");      
+        // console.error("Error inserting user");      
         return {
           success: false,
           message: `Failed to insert user with email ${userArg.email}`,

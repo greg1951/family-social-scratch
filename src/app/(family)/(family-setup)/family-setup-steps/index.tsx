@@ -277,7 +277,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <FormItem>
                                   <FormLabel className="font-extrabold">First Name</FormLabel>
                                   <FormControl>
-                                    <Input { ...field } placeholder="John" className="text-xs font-extralight" />
+                                    <Input { ...field } placeholder="Your first name" className="text-xs font-extralight" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -299,7 +299,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <FormItem>
                                   <FormLabel className="font-extrabold">Last Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Doe" { ...field } className="text-xs font-extralight" />
+                                    <Input placeholder="Your last name" { ...field } className="text-xs font-extralight" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -322,7 +322,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <FormItem>
                                   <FormLabel className="font-extrabold italic">Nickname</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Optional" { ...field } className="text-xs font-extralight" />
+                                    <Input placeholder="Optional nickname" { ...field } className="text-xs font-extralight" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -347,7 +347,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <FormItem>
                                   <FormLabel className="font-extrabold">Founder's Email</FormLabel>
                                   <FormControl>
-                                    <Input type="email" placeholder="john@example.com" { ...field } className="text-xs font-extralight" />
+                                    <Input type="email" placeholder="your email address" { ...field } className="text-xs font-extralight" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -432,7 +432,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                     </CardContent>
                     <CardFooter className="flex justify-center">
                       <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
-                        <Link href="/trial-home">
+                        <Link href="/family-setup-home">
                           <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
@@ -519,18 +519,18 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                           } catch (error) {
                                             return error;
                                           }
-                                          console.log("onChange->search: ", search);
+                                          // console.log("onChange->search: ", search);
                                           const [filteredName] = familyNames?.filter((name) => name.toLowerCase().includes(search));
                                           let lowerFilteredName: string = "";
                                           if (filteredName) {
                                             lowerFilteredName = filteredName.toLowerCase();
                                           }
-                                          console.log("onChange->lowerFilteredName: ", lowerFilteredName);
+                                          // console.log("onChange->lowerFilteredName: ", lowerFilteredName);
                                           if (lowerFilteredName === search) {
-                                            console.log("onChange->not unique! ");
+                                            // console.log("onChange->not unique! ");
                                             setFamilyNameGood(false);
                                           } else {
-                                            console.log("onChange->it is unique! ");
+                                            // console.log("onChange->it is unique! ");
                                             setFamilyNameGood(true);
                                           }
 
@@ -741,6 +741,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       <StatusUpdateDialog
         open={ showStatusDialog }
         onOpenChange={ setShowStatusDialog }
+        redirectUrl={ "/login" }
         submissionSteps={ submissionSteps }
       />
     </>

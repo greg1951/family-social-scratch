@@ -83,7 +83,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
  
   try {
     const findFamilyResult = await findRegisteredFamily(family);
-    console.log("queries-user->findRegisteredFamily->findFamilyResult: ", findFamilyResult);
+    // console.log("queries-user->getFullUserCredsByEmail->findFamilyResult: ", findFamilyResult);
     if (!findFamilyResult.success) {
       return findFamilyResult;
     }

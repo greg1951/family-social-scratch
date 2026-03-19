@@ -49,10 +49,10 @@ export default function LoginForm() {
   const handleEmailSubmit = async (data: z.infer<typeof formSchema>) => {
     setEmail(data.email);
     const precheckResult = await emailLoginCheck({ email: data.email, password: data.password, family: data.family });
-    console.log('Login->handleEmailSubmit->precheckResult: ', precheckResult);
+    // console.log('Login->handleEmailSubmit->precheckResult: ', precheckResult);
 
     if (precheckResult.error) {
-      console.log('Login->handleEmailSubmit->precheckResult.error! ', precheckResult.error);
+      // console.log('Login->handleEmailSubmit->precheckResult.error! ', precheckResult.error);
       form.setError("root", {
         message: precheckResult.message,
       });
@@ -69,7 +69,7 @@ export default function LoginForm() {
         family: data.family,
         password: data.password
       });
-      console.log("index->response: ", response);
+      // console.log("index->response: ", response);
 
       if (response?.error) {
         form.setError("root", {

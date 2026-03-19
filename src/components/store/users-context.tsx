@@ -50,7 +50,7 @@ export function userReducer(
 ): UserState {
   switch (action.type) {
     case "UPDATE_USER":
-      console.log("UPDATE_USER->action.payload: ", action.payload)
+      // console.log("UPDATE_USER->action.payload: ", action.payload)
       return {
         ...previousState,
         isActive: true,
@@ -64,13 +64,13 @@ export function userReducer(
         },
       };
     case "REMOVE_USER":
-      console.log("REMOVE_USER")
+      // console.log("REMOVE_USER")
       return {
         ...previousState,
         isActive: false,
       };
     case "ADD_USER":
-      console.log("ADD_USER->action.payload: ", action.payload)
+      // console.log("ADD_USER->action.payload: ", action.payload)
       return {
         ...previousState,
         isActive: true,

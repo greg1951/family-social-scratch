@@ -18,6 +18,7 @@ import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInvi
 import { SubmissionStep } from '@/features/family/types/family-steps';
 import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/constants/family-steps';
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
+import { InviteRelatedInput } from '@/components/db/types/family-member';
 
 const formSchema = z.object({
   firstName: z.string().min(2, { message: "First name is required" }),
@@ -41,8 +42,7 @@ function formatPhoneNumber(value: string): string {
 }
 
 //--------------- FamilyMemberRegistrationForm Component ---------------
-export default function FamilyMemberRegistrationForm({ email, firstName, lastName, familyName, familyId }
-  : { email: string; firstName: string; lastName: string; familyName: string; familyId: number; }) {
+export default function FamilyMemberRegistrationForm({ inviteRelatedInput }: { inviteRelatedInput: InviteRelatedInput }) {
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -52,11 +52,12 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
     useState<SubmissionStep[]>(initialRegistrationSteps);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      firstName: firstName,
-      lastName: lastName,
+      firstName: inviteRelatedInput.firstName,
+      lastName: inviteRelatedInput.lastName,
       nickName: "",
       phone: "",
       password: "",
@@ -89,7 +90,7 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
       updateStepStatus(1, 'inProgress');
       // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
       const registeredMember = {
-        ...data, email, familyId: familyId, isFounder: false
+        ...data, email: inviteRelatedInput.email, familyId: inviteRelatedInput.familyId, isFounder: false
       };
 
       const addMemberResult = await addRegisteredMember(registeredMember);
@@ -125,7 +126,7 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
       // Step 4: Update the invite status to joined
       updateStepStatus(4, 'inProgress');
       // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      const updateInviteStatusResult = await updateInviteStatus(addMemberResult.id, inviteStatusJoined);
+      const updateInviteStatusResult = await updateInviteStatus(inviteRelatedInput.id, inviteStatusJoined);
       if (updateInviteStatusResult.error) {
         const message = "Error occurred updating the invite status";
         updateStepStatus(4, 'error', message);
@@ -321,7 +322,7 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
               </div>
             </CardContent>
             <CardFooter className="flex justify-center">
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end pt-0">
                 <Button
                   type="reset" className="w-full border-[#59cdf7] text-black hover:bg-[#9de4fe] font-semibold md:w-auto text-xs md:text-sm"
                   disabled={ !isDirty || isLoading ? true : false } onClick={ handleReset }>
@@ -345,6 +346,7 @@ export default function FamilyMemberRegistrationForm({ email, firstName, lastNam
       <StatusUpdateDialog
         open={ showStatusDialog }
         onOpenChange={ setShowStatusDialog }
+        redirectUrl={ "/login" }
         submissionSteps={ submissionSteps }
       />
     </>

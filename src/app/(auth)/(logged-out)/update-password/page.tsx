@@ -18,7 +18,7 @@ export default async function UpdateResetPassword({ searchParams }: {
   if (token) {
     const result = await getPasswordToken({ token });
     if (result.error) {
-      console.log('Error occurred retrieving passwordToken');
+      console.error('Error occurred retrieving passwordToken');
     }
 
     // console.log('UpdateResetPassword->result: ', result);

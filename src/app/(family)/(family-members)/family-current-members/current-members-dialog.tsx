@@ -50,7 +50,7 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
   })
 
   const onSubmit = (values: UpdateMemberValues) => {
-    console.log('Form submitted with values:', values);
+    // console.log('Form submitted with values:', values);
     form.reset(values)
   }
 

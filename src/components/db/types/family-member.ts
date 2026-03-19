@@ -182,14 +182,29 @@ export type GetInviteTokenReturn =
   | { error: true; message: string }
   | {
       error: false;
-      firstName: string;
-      lastName: string;
-      email: string;
-      tokenExpiry: Date;
-      isValidExpiry: boolean;
-      familyName: string;
-      familyId: number;
+      inviteRelated: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        email: string;
+        tokenExpiry: Date;
+        isValidExpiry: boolean;
+        familyName: string;
+        familyId: number;
+      }
     };
+
+export type InviteRelatedInput = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  tokenExpiry: Date;
+  isValidExpiry: boolean;
+  familyName: string;
+  familyId: number;
+};
+
 
 export type GetInviteByMemberIdReturn =
   | { error: true; message: string }

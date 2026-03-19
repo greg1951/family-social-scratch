@@ -55,7 +55,7 @@ export const passwordReset = async (email: string) => {
     react: React.createElement(PasswordResetEmail, { link: resetLink, }),
   });
   
-  console.log('passwordReset->sendResult: ',sendResult)
+  // console.log('passwordReset->sendResult: ',sendResult)
   if (sendResult.error) {
     return {
       error: true,

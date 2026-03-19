@@ -7,7 +7,7 @@ import { auth } from "@/auth";
 export async function getMemberPageDetails(): Promise<MemberKeyDetails> {
   const session = await auth();
   if (!session) {
-    console.log("getMemberPageDetails: No session found");
+    // console.log("getMemberPageDetails: No session found");
     return {
       isLoggedIn: false,
       email: "",

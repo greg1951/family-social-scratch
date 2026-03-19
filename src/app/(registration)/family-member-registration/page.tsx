@@ -14,42 +14,60 @@ export default async function FamilyMemberRegistration({ searchParams }
   }) {
   // Let the logic begin...
   const { token } = await searchParams;
-  let isValidExpiry: boolean = false;
-  let email: string = "";
-  let firstName: string = "";
-  let lastName: string = "";
-  let familyName: string = "";
-  let familyId: number = 0;
-  let tokenResult: GetInviteTokenReturn;
-  if (token) {
-    const getTokenResult = await getInviteToken(token);
-    if (getTokenResult.error) {
-      console.log('Error occurred retrieving the invitation token');
-    }
-    else {
-      tokenResult = getTokenResult;
-      isValidExpiry = getTokenResult.isValidExpiry;
-      email = getTokenResult.email;
-      firstName = getTokenResult.firstName;
-      lastName = getTokenResult.lastName;
-      familyName = getTokenResult.familyName;
-      familyId = getTokenResult.familyId;
-    }
+  if (!token) {
+    console.warn('FamilyMemberRegistration->No token provided in search params');
+    return (
+      <div className="flex justify-center">
+        <main className="font-app">
+          <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
+              <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
+              <div className="text-center text-xs font-light text-slate-800 pt-2">
+                No token provided in search params.
+              </div>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
+    );
   }
 
+  let inviteRelated: Extract<GetInviteTokenReturn, { error: false }>['inviteRelated'];
+  const getTokenResult = await getInviteToken(token);
+  if (getTokenResult.error) {
+    console.error('Error occurred retrieving the invitation token');
+    return (
+      <div className="flex justify-center">
+        <main className="font-app">
+          <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
+              <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
+              <div className="text-center text-xs font-light text-slate-800 pt-2">
+                Error occurred retrieving the invitation token.
+              </div>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+  else {
+    inviteRelated = getTokenResult.inviteRelated;
+  }
+  // console.log('FamilyMemberRegistration->getInviteToken->inviteRelated.isValidExpiry: ', inviteRelated?.isValidExpiry);
   return (
     <div className="flex justify-center">
       <main className="font-app">
-        <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[80vh]">
+        <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
           <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
             <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
-            { isValidExpiry && (
+            { inviteRelated?.isValidExpiry && (
               <div className="text-center text-xs font-light text-slate-800 pt-2">
-                Registering <b>{ email }</b> in the <b>{ familyName }</b> family
+                Registering <b>{ inviteRelated.email }</b> in the <b>{ inviteRelated.familyName }</b> family
               </div>
             ) }
           </CardHeader>
-          { !isValidExpiry && (
+          { !inviteRelated?.isValidExpiry && (
             <CardDescription className="text-left text-xs text-bold p-2">
               <p className="text-red-700">
                 Something went wrong. There are a number of possibilities. <br></br><br></br>
@@ -72,18 +90,18 @@ export default async function FamilyMemberRegistration({ searchParams }
 
             </CardDescription>
           ) }
-          { !isValidExpiry && (
+          { !inviteRelated?.isValidExpiry && (
             <CardFooter className="flex-col gap-2">
             </CardFooter>
           ) }
-          { isValidExpiry && (
+          { inviteRelated?.isValidExpiry && (
             <CardDescription className="text-center text-xs text-bold text-slate-800 p-4">
               When you submit your registration you'll be forwarded to resources to help you get started with your family.
             </CardDescription>
           ) }
           <CardContent>
-            { isValidExpiry && (
-              <FamilyMemberRegistrationForm email={ email } firstName={ firstName } lastName={ lastName } familyName={ familyName } familyId={ familyId } />
+            { inviteRelated?.isValidExpiry && (
+              <FamilyMemberRegistrationForm inviteRelatedInput={ inviteRelated } />
             ) }
 
           </CardContent>

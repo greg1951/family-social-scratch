@@ -15,10 +15,12 @@ import { CurrentMembersDialog } from "./current-members-dialog";
 import { toast } from "sonner";
 import { updateFamilyInviteStatuses } from "@/components/db/sql/queries-family-invite";
 import { updateCurrentMembers } from "./actions";
+import { useRouter } from "next/navigation";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
 export default function CurrentMembersAccountForm({ familyMembers }: { familyMembers: CurrentFamilyMember[] }) {
+  const router = useRouter();
   const form = useForm<FormValues>({
     resolver: zodResolver(CurrentMembersFormSchema),
     defaultValues: {
@@ -68,8 +70,8 @@ export default function CurrentMembersAccountForm({ familyMembers }: { familyMem
     }
   }
   const processForm: SubmitHandler<FormValues> = async (values) => {
-    console.log('SubmitHandler->values:', values);
-    console.log('SubmitHandler->Dirty fields:', form.formState.dirtyFields);
+    // console.log('SubmitHandler->values:', values);
+    // console.log('SubmitHandler->Dirty fields:', form.formState.dirtyFields);
 
     const currentMemberValues: CurrentMembersValues = {
       currentMembers: values.currentFamilyMembers.map((member) => ({
@@ -102,6 +104,7 @@ export default function CurrentMembersAccountForm({ familyMembers }: { familyMem
       position: "top-center",
       duration: 2000,
     });
+    router.refresh();
 
   }
 

@@ -17,11 +17,13 @@ import { SubmissionStep } from "@/features/family/types/family-steps";
 import { initialNewInviteSteps } from "@/features/family/constants/family-steps";
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
 import { AccountDetails } from "@/features/auth/types/auth-types";
+import { useRouter } from "next/navigation";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
 //--------------- NewMembersAccountForm Component ---------------
 export default function NewMembersAccountForm({ familyId, accountDetails }: { familyId: number, accountDetails: AccountDetails | null }) {
+  const router = useRouter();
   const [invites, setInvites] = useState<NewFamilyInvite[]>([]);
   const [submissionSteps, setSubmissionSteps] =
     useState<SubmissionStep[]>(initialNewInviteSteps);
@@ -45,7 +47,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
 
 
   const handleAddInvite = (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email'>) => {
-    console.log('NewMembersAccountForm->handleAddInvite->Adding invite with values:', values);
+    // console.log('NewMembersAccountForm->handleAddInvite->Adding invite with values:', values);
     setInvites((prev) => [
       ...prev,
       {
@@ -72,7 +74,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
 
   /*-------------------- Form Submission ------------------------ */
   const processForm: SubmitHandler<FormValues> = async (values) => {
-    console.log('Form submitted with values:', values);
+    // console.log('Form submitted with values:', values);
 
     setShowStatusDialog(true);
 
@@ -111,6 +113,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
 
     form.reset(values);
     setInvites([]);
+    router.refresh();
   }
 
   return (
@@ -156,6 +159,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
         <StatusUpdateDialog
           open={ showStatusDialog }
           onOpenChange={ setShowStatusDialog }
+          redirectUrl="/family-founder-account?tab=new-family"
           submissionSteps={ submissionSteps }
         />
       </CardContent>

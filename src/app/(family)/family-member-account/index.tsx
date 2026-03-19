@@ -11,8 +11,7 @@ import { useState } from "react";
 import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
 import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
 import { toast } from "sonner";
-import { Router } from "next/router";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 const formSchema = z
   .object({
@@ -73,6 +72,7 @@ export default function AccountDetailsForm({ accountDetails }: { accountDetails:
       position: "top-center",
       duration: 3000,
     });
+    router.refresh();
   };
 
   function resetForm() {

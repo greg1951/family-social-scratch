@@ -1,19 +1,14 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getMemberDetails } from "@/app/(family)/family-member-account/actions";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import FamilyNotificationsForm from "../family-notifications";
-import AccountDetailsForm from "@/app/(family)/family-member-account";
-import { CurrentFamilyMember, NewFamilyInvite, NewFamilyMember } from "@/features/family/types/family-members";
-import { MessageCircleMore, UserPenIcon, UserPlus, Users } from 'lucide-react'
-import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
-import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
+import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
+import FounderAccountTabs from "./founder-tabs";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -89,44 +84,12 @@ export default async function FamilyMyAccountPage() {
           </CardHeader>
 
           <CardContent className="pt-1">
-            <Tabs defaultValue="profile" className=" gap-y-25 md:gap-y-2">
-              <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 md:grid-cols-4 mb-10 md:mb-1">
-                <TabsTrigger value="profile" className="border bg-slate-100 data-[state=active]:bg-white">
-                  <UserPenIcon className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-                  Your Profile
-                </TabsTrigger>
-                <TabsTrigger value="notifications" className="border bg-slate-100 data-[state=active]:bg-white">
-                  <MessageCircleMore className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-                  Your Notifications
-                </TabsTrigger>
-                <TabsTrigger value="current-family" className="border bg-slate-100 data-[state=active]:bg-white">
-                  <Users className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-                  Current Members
-                </TabsTrigger>
-                <TabsTrigger value="new-family" className="border bg-slate-100 data-[state=active]:bg-white">
-                  <UserPlus className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-                  Add Members
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="profile" className="mt-4">
-                { accountDetails && (
-                  <AccountDetailsForm accountDetails={ accountDetails } />
-                ) }
-              </TabsContent>
-
-              <TabsContent value="notifications" className="mt-4 rounded-lg border p-4">
-                <FamilyNotificationsForm notifications={ notifications } />
-              </TabsContent>
-
-              <TabsContent value="new-family" className="mt-4 rounded-lg border">
-                <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } />
-              </TabsContent>
-
-              <TabsContent value="current-family" className="mt-4 rounded-lg border">
-                <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } />
-              </TabsContent>
-            </Tabs>
+            <FounderAccountTabs
+              accountDetails={ accountDetails }
+              notifications={ notifications }
+              familyId={ memberKeyDetails.familyId }
+              currentFamilyMembers={ currentFamilyMembers }
+            />
           </CardContent>
         </Card>
       </div>

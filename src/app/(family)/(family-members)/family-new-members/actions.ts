@@ -7,11 +7,12 @@ import { InsertInvitesReturn } from "@/components/db/types/family-member";
 import { FounderDetails } from "@/features/family/types/family-steps";
 import { sendFamilyInviteEmails } from "@/features/family/services/send-invites-emails";
 import { AccountDetails } from "@/features/auth/types/auth-types";
+import { revalidatePath } from "next/cache";
 
 
 export async function addNewAccountInvites({newInvites, familyId}: { newInvites: NewFamilyInvites, familyId: number }): Promise<InsertInvitesReturn> {
   
-  console.log('addNewAccountInvites->newInvites: ', newInvites); 
+  // console.log('addNewAccountInvites->newInvites: ', newInvites); 
   const addInvitesResult = await addNewInvitesQuery({ newInvites, familyId });
   if (!addInvitesResult.success) {
     console.error('Error adding new invites:', addInvitesResult.message);
@@ -20,6 +21,8 @@ export async function addNewAccountInvites({newInvites, familyId}: { newInvites:
       message: addInvitesResult.message,
     }
   }
+
+  revalidatePath("/family-founder-account");
   
   return addInvitesResult;
 }

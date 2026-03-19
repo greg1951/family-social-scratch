@@ -9,7 +9,7 @@ import { generate } from "otplib";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 
 export const fullLoginUser = async({email, password, family, token}: {email: string, password: string, family: string, token?: string}) => {
-    console.log('fullLoginUser->email: ',email, 'family: ',family, 'token: ', token);
+    // console.log('fullLoginUser->email: ',email, 'family: ',family, 'token: ', token);
     const userSchema = z.object({
       email: z.email(),
       family: familySchema,
@@ -17,7 +17,7 @@ export const fullLoginUser = async({email, password, family, token}: {email: str
     });
     
     const userValidation = userSchema.safeParse({email, password, family});
-    console.log("fullLoginUser->userValidation: ", userValidation);
+    // console.log("fullLoginUser->userValidation: ", userValidation);
     
     if (!userValidation.success) {
       return {
@@ -28,7 +28,7 @@ export const fullLoginUser = async({email, password, family, token}: {email: str
       }
       /* Kickoff the auth authentication here to the auth.ts Credentials provider */
       try {
-        console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${family}, ${token}`);
+        // console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${family}, ${token}`);
         const signInResult = await signIn("credentials", {
           email,
           password,
@@ -36,7 +36,7 @@ export const fullLoginUser = async({email, password, family, token}: {email: str
           token,
           redirect: false
         })
-        console.info('fullLoginUser->signInResult: ', signInResult);
+        // console.info('fullLoginUser->signInResult: ', signInResult);
       } catch(e) {
         return {
           error: true,
@@ -54,7 +54,7 @@ export const emailLoginCheck = async ({email, password, family}:{email:string; p
   
   const validationResult = await preLoginAuthValidation({email, password, family});
 
-  console.log('actions->emailLoginCheck->validationResult: ', validationResult);
+  // console.log('actions->emailLoginCheck->validationResult: ', validationResult);
   return validationResult;
 };
 

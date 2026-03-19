@@ -45,7 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // console.log('auth->authorize->authRecord', authRecord);
 
         const validationResult = await authValidation(authRecord);
-        console.log('auth->authorize->validationResult: ', validationResult);
+        // console.log('auth->authorize->validationResult: ', validationResult);
         if (validationResult.error) {
           return null;
         }

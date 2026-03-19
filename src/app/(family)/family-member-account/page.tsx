@@ -1,15 +1,13 @@
 import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { redirect } from "next/navigation";
-import AccountDetailsForm from "./index";
 import { getMemberDetails } from "./actions";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import FamilyNotificationsForm from "../family-notifications";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
+import MemberAccountTabs from "./member-tabs";
 
 export default async function FamilyMemberAccount() {
   const session = await auth();
@@ -64,28 +62,12 @@ export default async function FamilyMemberAccount() {
             </div>
           </CardHeader>
           <CardContent className="pt-0 ">
-            <Tabs defaultValue="profile" className="w-full">
-              <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 md:grid-cols-3 mb-10 md:mb-1">
-                <TabsTrigger value="profile" className="border bg-slate-100 data-[state=active]:bg-white">
-                  Member Profile
-                </TabsTrigger>
-                <TabsTrigger value="notifications" className="border bg-slate-100 data-[state=active]:bg-white">
-                  Notifications
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="profile" className="mt-4">
-                { accountDetails && (
-                  <AccountDetailsForm accountDetails={ accountDetails } />
-                ) }
-              </TabsContent>
-
-              <TabsContent value="notifications" className="mt-4 rounded-lg border p-4">
-                <FamilyNotificationsForm notifications={ notifications } />
-              </TabsContent>
-
-            </Tabs>
-
+            { accountDetails && (
+              <MemberAccountTabs
+                accountDetails={ accountDetails }
+                notifications={ notifications }
+              />
+            ) }
           </CardContent>
         </Card>
       </main>

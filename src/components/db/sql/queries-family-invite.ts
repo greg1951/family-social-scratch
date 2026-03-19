@@ -63,7 +63,9 @@ export async function updateFamilyInviteToken({inviteToken }: { inviteToken: Upd
   return {error: false, message: "Invite token updated successfully"}
 }
 
+/*----------------------- getInviteToken ----------------------  */
 export async function getInviteToken(token: string) : Promise<GetInviteTokenReturn> {
+  // console.log('queries-family-invite->getInviteToken->token: ', token);
 
   const [inviteResetToken] = await db
     .select()
@@ -92,6 +94,8 @@ export async function getInviteToken(token: string) : Promise<GetInviteTokenRetu
     
     return {
       error: false,
+      inviteRelated: {
+      id: inviteResetToken.family_invitation.id,
       email: inviteResetToken.family_invitation.email,
       firstName: inviteResetToken.family_invitation.firstName,
       lastName: inviteResetToken.family_invitation.lastName,
@@ -99,6 +103,7 @@ export async function getInviteToken(token: string) : Promise<GetInviteTokenRetu
       isValidExpiry: isValid,
       familyId: inviteResetToken.family.id,
       familyName: inviteResetToken.family.name,
+      }
     };
 };
 
@@ -125,33 +130,42 @@ export async function getInvitebyMemberId(memberId: number) : Promise<GetInviteB
 };
 
 
-export async function updateFamilyInviteStatus(memberId: number, status: string)
+export async function updateFamilyInviteStatus(id: number, status: string)
 : (Promise<UpdateInviteStatusResult>) {
 
-  const getInviteResult = await getInvitebyMemberId(memberId);
+  const updateResult = await db
+    .update(familyInvitation)
+    .set({
+      status: status,
+    })
+    .where(eq(familyInvitation.id, id));
 
-  if (getInviteResult.error) {
-    return getInviteResult;
+
+  if (!updateResult) {
+    return {
+      error: true,
+      message: `Failed to update invite status for inviteId ${id}`
+    }
   }
-  else {
+  if (status === 'joined')  {
     const updateResult = await db
       .update(familyInvitation)
       .set({
-        status: status,
+        inviteToken: "",
       })
-      .where(eq(familyInvitation.id, getInviteResult.inviteId));
-  
+      .where(eq(familyInvitation.id, id));
+      
     if (!updateResult) {
       return {
         error: true,
-        message: `Failed to update invite status for memberId ${memberId}`
+        message: `Failed to clear invite token for inviteId ${id} after status update to joined`
       }
     }
-  
-    return {error: false}
   }
-
+  return {error: false}
 }
+
+
 
 /*-------- updateFamilyInviteStatuses ------------------ */
 export async function updateFamilyInviteStatuses({currentMemberValues, originalMemberValues}
@@ -184,7 +198,7 @@ export async function updateFamilyInviteStatuses({currentMemberValues, originalM
         .where(eq(familyInvitation.id, updatedMembers[ix].id));
 
       if (!updateResult) {
-        console.error("queries-family-invite->updateFamilyInviteStatuses->FAILED to update member with memberId: ", updatedMembers[ix].id);
+        // console.error("queries-family-invite->updateFamilyInviteStatuses->FAILED to update member with memberId: ", updatedMembers[ix].id);
         return {
           success: false,
           message: `Failed to update member with memberId ${updatedMembers[ix].id}`, 
@@ -199,7 +213,7 @@ export async function updateFamilyInviteStatuses({currentMemberValues, originalM
 export async function addNewInvites({newInvites, familyId}
   : { newInvites: NewFamilyInvites, familyId: number })
   : Promise<InsertInvitesReturn> {
-  console.log('queries-family-invite->addNewInvites->newInvites: ', newInvites); 
+  // console.log('queries-family-invite->addNewInvites->newInvites: ', newInvites); 
 
   const invites = newInvites.newInvites.map((invite) => ({
     firstName: invite.firstName,
@@ -211,14 +225,14 @@ export async function addNewInvites({newInvites, familyId}
 
   const insertResult = await db.insert(familyInvitation).values(invites).returning();
   if (!insertResult) {
-    console.error('queries-family-invite->addNewInvites->FAILED to insert invites: ', invites);
+    // console.error('queries-family-invite->addNewInvites->FAILED to insert invites: ', invites);
     return {
       success: false,
       message: `Failed to insert new invites`, 
     }
   }
   else {
-    console.log('queries-family-invite->addNewInvites->Successfully inserted invites: ', insertResult);
+    // console.log('queries-family-invite->addNewInvites->Successfully inserted invites: ', insertResult);
     const returnInvites = insertResult.map((invite) => ({
       id: invite.id,
       email: invite.email,

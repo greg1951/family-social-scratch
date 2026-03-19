@@ -3,6 +3,7 @@ import { getMemberDetailsByUserId, updateMemberDetailsDml } from "@/components/d
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { GetUser2faReturnType } from "@/components/db/types/user";
 import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
+import { revalidatePath } from "next/cache";
 
 /* Retrieve the user's 2FA details by email */
 export const get2faDetails = async(email:string) => {
@@ -34,5 +35,10 @@ export const getMemberDetails = async(userId:number) => {
 export const updateMemberDetails = async(updateAccountDetails:UpdateAccountDetails) => {
   const updateResult = await updateMemberDetailsDml(updateAccountDetails);
   // console.log("actions->updateMemberDetails->updateResult: ", updateResult);
+  
+  if (updateResult.success) {
+    revalidatePath("/family-member-account");
+  }
+  
   return updateResult;
 }

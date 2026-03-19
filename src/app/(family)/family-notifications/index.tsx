@@ -9,12 +9,14 @@ import { NotificationsFormSchema } from "@/features/family/components/validation
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { useRouter } from "next/navigation";
 
 const formSchema = NotificationsFormSchema;
 
 type FormValues = z.infer<typeof formSchema>;
 
 export default function FamilyNotificationsForm({ notifications }: { notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"] }) {
+  const router = useRouter();
 
   const notificationOptions = (notifications ?? []).map((notification) => ({
     memberOptionId: notification.memberOptionId,
@@ -41,6 +43,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
     if (notificationUpdateResult.success) {
       // Reset defaults to submitted values so isDirty returns to false.
       form.reset(data);
+      router.refresh();
     }
   }
 
