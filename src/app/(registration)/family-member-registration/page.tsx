@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from "next/link";
 import FamilyMemberRegistrationForm from ".";
 import { CircleX, CircleCheck } from "lucide-react";
+import { findFamilyMember } from "@/components/db/sql/queries-family-member";
 
 export default async function FamilyMemberRegistration({ searchParams }
   : {
@@ -22,9 +23,9 @@ export default async function FamilyMemberRegistration({ searchParams }
           <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
             <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
               <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
-              <div className="text-center text-xs font-light text-slate-800 pt-2">
+              <CardDescription className="text-center text-xs font-light text-red-800 pt-5">
                 No token provided in search params.
-              </div>
+              </CardDescription>
             </CardHeader>
           </Card>
         </main>
@@ -42,9 +43,9 @@ export default async function FamilyMemberRegistration({ searchParams }
           <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
             <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
               <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
-              <div className="text-center text-xs font-light text-slate-800 pt-2">
+              <CardDescription className="text-center text-xs font-light text-red-800 pt-5">
                 Error occurred retrieving the invitation token.
-              </div>
+              </CardDescription>
             </CardHeader>
           </Card>
         </main>
@@ -54,6 +55,26 @@ export default async function FamilyMemberRegistration({ searchParams }
   else {
     inviteRelated = getTokenResult.inviteRelated;
   }
+
+  const validateEmailResult = await findFamilyMember(inviteRelated.familyId, inviteRelated.email);
+  if (!validateEmailResult.error) {
+    console.error('Error occurred retrieving the invitation token');
+    return (
+      <div className="flex justify-center">
+        <main className="font-app">
+          <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
+              <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
+              <CardDescription className="text-center text-xs font-light text-red-800 pt-5">
+                Your email is already registered in a family. If you believe this is an error please refer to your invitation email.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
   // console.log('FamilyMemberRegistration->getInviteToken->inviteRelated.isValidExpiry: ', inviteRelated?.isValidExpiry);
   return (
     <div className="flex justify-center">
@@ -96,7 +117,7 @@ export default async function FamilyMemberRegistration({ searchParams }
           ) }
           { inviteRelated?.isValidExpiry && (
             <CardDescription className="text-center text-xs text-bold text-slate-800 p-4">
-              When you submit your registration you'll be forwarded to resources to help you get started with your family.
+              When you submit your registration you'll be forwarded to resources to help you get started in your new family.
             </CardDescription>
           ) }
           <CardContent>

@@ -51,12 +51,14 @@ export const addMemberNotifications = async(newMemberId: number) => {
 }
 
 export const updateInviteStatus = async(id: number, status: string) => {
-  console.log('actions->updateInviteStatus->id: ', id, 'status: ', status);
+  // console.log('actions->updateInviteStatus->id: ', id, 'status: ', status);
   const updateInviteStatusResult = await updateFamilyInviteStatus(id, status);
   if (updateInviteStatusResult.error) {
     // console.log('Error occurred updating the invite status');
     return updateInviteStatusResult;
   }
+
+  
 
   return {
     error: false,

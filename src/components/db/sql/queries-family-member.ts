@@ -59,8 +59,8 @@ export async function getAllFamilies()
 
 /*-------- findFamilyMember ------------------ */
 export async function findFamilyMember(familyId: number, memberEmail: string) {
-  const result = await db
-    .select({count: count(), memberId: member.id})
+  const [result] = await db
+    .select({memberId: member.id})
     .from(member)
     .where(
       and(
@@ -71,10 +71,10 @@ export async function findFamilyMember(familyId: number, memberEmail: string) {
 
   // console.log('queries-family-members->findFamilyMember->count: ',result[0].count);
   
-  if (result[0].count > 0) 
+  if (result) 
     return {
       error: false,
-      memberId: result[0].memberId
+      memberId: result.memberId
     }
   else
     return {

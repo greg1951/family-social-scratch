@@ -11,18 +11,20 @@ import { NewMembersFormSchema } from "@/features/family/components/validation/sc
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Mail } from "lucide-react";
-import { NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
 import { addNewAccountInvites, sendEmails } from "./actions";
 import { SubmissionStep } from "@/features/family/types/family-steps";
 import { initialNewInviteSteps } from "@/features/family/constants/family-steps";
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
 //--------------- NewMembersAccountForm Component ---------------
-export default function NewMembersAccountForm({ familyId, accountDetails }: { familyId: number, accountDetails: AccountDetails | null }) {
+export default function NewMembersAccountForm({ familyId, accountDetails, currentFamilyMembers }
+  : { familyId: number, accountDetails: AccountDetails | null, currentFamilyMembers: CurrentFamilyMember[] }) {
   const router = useRouter();
   const [invites, setInvites] = useState<NewFamilyInvite[]>([]);
   const [submissionSteps, setSubmissionSteps] =
@@ -47,6 +49,30 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
 
 
   const handleAddInvite = (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email'>) => {
+    const normalizedEmail = values.email.trim().toLowerCase();
+    const emailExists = currentFamilyMembers.some(
+      (member) => member.email.trim().toLowerCase() === normalizedEmail,
+    );
+    const inviteAlreadyAdded = invites.some(
+      (invite) => invite.email.trim().toLowerCase() === normalizedEmail,
+    );
+
+    if (emailExists) {
+      toast.error("That email already exists in the current family invite list.", {
+        position: "top-center",
+        duration: 3000,
+      });
+      return;
+    }
+
+    if (inviteAlreadyAdded) {
+      toast.error("That email is already in the new invite list.", {
+        position: "top-center",
+        duration: 3000,
+      });
+      return;
+    }
+
     // console.log('NewMembersAccountForm->handleAddInvite->Adding invite with values:', values);
     setInvites((prev) => [
       ...prev,
@@ -54,7 +80,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails }: { fa
         id: crypto.randomUUID(),
         firstName: values.firstName,
         lastName: values.lastName,
-        email: values.email,
+        email: normalizedEmail,
       },
     ])
   }

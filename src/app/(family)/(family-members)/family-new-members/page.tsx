@@ -6,7 +6,7 @@ import { NewMembersFormSchema } from "@/features/family/components/validation/sc
 import NewMembersAccountForm from "./index-new";
 import { getAllFamilyMembers, getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
 import { member } from "@/components/db/schema/family-social-schema-tables";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 
@@ -43,6 +43,21 @@ export default async function FamilyNewMembersPage() {
     };
   }
 
+  const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
+  let currentFamilyMembers: CurrentFamilyMember[] = [];
+
+  if (membersResult.success && membersResult.members) {
+    // console.log('FamilyCurrentMembersPage->getAllFamilyMembers->membersResult: ', membersResult);
+    currentFamilyMembers = membersResult.members.map((member) => ({
+      id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      status: member.status,
+    })) as CurrentFamilyMember[];
+  }
+
+
 
 
   return (
@@ -67,7 +82,7 @@ export default async function FamilyNewMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } />
+          <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } currentFamilyMembers={ currentFamilyMembers } />
         </Card>
 
       </div >

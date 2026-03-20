@@ -80,7 +80,11 @@ export default function FounderAccountTabs({
       </TabsContent>
 
       <TabsContent value="new-family" className="mt-4 rounded-lg border">
-        <NewMembersAccountForm familyId={ familyId } accountDetails={ accountDetails } />
+        <NewMembersAccountForm
+          familyId={ familyId }
+          accountDetails={ accountDetails }
+          currentFamilyMembers={ currentFamilyMembers }
+        />
       </TabsContent>
 
       <TabsContent value="current-family" className="mt-4 rounded-lg border">
