@@ -9,6 +9,7 @@ import { familySchema } from "@/features/auth/components/validation/familySchema
 import { Button } from "@/components/ui/button";
 import { registerUser } from "./actions";
 import { useRouter } from "next/navigation";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 // const formSchema = z
 //   .object({ email: z.email(), password: passwordSchema, family: familySchema });
@@ -93,7 +94,14 @@ export default function RegisterAccountForm() {
               </FormItem>
             ) }
           />
-          <Button type="submit">Register</Button>
+          <Button
+            type="submit"
+            className="mt-2 h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
+          >
+            <Sparkles className="h-4 w-4" />
+            Create My Account
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </fieldset>
       </form>
     </Form>

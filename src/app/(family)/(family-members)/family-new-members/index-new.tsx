@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Mail } from "lucide-react";
+import { ArrowRight, Mail } from "lucide-react";
 import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
 import { addNewAccountInvites, sendEmails } from "./actions";
 import { SubmissionStep } from "@/features/family/types/family-steps";
@@ -172,9 +172,14 @@ export default function NewMembersAccountForm({ familyId, accountDetails, curren
               <div className="flex items-center py-2"></div>
               <CardFooter className="flex justify-center gap-y-2">
                 <div className="flex justify-center">
-                  <Button type="submit" disabled={ !isDirty || invites.length === 0 } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-sm ">
+                  <Button
+                    type="submit"
+                    disabled={ !isDirty || invites.length === 0 }
+                    className="h-10 w-full rounded-xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-sm font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110 md:w-auto"
+                  >
                     Send Invitations
                     <Mail className="ml-1 h-4 w-4" />
+                    <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>
               </CardFooter>

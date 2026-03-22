@@ -8,6 +8,7 @@ import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
+import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
 
 export default async function FamilyMyAccountPage() {
@@ -73,12 +74,16 @@ export default async function FamilyMyAccountPage() {
   return (
     <main className="font-app min-h-[90vh] max-w-screen bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
-        <Card className="w-full border-slate-200 shadow-lg pt-0">
-          <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-5">
-            <CardTitle className="text-center text-2xl font-bold text-slate-900 md:text-3xl">
+        <Card className="w-full overflow-hidden border-white/70 bg-white/82 pt-0 shadow-[0_28px_90px_-50px_rgba(16,54,74,0.75)] backdrop-blur">
+          <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 text-center shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" />
+              Founder Dashboard
+            </div>
+            <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
               My Family Account
             </CardTitle>
-            <CardDescription className="text-center text-sm text-slate-800">
+            <CardDescription className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[#315363]">
               Manage the <b>{ memberKeyDetails.familyName }</b> family settings here
             </CardDescription>
           </CardHeader>

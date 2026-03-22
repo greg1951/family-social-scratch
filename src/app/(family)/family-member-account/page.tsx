@@ -7,6 +7,7 @@ import { getMemberDetails } from "./actions";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
+import { Sparkles } from "lucide-react";
 import MemberAccountTabs from "./member-tabs";
 
 export default async function FamilyMemberAccount() {
@@ -52,11 +53,15 @@ export default async function FamilyMemberAccount() {
 
     return (
       <main className="font-app h-[90vh] gap-y-2 pt-1">
-        <Card className="flex align-top w-[400] md:w-[700] pt-0">
-          <CardHeader className=" text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center ">
-            <CardTitle className="text-center font-bold size-1.2 p-1">My Account</CardTitle>
-            <div className="p-1">
-              <CardDescription className="text-xs md:text-sm text-center text-black/80">
+        <Card className="flex align-top w-[400] overflow-hidden border-white/70 bg-white/82 pt-0 shadow-[0_28px_90px_-50px_rgba(16,54,74,0.75)] backdrop-blur md:w-[700]">
+          <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 text-center shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
+            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5" />
+              Your Space
+            </div>
+            <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">My Account</CardTitle>
+            <div className="pt-1">
+              <CardDescription className="mx-auto max-w-2xl text-center text-sm leading-6 text-[#315363]">
                 Manage <b>{ memberDetails.firstName } { memberDetails.lastName }'s</b> settings in the <b>{ memberKeyDetails.familyName }</b> family
               </CardDescription>
             </div>

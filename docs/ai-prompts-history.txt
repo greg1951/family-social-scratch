@@ -45,5 +45,11 @@ Create a new react page.tsx that uses the forms in the src/app/(auth)/(logged-in
 
 Create a function to be run in a client-side form field onChange event to format a phone number using "(xxx) xxx-xxxx" format, so as the user types in the phone number it will be rendered in the phone form field.
 
+Create a new layout.tsx for the (logged-out) router group that will be a new header that consists of an image on the left (use the images/family-social-icon-only.png) with a link to the home page of the app. On the right side there should be an icon that will contain a shadcn dropdown menu consisting of help resources (which are still to be defined). In the center should be graphical images (also found in the images folder) that are arranged in an attractive and interesting manner. My goal is for this layout to draw people to the site. The new layout.tsx file should also be reused in the (registration) router group as well.
 
+apply the same card heading and button changes to the (family)/family-founder-account and (family)/family-member-account pages and forms
+
+The layout in the (family) router group must have same CTA approach as the layout.tsx in the (logged-out) router group, except that the (family) layout would need to implement same destination links as it currently does.
+
+apply the same card heading and button changes to the (family)/(auth-changes) pages and forms as was done in the (auth)/(logged-out) pages and forms.
 

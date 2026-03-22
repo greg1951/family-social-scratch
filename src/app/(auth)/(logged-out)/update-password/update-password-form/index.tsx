@@ -13,7 +13,7 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 const formSchema = passwordMatchSchema;
 
@@ -88,7 +88,7 @@ export default function UpdateResetPasswordForm({ userEmail }: UserEmailProp) {
               ) }
             />
             <Button type="button" variant="ghost" size="sm"
-              className="absolute right-0 top-3.5 h-full px-3 py-2 hover:bg-transparent"
+              className="absolute right-0 top-3.5 h-full px-3 py-2 text-[#315363] hover:bg-transparent hover:text-[#10364a]"
               onClick={ () => setShowPassword((prev) => !prev) }
             >
               { showPassword ? (
@@ -113,7 +113,7 @@ export default function UpdateResetPasswordForm({ userEmail }: UserEmailProp) {
               ) }
             />
             <Button type="button" variant="ghost" size="sm"
-              className="absolute right-0 top-3.5 h-full px-3 py-2 hover:bg-transparent"
+              className="absolute right-0 top-3.5 h-full px-3 py-2 text-[#315363] hover:bg-transparent hover:text-[#10364a]"
               onClick={ () => setShowConfirmPassword((prev) => !prev) }
             >
               { showConfirmPassword ? (
@@ -128,7 +128,14 @@ export default function UpdateResetPasswordForm({ userEmail }: UserEmailProp) {
               { form.formState.errors.root.message }
             </FormMessage>
           }
-          <Button type="submit">Update Password</Button>
+          <Button
+            type="submit"
+            className="mt-2 h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Update Password
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </fieldset>
       </form>
     </Form>

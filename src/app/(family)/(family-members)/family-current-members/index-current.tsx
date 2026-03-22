@@ -21,6 +21,7 @@ import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
 import { StatusUpdateDialog } from "@/features/family/components/dialogs/status-update-dialog";
 import { initializeFormProcessingArray, initializeProcessUpdateCounts, initializeRecordCounts } from "@/features/family/services/client-side";
+import { ArrowRight } from "lucide-react";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
@@ -185,9 +186,14 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
             <div className="flex items-center py-2"></div>
             <CardFooter className="flex justify-center gap-y-2">
               <div className="flex justify-center">
-                <Button type="submit" disabled={ !isDirty } className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm">
+                <Button
+                  type="submit"
+                  disabled={ !isDirty }
+                  className="h-10 w-full rounded-xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-xs font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110 md:w-auto md:text-sm"
+                >
                   Update Marked Changes
                   <CircleCheckBig className="ml-1 h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
             </CardFooter>

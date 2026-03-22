@@ -12,6 +12,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { sendFamilyNameEmail } from "./actions";
+import { ArrowRight, Mail } from "lucide-react";
 
 
 const formSchema = z.object({
@@ -76,7 +77,14 @@ export default function SendFamilyEmailForm() {
             </FormMessage>
           }
           <div className="py-2"></div>
-          <Button className="text-base" type="submit">Send Email</Button>
+          <Button
+            className="h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
+            type="submit"
+          >
+            <Mail className="h-4 w-4" />
+            Send Family Reminder
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </fieldset>
         <CardFooter className="flex flex-col gap-2 py-2 ">
           <div className=" text-sm text-muted-foreground">
