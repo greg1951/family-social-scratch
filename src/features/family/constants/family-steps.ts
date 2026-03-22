@@ -46,6 +46,11 @@
         { id: 1, label: 'Create family invitations in PENDING status', status: 'pending' },
         { id: 2, label: 'Send email invitations to register in family', status: 'pending' },
   ];
+
+  export const initialCurrentInviteSteps: SubmissionStep[] = [
+        { id: 1, label: 'Delete family member invitations and users', status: 'pending' },
+        { id: 2, label: 'Update family member invitation statuses', status: 'pending' },
+        { id: 3, label: 'Resend email invitations to invited family members', status: 'pending' },];
   
   // Define constants for step indices for better readability
   export const STEP_1_FOUNDER: number = 0; // Founder info

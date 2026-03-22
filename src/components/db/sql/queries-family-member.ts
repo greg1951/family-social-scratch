@@ -82,7 +82,7 @@ export async function findFamilyMember(familyId: number, memberEmail: string) {
     }
   }
 
-/*-------- getMemberDetailsByUserId ------------------ */
+/*------------------ getMemberDetailsByUserId ------------------ */
 export async function getMemberDetailsByUserId(userId:number)
   :(Promise<GetMemberDetailsReturn>) {
 
@@ -132,7 +132,7 @@ export async function getMemberDetailsByUserId(userId:number)
   return memberDetails;
 }
 
-/*-------- getMemberDetailsByEmail ------------------ */
+/*----------------- getMemberDetailsByEmail ------------------ */
 export async function getMemberDetailsByEmail(email:string)
   :(Promise<GetMemberDetailsReturn>) {
 
@@ -181,8 +181,31 @@ export async function getMemberDetailsByEmail(email:string)
   }  
   return memberDetails;
 }
+type GetMemberDetailsByEmailReturn = {
+  success: boolean;
+  message?: string;
+  memberId?: number;
+}
+export async function findMemberIdByEmail(email:string)
+  :(Promise<GetMemberDetailsByEmailReturn>) { 
+    
+  const [selectResult] = await db.select({memberId: member.id})
+    .from(member)
+    .where(eq(member.email, email)
+  );  
+  if (!selectResult) {
+    return {
+      success: false,
+      message: `MemberId NOT FOUND for email ${email}`
+    }   
+  }
+  return {
+    success: true,
+    memberId: selectResult.memberId,
+  }
+}
 
-/*-------- updateMemberDetailsDml ------------------ */
+/*----------------- updateMemberDetailsDml ------------------ */
 export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccountDetails)
   : Promise<UpdateMemberReturn> {
 
@@ -209,7 +232,7 @@ export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccount
   }
 }
 
-/*-------- getAllFamilyMembers ------------------ */
+/*----------------- getAllFamilyMembers ------------------ */
 export async function getAllFamilyMembers(familyId: number)
   :(Promise<GetAllFamilyMembersReturn>) {
 
@@ -242,8 +265,7 @@ export async function getAllFamilyMembers(familyId: number)
   }
 }
 
-
-/*-------- getFamilyFounderDetails ------------------ */
+/*------------------ getFamilyFounderDetails ------------------ */
 export async function getFamilyFounderDetails(familyId:number)
   :(Promise<GetFounderDetailsReturn>) {
 
@@ -289,3 +311,19 @@ export async function getFamilyFounderDetails(familyId:number)
   return founderDetails;
 }
 
+/*----------------- deleteMember ------------------ */
+export async function deleteMember(memberId:number) {
+  const deleteResult = await db
+    .delete(member)
+    .where(eq(member.id, memberId));
+
+  if (!deleteResult) {
+    return {
+      success: false,
+      message: `Failed to delete member with memberId ${memberId}`,
+    };
+  }
+  return {
+    success: true,
+  };
+}

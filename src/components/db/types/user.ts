@@ -13,10 +13,11 @@ export type ErrorReturnType = {
 
 export type UserPasswordReturnType = {
   success: boolean; 
+  message?: string
   id?: number; 
   password?: string; 
   salt?: string; 
-  message?: string
+  memberId?: number;
 }
 
 export type GetFullUserCredsReturnType = {

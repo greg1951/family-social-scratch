@@ -116,7 +116,7 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
                     <p className="text-xs text-neutral-600">{ `(id: ${ member.id })` }</p>
                   </div>
                   <div className='absolute right-1'>
-                    { (member.status === 'pending' || member.status !== 'joined') && (
+                    { (member.status === 'pending' || (member.status !== 'joined' && member.status !== 'resend')) && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -128,7 +128,7 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
                         <MailCheck className="h-4 w-4 text-green-500" />
                       </Button>
                     ) }
-                    { (member.status === 'invited' || member.status === 'joined') && (
+                    { (member.status === 'invited' || member.status === 'joined' || member.status === 'resend') && (
                       <Button
                         type="button"
                         variant="ghost"

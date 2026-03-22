@@ -89,6 +89,7 @@ export default async function FamilyMyAccountPage() {
               notifications={ notifications }
               familyId={ memberKeyDetails.familyId }
               currentFamilyMembers={ currentFamilyMembers }
+              memberKeyDetails={ memberKeyDetails }
             />
           </CardContent>
         </Card>

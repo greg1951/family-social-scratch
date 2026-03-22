@@ -24,6 +24,8 @@ export default async function FamilyCurrentMembersPage() {
     redirect("/");
   }
 
+  // console.log('FamilyCurrentMembersPage->memberKeyDetails: ', memberKeyDetails);
+
   const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
   let familyMembers: CurrentFamilyMember[] = [];
 
@@ -61,7 +63,7 @@ export default async function FamilyCurrentMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <CurrentMembersAccountForm familyMembers={ familyMembers } />
+          <CurrentMembersAccountForm familyMembers={ familyMembers } founderKeyDetails={ memberKeyDetails } />
         </Card>
 
       </div >

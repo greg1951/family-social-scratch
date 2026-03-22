@@ -214,6 +214,17 @@ export type GetInviteByMemberIdReturn =
       familyId: number;
     };
 
+export type GetInviteByInviteIdReturn =
+  | { error: true; message: string }
+  | {
+      error: false;      
+      inviteId: number;
+      email: string;
+      firstName: string;
+      lastName: string;
+      familyId: number;
+    };
+
 
 export type InsertMemberNotificationsReturn = {
   success: boolean;
@@ -230,3 +241,22 @@ export type GetAllOptionsRefReturn =
         optionDesc: string;
       }[];
     };
+
+export type StatusUpdateProcessing = {
+  inviteId: number;
+  newStatus: string;
+  originalStatus?: string;
+  email: string;
+  deleteMember: boolean;
+}    
+
+export type StatusUpdateCounts = {
+  totalUpdateCount: number;
+  totalDeleteRecordsCount: number;
+  userDeleteCount: number;
+  memberDeleteCount: number;
+  inviteDeleteCount: number;
+  totalResendRecordsCount: number;
+  resendCount: number;
+  resendEmailsSentCount: number;
+};

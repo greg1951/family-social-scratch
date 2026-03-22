@@ -10,6 +10,7 @@ export type MemberKeyDetails = {
   email: string;
   isFounder: boolean;
   firstName: string;
+  lastName: string;
   familyId: number;
   familyName: string;
   memberId: number;

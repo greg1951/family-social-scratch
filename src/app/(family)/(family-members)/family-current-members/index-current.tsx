@@ -13,14 +13,25 @@ import { CircleCheckBig, Group } from "lucide-react";
 import { CurrentFamilyMember, CurrentMembersValues } from "@/features/family/types/family-members";
 import { CurrentMembersDialog } from "./current-members-dialog";
 import { toast } from "sonner";
-import { updateFamilyInviteStatuses } from "@/components/db/sql/queries-family-invite";
-import { updateCurrentMembers } from "./actions";
+import { processInviteDeletes, processInviteUpdates, sendInviteEmails } from "./actions";
+import { SubmissionStep } from "@/features/family/types/family-steps";
+import { initialCurrentInviteSteps } from "@/features/family/constants/family-steps";
 import { useRouter } from "next/navigation";
+import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
+import { StatusUpdateDialog } from "@/features/family/components/dialogs/status-update-dialog";
+import { initializeFormProcessingArray, initializeProcessUpdateCounts, initializeRecordCounts } from "@/features/family/services/client-side";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
-export default function CurrentMembersAccountForm({ familyMembers }: { familyMembers: CurrentFamilyMember[] }) {
+export default function CurrentMembersAccountForm({ familyMembers, founderKeyDetails }: { familyMembers: CurrentFamilyMember[], founderKeyDetails: MemberKeyDetails }) {
+
   const router = useRouter();
+  const [submissionSteps, setSubmissionSteps] =
+    useState<SubmissionStep[]>(initialCurrentInviteSteps);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+
+
   const form = useForm<FormValues>({
     resolver: zodResolver(CurrentMembersFormSchema),
     defaultValues: {
@@ -69,43 +80,75 @@ export default function CurrentMembersAccountForm({ familyMembers }: { familyMem
       setMembers((prev) => prev.map((member) => (member.id === id ? originalMember : member)));
     }
   }
+
+  const updateStepStatus = (stepId: number, status: SubmissionStep['status'], errorMessage?: string) => {
+    setSubmissionSteps(prev =>
+      prev.map(step =>
+        step.id === stepId
+          ? { ...step, status, errorMessage }
+          : step
+      )
+    );
+  };
+
   const processForm: SubmitHandler<FormValues> = async (values) => {
     // console.log('SubmitHandler->values:', values);
-    // console.log('SubmitHandler->Dirty fields:', form.formState.dirtyFields);
+    // console.log('SubmitHandler->founderKeyDetails:', founderKeyDetails);
+    setShowStatusDialog(true);
 
-    const currentMemberValues: CurrentMembersValues = {
-      currentMembers: values.currentFamilyMembers.map((member) => ({
-        id: member.id,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        status: member.status,
-      })),
-    };
+    const updatedInvites = initializeFormProcessingArray({
+      formCurrentMembers: values.currentFamilyMembers,
+      originalMembers: originalMembers,
+      founderKeyDetails: founderKeyDetails
+    });
 
-    const originalMemberValues: CurrentMembersValues = {
-      currentMembers: originalMembers.map((member) => ({
-        id: member.id,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        status: member.status,
-      })),
-    };
+    // Use these counts to track the processing and help in reconcilement of all changes
+    let statusUpdateCounts: StatusUpdateCounts = initializeProcessUpdateCounts();
+    statusUpdateCounts = initializeRecordCounts(updatedInvites, statusUpdateCounts);
+    statusUpdateCounts.totalUpdateCount = updatedInvites.length;
 
-    const result = await updateCurrentMembers({ currentMembers: currentMemberValues, originalMembers: originalMemberValues });
-    if (!result.success) {
-      toast.error("There was an error updating your family members. Please try again.", { position: "top-center", duration: 3000 });
-      return;
+    console.log('SubmitHandler->statusUpdateCounts: ', statusUpdateCounts);
+
+    //--------- Step 1: Delete family invitations
+    updateStepStatus(1, 'inProgress');
+    if (updatedInvites.length > 0 && statusUpdateCounts.totalDeleteRecordsCount > 0) {
+      const deletesResult = await processInviteDeletes({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      if (deletesResult && !deletesResult.success) {
+        updateStepStatus(1, 'error', deletesResult.message);
+        throw new Error('Error processing invite deletes: ' + deletesResult.message);
+      }
     }
+    updateStepStatus(1, 'completed');
+
+
+    //--------- Step 2: Update family invitation statuses
+    updateStepStatus(2, 'inProgress');
+    if (updatedInvites.length > 0 && statusUpdateCounts.totalResendRecordsCount > 0) {
+      const updatesResult = await processInviteUpdates({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      if (updatesResult && !updatesResult.success) {
+        updateStepStatus(2, 'error', updatesResult.message);
+        throw new Error('Error processing invite updates: ' + updatesResult.message);
+      }
+    }
+    updateStepStatus(2, 'completed');
+
+    //--------- Step 3: Send invite emails
+    updateStepStatus(3, 'inProgress');
+    if (updatedInvites.length > 0 && statusUpdateCounts.totalResendRecordsCount > 0) {
+      const sendResult = await sendInviteEmails({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      if (sendResult && !sendResult.success) {
+        updateStepStatus(3, 'error', sendResult.message);
+        throw new Error('Error sending invite emails: ' + sendResult.message);
+      }
+    }
+    updateStepStatus(3, 'completed');
 
     form.reset(values);
-    toast.success("Your family members have been updated", {
+    toast.success("Your family member invites have been updated", {
       position: "top-center",
       duration: 2000,
     });
     router.refresh();
-
   }
 
   return (
@@ -151,6 +194,13 @@ export default function CurrentMembersAccountForm({ familyMembers }: { familyMem
           </div>
         </form>
       </Form>
+      {/* Status Dialog */ }
+      <StatusUpdateDialog
+        open={ showStatusDialog }
+        onOpenChange={ setShowStatusDialog }
+        redirectUrl="/family-founder-account?tab=current-family"
+        submissionSteps={ submissionSteps }
+      />
     </CardContent>
   )
 }

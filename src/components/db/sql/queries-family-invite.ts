@@ -6,9 +6,12 @@ import { InsertInvitesInput,
          InsertInvitesReturn, 
          GetInviteTokenReturn, 
          GetInviteByMemberIdReturn,
-         GenericDatabaseReturn} from '../types/family-member';
+         GenericDatabaseReturn,
+         StatusUpdateProcessing,
+         GetInviteByInviteIdReturn} from '../types/family-member';
 import { get } from 'http';
 import { CurrentMembersValues, NewFamilyInvites, UpdateInvite } from '@/features/family/types/family-members';
+import { deleteUserByUserId, getUserByEmail } from './queries-user';
 
          
 export async function insertInvites(invitesArg: InsertInvitesInput)
@@ -129,7 +132,32 @@ export async function getInvitebyMemberId(memberId: number) : Promise<GetInviteB
     }
 };
 
+export async function getInvitebyInviteId(inviteId: number) : Promise<GetInviteByInviteIdReturn> {
 
+  const [inviteMemberResult] = await db
+    .select()
+    .from(familyInvitation)
+    .where(eq(familyInvitation.id, inviteId));
+
+    if (!inviteMemberResult) {
+      return {
+        error: true,
+        message: "Did not find invitation for inviteId: " + inviteId,
+      }
+    }
+    else {
+      return {
+        error: false,
+        inviteId: inviteMemberResult.id,
+        familyId: inviteMemberResult.familyId,
+        email: inviteMemberResult.email,
+        firstName: inviteMemberResult.firstName,
+        lastName: inviteMemberResult.lastName,
+      };
+    }
+};
+
+/*-------------------- updateFamilyInviteStatus ------------------ */
 export async function updateFamilyInviteStatus(id: number, status: string)
 : (Promise<UpdateInviteStatusResult>) {
 
@@ -137,9 +165,9 @@ export async function updateFamilyInviteStatus(id: number, status: string)
     .update(familyInvitation)
     .set({
       status: status,
+      statusUpdate: new Date(),
     })
     .where(eq(familyInvitation.id, id));
-
 
   if (!updateResult) {
     return {
@@ -165,51 +193,7 @@ export async function updateFamilyInviteStatus(id: number, status: string)
   return {error: false}
 }
 
-
-
-/*-------- updateFamilyInviteStatuses ------------------ */
-export async function updateFamilyInviteStatuses({currentMemberValues, originalMemberValues}
-  : { currentMemberValues: CurrentMembersValues, originalMemberValues: CurrentMembersValues }  ) {
-
-  // console.log('queries-family-invite->updateFamilyInviteStatuses->currentMemberValues: ', currentMemberValues);
-  // console.log('queries-family-invite->updateFamilyInviteStatuses->originalMemberValues: ', originalMemberValues);
-
-  
-  let updatedMembers: UpdateInvite[] = [];
-  for (let i=0; i < currentMemberValues.currentMembers.length; i++) {
-    const currentMember = currentMemberValues.currentMembers[i];
-    const originalMember = originalMemberValues.currentMembers[i];
-    if (currentMember.status !== originalMember.status) {
-      updatedMembers.push({
-        id: currentMember.id,
-        status: currentMember.status,
-      });
-    }
-  };
-
-  // console.log('queries-family-invite->updateFamilyInviteStatuses->updatedMembers: ', updatedMembers);
-
-  if (updatedMembers.length > 0) {
-    for (let ix=0; ix < updatedMembers.length; ix++) {
-  
-      const updateResult = await db
-        .update(familyInvitation)
-        .set({status: updatedMembers[ix].status})
-        .where(eq(familyInvitation.id, updatedMembers[ix].id));
-
-      if (!updateResult) {
-        // console.error("queries-family-invite->updateFamilyInviteStatuses->FAILED to update member with memberId: ", updatedMembers[ix].id);
-        return {
-          success: false,
-          message: `Failed to update member with memberId ${updatedMembers[ix].id}`, 
-        }
-      }
-    }
-  }
-  return {success: true };
-}
-
-/*-------- addNewInvites ------------------ */
+/*------------------ addNewInvites ------------------ */
 export async function addNewInvites({newInvites, familyId}
   : { newInvites: NewFamilyInvites, familyId: number })
   : Promise<InsertInvitesReturn> {
@@ -247,6 +231,23 @@ export async function addNewInvites({newInvites, familyId}
       invites: returnInvites,
     };  
   }
+}
+
+/*----------------- deleteInvite ------------------ */
+export async function deleteInvite(inviteId:number) {
+  const deleteResult = await db
+    .delete(familyInvitation)
+    .where(eq(familyInvitation.id, inviteId));
+
+  if (!deleteResult) {
+    return {
+      success: false,
+      message: `Failed to delete invite with inviteId ${inviteId}`,
+    };
+  }
+  return {
+    success: true,
+  };
 }
 
 

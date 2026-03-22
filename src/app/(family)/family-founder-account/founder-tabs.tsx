@@ -11,6 +11,7 @@ import FamilyNotificationsForm from "../family-notifications";
 import AccountDetailsForm from "@/app/(family)/family-member-account";
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
 import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
+import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
 type TabValue = "profile" | "notifications" | "current-family" | "new-family";
 
@@ -29,11 +30,13 @@ export default function FounderAccountTabs({
   notifications,
   familyId,
   currentFamilyMembers,
+  memberKeyDetails
 }: {
   accountDetails: AccountDetails | null;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
   familyId: number;
   currentFamilyMembers: CurrentFamilyMember[];
+  memberKeyDetails: MemberKeyDetails;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -88,7 +91,7 @@ export default function FounderAccountTabs({
       </TabsContent>
 
       <TabsContent value="current-family" className="mt-4 rounded-lg border">
-        <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } />
+        <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } founderKeyDetails={ memberKeyDetails } />
       </TabsContent>
     </Tabs>
   );

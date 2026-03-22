@@ -1,7 +1,7 @@
 "use server";
 
 import { count, eq, and } from 'drizzle-orm';
-import { user } from '../schema/family-social-schema-tables';
+import { member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -141,12 +141,13 @@ export async function getUserByEmail(email: string)
   const [selectedUser] = await db
     .select({
       id: user.id,
-      password: user.password,
+      password: user.password,  
+      memberId: user.memberId,
     })
     .from(user)
     .where(eq(user.email, email)); 
 
-    if (!user) 
+    if (!selectedUser) 
       return {
         success: false,
         message: "There were no users found matching that email."
@@ -161,6 +162,7 @@ export async function getUserByEmail(email: string)
         id: selectedUser.id as number,
         password: passwordParts[0],
         salt: passwordParts[1],
+        memberId: selectedUser.memberId as number,
       }
       // console.log('getUserByEmail->fullUserInfo: ', fullUserInfo);
       return fullUserInfo;
@@ -240,14 +242,15 @@ export async function updateUser2faActivated(args: Update2faActivatedRecordType)
 /* Retrieve user details by id */
 export async function getEmailByUserId(userId: number) 
   : Promise<EmailByIdReturnType>  {
-  const [selectedUser] = await db
-    .select({
-      email: user.email,
-    })
-    .from(user)
-    .where(eq(user.id, userId)); 
+  const [selectedUser] = 
+    await db
+      .select({
+        email: user.email,
+      })
+      .from(user)
+      .where(eq(user.id, userId)); 
 
-    if (!user) 
+    if (!selectedUser) 
       return {
         success: false,
         message: "There was no user found matching that id."
@@ -259,3 +262,21 @@ export async function getEmailByUserId(userId: number)
       };
     };
 
+/*---------------------- deleteUser ---------------------- */    
+export async function deleteUserByUserId(userId: number) 
+  : Promise<ErrorReturnType> {  
+    
+  const deleteUserResult = await db
+    .delete(user)
+    .where(eq(user.id, userId));
+
+  if (!deleteUserResult) {
+    return {
+      error: true,
+      message: `Failed to delete user with userId ${userId}`,
+    };
+  }
+  return {
+    error: false,
+  }
+}

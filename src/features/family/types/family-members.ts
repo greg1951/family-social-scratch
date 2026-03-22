@@ -45,5 +45,10 @@ export type UpdateInvite = {
   status: string;
 }
 
+export type StandardResponse = {
+  success: boolean;
+  message: string;
+}
+
 
 
