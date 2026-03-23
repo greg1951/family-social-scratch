@@ -9,6 +9,14 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
+  const ctaCardClasses = [
+    "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
+    "px-4 py-2.5 text-center text-[13px] font-bold tracking-[0.01em] text-sky-900",
+    "shadow-[0_6px_14px_rgba(3,79,112,0.14)] transition-all duration-300",
+    "hover:-translate-y-0.5 hover:border-sky-400 hover:from-sky-50 hover:to-white hover:shadow-[0_10px_20px_rgba(3,79,112,0.22)]",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
+  ].join(" ");
+
   let title: string = "Welcome to Family Social!";
   if (memberKeyDetails.isLoggedIn) {
     title = `Welcome back, ${ memberKeyDetails.firstName }!`;
@@ -41,21 +49,21 @@ export default async function MainPage() {
               <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3">
                 <Link
                   href="/help/about-family-social"
-                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                  className={ ctaCardClasses }
                 >
                   What is Family Social?
                 </Link>
                 { memberKeyDetails.isFounder ? (
                   <Link
                     href="/family-founder-account"
-                    className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                    className={ ctaCardClasses }
                   >
                     My Family Account
                   </Link>
                 ) : (
                   <Link
                     href="/family-setup-home"
-                    className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                    className={ ctaCardClasses }
                   >
                     Start a Family!
                   </Link>
@@ -63,7 +71,7 @@ export default async function MainPage() {
                 ) }
                 <Link
                   href="/help-subscribe"
-                  className="rounded-lg border border-[#59cdf7] bg-white px-3 py-2 text-center font-semibold text-[#005472] transition hover:bg-[#e6f8ff]"
+                  className={ ctaCardClasses }
                 >
                   Our Reasonable Subscriptions
                 </Link>

@@ -21,7 +21,7 @@ export default async function ChangePassword() {
             Account Security
           </div>
           <CardTitle className="mt-3 text-center text-2xl font-extrabold text-[#10364a]">Change Password</CardTitle>
-          <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { name }</CardDescription>
+          <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as <b>{ email }</b></CardDescription>
         </CardHeader>
         <CardDescription className="px-6 pt-3 text-center text-base font-medium text-[#315363]">
           Enter your current password, then choose and confirm a new password below.

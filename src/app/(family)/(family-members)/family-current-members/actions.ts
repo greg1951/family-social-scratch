@@ -4,7 +4,7 @@ import { deleteInvite, updateFamilyInviteStatus, getInvitebyInviteId } from "@/c
 import { deleteMember, findMemberIdByEmail, getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { deleteUserByUserId, getUserByEmail } from "@/components/db/sql/queries-user";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
-import { sendFamilyInviteEmails } from "@/features/family/services/send-invites-emails";
+import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 import { CurrentMembersValues, NewFamilyInvites } from "@/features/family/types/family-members";
 import { FounderDetails, MemberKeyDetails } from "@/features/family/types/family-steps";
 import { error } from "console";

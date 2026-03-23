@@ -5,7 +5,7 @@ import { NewFamilyInvites } from "@/features/family/types/family-members";
 import { InsertInvitesReturn } from "@/components/db/types/family-member";
 
 import { FounderDetails } from "@/features/family/types/family-steps";
-import { sendFamilyInviteEmails } from "@/features/family/services/send-invites-emails";
+import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { revalidatePath } from "next/cache";
 

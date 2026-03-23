@@ -15,11 +15,11 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
     <>
 
       <header className=" font-app rounded font-extrabold bg-[#59cdf7] flex justify-between align-middle h-[80] md:h-[110]">
-        <HeaderImage href="/my-account" src="images/family-social-icon-only.png" title="Family Social Home" tw="h-11 w-11 md:w-20 pt-[15] md:h-13 md:w-13" />
+        <HeaderImage href="/my-account" src="images/family-social-icon-only.png" title="Family Social Home" />
 
         <div className="flex justify-center ">
           <nav className="font-app font-extrabold text-xs md:text-base w-max-[100vh]">
-            <ul className="flex absolute pt-[30] md:pt-[25] left-[70] md:left-[250] space-x-2 md:space-x-4">
+            <ul className="flex absolute pt-[30] md:pt-[25] left-[70] md:left-[200] space-x-2 md:space-x-4">
               <NavBar isLoggedIn={ isLoggedIn } href="/tv-junkies" src="/icons/tv.png" title="TV Junkies" />
               <NavBar isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="/icons/movies.png" title="Movie Maniacs" />
               <NavBar isLoggedIn={ isLoggedIn } href="/book-besties" src="/icons/book.png" title="Book Besties" />

@@ -4,7 +4,7 @@ import { InsertInvitesReturn } from "@/components/db/types/family-member";
 
 import { FounderDetails } from "@/features/family/types/family-steps";
 import { Resend } from 'resend';
-import { sendFamilyInviteEmails } from "@/features/family/services/send-invites-emails";
+import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

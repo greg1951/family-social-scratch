@@ -1,9 +1,9 @@
 'use server';
 
 import { updateFamilyInviteToken } from "@/components/db/sql/queries-family-invite";
-import { FounderDetails, UpdateInviteTokenInput } from "../types/family-steps";
-import { familySocialEmail, familySocialHostReference } from "../constants/family-steps";
-import MemberInviteEmail from "./member-invite-email";
+import { FounderDetails, UpdateInviteTokenInput } from "../../features/family/types/family-steps";
+import { familySocialEmail, familySocialHostReference } from "../../features/family/constants/family-steps";
+import MemberInviteEmail from "./templates/member-invite-email";
 import React from "react";
 import { randomBytes } from "crypto";
 import { InsertInvitesReturn } from "@/components/db/types/family-member";

@@ -13,14 +13,14 @@ import Link from 'next/link';
 import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
-import { NewInvitesDialog } from '../../(family-members)/family-new-members/new-members-dialog';
+import { NewInvitesDialog } from '@/app/(family)/(family-members)/family-new-members/new-members-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
 import { sendEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
-import { addMemberNotifications } from '@/app/(registration)/family-member-registration/actions';
+import { addMemberNotifications } from '@/app/(new-setup)/(member-setup)/family-member-registration/actions';
 import { NewFamilyMember } from '@/features/family/types/family-members';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
