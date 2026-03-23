@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 
-export default function HeaderImage({ href, src, title }: { href: string, src: string, title: string, tw: string }) {
+export default function HeaderImage({ href, src, title }: { href: string, src: string, title: string }) {
   const pathName = usePathname();
   const tooltipClasses = [
     "font-app text-center rounded-full absolute -bottom-2 left-17 -translate-x-1/2 whitespace-nowrap",
@@ -17,7 +17,6 @@ export default function HeaderImage({ href, src, title }: { href: string, src: s
         <div className="h-11 w-11 md:w-20 pt-[10] md:h-10 md:w-10">
           <img src={ src } className='transition-transform duration-300 transform hover:scale-110 ' />
         </div>
-        {/* <span className="font-app text-center text-xs rounded absolute bottom left-0 bg-blue-300 text-blue-700 opacity-0 group-hover:opacity-100 transition-opacity"> */ }
         <p className={ tooltipClasses }>
           { title }
         </p>
