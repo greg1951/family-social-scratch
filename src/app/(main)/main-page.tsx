@@ -6,6 +6,7 @@ import MainLinkCard from "../../components/common/main-link-card";
 import Image from "next/image";
 import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
+import PublicHelpMenu from "@/components/common/public-help-menu";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
@@ -47,42 +48,60 @@ export default async function MainPage() {
               </div>
 
               <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3">
-                <Link
-                  href="/help/about-family-social"
-                  className={ ctaCardClasses }
-                >
-                  What is Family Social?
-                </Link>
-                { memberKeyDetails.isFounder ? (
-                  <Link
-                    href="/family-founder-account"
-                    className={ ctaCardClasses }
-                  >
-                    My Family Account
-                  </Link>
-                ) : (
-                  <Link
-                    href="/family-setup-home"
-                    className={ ctaCardClasses }
-                  >
-                    Start a Family!
-                  </Link>
-
+                { memberKeyDetails.isFounder && (
+                  <>
+                    <Link
+                      href="/family-founder-account"
+                      className={ ctaCardClasses }
+                    >
+                      My Family Account
+                    </Link>
+                    <Link
+                      href="/help-subscribe"
+                      className={ ctaCardClasses }
+                    >
+                      Our Reasonable Subscriptions
+                    </Link>
+                  </>
                 ) }
-                <Link
-                  href="/help-subscribe"
-                  className={ ctaCardClasses }
-                >
-                  Our Reasonable Subscriptions
-                </Link>
+                { memberKeyDetails.isLoggedIn && !memberKeyDetails.isFounder && (
+                  <>
+                    <Link
+                      href="/family-member-account"
+                      className={ ctaCardClasses }
+                    >
+                      My Account
+                    </Link>
+                  </>
+                ) }
+                { !memberKeyDetails.isLoggedIn && (
+                  <>
+                    <Link
+                      href="/help/about-family-social"
+                      className={ ctaCardClasses }
+                    >
+                      What is Family Social?
+                    </Link>
+                    <Link
+                      href="/family-setup-home"
+                      className={ ctaCardClasses }
+                    >
+                      Start a Family!
+                    </Link>
+
+                  </>
+                ) }
+              </div>
+              <div className="flex items-start justify-end md:pt-1 md:self-start">
+                <PublicHelpMenu />
               </div>
             </div>
 
-            { !memberKeyDetails.isLoggedIn && (
+            {/* { !memberKeyDetails.isLoggedIn && (
               <p className="mt-3 text-center text-xs text-slate-600 md:text-left">
                 Sign in to open channels directly from this page.
               </p>
-            ) }
+            ) } */}
           </Card>
 
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv-junkies" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
