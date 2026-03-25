@@ -57,6 +57,12 @@ export default async function MainPage() {
                       My Family Account
                     </Link>
                     <Link
+                      href="/family-member-dashboard"
+                      className={ ctaCardClasses }
+                    >
+                      Family Dashboard
+                    </Link>
+                    <Link
                       href="/help-subscribe"
                       className={ ctaCardClasses }
                     >
@@ -71,6 +77,12 @@ export default async function MainPage() {
                       className={ ctaCardClasses }
                     >
                       My Account
+                    </Link>
+                    <Link
+                      href="/family-member-dashboard"
+                      className={ ctaCardClasses }
+                    >
+                      My Dashboard
                     </Link>
                   </>
                 ) }
