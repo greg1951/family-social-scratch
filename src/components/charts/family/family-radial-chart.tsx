@@ -46,7 +46,7 @@ const chartConfig = {
     color: "var(--chart-4)",
   },
   books: {
-    label: "Book Lovers",
+    label: "Book Besties",
     color: "var(--chart-5)",
   },
 } satisfies ChartConfig
@@ -61,11 +61,11 @@ export default function FamilyRadialChart() {
           <CardTitle className="text-center text-sm font-semibold">Family-Wide Activity</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="flex flex-1 justify-center">
+      <CardContent className="flex flex-1 justify-center h-55">
         <ChartContainer
           id={ id }
           config={ chartConfig }
-          className="mx-auto aspect-square h-50"
+          className="mx-auto aspect-square"
         >
           <RadialBarChart
             data={ chartData }
