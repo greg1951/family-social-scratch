@@ -116,7 +116,7 @@ export default async function MainPage() {
             ) } */}
           </Card>
 
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv-junkies" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movie-maniacs" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/book-besties" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
