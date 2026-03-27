@@ -32,7 +32,7 @@ export default async function MainPage() {
           <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#d8f4ff] to-[#eef9ff] p-3 shadow-sm md:p-4">
             <div className="flex flex-col items-center justify-between gap-3 md:flex-row md:items-start">
               <div className="flex items-center gap-3">
-                <div className="rounded-full bg-white/80 p-2 shadow-sm">
+                {/* <div className="rounded-full bg-white/80 p-2 shadow-sm">
                   <Image
                     src="/icons/investigation.png"
                     alt="More Information"
@@ -40,7 +40,7 @@ export default async function MainPage() {
                     height={ 56 }
                     className="h-10 w-10 object-contain md:h-14 md:w-14"
                   />
-                </div>
+                </div> */}
                 <div>
                   <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
                   <p className="text-xs text-slate-600 md:text-sm">Choose a channel below or learn more first.</p>
