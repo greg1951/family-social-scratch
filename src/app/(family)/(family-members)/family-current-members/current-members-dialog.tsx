@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
-import { Trash2, UserPlus, MessageCircleReply, MessageCircleX, MailCheck, Undo2, CircleCheck, CircleSlash, Users } from 'lucide-react'
+import { MessageCircleX, MailCheck, Undo2, CircleCheck, Users } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -25,7 +25,7 @@ const currentMemberSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.email('Please enter a valid email address'),
-  invitationStatus: z.enum(['pending', 'joined', 'revoked']),
+  invitationStatus: z.enum(['pending', 'joined', 'revoked', 'resend', 'suggested']),
 })
 
 type UpdateMemberValues = z.infer<typeof currentMemberSchema>
@@ -35,9 +35,10 @@ type CurrentMembersDialogProps = {
   onResendMember: (id: number) => void
   onRemoveMember: (id: number) => void
   onResetMember: (id: number) => void
+  onInviteMember: (id: number) => void
 }
 
-export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, onResetMember }: CurrentMembersDialogProps) {
+export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, onResetMember, onInviteMember }: CurrentMembersDialogProps) {
   const form = useForm<UpdateMemberValues>({
     resolver: zodResolver(currentMemberSchema),
     defaultValues: {
@@ -59,6 +60,20 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
     form.handleSubmit(onSubmit)(e)
   }
 
+  const getStatusClasses = (status: string) => {
+    const normalized = status.toLowerCase()
+    if (normalized === 'active' || normalized === 'joined') {
+      return 'bg-emerald-100 text-emerald-700 border-emerald-200'
+    }
+    if (normalized === 'pending') {
+      return 'bg-amber-100 text-amber-700 border-amber-200'
+    }
+    if (normalized === 'suggested') {
+      return 'bg-sky-100 text-sky-700 border-sky-200'
+    }
+    return 'bg-slate-100 text-slate-700 border-slate-200'
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -72,8 +87,8 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
         <DialogHeader>
           <DialogTitle>Update Family Members</DialogTitle>
           <DialogDescription className="text-xs">
-            Change a family member status to REMOVE from the family or to RESEND an email invitation.
-            When done, close the dialog and click the "Update Marked Changes" button to apply your changes.
+            Select an action on a member. When done, close the dialog and click the "Update Marked Changes"
+            button to apply your changes.
           </DialogDescription>
         </DialogHeader>
 
@@ -85,15 +100,19 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
             <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
               <div className="flex items-center gap-1" >
                 <MailCheck size={ 6 } className="h-10 w-10 text-green-500" />
-                <p className='text-sm p-1'>Set status to RESEND that will resend the invitation email to the member</p>
+                <p className='text-sm p-1'>Status set to RESEND that resends the invitation email to the member</p>
               </div>
               <div className="flex items-center gap-1" >
                 <MessageCircleX className="h-10 w-10 text-red-500" />
-                <p className='text-sm p-1'>Set status to REMOVE that will revoke the invitation email to the member</p>
+                <p className='text-sm p-1'>Status set to REMOVE that revokes the invitation email to the member</p>
               </div>
               <div className="flex items-center gap-1" >
-                <Undo2 className="h-7 w-7 text-yellow-500" />
-                <p className='text-sm p-1'>Reset the member to the original status</p>
+                <CircleCheck className="h-10 w-10 text-purple-500" />
+                <p className='text-sm p-1'>Status set to INVITE that sends an invitation to a <i>suggested</i> member</p>
+              </div>
+              <div className="flex items-center gap-1" >
+                <Undo2 className="h-10 w-10 text-yellow-500" />
+                <p className='text-sm p-1'>Status set to RESET that reverts back to the original status</p>
               </div>
             </HoverCardContent>
           </HoverCard>
@@ -101,57 +120,80 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
           { members.length === 0 ? (
             <p className="text-sm text-neutral-500">No family members? Get crackin'</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
               { members.map((member) => (
                 <li
                   key={ member.id }
-                  className="flex items-center justify-between rounded-md border bg-neutral-50 px-3 py-2 relative"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">
-                      { member.firstName } { member.lastName }
-                    </p>
-                    <p className="text-xs text-neutral-600">{ member.email }</p>
-                    <p className="text-xs text-neutral-600">{ `status: ${ member.status.toUpperCase() }` }</p>
-                    <p className="text-xs text-neutral-600">{ `(id: ${ member.id })` }</p>
-                  </div>
-                  <div className='absolute right-1'>
-                    { (member.status === 'pending' || (member.status !== 'joined' && member.status !== 'resend')) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={ () => onResendMember(member.id) }
-                        aria-label={ `Resend invitation to ${ member.firstName } ${ member.lastName }` }
-                        className="text-black hover:text-gray-600"
-                      >
-                        <MailCheck className="h-4 w-4 text-green-500" />
-                      </Button>
-                    ) }
-                    { (member.status === 'invited' || member.status === 'joined' || member.status === 'resend') && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={ () => onRemoveMember(member.id) }
-                        aria-label={ `Remove ${ member.firstName } ${ member.lastName }` }
-                        className="text-black hover:text-gray-600"
-                      >
-                        <MessageCircleX className="h-4 w-4 text-red-500" />
-                      </Button>
-                    ) }
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={ () => onResetMember(member.id) }
-                      aria-label={ `Reset ${ member.firstName } ${ member.lastName }` }
-                      className="text-black hover:text-gray-600"
-                    >
-                      <Undo2 className="h-4 w-4 text-yellow-500" />
-                    </Button>
-                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold leading-tight text-slate-900">
+                        { member.firstName } { member.lastName }
+                      </p>
+                      <p className="break-all text-xs text-slate-600">{ member.email }</p>
+                    </div>
 
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className={ `rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ getStatusClasses(member.status) }` }>
+                        { member.status }
+                      </span>
+                      <div className="flex justify-end gap-1">
+                        { (member.status === 'pending'
+                          || (member.status !== 'joined'
+                            && member.status !== 'suggested'
+                            && member.status !== 'resend')) && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={ () => onResendMember(member.id) }
+                              aria-label={ `Resend invitation to ${ member.firstName } ${ member.lastName }` }
+                              className="h-8 w-8 text-black hover:text-gray-600"
+                            >
+                              <MailCheck className="h-4 w-4 text-green-500" />
+                            </Button>
+                          ) }
+                        { (member.status === 'suggested') && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={ () => onInviteMember(member.id) }
+                            aria-label={ `Invite ${ member.firstName } ${ member.lastName }` }
+                            className="h-8 w-8 text-black hover:text-gray-600"
+                          >
+                            <CircleCheck className="h-4 w-4 text-purple-500" />
+                          </Button>
+                        ) }
+                        { (member.status === 'invited'
+                          || member.status === 'joined'
+                          || member.status === 'suggested'
+                          || member.status === 'resend') && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={ () => onRemoveMember(member.id) }
+                              aria-label={ `Remove ${ member.firstName } ${ member.lastName }` }
+                              className="h-8 w-8 text-black hover:text-gray-600"
+                            >
+                              <MessageCircleX className="h-4 w-4 text-red-500" />
+                            </Button>
+                          ) }
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={ () => onResetMember(member.id) }
+                          aria-label={ `Reset ${ member.firstName } ${ member.lastName }` }
+                          className="h-8 w-8 text-black hover:text-gray-600"
+                        >
+                          <Undo2 className="h-4 w-4 text-yellow-500" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </li>
               )) }
             </ul>

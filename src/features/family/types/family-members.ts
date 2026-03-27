@@ -50,5 +50,13 @@ export type StandardResponse = {
   message: string;
 }
 
-
-
+export type FounderDetails = {
+  email: string;
+  status: string;
+  memberId: number;
+  firstName: string;
+  lastName: string;
+  nickName: string;
+  birthday: string;
+  cellPhone: string;
+}

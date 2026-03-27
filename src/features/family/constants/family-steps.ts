@@ -51,6 +51,11 @@
         { id: 1, label: 'Delete family member invitations and users', status: 'pending' },
         { id: 2, label: 'Update family member invitation statuses', status: 'pending' },
         { id: 3, label: 'Resend email invitations to invited family members', status: 'pending' },];
+
+  export const initialSuggestedInviteSteps: SubmissionStep[] = [
+        { id: 1, label: 'Create family invitation in SUGGESTED status', status: 'pending' },
+        { id: 2, label: 'Notify family founder of suggested invitation', status: 'pending' },
+  ];
   
   // Define constants for step indices for better readability
   export const STEP_1_FOUNDER: number = 0; // Founder info
@@ -66,4 +71,5 @@
   export const familySocialHostReference = "https://kbgfamilysocial.com";
 
   export const inviteStatusJoined = "joined";
-  
+  export const inviteStatusActive = "active";
+  export const inviteStatusSuggested = "suggested"; 

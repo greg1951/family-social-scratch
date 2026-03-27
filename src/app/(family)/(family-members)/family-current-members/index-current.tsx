@@ -20,7 +20,11 @@ import { useRouter } from "next/navigation";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
 import { StatusUpdateDialog } from "@/features/family/components/dialogs/status-update-dialog";
-import { initializeFormProcessingArray, initializeProcessUpdateCounts, initializeRecordCounts } from "@/features/family/services/client-side";
+import {
+  initializeFormProcessingArray,
+  initializeProcessUpdateCounts,
+  initializeRecordCounts
+} from "@/features/family/services/client-side";
 import { ArrowRight } from "lucide-react";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
@@ -43,6 +47,20 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
 
   const [members, setMembers] = useState<CurrentFamilyMember[]>(familyMembers);
   const [originalMembers] = useState<CurrentFamilyMember[]>(familyMembers);
+
+  const getStatusClasses = (status: string) => {
+    const normalized = status.toLowerCase();
+    if (normalized === "active" || normalized === "joined") {
+      return "bg-emerald-100 text-emerald-700 border-emerald-200";
+    }
+    if (normalized === "pending") {
+      return "bg-amber-100 text-amber-700 border-amber-200";
+    }
+    if (normalized === "suggested") {
+      return "bg-sky-100 text-sky-700 border-sky-200";
+    }
+    return "bg-slate-100 text-slate-700 border-slate-200";
+  };
 
   useEffect(() => {
     form.setValue("currentFamilyMembers", members, {
@@ -68,7 +86,9 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     }
   }
 
-
+  const handleInviteMember = (id: number) => {
+    setStateStatus('invite', id);
+  }
   const handleResendMember = (id: number) => {
     setStateStatus('resend', id);
   }
@@ -108,6 +128,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     statusUpdateCounts = initializeRecordCounts(updatedInvites, statusUpdateCounts);
     statusUpdateCounts.totalUpdateCount = updatedInvites.length;
 
+    console.log('SubmitHandler->updatedInvites: ', updatedInvites);
     console.log('SubmitHandler->statusUpdateCounts: ', statusUpdateCounts);
 
     //--------- Step 1: Delete family invitations
@@ -124,7 +145,9 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
 
     //--------- Step 2: Update family invitation statuses
     updateStepStatus(2, 'inProgress');
-    if (updatedInvites.length > 0 && statusUpdateCounts.totalResendRecordsCount > 0) {
+    if (updatedInvites.length > 0
+      && (statusUpdateCounts.totalResendRecordsCount > 0
+        || statusUpdateCounts.totalInviteRecordsCount > 0)) {
       const updatesResult = await processInviteUpdates({ updatedInvites, statusUpdateCounts, founderKeyDetails });
       if (updatesResult && !updatesResult.success) {
         updateStepStatus(2, 'error', updatesResult.message);
@@ -135,7 +158,9 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
 
     //--------- Step 3: Send invite emails
     updateStepStatus(3, 'inProgress');
-    if (updatedInvites.length > 0 && statusUpdateCounts.totalResendRecordsCount > 0) {
+    if (updatedInvites.length > 0
+      && (statusUpdateCounts.totalResendRecordsCount > 0
+        || statusUpdateCounts.totalInviteRecordsCount > 0)) {
       const sendResult = await sendInviteEmails({ updatedInvites, statusUpdateCounts, founderKeyDetails });
       if (sendResult && !sendResult.success) {
         updateStepStatus(3, 'error', sendResult.message);
@@ -162,6 +187,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
               onResendMember={ handleResendMember }
               onRemoveMember={ handleRemoveMember }
               onResetMember={ handleResetMember }
+              onInviteMember={ handleInviteMember }
             />
 
             <div className="rounded-md border p-1">
@@ -169,15 +195,23 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
               { members.length === 0 ? (
                 <p className="text-sm text-neutral-500">No family members added yet.</p>
               ) : (
-                <ul className="space-y-2">
+                <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
                   { members.map((member) => (
-                    <li key={ member.id } className="rounded-md border bg-neutral-100 px-2 py-1">
-                      <p className="text-sm font-medium text-neutral-900">
-                        { member.firstName } { member.lastName }
-                      </p>
-                      <p className="text-xs text-neutral-600">{ member.email }</p>
-                      <p className="text-xs text-neutral-600">{ `status: ${ member.status.toUpperCase() }` }</p>
-                      <p className="text-xs text-neutral-600">{ `(id: ${ member.id })` }</p>
+                    <li key={ member.id } className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-tight text-slate-900">
+                            { member.firstName } { member.lastName }
+                          </p>
+                          <p className="break-all text-xs text-slate-600">{ member.email }</p>
+                        </div>
+
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          <span className={ `rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ getStatusClasses(member.status) }` }>
+                            { member.status }
+                          </span>
+                        </div>
+                      </div>
                     </li>
                   )) }
                 </ul>

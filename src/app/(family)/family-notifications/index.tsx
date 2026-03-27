@@ -72,7 +72,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
                         className="text-xs font-extralight"
                       />
                     </FormControl>
-                    <FormLabel className="font-extrabold">{ notification.optionName }</FormLabel>
+                    <FormLabel className="font-light">{ notification.optionName }</FormLabel>
                     <FormMessage />
                   </FormItem>
                 ) }

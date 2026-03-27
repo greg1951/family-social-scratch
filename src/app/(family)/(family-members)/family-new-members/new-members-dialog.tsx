@@ -133,27 +133,31 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
           { newInvites.length === 0 ? (
             <p className="text-sm text-neutral-500">No entries yet.</p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
               { newInvites.map((invite) => (
                 <li
                   key={ invite.id }
-                  className="flex items-center justify-between rounded-md border bg-neutral-50 px-3 py-2"
+                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">{ invite.firstName } { invite.lastName }</p>
-                    <p className="text-xs text-neutral-600">{ invite.email }</p>
-                  </div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold leading-tight text-slate-900">
+                        { invite.firstName } { invite.lastName }
+                      </p>
+                      <p className="break-all text-xs text-slate-600">{ invite.email }</p>
+                    </div>
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={ () => onRemoveInvite(invite.id) }
-                    aria-label={ `Remove ${ invite.firstName } ${ invite.lastName }` }
-                    className="text-neutral-600 hover:text-red-600"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={ () => onRemoveInvite(invite.id) }
+                      aria-label={ `Remove ${ invite.firstName } ${ invite.lastName }` }
+                      className="h-8 w-8 shrink-0 text-neutral-600 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </li>
               )) }
             </ul>

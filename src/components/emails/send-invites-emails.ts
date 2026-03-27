@@ -11,9 +11,10 @@ import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendFamilyInviteEmails = async (familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
-                                             familyName: string, 
-                                             founderDetails:FounderDetails ) => {
+export const sendFamilyInviteEmails = async (
+  familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
+  familyName: string, 
+  founderDetails:FounderDetails ) => {
 
                                               
   if (familyInvites) {

@@ -13,6 +13,7 @@ import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-membe
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RotateCcw, ShieldCheck } from "lucide-react";
+import { FounderDetails } from "@/features/family/types/family-members";
 
 const formSchema = z
   .object({
@@ -25,7 +26,8 @@ const formSchema = z
   });
 
 
-export default function AccountDetailsForm({ accountDetails }: { accountDetails: AccountDetails }) {
+export default function AccountDetailsForm({ accountDetails, founderDetails }
+  : { accountDetails: AccountDetails, founderDetails: FounderDetails | null }) {
 
   const [open, setOpen] = useState(false);
   const [dateNotDirty, setDateNotDirty] = useState(true);

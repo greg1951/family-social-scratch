@@ -46,9 +46,6 @@ export type GetFounderDetailsReturn =
       nickName?: string;
       birthday?: string;
       cellPhone?: string;
-      isFounder: boolean;
-      familyId: number;
-      familyName: string;
       memberId: number;
     };
 
@@ -121,14 +118,17 @@ export type InsertUserReturn =
       // familyId: number;
       createdAt: Date;
     };
-export type InsertInvitesInput = {
+
+export type InsertInviteInput = {
     email: string;
     firstName: string; 
     lastName: string;
     inviteToken?: string;
+    status?: string;
     familyId: number;
-  }[];
+  };
 
+export type InsertInvitesInput = InsertInviteInput[];
 
 export type InsertInvitesReturn =
   | { success: false; message: string }
@@ -145,6 +145,14 @@ export type InsertInvitesReturn =
         // familyId: number;
         createdAt: Date;
       }[];
+    };
+
+export type InsertInviteReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      id: number;
+      createdAt: Date;
     };
 
 export type GetAllFamilyMembersReturn =
@@ -252,9 +260,11 @@ export type StatusUpdateProcessing = {
 
 export type StatusUpdateCounts = {
   totalUpdateCount: number;
+  totalInviteRecordsCount: number;
   totalDeleteRecordsCount: number;
   userDeleteCount: number;
   memberDeleteCount: number;
+  inviteAddCount: number;
   inviteDeleteCount: number;
   totalResendRecordsCount: number;
   resendCount: number;

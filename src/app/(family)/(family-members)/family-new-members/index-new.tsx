@@ -159,11 +159,15 @@ export default function NewMembersAccountForm({ familyId, accountDetails, curren
                 { invites.length === 0 ? (
                   <p className="text-sm text-neutral-500">No family members added yet.</p>
                 ) : (
-                  <ul className="space-y-2">
+                  <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
                     { invites.map((invite) => (
-                      <li key={ invite.id } className="rounded-md border bg-neutral-100 px-2 py-1">
-                        <p className="text-sm font-medium text-neutral-900">{ invite.firstName } { invite.lastName }</p>
-                        <p className="text-xs text-neutral-600">{ invite.email }</p>
+                      <li key={ invite.id } className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-tight text-slate-900">
+                            { invite.firstName } { invite.lastName }
+                          </p>
+                          <p className="break-all text-xs text-slate-600">{ invite.email }</p>
+                        </div>
                       </li>
                     )) }
                   </ul>

@@ -60,7 +60,7 @@ export default function FounderAccountTabs({
         </TabsTrigger>
         <TabsTrigger value="notifications" className="border bg-slate-100 data-[state=active]:bg-white">
           <MessageCircleMore className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-          Your Notifications
+          Your Settings
         </TabsTrigger>
         <TabsTrigger value="current-family" className="border bg-slate-100 data-[state=active]:bg-white">
           <Users className="inline h-3 w-3 mr-1 text-[#59cdf7]" />

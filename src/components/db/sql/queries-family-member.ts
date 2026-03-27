@@ -283,32 +283,30 @@ export async function getFamilyFounderDetails(familyId:number)
       familyId: family.id,
       familyName: family.name,
     })
-    .from(family).leftJoin(member, eq(family.id, member.familyId))
-    .where(eq(family.id, familyId)
-  );
+    .from(family)
+      .leftJoin(member, eq(family.id, member.familyId))
+        .where(eq(member.isFounder, true));
 
   if (!selectResult) {
     return {
       success: false,
-      message: `Member details NOT FOUND for familyId ${familyId}`
+      message: `Founder NOT FOUND for familyId ${familyId}`
     }
   }
-
-  const founderDetails:GetFounderDetailsReturn = {
-    success: true,
-    familyId: familyId,
-    familyName: selectResult.familyName,
-    memberId: selectResult.memberId!,
-    email: selectResult.email!,
-    status: selectResult.status!,
-    firstName: selectResult.firstName!, 
-    lastName: selectResult.lastName!,
-    nickName: selectResult?.nickName!,
-    birthday: selectResult.birthday!,
-    cellPhone: selectResult?.cellPhone!,
-    isFounder: selectResult.isFounder!,
-  }  
-  return founderDetails;
+  else {
+    const founderDetails:GetFounderDetailsReturn = {
+      success: true,
+      memberId: selectResult.memberId!,
+      email: selectResult.email!,
+      status: selectResult.status!,
+      firstName: selectResult.firstName!, 
+      lastName: selectResult.lastName!,
+      nickName: selectResult?.nickName!,
+      birthday: selectResult.birthday!,
+      cellPhone: selectResult?.cellPhone!,
+    }  
+    return founderDetails;
+  }
 }
 
 /*----------------- deleteMember ------------------ */

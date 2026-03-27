@@ -8,9 +8,10 @@ import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails"
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export const sendEmails = async (familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
-                                             familyName: string, 
-                                             founderDetails:FounderDetails ) => {
+export const sendEmails = async (
+    familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
+    familyName: string, 
+    founderDetails:FounderDetails ) => {
  
   if (familyInvites) {
     const sendResult = await sendFamilyInviteEmails(familyInvites, familyName, founderDetails);

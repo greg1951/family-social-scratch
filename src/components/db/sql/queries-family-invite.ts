@@ -8,12 +8,15 @@ import { InsertInvitesInput,
          GetInviteByMemberIdReturn,
          GenericDatabaseReturn,
          StatusUpdateProcessing,
-         GetInviteByInviteIdReturn} from '../types/family-member';
+         GetInviteByInviteIdReturn,
+         InsertInviteInput,
+         InsertInviteReturn} from '../types/family-member';
 import { get } from 'http';
 import { CurrentMembersValues, NewFamilyInvites, UpdateInvite } from '@/features/family/types/family-members';
 import { deleteUserByUserId, getUserByEmail } from './queries-user';
 
-         
+
+/*------------------- insertInvites (bulk insert) ------------------- */
 export async function insertInvites(invitesArg: InsertInvitesInput)
 : Promise<InsertInvitesReturn> {
 
@@ -44,6 +47,32 @@ export async function insertInvites(invitesArg: InsertInvitesInput)
     }
 }
 
+/*------------------- insertInvite (singleton insert) ------------------- */
+export async function insertInvite(inviteArg: InsertInviteInput)
+: Promise<InsertInviteReturn> {
+
+  // console.log("insertInvite-> invite: ", inviteArg);
+
+  const [insertResult] = await db.insert(familyInvitation).values(inviteArg).returning();
+  if (!insertResult) {
+    return {
+      success: false,
+      message: `Failed to insert invite for email ${inviteArg.email}`,
+    };
+  }
+  if (insertResult.id === undefined || insertResult.createdAt === undefined) {
+    return {
+      success: false,
+      message: `Insert invite did not return expected id or createdAt for email ${inviteArg.email}`,
+    };
+  }
+
+  return {
+    success: true,
+      id: insertResult.id,
+      createdAt: insertResult.createdAt as Date,
+  };
+}
 
 export async function updateFamilyInviteToken({inviteToken }: { inviteToken: UpdateInviteTokenInput })
 : (Promise<UpdateInviteTokenResult>) {

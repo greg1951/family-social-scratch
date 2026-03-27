@@ -56,6 +56,7 @@ export function initializeProcessUpdateCounts() : StatusUpdateCounts {
 
   let statusUpdateCounts: StatusUpdateCounts = {
     totalUpdateCount: 0,
+    totalInviteRecordsCount: 0,
     totalDeleteRecordsCount: 0,
     userDeleteCount: 0,
     memberDeleteCount: 0,
@@ -76,6 +77,8 @@ export function initializeRecordCounts(updatedInvites: StatusUpdateProcessing[],
       statusUpdateCounts.totalResendRecordsCount++;
     else if (updatedInvites[ix].newStatus === 'remove' ) 
       statusUpdateCounts.totalDeleteRecordsCount++;
+    else if (updatedInvites[ix].newStatus === 'invite' ) 
+      statusUpdateCounts.totalInviteRecordsCount++;
   }
 
   return statusUpdateCounts;

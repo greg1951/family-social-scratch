@@ -9,6 +9,9 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { Sparkles } from "lucide-react";
 import MemberAccountTabs from "./member-tabs";
+import { getAllFamilyMembers, getFamilyFounderDetails } from "@/components/db/sql/queries-family-member";
+import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
+import { toast } from "sonner";
 
 export default async function FamilyMemberAccount() {
   const session = await auth();
@@ -51,8 +54,43 @@ export default async function FamilyMemberAccount() {
       }
     }
 
+    const currentMembersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
+    let currentFamilyMembers: CurrentFamilyMember[] = [];
+
+    if (currentMembersResult.success && currentMembersResult.members) {
+      // console.log('FamilyCurrentMembersPage->getAllFamilyMembers->membersResult: ', currentMembersResult);
+      currentFamilyMembers = currentMembersResult.members.map((member) => ({
+        id: member.id,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        status: member.status,
+      })) as CurrentFamilyMember[];
+    }
+
+    const founderDetailsResult = await getFamilyFounderDetails(memberKeyDetails.familyId);
+    let founderDetails: FounderDetails | null = null;
+    if (!founderDetailsResult.success) {
+      console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
+      toast.error('Error fetching family founder details. Please try again later.');
+      redirect("/");
+    }
+    else {
+      founderDetails = {
+        email: founderDetailsResult.email,
+        status: founderDetailsResult.status,
+        memberId: founderDetailsResult.memberId,
+        firstName: founderDetailsResult.firstName,
+        lastName: founderDetailsResult.lastName,
+        nickName: founderDetailsResult.nickName!,
+        birthday: founderDetailsResult.birthday!,
+        cellPhone: founderDetailsResult.cellPhone!,
+      };
+    }
+
+
     return (
-      <main className="font-app h-[90vh] gap-y-2 pt-1">
+      <main className="font-app h-[90vh] gap-y-2 pt-1 w-[700]">
         <Card className="flex align-top w-[400] overflow-hidden border-white/70 bg-white/82 pt-0 shadow-[0_28px_90px_-50px_rgba(16,54,74,0.75)] backdrop-blur md:w-[700]">
           <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 text-center shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
@@ -71,6 +109,10 @@ export default async function FamilyMemberAccount() {
               <MemberAccountTabs
                 accountDetails={ accountDetails }
                 notifications={ notifications }
+                familyId={ memberKeyDetails.familyId }
+                currentFamilyMembers={ currentFamilyMembers }
+                memberKeyDetails={ memberKeyDetails }
+                founderDetails={ founderDetails }
               />
             ) }
           </CardContent>

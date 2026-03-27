@@ -90,13 +90,26 @@ export async function processInviteUpdates({updatedInvites, statusUpdateCounts, 
 
   try {
     for (let ix=0; ix < updatedInvites.length; ix++) {
-      if (updatedInvites[ix].newStatus === 'resend') {
-        const updateResult = await updateFamilyInviteStatus(updatedInvites[ix].inviteId, updatedInvites[ix].newStatus);
+      if (updatedInvites[ix].newStatus === 'resend' || updatedInvites[ix].newStatus === 'invite') {
+        let status:string;
+        if (updatedInvites[ix].newStatus === 'invite') {
+          status = 'invited';
+        }
+        else {
+          status = 'resend';
+        }
+
+        console.log(`Processing invite update for inviteId ${updatedInvites[ix].inviteId} with new status ${status}`);  
+        const updateResult = await updateFamilyInviteStatus(updatedInvites[ix].inviteId, status);
         if (updateResult && updateResult.error) {
           throw new Error(`Failed to update invite status for invite id ${updatedInvites[ix].inviteId}: ${updateResult.message}`);
         }
         else {
-          statusUpdateCounts.resendCount++;
+          if (status === 'invited') {
+            statusUpdateCounts.inviteAddCount++;
+          } else if (status === 'resend') {
+            statusUpdateCounts.resendCount++;
+          }
         }
       }
     }
@@ -154,7 +167,15 @@ export async function sendInviteEmails({updatedInvites, statusUpdateCounts, foun
 
 try {
   for (let ix=0; ix < updatedInvites.length; ix++) {
-    if (updatedInvites[ix].newStatus === 'resend') {
+    if (updatedInvites[ix].newStatus === 'resend' || updatedInvites[ix].newStatus === 'invite') {
+        let status:string;
+        if (updatedInvites[ix].newStatus === 'invite') {
+          status = 'invited';
+        }
+        else {
+          status = 'resend';
+        }
+
         const inviteResult = await getInvitebyInviteId(updatedInvites[ix].inviteId);
         let familyInvites: FamilyInvites = [];
         if (!inviteResult.error) {
@@ -163,9 +184,11 @@ try {
             email: inviteResult.email,
             firstName: inviteResult.firstName,
             lastName: inviteResult.lastName,
+            status: status,
             createdAt: new Date(),
           });
         }
+        console.log(`sendInviteEmails->familyInvites: `, familyInvites);
         const sendResult = await sendFamilyInviteEmails(familyInvites, founderKeyDetails.familyName, founderDetails);
         if (sendResult && sendResult.error) {
           throw new Error(`Failed to send invite email for invite id ${updatedInvites[ix].inviteId}: ${sendResult.message}`);
