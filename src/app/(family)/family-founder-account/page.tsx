@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getMemberDetails } from "@/app/(family)/family-member-account/actions";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getUser2fa } from "@/components/db/sql/queries-user";
-import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getFamilyFounderDetails } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails, NewFamilyInvite } from "@/features/family/types/family-members";
 import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
+import { toast } from "sonner";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -71,6 +72,27 @@ export default async function FamilyMyAccountPage() {
     }
   }
 
+  const founderDetailsResult = await getFamilyFounderDetails(memberKeyDetails.familyId);
+  let founderDetails: FounderDetails | null = null;
+  if (!founderDetailsResult.success) {
+    console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
+    toast.error('Error fetching family founder details. Please try again later.');
+    redirect("/");
+  }
+  else {
+    founderDetails = {
+      email: founderDetailsResult.email,
+      status: founderDetailsResult.status,
+      memberId: founderDetailsResult.memberId,
+      firstName: founderDetailsResult.firstName,
+      lastName: founderDetailsResult.lastName,
+      nickName: founderDetailsResult.nickName!,
+      birthday: founderDetailsResult.birthday!,
+      cellPhone: founderDetailsResult.cellPhone!,
+    };
+  }
+
+
   return (
     <main className="font-app min-h-[90vh] max-w-screen bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
@@ -91,6 +113,7 @@ export default async function FamilyMyAccountPage() {
           <CardContent className="pt-1">
             <FounderAccountTabs
               accountDetails={ accountDetails }
+              founderDetails={ founderDetails }
               notifications={ notifications }
               familyId={ memberKeyDetails.familyId }
               currentFamilyMembers={ currentFamilyMembers }

@@ -2,10 +2,11 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getMemberDetails } from "@/app/(family)/family-member-account/actions";
-import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getFamilyFounderDetails } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails, NewFamilyInvite } from "@/features/family/types/family-members";
 import FamilyMemberSuggestForm from ".";
+import { toast } from "sonner";
 
 export default async function FamilyMemberSuggestPage() {
 
@@ -45,6 +46,27 @@ export default async function FamilyMemberSuggestPage() {
     })) as CurrentFamilyMember[];
   }
 
+  const founderDetailsResult = await getFamilyFounderDetails(memberKeyDetails.familyId);
+  let founderDetails: FounderDetails | null = null;
+  if (!founderDetailsResult.success) {
+    console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
+    toast.error('Error fetching family founder details. Please try again later.');
+    redirect("/");
+  }
+  else {
+    founderDetails = {
+      email: founderDetailsResult.email,
+      status: founderDetailsResult.status,
+      memberId: founderDetailsResult.memberId,
+      firstName: founderDetailsResult.firstName,
+      lastName: founderDetailsResult.lastName,
+      nickName: founderDetailsResult.nickName!,
+      birthday: founderDetailsResult.birthday!,
+      cellPhone: founderDetailsResult.cellPhone!,
+    };
+  }
+
+
   return (
     <div className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
@@ -71,6 +93,7 @@ export default async function FamilyMemberSuggestPage() {
             familyId={ memberKeyDetails.familyId }
             currentFamilyMembers={ currentFamilyMembers }
             memberKeyDetails={ memberKeyDetails }
+            founderDetails={ founderDetails }
           />
         </Card>
 

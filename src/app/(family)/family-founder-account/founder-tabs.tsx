@@ -5,7 +5,7 @@ import { MessageCircleMore, UserPenIcon, UserPlus, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountDetails } from "@/features/auth/types/auth-types";
-import { CurrentFamilyMember } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
 import FamilyNotificationsForm from "../family-notifications";
 import AccountDetailsForm from "@/app/(family)/family-member-account";
@@ -27,12 +27,14 @@ function getValidTab(tab: string | null): TabValue {
 
 export default function FounderAccountTabs({
   accountDetails,
+  founderDetails,
   notifications,
   familyId,
   currentFamilyMembers,
   memberKeyDetails
 }: {
   accountDetails: AccountDetails | null;
+  founderDetails: FounderDetails | null;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
   familyId: number;
   currentFamilyMembers: CurrentFamilyMember[];
@@ -74,7 +76,7 @@ export default function FounderAccountTabs({
 
       <TabsContent value="profile" className="mt-4">
         { accountDetails && (
-          <AccountDetailsForm accountDetails={ accountDetails } />
+          <AccountDetailsForm accountDetails={ accountDetails } founderDetails={ founderDetails } />
         ) }
       </TabsContent>
 

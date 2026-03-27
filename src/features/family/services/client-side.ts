@@ -57,6 +57,7 @@ export function initializeProcessUpdateCounts() : StatusUpdateCounts {
   let statusUpdateCounts: StatusUpdateCounts = {
     totalUpdateCount: 0,
     totalInviteRecordsCount: 0,
+    inviteAddCount: 0,
     totalDeleteRecordsCount: 0,
     userDeleteCount: 0,
     memberDeleteCount: 0,
