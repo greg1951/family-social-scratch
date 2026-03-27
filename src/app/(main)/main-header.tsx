@@ -20,13 +20,13 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
         <div className="flex justify-center ">
           <nav className="font-app font-extrabold text-xs md:text-base w-max-[100vh]">
             <ul className="flex absolute pt-[30] md:pt-[25] left-[70] md:left-[200] space-x-2 md:space-x-4">
-              <NavBar isLoggedIn={ isLoggedIn } href="/tv-junkies" src="/icons/tv.png" title="TV Junkies" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/movie-maniacs" src="/icons/movies.png" title="Movie Maniacs" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/book-besties" src="/icons/book.png" title="Book Besties" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/poetry-cafe" src="/icons/poetry.png" title="Poetry Cafe" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/family-foodies" src="/icons/food.png" title="Family Foodies" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/mx-train" src="/icons/games.png" title="MX Train" />
-              <NavBar isLoggedIn={ isLoggedIn } href="/family-threads" src="/icons/family.png" title="Family Threads" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/mxtrain" src="/icons/games.png" title="MX Train" />
+              <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" />
             </ul>
             <main className="flex pr-6 items-center gap-x-2 gap-y-2 pt-6">
               <div>

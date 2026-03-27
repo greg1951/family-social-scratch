@@ -1,6 +1,7 @@
 "use client";
 
 import { Star, ThumbsUp, MessageSquareText, Tv, Search } from "lucide-react";
+import Link from "next/link";
 import { useDeferredValue, useState } from "react";
 
 import { Input } from "@/components/ui/input";
@@ -182,12 +183,18 @@ export function TvHomePage() {
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
                 Family TV Hub
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+              <Link
+                href="/"
+                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                Back to Main Page
+              </Link>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Keep your family&apos;s next binge watch in one place.
               </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-7 text-[#d9f5ff] sm:text-base">
+              {/* <p className="mt-4 max-w-2xl text-sm leading-7 text-[#d9f5ff] sm:text-base">
                 Browse fresh additions, revisit the top-rated favorites, and search the full family watch list without leaving the TV group.
-              </p>
+              </p> */}
             </div>
 
             <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-3 lg:min-w-[24rem]">
@@ -213,7 +220,7 @@ export function TvHomePage() {
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
           <div className="space-y-6">
             <TvScrollStrip
-              title="Latest tv shows"
+              title="Latest TV Shows"
               description="Fresh picks for the family queue. Use the arrows on larger screens, or scroll vertically on smaller screens."
               items={ latestShows }
               accentClassName="bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
