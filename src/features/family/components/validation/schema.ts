@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
-import { id } from 'date-fns/locale';
+import { familySchema } from '@/features/auth/components/validation/familySchema';
+import { passwordMatchSchema } from '@/features/auth/components/validation/passwordMatchSchema';
 
 /*------------ CurrentMemberSchema definitions below -------------- */
 
@@ -67,13 +68,52 @@ export const NotificationsFormSchema = z.object({
 /*------------ MemberRegistrationSchema definitions below -------------- */
 
 export const MemberRegistrationSchema = z.object({
-  firstName: z.string(),
-  lastName: z.string(),
-  email: z.email(),
+  firstName: z.string().min(2, { message: "First name is required" }),
+  lastName: z.string().min(2, { message: "Last name is required" }),
   nickName: z.string().optional(),
+  phone: z.string().min(14).max(14).or(z.string().max(0)),
   password: passwordSchema,
   passwordConfirm: z.string(),
 }).refine((data) => data.password === data.passwordConfirm, {
-    message: "Passwords don't match",
-    path: ["passwordConfirm"],
+  message: "Passwords don't match",
+  path: ["passwordConfirm"],
+});
+
+/*------------ Email schemas of various uses below -------------- */
+
+export const EmailFamilyReminderSchema = z.object({
+  email: z.email()
+});
+
+export const EmailResetPasswordSchema = z.object({
+  email: z.email()
+});
+
+export const ResetPasswordSchema = z.object({
+    email: z.email(),
+    family: familySchema,
+  })
+  .and(passwordMatchSchema);
+
+export const UpdatePasswordSchema = z.object({
+  email: z.email(),
+})
+.and(passwordMatchSchema);
+
+export const ChangePasswordFormSchema = z.object({
+  currentPassword: passwordSchema,
+}).and(passwordMatchSchema);
+
+/* ------------ TypeScript type exports below -------------- */
+
+export const FamilySocialLoginSchema = z.object({ email: z.email(), password: passwordSchema, family: familySchema });
+
+export const MemberAccountFormSchema = z
+  .object({
+    firstName: z.string().min(2, { message: "First name is required" }),
+    lastName: z.string().min(2, { message: "Last name is required" }),
+    nickName: z.string().optional(),
+    birthday: z.string().min(10).max(10).or(z.string().max(0)),
+    cellPhone: z.string().min(14).max(14).or(z.string().max(0)),
+    mfaActive: z.boolean(),
   });

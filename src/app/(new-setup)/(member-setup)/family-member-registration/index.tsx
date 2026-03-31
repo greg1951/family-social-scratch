@@ -12,7 +12,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { CircleCheck, Eye, EyeOff, CircleX } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
-import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
 import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInviteStatus } from './actions';
 import { SubmissionStep } from '@/features/family/types/family-steps';
 import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/constants/family-steps';
@@ -21,17 +20,7 @@ import { MemberRegistrationInput } from '@/components/db/types/family-member';
 import { sendLoginInstructionsEmail } from '@/components/emails/send-signin-email';
 import { FounderDetails } from '@/features/family/types/family-members';
 
-const formSchema = z.object({
-  firstName: z.string().min(2, { message: "First name is required" }),
-  lastName: z.string().min(2, { message: "Last name is required" }),
-  nickName: z.string().optional(),
-  phone: z.string().min(14).max(14).or(z.string().max(0)),
-  password: passwordSchema,
-  passwordConfirm: z.string(),
-}).refine((data) => data.password === data.passwordConfirm, {
-  message: "Passwords don't match",
-  path: ["passwordConfirm"],
-});
+const formSchema = MemberRegistrationSchema;
 
 function formatPhoneNumber(value: string): string {
   const digits = value.replace(/\D/g, '').slice(0, 10);
@@ -44,7 +33,7 @@ function formatPhoneNumber(value: string): string {
 
 //--------------- FamilyMemberRegistrationForm Component ---------------
 export default function FamilyMemberRegistrationForm({ memberToRegister, founderDetails }
-  : { memberToRegister: MemberRegistrationInput, founderDetails: FounderDetails  }) {
+  : { memberToRegister: MemberRegistrationInput, founderDetails: FounderDetails }) {
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -138,7 +127,7 @@ export default function FamilyMemberRegistrationForm({ memberToRegister, founder
 
       // Step 5: Send login instructions email
       updateStepStatus(5, 'inProgress');
-      console.log('FamilyMemberRegistration->handleFormSubmit->Sending login instructions email to: ', memberToRegister.email, ' with founder details: ', founderDetails  );
+      console.log('FamilyMemberRegistration->handleFormSubmit->Sending login instructions email to: ', memberToRegister.email, ' with founder details: ', founderDetails);
 
       const sendLoginInstructionsResult = await sendLoginInstructionsEmail(memberToRegister.email, founderDetails);
       if (!sendLoginInstructionsResult || sendLoginInstructionsResult.error) {

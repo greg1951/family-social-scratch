@@ -10,16 +10,9 @@ import { Button } from "@/components/ui/button";
 import { registerUser } from "./actions";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { ResetPasswordSchema } from "@/features/family/components/validation/schema";
 
-// const formSchema = z
-//   .object({ email: z.email(), password: passwordSchema, family: familySchema });
-
-const formSchema = z
-  .object({
-    email: z.email(),
-    family: familySchema,
-  })
-  .and(passwordMatchSchema);
+const formSchema = ResetPasswordSchema;
 
 export default function RegisterAccountForm() {
   const router = useRouter();

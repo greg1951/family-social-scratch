@@ -5,6 +5,7 @@ import z from "zod";
 import { updateUserPassword, getUserByEmail } from "@/components/db/sql/queries-user";
 import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
 import { hashPasswordWithSalt } from "@/features/auth/services/hash";
+import { ChangePasswordFormSchema } from "@/features/family/components/validation/schema";
 
 export const changeUserPassword = async({
   email,
@@ -20,9 +21,7 @@ export const changeUserPassword = async({
 
     try {
       // console.info('changeUserPassword->starting->email: ', email, ' currentPassword: ', currentPassword, 'password: ', password, 'passwordConfirm: ', passwordConfirm);
-      const formSchema = z.object({
-        currentPassword: passwordSchema
-      }).and(passwordMatchSchema);
+      const formSchema = ChangePasswordFormSchema;
       
       const passwordValidation = formSchema.safeParse({currentPassword, password, passwordConfirm});
       if (!passwordValidation.success) {

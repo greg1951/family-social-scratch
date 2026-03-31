@@ -15,17 +15,9 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, RotateCcw, ShieldCheck } from "lucide-react";
 import { FounderDetails } from "@/features/family/types/family-members";
 import { updateDetails } from "./actions";
+import { MemberAccountFormSchema } from "@/features/family/components/validation/schema";
 
-const formSchema = z
-  .object({
-    firstName: z.string().min(2, { message: "First name is required" }),
-    lastName: z.string().min(2, { message: "Last name is required" }),
-    nickName: z.string().optional(),
-    birthday: z.string().min(10).max(10).or(z.string().max(0)),
-    cellPhone: z.string().min(14).max(14).or(z.string().max(0)),
-    mfaActive: z.boolean(),
-  });
-
+const formSchema = MemberAccountFormSchema;
 
 export default function AccountDetailsForm({ founderDetails }
   : { founderDetails: FounderDetails | null }) {

@@ -13,11 +13,10 @@ import { useSearchParams } from "next/navigation";
 import { passwordReset } from "./actions";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Mail } from "lucide-react";
+import { EmailResetPasswordSchema } from "@/features/family/components/validation/schema";
 
 
-const formSchema = z.object({
-  email: z.email()
-});
+const formSchema = EmailResetPasswordSchema;
 
 /* 
   This function will receive a request parameter containing an email address + token string

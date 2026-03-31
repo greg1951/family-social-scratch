@@ -12,10 +12,9 @@ import { changeUserPassword } from "./actions";
 import { toast } from "sonner";
 import { useState } from "react";
 import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ChangePasswordFormSchema } from "@/features/family/components/validation/schema";
 
-const formSchema = z.object({
-  currentPassword: passwordSchema,
-}).and(passwordMatchSchema);
+const formSchema = ChangePasswordFormSchema;
 
 type UserEmailProp = {
   userEmail: string;

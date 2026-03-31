@@ -6,6 +6,7 @@ import { updateUserPassword, getUserByEmail } from "@/components/db/sql/queries-
 import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
 import { auth } from "@/auth";
 import { removePasswordToken } from "@/components/db/sql/queries-passwordReset";
+import { UpdatePasswordSchema } from "@/features/family/components/validation/schema";
 
 /* Also include the token in the arguments below as it will be used to remove the token after password change */
 export const updateResetPassword = async({
@@ -27,14 +28,12 @@ export const updateResetPassword = async({
     }
 
     try {
-      console.info('updateResetPassword->starting->email: ', 
-        email, 'password: ', 
-        password, 'passwordConfirm: ', 
-        passwordConfirm);
+      // console.info('updateResetPassword->starting->email: ', 
+      //   email, 'password: ', 
+      //   password, 'passwordConfirm: ', 
+      //   passwordConfirm);
 
-      const formSchema = z.object({
-        password: passwordSchema
-      }).and(passwordMatchSchema);
+      const formSchema = UpdatePasswordSchema;
       
       const passwordValidation = formSchema.safeParse({password, passwordConfirm});
       if (!passwordValidation.success) {

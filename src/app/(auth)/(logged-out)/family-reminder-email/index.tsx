@@ -13,11 +13,10 @@ import { useSearchParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { sendFamilyNameEmail } from "./actions";
 import { ArrowRight, Mail } from "lucide-react";
+import { EmailFamilyReminderSchema } from "@/features/family/components/validation/schema";
 
 
-const formSchema = z.object({
-  email: z.email()
-});
+const formSchema = EmailFamilyReminderSchema;
 
 /* 
   This function will receive a request parameter containing an email address + token string

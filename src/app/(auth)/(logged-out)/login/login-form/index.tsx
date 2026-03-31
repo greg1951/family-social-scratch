@@ -16,9 +16,9 @@ import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/comp
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Eye, EyeOff, LogIn, ShieldCheck, Sparkles } from "lucide-react";
+import { FamilySocialLoginSchema } from "@/features/family/components/validation/schema";
 
-const formSchema = z
-  .object({ email: z.email(), password: passwordSchema, family: familySchema });
+const formSchema = FamilySocialLoginSchema;
 
 export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
