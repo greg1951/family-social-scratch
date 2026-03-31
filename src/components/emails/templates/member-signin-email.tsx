@@ -87,11 +87,11 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                 <Text className='m-0 font-app text-base leading-6'>
                   As shown in the login page below, there are three fields required to sign in to Family Social:
                   your email address, the password you created during registration,
-                  and the family name you are a member of ({ familyName }).
+                  and the family name you are a member of the <b>{ familyName }</b> family network.
                 </Text>
                 <Row><br></br></Row>
                 <Text className='m-0 font-app text-base leading-6'>
-                  Make note of your family name: { familyName }. It must be entered exactly this way when you sign in,
+                  Make note of your family name: <b>{ familyName }</b>. It must be entered exactly this way when you sign in,
                   including the capitalization. (The name shown below is just an example and is <u>not</u> your family
                   name.)
                 </Text>
@@ -154,7 +154,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
           <Text className='m-0 mb-4 font-app text-base leading-6'>
             After you login go to the <b>My Account</b> page and update your profile.
           </Text>
-          <Text className='m-0 mb-4 text-center font-app text-base font-semibold leading-6 text-brandText'>
+          <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
             When you have signed in, explore the site and all the wonderful features we have to offer! We are so
             excited to have you as part of the { familyName } family on Family Social!
           </Text>
