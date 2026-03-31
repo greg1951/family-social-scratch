@@ -138,18 +138,8 @@ export default function FamilyMemberRegistrationForm({ memberToRegister, founder
 
       // Step 5: Send login instructions email
       updateStepStatus(5, 'inProgress');
-      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      // const founderDetails: FounderDetails = {
-      //   firstName: registeredMember.firstName,
-      //   email: registeredMember.email,
-      //   lastName: registeredMember.lastName, 
-      //   familyName: memberToRegister.familyName,
-      //   familyId: memberToRegister.familyId,
-      //   isFounder: false,
-      //   isLoggedIn: false,
-      //   status: "joined",
-      //   memberId: 0, // This will be used in the email template but is not critical since the login link is based on email and familyId
-      // }
+      console.log('FamilyMemberRegistration->handleFormSubmit->Sending login instructions email to: ', memberToRegister.email, ' with founder details: ', founderDetails  );
+
       const sendLoginInstructionsResult = await sendLoginInstructionsEmail(memberToRegister.email, founderDetails);
       if (!sendLoginInstructionsResult || sendLoginInstructionsResult.error) {
         const message = "Error occurred sending login instructions email";
