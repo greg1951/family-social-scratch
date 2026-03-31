@@ -10,7 +10,6 @@ import { CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import Link from 'next/link';
 import { CircleCheck, Eye, EyeOff, CircleX } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
 import { passwordSchema } from '@/features/auth/components/validation/passwordSchema';
@@ -20,6 +19,7 @@ import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
 import { MemberRegistrationInput } from '@/components/db/types/family-member';
 import { sendLoginInstructionsEmail } from '@/components/emails/send-signin-email';
+import { FounderDetails } from '@/features/family/types/family-members';
 
 const formSchema = z.object({
   firstName: z.string().min(2, { message: "First name is required" }),
@@ -43,7 +43,8 @@ function formatPhoneNumber(value: string): string {
 }
 
 //--------------- FamilyMemberRegistrationForm Component ---------------
-export default function FamilyMemberRegistrationForm({ memberToRegister }: { memberToRegister: MemberRegistrationInput }) {
+export default function FamilyMemberRegistrationForm({ memberToRegister, founderDetails }
+  : { memberToRegister: MemberRegistrationInput, founderDetails: FounderDetails  }) {
 
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -134,15 +135,27 @@ export default function FamilyMemberRegistrationForm({ memberToRegister }: { mem
         throw new Error(message);
       }
       updateStepStatus(4, 'completed');
+
       // Step 5: Send login instructions email
       updateStepStatus(5, 'inProgress');
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      // const sendLoginInstructionsResult = await sendLoginInstructionsEmail(memberToRegister.email, founderDetails);
-      // if (!sendLoginInstructionsResult || sendLoginInstructionsResult.error) {
-      //   const message = "Error occurred sending login instructions email";
-      //   updateStepStatus(5, 'error', message);
-      //   throw new Error(message);
+      // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+      // const founderDetails: FounderDetails = {
+      //   firstName: registeredMember.firstName,
+      //   email: registeredMember.email,
+      //   lastName: registeredMember.lastName, 
+      //   familyName: memberToRegister.familyName,
+      //   familyId: memberToRegister.familyId,
+      //   isFounder: false,
+      //   isLoggedIn: false,
+      //   status: "joined",
+      //   memberId: 0, // This will be used in the email template but is not critical since the login link is based on email and familyId
       // }
+      const sendLoginInstructionsResult = await sendLoginInstructionsEmail(memberToRegister.email, founderDetails);
+      if (!sendLoginInstructionsResult || sendLoginInstructionsResult.error) {
+        const message = "Error occurred sending login instructions email";
+        updateStepStatus(5, 'error', message);
+        throw new Error(message);
+      }
       updateStepStatus(5, 'completed');
 
       form.reset(data);

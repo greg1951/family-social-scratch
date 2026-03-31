@@ -6,6 +6,7 @@ import Link from "next/link";
 import FamilyMemberRegistrationForm from ".";
 import { CircleX, CircleCheck } from "lucide-react";
 import { findFamilyMember } from "@/components/db/sql/queries-family-member";
+import { getFounderDetails } from "@/features/family/services/get-founder-details";
 
 export default async function FamilyMemberRegistration({ searchParams }
   : {
@@ -92,6 +93,26 @@ export default async function FamilyMemberRegistration({ searchParams }
       </div>
     );
   }
+  const founderDetailsResult = await getFounderDetails(memberToRegister.familyId);
+  if (!founderDetailsResult.success || !founderDetailsResult.founderDetails) {
+    console.error('Error occurred retrieving the family founder details');
+    return (
+      <div className="flex justify-center">
+        <main className="font-app">
+          <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
+              <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
+              <CardDescription className="text-center text-xs font-light text-red-800 pt-5">
+                Error occurred retrieving the family founder details.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+  const founderDetails = founderDetailsResult.founderDetails;
+
 
   // console.log('FamilyMemberRegistration->getInviteToken->inviteRelated.isValidExpiry: ', inviteRelated?.isValidExpiry);
   return (
@@ -140,7 +161,7 @@ export default async function FamilyMemberRegistration({ searchParams }
           ) }
           <CardContent>
             { memberToRegister?.isValidExpiry && (
-              <FamilyMemberRegistrationForm memberToRegister={ memberToRegister } />
+              <FamilyMemberRegistrationForm memberToRegister={ memberToRegister } founderDetails={ founderDetails } />
             ) }
 
           </CardContent>
