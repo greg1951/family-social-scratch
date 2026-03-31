@@ -2,23 +2,21 @@
 
 import z from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
-
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { useEffect, useState } from "react";
 import { CurrentMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { CircleCheckBig, Group } from "lucide-react";
-import { CurrentFamilyMember, CurrentMembersValues } from "@/features/family/types/family-members";
+import { CircleCheckBig } from "lucide-react";
+import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import { CurrentMembersDialog } from "./current-members-dialog";
 import { toast } from "sonner";
 import { processInviteDeletes, processInviteUpdates, sendInviteEmails } from "./actions";
 import { SubmissionStep } from "@/features/family/types/family-steps";
 import { initialCurrentInviteSteps } from "@/features/family/constants/family-steps";
 import { useRouter } from "next/navigation";
-import { MemberKeyDetails } from "@/features/family/types/family-steps";
-import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
+import { StatusUpdateCounts } from "@/components/db/types/family-member";
 import { StatusUpdateDialog } from "@/features/family/components/dialogs/status-update-dialog";
 import {
   initializeFormProcessingArray,
@@ -29,7 +27,7 @@ import { ArrowRight } from "lucide-react";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
-export default function CurrentMembersAccountForm({ familyMembers, founderKeyDetails }: { familyMembers: CurrentFamilyMember[], founderKeyDetails: MemberKeyDetails }) {
+export default function CurrentMembersAccountForm({ familyMembers, founderDetails }: { familyMembers: CurrentFamilyMember[], founderDetails: FounderDetails }) {
 
   const router = useRouter();
   const [submissionSteps, setSubmissionSteps] =
@@ -120,7 +118,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     const updatedInvites = initializeFormProcessingArray({
       formCurrentMembers: values.currentFamilyMembers,
       originalMembers: originalMembers,
-      founderKeyDetails: founderKeyDetails
+      founderDetails: founderDetails
     });
 
     // Use these counts to track the processing and help in reconcilement of all changes
@@ -134,7 +132,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     //--------- Step 1: Delete family invitations
     updateStepStatus(1, 'inProgress');
     if (updatedInvites.length > 0 && statusUpdateCounts.totalDeleteRecordsCount > 0) {
-      const deletesResult = await processInviteDeletes({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      const deletesResult = await processInviteDeletes({ updatedInvites, statusUpdateCounts, founderDetails: founderDetails });
       if (deletesResult && !deletesResult.success) {
         updateStepStatus(1, 'error', deletesResult.message);
         throw new Error('Error processing invite deletes: ' + deletesResult.message);
@@ -148,7 +146,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     if (updatedInvites.length > 0
       && (statusUpdateCounts.totalResendRecordsCount > 0
         || statusUpdateCounts.totalInviteRecordsCount > 0)) {
-      const updatesResult = await processInviteUpdates({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      const updatesResult = await processInviteUpdates({ updatedInvites, statusUpdateCounts, founderDetails: founderDetails });
       if (updatesResult && !updatesResult.success) {
         updateStepStatus(2, 'error', updatesResult.message);
         throw new Error('Error processing invite updates: ' + updatesResult.message);
@@ -161,7 +159,7 @@ export default function CurrentMembersAccountForm({ familyMembers, founderKeyDet
     if (updatedInvites.length > 0
       && (statusUpdateCounts.totalResendRecordsCount > 0
         || statusUpdateCounts.totalInviteRecordsCount > 0)) {
-      const sendResult = await sendInviteEmails({ updatedInvites, statusUpdateCounts, founderKeyDetails });
+      const sendResult = await sendInviteEmails({ updatedInvites, statusUpdateCounts, founderDetails: founderDetails });
       if (sendResult && !sendResult.success) {
         updateStepStatus(3, 'error', sendResult.message);
         throw new Error('Error sending invite emails: ' + sendResult.message);

@@ -5,6 +5,13 @@ export type NewFamilyMember = {
   email: string
 }
 
+export type GetMemberDetailsByEmailReturn = {
+  success: boolean;
+  message?: string;
+  memberId?: number;
+}
+
+
 export interface NewFamilyInvite {
   id: string
   firstName: string
@@ -56,7 +63,20 @@ export type FounderDetails = {
   memberId: number;
   firstName: string;
   lastName: string;
-  nickName: string;
-  birthday: string;
-  cellPhone: string;
+  nickName?: string;
+  birthday?: string;
+  cellPhone?: string;
+  familyName: string;
+  familyId: number;
+  isFounder?: boolean;
+  mfaActive?: boolean;
+  isLoggedIn?: boolean;
 }
+
+export type FounderDetailsReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      founderDetails: FounderDetails;
+    };
+

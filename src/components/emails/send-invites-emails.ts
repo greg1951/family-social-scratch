@@ -1,13 +1,14 @@
 'use server';
 
 import { updateFamilyInviteToken } from "@/components/db/sql/queries-family-invite";
-import { FounderDetails, UpdateInviteTokenInput } from "../../features/family/types/family-steps";
+import { UpdateInviteTokenInput } from "../../features/family/types/family-steps";
 import { familySocialEmail, familySocialHostReference } from "../../features/family/constants/family-steps";
 import MemberInviteEmail from "./templates/member-invite-email";
 import React from "react";
 import { randomBytes } from "crypto";
 import { InsertInvitesReturn } from "@/components/db/types/family-member";
 import { Resend } from 'resend';
+import { FounderDetails } from "@/features/family/types/family-members";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

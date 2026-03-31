@@ -4,6 +4,10 @@ import { updateFamilyInviteStatus } from "@/components/db/sql/queries-family-inv
 import { insertMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { insertMember, insertUser } from "@/components/db/sql/queries-family-user";
 import { RegisterMemberInput } from "@/components/db/types/family-member";
+import { sendLoginInstructionsEmail } from "@/components/emails/send-signin-email";
+import { FounderDetails } from "@/features/family/types/family-members";
+import { RegistrationMemberDetails } from "@/features/family/types/family-steps";
+
 
 export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
 
@@ -58,12 +62,18 @@ export const updateInviteStatus = async(id: number, status: string) => {
     return updateInviteStatusResult;
   }
 
-  
-
   return {
     error: false,
   } 
-
 }
 
+export const sendLoginInstructions = async(email: string, founderDetails: FounderDetails) => {
 
+
+
+  const sendLoginInstructionsResult = await sendLoginInstructionsEmail(email, founderDetails);
+  if (!sendLoginInstructionsResult || sendLoginInstructionsResult.error) {
+    return { error: true };
+  }
+  return { error: false };
+}

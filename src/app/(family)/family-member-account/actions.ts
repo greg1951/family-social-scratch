@@ -1,8 +1,8 @@
 'use server';
-import { getMemberDetailsByUserId, updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
+import { getMemberDetailsByUserId, updateMemberDetails } from "@/components/db/sql/queries-family-member";
 import { getUser2fa } from "@/components/db/sql/queries-user";
 import { GetUser2faReturnType } from "@/components/db/types/user";
-import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
+import { UpdateAccountDetails } from "@/features/auth/types/auth-types";
 import { revalidatePath } from "next/cache";
 
 /* Retrieve the user's 2FA details by email */
@@ -32,8 +32,8 @@ export const getMemberDetails = async(userId:number) => {
   return getResult;
 }
 
-export const updateMemberDetails = async(updateAccountDetails:UpdateAccountDetails) => {
-  const updateResult = await updateMemberDetailsDml(updateAccountDetails);
+export const updateDetails = async(updateAccountDetails:UpdateAccountDetails) => {
+  const updateResult = await updateMemberDetails(updateAccountDetails);
   // console.log("actions->updateMemberDetails->updateResult: ", updateResult);
   
   if (updateResult.success) {

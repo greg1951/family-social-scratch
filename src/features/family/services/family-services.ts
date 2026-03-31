@@ -3,6 +3,7 @@
 import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { MemberKeyDetails } from "../types/family-steps";
 import { auth } from "@/auth"; 
+import { FounderDetails } from "../types/family-members";
 
 export async function getMemberPageDetails(): Promise<MemberKeyDetails> {
   const session = await auth();
@@ -46,3 +47,4 @@ export async function getMemberPageDetails(): Promise<MemberKeyDetails> {
     memberId: 0,
   }
 }
+

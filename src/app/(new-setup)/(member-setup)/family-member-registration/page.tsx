@@ -1,5 +1,5 @@
 import { getInviteToken } from "@/components/db/sql/queries-family-invite";
-import { GetInviteTokenReturn } from "@/components/db/types/family-member";
+import { MemberRegistrationReturn } from "@/components/db/types/family-member";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 import Link from "next/link";
@@ -33,7 +33,7 @@ export default async function FamilyMemberRegistration({ searchParams }
     );
   }
 
-  let inviteRelated: Extract<GetInviteTokenReturn, { error: false }>['inviteRelated'];
+  let memberToRegister: Extract<MemberRegistrationReturn, { error: false }>['memberToRegister'] | null = null;
   const getTokenResult = await getInviteToken(token);
   if (getTokenResult.error) {
     console.error('Error occurred retrieving the invitation token');
@@ -53,10 +53,28 @@ export default async function FamilyMemberRegistration({ searchParams }
     );
   }
   else {
-    inviteRelated = getTokenResult.inviteRelated;
+    memberToRegister = getTokenResult.memberToRegister;
   }
 
-  const validateEmailResult = await findFamilyMember(inviteRelated.familyId, inviteRelated.email);
+  if (memberToRegister === null) {
+    console.error('Invitation token was not found');
+    return (
+      <div className="flex justify-center">
+        <main className="font-app">
+          <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
+            <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
+              <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
+              <CardDescription className="text-center text-xs font-light text-red-800 pt-5">
+                Invitation token was not found.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </main>
+      </div>
+    );
+  }
+
+  const validateEmailResult = await findFamilyMember(memberToRegister.familyId, memberToRegister.email);
   if (!validateEmailResult.error) {
     console.error('Error occurred retrieving the invitation token');
     return (
@@ -82,13 +100,13 @@ export default async function FamilyMemberRegistration({ searchParams }
         <Card className="flex align-middle w-[400] md:w-[900] pt-0 h-[85vh]">
           <CardHeader className="text-base md:text-2xl bg-[#59cdf7] rounded-2xl text-center gap-y-0 p-2">
             <CardTitle className="text-center font-bold size-1.2 pt-0">Family Member Registration</CardTitle>
-            { inviteRelated?.isValidExpiry && (
+            { memberToRegister?.isValidExpiry && (
               <div className="text-center text-xs font-light text-slate-800 pt-2">
-                Registering <b>{ inviteRelated.email }</b> in the <b>{ inviteRelated.familyName }</b> family
+                Registering <b>{ memberToRegister.email }</b> in the <b>{ memberToRegister.familyName }</b> family
               </div>
             ) }
           </CardHeader>
-          { !inviteRelated?.isValidExpiry && (
+          { !memberToRegister?.isValidExpiry && (
             <CardDescription className="text-left text-xs text-bold p-2">
               <p className="text-red-700">
                 Something went wrong. There are a number of possibilities. <br></br><br></br>
@@ -111,18 +129,18 @@ export default async function FamilyMemberRegistration({ searchParams }
 
             </CardDescription>
           ) }
-          { !inviteRelated?.isValidExpiry && (
+          { !memberToRegister?.isValidExpiry && (
             <CardFooter className="flex-col gap-2">
             </CardFooter>
           ) }
-          { inviteRelated?.isValidExpiry && (
+          { memberToRegister?.isValidExpiry && (
             <CardDescription className="text-center text-xs text-bold text-slate-800 p-4">
               When you submit your registration you'll be forwarded to resources to help you get started in your new family.
             </CardDescription>
           ) }
           <CardContent>
-            { inviteRelated?.isValidExpiry && (
-              <FamilyMemberRegistrationForm inviteRelatedInput={ inviteRelated } />
+            { memberToRegister?.isValidExpiry && (
+              <FamilyMemberRegistrationForm memberToRegister={ memberToRegister } />
             ) }
 
           </CardContent>

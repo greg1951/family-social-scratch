@@ -40,6 +40,7 @@
         { id: 2, label: 'Create member login credentials', status: 'pending' },
         { id: 3, label: 'Add member notifications', status: 'pending' },
         { id: 4, label: 'Update member invitation status', status: 'pending' },
+        { id: 5, label: 'Send login instructions email', status: 'pending' },
   ];
 
   export const initialNewInviteSteps: SubmissionStep[] = [

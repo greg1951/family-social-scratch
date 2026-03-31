@@ -10,6 +10,7 @@ import { InsertFamilyReturn,
          InsertUserInput, 
          InsertUserReturn } from '../types/family-member';
 import { hashUserPassword } from '@/features/auth/services/hash';
+import { RegistrationMemberDetails } from '@/features/family/types/family-steps';
 
 export async function getUserFamilyNameByEmail(email: string)
   : Promise<UserFamilyReturn> {
@@ -66,7 +67,7 @@ export async function insertFamily(familyName: string)
 }
 
 
-export async function insertMember(memberArg: InsertMemberInput)
+export async function insertMember(memberArg: RegistrationMemberDetails)
 : Promise<InsertMemberReturn> {
 
   // console.log("insertMember-> member: ", memberArg);
@@ -78,7 +79,7 @@ export async function insertMember(memberArg: InsertMemberInput)
       lastName: memberArg.lastName as string,
       nickName: memberArg.nickName as string | undefined,
       isFounder: memberArg.isFounder as boolean,
-      cellPhone: memberArg.phone as string | undefined,
+      cellPhone: "",
       familyId: memberArg.familyId as number,
     }).returning();
     if (!insertResult) {

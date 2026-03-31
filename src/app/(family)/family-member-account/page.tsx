@@ -85,6 +85,9 @@ export default async function FamilyMemberAccount() {
         nickName: founderDetailsResult.nickName!,
         birthday: founderDetailsResult.birthday!,
         cellPhone: founderDetailsResult.cellPhone!,
+        familyName: founderDetailsResult.familyName!,
+        familyId: memberKeyDetails.familyId,
+        isFounder: true,
       };
     }
 
@@ -109,7 +112,6 @@ export default async function FamilyMemberAccount() {
               <MemberAccountTabs
                 accountDetails={ accountDetails }
                 notifications={ notifications }
-                familyId={ memberKeyDetails.familyId }
                 currentFamilyMembers={ currentFamilyMembers }
                 memberKeyDetails={ memberKeyDetails }
                 founderDetails={ founderDetails }

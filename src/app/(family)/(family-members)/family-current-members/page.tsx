@@ -7,6 +7,7 @@ import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import CurrentMembersAccountForm from "./index-current";
 import { CurrentFamilyMember } from "@/features/family/types/family-members";
+import { copyMemberToFounderDetails } from "@/features/family/services/client-side";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
@@ -40,6 +41,7 @@ export default async function FamilyCurrentMembersPage() {
     })) as CurrentFamilyMember[];
   }
 
+  const founderDetails = copyMemberToFounderDetails(memberKeyDetails);
 
   return (
     <div className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
@@ -63,7 +65,7 @@ export default async function FamilyCurrentMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <CurrentMembersAccountForm familyMembers={ familyMembers } founderKeyDetails={ memberKeyDetails } />
+          <CurrentMembersAccountForm familyMembers={ familyMembers } founderDetails={ founderDetails } />
         </Card>
 
       </div >

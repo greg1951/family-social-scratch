@@ -4,11 +4,11 @@ import { family, familyInvitation, member, optionReference, user, memberOption }
 import { UpdateInviteStatusResult, UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
 import { InsertInvitesInput, 
          InsertInvitesReturn, 
-         GetInviteTokenReturn, 
+         MemberRegistrationReturn, 
          GetInviteByMemberIdReturn,
          GenericDatabaseReturn,
          StatusUpdateProcessing,
-         GetInviteByInviteIdReturn,
+         GetInviteReturn,
          InsertInviteInput,
          InsertInviteReturn} from '../types/family-member';
 import { get } from 'http';
@@ -96,7 +96,7 @@ export async function updateFamilyInviteToken({inviteToken }: { inviteToken: Upd
 }
 
 /*----------------------- getInviteToken ----------------------  */
-export async function getInviteToken(token: string) : Promise<GetInviteTokenReturn> {
+export async function getInviteToken(token: string) : Promise<MemberRegistrationReturn> {
   // console.log('queries-family-invite->getInviteToken->token: ', token);
 
   const [inviteResetToken] = await db
@@ -126,7 +126,7 @@ export async function getInviteToken(token: string) : Promise<GetInviteTokenRetu
     
     return {
       error: false,
-      inviteRelated: {
+      memberToRegister: {
       id: inviteResetToken.family_invitation.id,
       email: inviteResetToken.family_invitation.email,
       firstName: inviteResetToken.family_invitation.firstName,
@@ -139,6 +139,7 @@ export async function getInviteToken(token: string) : Promise<GetInviteTokenRetu
     };
 };
 
+/*------------------ getInvitebyMemberId ------------------ */
 export async function getInvitebyMemberId(memberId: number) : Promise<GetInviteByMemberIdReturn> {
 
   const [inviteMemberResult] = await db
@@ -161,7 +162,8 @@ export async function getInvitebyMemberId(memberId: number) : Promise<GetInviteB
     }
 };
 
-export async function getInvitebyInviteId(inviteId: number) : Promise<GetInviteByInviteIdReturn> {
+/*------------------ getInvitebyInviteId ------------------ */
+export async function getInvitebyInviteId(inviteId: number) : Promise<GetInviteReturn> {
 
   const [inviteMemberResult] = await db
     .select()
@@ -172,6 +174,31 @@ export async function getInvitebyInviteId(inviteId: number) : Promise<GetInviteB
       return {
         error: true,
         message: "Did not find invitation for inviteId: " + inviteId,
+      }
+    }
+    else {
+      return {
+        error: false,
+        inviteId: inviteMemberResult.id,
+        familyId: inviteMemberResult.familyId,
+        email: inviteMemberResult.email,
+        firstName: inviteMemberResult.firstName,
+        lastName: inviteMemberResult.lastName,
+      };
+    }
+};
+/*------------------ getInvitebyInviteEmail ------------------ */
+export async function getInvitebyInviteEmail(email: string) : Promise<GetInviteReturn> {
+
+  const [inviteMemberResult] = await db
+    .select()
+    .from(familyInvitation)
+    .where(eq(familyInvitation.email, email));
+
+    if (!inviteMemberResult) {
+      return {
+        error: true,
+        message: "Did not find invitation for email: " + email,
       }
     }
     else {

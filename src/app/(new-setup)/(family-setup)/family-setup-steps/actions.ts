@@ -2,16 +2,17 @@
 
 import { InsertInvitesReturn } from "@/components/db/types/family-member";
 
-import { FounderDetails } from "@/features/family/types/family-steps";
+import { RegistrationMemberDetails } from "@/features/family/types/family-steps";
 import { Resend } from 'resend';
 import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
+import { FounderDetails } from "@/features/family/types/family-members";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export const sendEmails = async (
     familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
     familyName: string, 
-    founderDetails:FounderDetails ) => {
+    founderDetails: FounderDetails ) => {
  
   if (familyInvites) {
     const sendResult = await sendFamilyInviteEmails(familyInvites, familyName, founderDetails);

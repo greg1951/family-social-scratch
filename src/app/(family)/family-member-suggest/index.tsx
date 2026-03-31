@@ -48,12 +48,10 @@ const inviteMemberSchema = z.object({
 type InviteMemberFormValues = z.infer<typeof inviteMemberSchema>;
 
 export default function FamilyMemberSuggestForm({
-  familyId,
   currentFamilyMembers,
   memberKeyDetails,
   founderDetails,
 }: {
-  familyId: number;
   currentFamilyMembers: CurrentFamilyMember[];
   memberKeyDetails: MemberKeyDetails;
   founderDetails: FounderDetails | null;

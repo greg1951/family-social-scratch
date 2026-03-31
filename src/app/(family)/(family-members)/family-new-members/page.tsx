@@ -9,6 +9,7 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
 import { member } from "@/components/db/schema/family-social-schema-tables";
 import { AccountDetails } from "@/features/auth/types/auth-types";
+import { copyMemberToFounderDetails } from "@/features/family/services/client-side";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
@@ -25,23 +26,7 @@ export default async function FamilyNewMembersPage() {
   ]);
 
 
-  let accountDetails: AccountDetails | null = null;
-  if (memberDetailsResult.success) {
-    accountDetails = {
-      accountDetails: {
-        userId: memberDetailsResult.userId,
-        email: memberDetailsResult.email,
-        familyName: memberDetailsResult.familyName,
-        firstName: memberDetailsResult.firstName,
-        lastName: memberDetailsResult.lastName,
-        nickName: memberDetailsResult.nickName,
-        birthday: memberDetailsResult.birthday,
-        cellPhone: memberDetailsResult.cellPhone,
-        memberId: memberDetailsResult.memberId,
-        mfaActive: memberDetailsResult.mfaActive,
-      }
-    };
-  }
+  const founderDetails = copyMemberToFounderDetails(memberKeyDetails);
 
   const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
   let currentFamilyMembers: CurrentFamilyMember[] = [];
@@ -56,9 +41,6 @@ export default async function FamilyNewMembersPage() {
       status: member.status,
     })) as CurrentFamilyMember[];
   }
-
-
-
 
   return (
     <div className="font-app min-h-[90vh] bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
@@ -82,7 +64,7 @@ export default async function FamilyNewMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <NewMembersAccountForm familyId={ memberKeyDetails.familyId } accountDetails={ accountDetails } currentFamilyMembers={ currentFamilyMembers } />
+          <NewMembersAccountForm founderDetails={ founderDetails } currentFamilyMembers={ currentFamilyMembers } />
         </Card>
 
       </div >

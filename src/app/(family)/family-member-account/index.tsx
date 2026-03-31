@@ -9,11 +9,12 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
 import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
-import { updateMemberDetailsDml } from "@/components/db/sql/queries-family-member";
+// import { updateMemberDetails } from "@/components/db/sql/queries-family-member";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RotateCcw, ShieldCheck } from "lucide-react";
 import { FounderDetails } from "@/features/family/types/family-members";
+import { updateDetails } from "./actions";
 
 const formSchema = z
   .object({
@@ -26,12 +27,12 @@ const formSchema = z
   });
 
 
-export default function AccountDetailsForm({ accountDetails, founderDetails }
-  : { accountDetails: AccountDetails, founderDetails: FounderDetails | null }) {
+export default function AccountDetailsForm({ founderDetails }
+  : { founderDetails: FounderDetails | null }) {
 
   const [open, setOpen] = useState(false);
   const [dateNotDirty, setDateNotDirty] = useState(true);
-  const { userId, memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = accountDetails.accountDetails;
+  const { memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = founderDetails!;
   const [date, setDate] = useState<Date>(new Date(birthday as string));
   const router = useRouter();
 
@@ -52,7 +53,6 @@ export default function AccountDetailsForm({ accountDetails, founderDetails }
 
     const calendarBirthday = date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
     const updateAccountDetails: UpdateAccountDetails = {
-      userId: userId,
       memberId: memberId as number,
       firstName: data.firstName,
       lastName: data.lastName,
@@ -60,7 +60,7 @@ export default function AccountDetailsForm({ accountDetails, founderDetails }
       cellPhone: data.cellPhone!,
       birthday: calendarBirthday!,
     }
-    const updateMemberResult = await updateMemberDetailsDml(updateAccountDetails);
+    const updateMemberResult = await updateDetails(updateAccountDetails);
     if (!updateMemberResult.success) {
       toast.error(updateMemberResult.message, {
         position: "top-center",

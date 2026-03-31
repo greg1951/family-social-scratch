@@ -25,14 +25,12 @@ function getValidTab(tab: string | null): TabValue {
 export default function MemberAccountTabs({
   accountDetails,
   notifications,
-  familyId,
   currentFamilyMembers,
   memberKeyDetails,
   founderDetails,
 }: {
   accountDetails: AccountDetails;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
-  familyId: number;
   currentFamilyMembers: CurrentFamilyMember[];
   memberKeyDetails: MemberKeyDetails;
   founderDetails: FounderDetails | null;
@@ -68,8 +66,8 @@ export default function MemberAccountTabs({
       </TabsList>
 
       <TabsContent value="profile" className="mt-4">
-        { accountDetails && (
-          <AccountDetailsForm accountDetails={ accountDetails } founderDetails={ founderDetails } />
+        { founderDetails && (
+          <AccountDetailsForm founderDetails={ founderDetails } />
         ) }
       </TabsContent>
 
@@ -79,7 +77,6 @@ export default function MemberAccountTabs({
 
       <TabsContent value="family-members" className="mt-4 rounded-lg border p-4">
         <FamilyMemberSuggestForm
-          familyId={ familyId }
           currentFamilyMembers={ currentFamilyMembers }
           memberKeyDetails={ memberKeyDetails }
           founderDetails={ founderDetails }

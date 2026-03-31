@@ -13,7 +13,6 @@ export interface AccountDetails {
   } 
 }
 export interface UpdateAccountDetails {
-  userId: number;
   memberId: number;
   firstName: string;
   lastName: string;

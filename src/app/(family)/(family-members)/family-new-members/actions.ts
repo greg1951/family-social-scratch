@@ -1,10 +1,10 @@
 'use server';
 
 import { addNewInvites as addNewInvitesQuery } from "@/components/db/sql/queries-family-invite";
-import { NewFamilyInvites } from "@/features/family/types/family-members";
+import { FounderDetails, NewFamilyInvites } from "@/features/family/types/family-members";
 import { InsertInvitesReturn } from "@/components/db/types/family-member";
 
-import { FounderDetails } from "@/features/family/types/family-steps";
+import { RegistrationMemberDetails } from "@/features/family/types/family-steps";
 import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { revalidatePath } from "next/cache";
@@ -31,20 +31,23 @@ export const sendEmails = async (
   familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'],
   familyName: string,
   familyId: number,
-  accountDetails: AccountDetails,
+  accountDetails: RegistrationMemberDetails,
 ) => {
  
   if (familyInvites) {
-    const founderDetails: FounderDetails = {
-      firstName: accountDetails.accountDetails.firstName,
-      lastName: accountDetails.accountDetails.lastName,
-      nickName: accountDetails.accountDetails.nickName,
-      email: accountDetails.accountDetails.email,
-      familyId,
+    const memberDetails: FounderDetails = {
+      email: accountDetails.email,
+      firstName: accountDetails.firstName,
+      lastName: accountDetails.lastName,
+      nickName: accountDetails.nickName,
+      status: 'invited',
+      memberId: 0, // This will be updated when the founder accepts the invite and is added as a member in the database
+      familyName: familyName,
+      familyId: familyId,
       isFounder: true,
     };
 
-    const sendResult = await sendFamilyInviteEmails(familyInvites, familyName, founderDetails);
+    const sendResult = await sendFamilyInviteEmails(familyInvites, familyName, memberDetails);
     return sendResult;
 
   }

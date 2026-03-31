@@ -1,18 +1,18 @@
 'use server';
 
 import { deleteInvite, updateFamilyInviteStatus, getInvitebyInviteId } from "@/components/db/sql/queries-family-invite";
-import { deleteMember, findMemberIdByEmail, getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
+import { deleteMember, findMemberIdByEmail } from "@/components/db/sql/queries-family-member";
 import { deleteUserByUserId, getUserByEmail } from "@/components/db/sql/queries-user";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
 import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
-import { CurrentMembersValues, NewFamilyInvites } from "@/features/family/types/family-members";
-import { FounderDetails, MemberKeyDetails } from "@/features/family/types/family-steps";
+import { FounderDetails } from "@/features/family/types/family-members";
+import { MemberKeyDetails, RegistrationMemberDetails } from "@/features/family/types/family-steps";
 import { error } from "console";
 import { revalidatePath } from "next/cache";
 
 /*----------------- processInviteDeletes ------------------ */
-export async function processInviteDeletes({updatedInvites, statusUpdateCounts, founderKeyDetails}
-  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderKeyDetails: MemberKeyDetails }  ) {
+export async function processInviteDeletes({updatedInvites, statusUpdateCounts, founderDetails}
+  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderDetails: FounderDetails }  ) {
     
   let errorFound = false;
 
@@ -83,8 +83,8 @@ export async function processInviteDeletes({updatedInvites, statusUpdateCounts, 
 }
 
 /*----------------- processInviteUpdates ------------------ */
-export async function processInviteUpdates({updatedInvites, statusUpdateCounts, founderKeyDetails}
-  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderKeyDetails: MemberKeyDetails }  ) {
+export async function processInviteUpdates({updatedInvites, statusUpdateCounts, founderDetails}
+  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderDetails: FounderDetails }  ) {
 
   let errorFound:boolean = false;   
 
@@ -149,17 +149,17 @@ type FamilyInvites = {
 }[]
 
 /*----------------- sendInviteEmails ------------------ */
-export async function sendInviteEmails({updatedInvites, statusUpdateCounts, founderKeyDetails}
-  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderKeyDetails: MemberKeyDetails }  ) {
+export async function sendInviteEmails({updatedInvites, statusUpdateCounts, founderDetails}
+  : { updatedInvites: StatusUpdateProcessing[], statusUpdateCounts: StatusUpdateCounts, founderDetails: FounderDetails }  ) {
 
   let errorFound:boolean = false;   
 
-  const founderDetails:FounderDetails = {
-    firstName: founderKeyDetails.firstName,
-    lastName: founderKeyDetails.lastName,
-    email: founderKeyDetails.email,
-    familyId: founderKeyDetails.familyId,
-    isFounder: founderKeyDetails.isFounder, 
+  const founder:RegistrationMemberDetails = {
+    firstName: founderDetails.firstName,
+    lastName: founderDetails.lastName,
+    email: founderDetails.email,
+    familyId: founderDetails.familyId,
+    isFounder: founderDetails.isFounder, 
   };
 
   
@@ -189,7 +189,7 @@ try {
           });
         }
         console.log(`sendInviteEmails->familyInvites: `, familyInvites);
-        const sendResult = await sendFamilyInviteEmails(familyInvites, founderKeyDetails.familyName, founderDetails);
+        const sendResult = await sendFamilyInviteEmails(familyInvites, founderDetails.familyName, founderDetails);
         if (sendResult && sendResult.error) {
           throw new Error(`Failed to send invite email for invite id ${updatedInvites[ix].inviteId}: ${sendResult.message}`);
         }

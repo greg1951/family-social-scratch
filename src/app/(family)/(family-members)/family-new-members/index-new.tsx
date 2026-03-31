@@ -11,20 +11,19 @@ import { NewMembersFormSchema } from "@/features/family/components/validation/sc
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Mail } from "lucide-react";
-import { CurrentFamilyMember, NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails, NewFamilyInvite } from "@/features/family/types/family-members";
 import { addNewAccountInvites, sendEmails } from "./actions";
 import { SubmissionStep } from "@/features/family/types/family-steps";
 import { initialNewInviteSteps } from "@/features/family/constants/family-steps";
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
-import { AccountDetails } from "@/features/auth/types/auth-types";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
 
 //--------------- NewMembersAccountForm Component ---------------
-export default function NewMembersAccountForm({ familyId, accountDetails, currentFamilyMembers }
-  : { familyId: number, accountDetails: AccountDetails | null, currentFamilyMembers: CurrentFamilyMember[] }) {
+export default function NewMembersAccountForm({ founderDetails, currentFamilyMembers }
+  : { founderDetails: FounderDetails, currentFamilyMembers: CurrentFamilyMember[] }) {
   const router = useRouter();
   const [invites, setInvites] = useState<NewFamilyInvite[]>([]);
   const [submissionSteps, setSubmissionSteps] =
@@ -109,7 +108,7 @@ export default function NewMembersAccountForm({ familyId, accountDetails, curren
     // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
     const addInvitesResult = await addNewAccountInvites({
       newInvites: { newInvites: values.newfamilyMembers },
-      familyId,
+      familyId: founderDetails.familyId as number,
     });
     if (!addInvitesResult.success) {
       updateStepStatus(1, 'error', 'Error occurred adding new invites');
@@ -118,17 +117,18 @@ export default function NewMembersAccountForm({ familyId, accountDetails, curren
     updateStepStatus(1, 'completed');
 
     //--------- Step 2: Send email invitations to register in family
-    if (!accountDetails) {
-      updateStepStatus(2, 'error', 'Missing account details for founder email context');
-      throw new Error('Missing account details for founder email context');
+    if (!founderDetails) {
+      updateStepStatus(2, 'error', 'Missing founder details for email context');
+      throw new Error('Missing founder details for email context');
     }
 
     updateStepStatus(2, 'inProgress');
+    const { familyName, familyId } = founderDetails;
     const sendMemberEmailResult = await sendEmails(
       addInvitesResult.invites,
-      accountDetails.accountDetails.familyName,
+      familyName,
       familyId,
-      accountDetails,
+      founderDetails,
     );
     // console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
     if (sendMemberEmailResult.error) {

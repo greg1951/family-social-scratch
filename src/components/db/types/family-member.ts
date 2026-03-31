@@ -47,6 +47,7 @@ export type GetFounderDetailsReturn =
       birthday?: string;
       cellPhone?: string;
       memberId: number;
+      familyName?: string;
     };
 
 export type InsertFamilyReturn =
@@ -186,23 +187,14 @@ export type GetMemberNotificationsReturn =
       }[];
     };
 
-export type GetInviteTokenReturn =
+export type MemberRegistrationReturn =
   | { error: true; message: string }
   | {
       error: false;
-      inviteRelated: {
-        id: number;
-        firstName: string;
-        lastName: string;
-        email: string;
-        tokenExpiry: Date;
-        isValidExpiry: boolean;
-        familyName: string;
-        familyId: number;
-      }
+      memberToRegister: MemberRegistrationInput;
     };
 
-export type InviteRelatedInput = {
+export type MemberRegistrationInput = {
   id: number;
   firstName: string;
   lastName: string;
@@ -222,7 +214,7 @@ export type GetInviteByMemberIdReturn =
       familyId: number;
     };
 
-export type GetInviteByInviteIdReturn =
+export type GetInviteReturn =
   | { error: true; message: string }
   | {
       error: false;      

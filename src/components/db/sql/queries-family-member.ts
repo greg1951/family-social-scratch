@@ -5,7 +5,7 @@ import { family, familyInvitation, member, optionReference, user, memberOption }
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/types/auth-types';
-import { CurrentMemberDirtyFields, CurrentMembersValues, UpdateInvite } from '@/features/family/types/family-members';
+import { GetMemberDetailsByEmailReturn, UpdateInvite } from '@/features/family/types/family-members';
 
 /*-------- findRegisteredFamily ------------------ */
 export async function findRegisteredFamily(familyName: string)
@@ -181,11 +181,6 @@ export async function getMemberDetailsByEmail(email:string)
   }  
   return memberDetails;
 }
-type GetMemberDetailsByEmailReturn = {
-  success: boolean;
-  message?: string;
-  memberId?: number;
-}
 export async function findMemberIdByEmail(email:string)
   :(Promise<GetMemberDetailsByEmailReturn>) { 
     
@@ -205,11 +200,11 @@ export async function findMemberIdByEmail(email:string)
   }
 }
 
-/*----------------- updateMemberDetailsDml ------------------ */
-export async function updateMemberDetailsDml(updateAccountDetails: UpdateAccountDetails)
+/*----------------- updateMemberDetails ------------------ */
+export async function updateMemberDetails(updateAccountDetails: UpdateAccountDetails)
   : Promise<UpdateMemberReturn> {
 
-  // console.log("queries-family-member-udateMemberDetailsDml->memberDetails: ", updateAccountDetails);
+  // console.log("queries-family-member-updateMemberDetails->memberDetails: ", updateAccountDetails);
   const updateResult = await db.update(member)
      .set({
         firstName: updateAccountDetails.firstName,
@@ -304,6 +299,7 @@ export async function getFamilyFounderDetails(familyId:number)
       nickName: selectResult?.nickName!,
       birthday: selectResult.birthday!,
       cellPhone: selectResult?.cellPhone!,
+      familyName: selectResult.familyName!,
     }  
     return founderDetails;
   }

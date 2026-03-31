@@ -31,13 +31,13 @@ export type NotificationsFormValues = {
   }[];
 }
 
-export type FounderDetails = {
+export type RegistrationMemberDetails = {
   email: string;
   firstName: string;
   lastName: string;
   nickName?: string;
-  familyId: number;
-  isFounder: boolean;
+  familyId?: number;
+  isFounder?: boolean;
 };
 
 export type UpdateInviteTokenInput = {

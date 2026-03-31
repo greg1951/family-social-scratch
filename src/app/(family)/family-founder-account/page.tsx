@@ -11,6 +11,7 @@ import { CurrentFamilyMember, FounderDetails, NewFamilyInvite } from "@/features
 import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
 import { toast } from "sonner";
+import { getFounderDetails } from "@/features/family/services/get-founder-details";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -22,24 +23,27 @@ export default async function FamilyMyAccountPage() {
   const email = session.user?.email as string;
   const userId = Number(session.user?.id);
 
-  const [memberDetails, result2fa, memberKeyDetails] = await Promise.all([
-    getMemberDetails(userId),
-    getUser2fa(email),
-    getMemberPageDetails(),
-  ]);
 
+  const memberKeyDetails = await getMemberPageDetails();
   if (memberKeyDetails.isLoggedIn === false || memberKeyDetails.isFounder === false) {
     console.warn('Unauthorized access attempt to family founder account page. Redirecting to home page.');
     redirect("/");
   }
 
-  const memberNotificationsResult = await getMemberNotifications(memberKeyDetails.memberId);
-  const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];
+  const [
+    memberNotificationsResult,
+    currentMembersResult
+  ] = await Promise.all([
+    getMemberNotifications(memberKeyDetails.memberId),
+    getAllFamilyMembers(memberKeyDetails.familyId),
+  ]);
 
-  // const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
+
+  const notifications = memberNotificationsResult.success
+    ? memberNotificationsResult.notifications
+    : [];
+
   let newFamilyMembers: NewFamilyInvite[] = [];
-
-  const currentMembersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
   let currentFamilyMembers: CurrentFamilyMember[] = [];
 
   if (currentMembersResult.success && currentMembersResult.members) {
@@ -54,44 +58,53 @@ export default async function FamilyMyAccountPage() {
   }
 
 
-  let accountDetails: AccountDetails | null = null;
-  if (memberDetails.success) {
-    accountDetails = {
-      accountDetails: {
-        email: memberDetails.email as string,
-        familyName: memberDetails.familyName,
-        userId,
-        memberId: memberDetails.memberId as number,
-        firstName: memberDetails.firstName as string,
-        lastName: memberDetails.lastName as string,
-        nickName: memberDetails.nickName as string,
-        birthday: memberDetails.birthday as string,
-        cellPhone: memberDetails.cellPhone as string,
-        mfaActive: memberDetails.mfaActive as boolean,
-      }
-    }
-  }
+  // let accountDetails: AccountDetails | null = null;
+  // if (memberDetails.success) {
+  //   accountDetails = {
+  //     accountDetails: {
+  //       email: memberDetails.email as string,
+  //       familyName: memberDetails.familyName,
+  //       userId,
+  //       memberId: memberDetails.memberId as number,
+  //       firstName: memberDetails.firstName as string,
+  //       lastName: memberDetails.lastName as string,
+  //       nickName: memberDetails.nickName as string,
+  //       birthday: memberDetails.birthday as string,
+  //       cellPhone: memberDetails.cellPhone as string,
+  //       mfaActive: memberDetails.mfaActive as boolean,
+  //     }
+  //   }
+  // }
 
-  const founderDetailsResult = await getFamilyFounderDetails(memberKeyDetails.familyId);
+  // const founderDetailsResult = await getFounderDetails(memberKeyDetails.familyId);
+  // let founderDetails: FounderDetails | null = null;
+  // if (!founderDetailsResult.success) {
+  //   console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
+  //   toast.error('Error fetching family founder details. Please try again later.');
+  //   redirect("/");
+  // }
+  // else {
+  //   founderDetails = {
+  //     email: founderDetailsResult.email,
+  //     status: founderDetailsResult.status,
+  //     memberId: founderDetailsResult.memberId,
+  //     firstName: founderDetailsResult.firstName,
+  //     lastName: founderDetailsResult.lastName,
+  //     nickName: founderDetailsResult.nickName!,
+  //     birthday: founderDetailsResult.birthday!,
+  //     cellPhone: founderDetailsResult.cellPhone!,
+  //   };
+  // }
+
+  const founderDetailsResult = await getFounderDetails(memberKeyDetails.familyId);
   let founderDetails: FounderDetails | null = null;
-  if (!founderDetailsResult.success) {
-    console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
+  if (founderDetailsResult.success && founderDetailsResult.founderDetails) {
+    founderDetails = founderDetailsResult.founderDetails;
+  } else {
+    console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }`);
     toast.error('Error fetching family founder details. Please try again later.');
     redirect("/");
   }
-  else {
-    founderDetails = {
-      email: founderDetailsResult.email,
-      status: founderDetailsResult.status,
-      memberId: founderDetailsResult.memberId,
-      firstName: founderDetailsResult.firstName,
-      lastName: founderDetailsResult.lastName,
-      nickName: founderDetailsResult.nickName!,
-      birthday: founderDetailsResult.birthday!,
-      cellPhone: founderDetailsResult.cellPhone!,
-    };
-  }
-
 
   return (
     <main className="font-app min-h-[90vh] max-w-screen bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
@@ -112,12 +125,9 @@ export default async function FamilyMyAccountPage() {
 
           <CardContent className="pt-1">
             <FounderAccountTabs
-              accountDetails={ accountDetails }
               founderDetails={ founderDetails }
               notifications={ notifications }
-              familyId={ memberKeyDetails.familyId }
               currentFamilyMembers={ currentFamilyMembers }
-              memberKeyDetails={ memberKeyDetails }
             />
           </CardContent>
         </Card>

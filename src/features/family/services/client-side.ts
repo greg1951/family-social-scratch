@@ -1,14 +1,13 @@
 'use client';
 
-import { CurrentFamilyMember, CurrentMembersValues } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, CurrentMembersValues, FounderDetails } from "@/features/family/types/family-members";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
-import { CurrentMembersFormSchema } from "@/features/family/components/validation/schema";
 import { MemberKeyDetails } from "../types/family-steps";
 
 type CurrentFamilyMembers = CurrentFamilyMember[];
 
-export function initializeFormProcessingArray({formCurrentMembers, originalMembers, founderKeyDetails} 
-  : { formCurrentMembers: CurrentFamilyMembers, originalMembers: CurrentFamilyMembers, founderKeyDetails: MemberKeyDetails }  )
+export function initializeFormProcessingArray({formCurrentMembers, originalMembers, founderDetails} 
+  : { formCurrentMembers: CurrentFamilyMembers, originalMembers: CurrentFamilyMembers, founderDetails: FounderDetails }  )
   : StatusUpdateProcessing[] {
 
     const currentMemberValues: CurrentMembersValues = {
@@ -83,4 +82,19 @@ export function initializeRecordCounts(updatedInvites: StatusUpdateProcessing[],
   }
 
   return statusUpdateCounts;
+}
+
+export function copyMemberToFounderDetails(memberKeyDetails: MemberKeyDetails): FounderDetails {
+  const founderDetails: FounderDetails = {
+    email: memberKeyDetails.email,
+    firstName: memberKeyDetails.firstName,
+    lastName: memberKeyDetails.lastName,
+    familyId: memberKeyDetails.familyId,
+    familyName: memberKeyDetails.familyName,
+    isFounder: memberKeyDetails.isFounder,
+    isLoggedIn: memberKeyDetails.isLoggedIn,
+    status: memberKeyDetails.isFounder ? "active" : "pending",
+    memberId: memberKeyDetails.memberId,
+  };    
+  return founderDetails;
 }

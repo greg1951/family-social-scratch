@@ -17,11 +17,11 @@ import { NewInvitesDialog } from '@/app/(family)/(family-members)/family-new-mem
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
-import { FounderDetails, SubmissionStep } from '@/features/family/types/family-steps';
+import { RegistrationMemberDetails, SubmissionStep } from '@/features/family/types/family-steps';
 import { sendEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
 import { addMemberNotifications } from '@/app/(new-setup)/(member-setup)/family-member-registration/actions';
-import { NewFamilyMember } from '@/features/family/types/family-members';
+import { FounderDetails, NewFamilyMember } from '@/features/family/types/family-members';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -88,7 +88,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 2: Create Member entry for the Founder
       updateStepStatus(2, 'inProgress');
-      const founderDetails: FounderDetails = {
+      const registrationDetails: RegistrationMemberDetails = {
         email: values.email as string,
         firstName: values.firstName as string,
         lastName: values.lastName as string,
@@ -96,7 +96,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         familyId: insertFamilyResult.id as number,
         isFounder: true,
       }
-      const insertMemberResult = await insertMember(founderDetails);
+      const insertMemberResult = await insertMember(registrationDetails);
       if (!insertMemberResult.success) {
         updateStepStatus(2, 'error', insertMemberResult.message);
         throw new Error(insertMemberResult.message);
@@ -147,7 +147,20 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 6: Send emails to join new Family Social family
       updateStepStatus(6, 'inProgress');
-      const sendMemberEmailResult = await sendEmails(insertInvitesResult.invites, values.familyName, founderDetails);
+      const founderDetails: FounderDetails = {
+        email: registrationDetails.email,
+        firstName: registrationDetails.firstName,
+        lastName: registrationDetails.lastName,
+        nickName: registrationDetails.nickName,
+        status: 'invited',
+        memberId: 0, // Do not have this and don't need it for sending the email, so setting to 0 to satisfy type requirement.
+        familyName: values.familyName,
+        familyId: insertFamilyResult.id as number,
+        isFounder: true,
+      };
+
+      const sendMemberEmailResult =
+        await sendEmails(insertInvitesResult.invites, values.familyName, founderDetails);
       // console.log("processForm->sendMemberEmailResult: ", sendMemberEmailResult);
       if (sendMemberEmailResult.error) {
         updateStepStatus(6, 'error', sendMemberEmailResult.message);

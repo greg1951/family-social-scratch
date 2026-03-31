@@ -11,7 +11,7 @@ import FamilyNotificationsForm from "../family-notifications";
 import AccountDetailsForm from "@/app/(family)/family-member-account";
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
 import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
-import { MemberKeyDetails } from "@/features/family/types/family-steps";
+// import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
 type TabValue = "profile" | "notifications" | "current-family" | "new-family";
 
@@ -26,19 +26,14 @@ function getValidTab(tab: string | null): TabValue {
 }
 
 export default function FounderAccountTabs({
-  accountDetails,
   founderDetails,
   notifications,
-  familyId,
   currentFamilyMembers,
-  memberKeyDetails
 }: {
-  accountDetails: AccountDetails | null;
-  founderDetails: FounderDetails | null;
+  // accountDetails: AccountDetails | null;
+  founderDetails: FounderDetails;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
-  familyId: number;
   currentFamilyMembers: CurrentFamilyMember[];
-  memberKeyDetails: MemberKeyDetails;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -75,8 +70,8 @@ export default function FounderAccountTabs({
       </TabsList>
 
       <TabsContent value="profile" className="mt-4">
-        { accountDetails && (
-          <AccountDetailsForm accountDetails={ accountDetails } founderDetails={ founderDetails } />
+        { founderDetails && (
+          <AccountDetailsForm founderDetails={ founderDetails } />
         ) }
       </TabsContent>
 
@@ -86,14 +81,13 @@ export default function FounderAccountTabs({
 
       <TabsContent value="new-family" className="mt-4 rounded-lg border">
         <NewMembersAccountForm
-          familyId={ familyId }
-          accountDetails={ accountDetails }
+          founderDetails={ founderDetails }
           currentFamilyMembers={ currentFamilyMembers }
         />
       </TabsContent>
 
       <TabsContent value="current-family" className="mt-4 rounded-lg border">
-        <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } founderKeyDetails={ memberKeyDetails } />
+        <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } founderDetails={ founderDetails } />
       </TabsContent>
     </Tabs>
   );
