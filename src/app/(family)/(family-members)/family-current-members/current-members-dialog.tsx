@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -15,8 +16,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
 import { CurrentFamilyMember } from '@/features/family/types/family-members'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
@@ -39,6 +38,8 @@ type CurrentMembersDialogProps = {
 }
 
 export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, onResetMember, onInviteMember }: CurrentMembersDialogProps) {
+  const [infoOpen, setInfoOpen] = useState(false)
+
   const form = useForm<UpdateMemberValues>({
     resolver: zodResolver(currentMemberSchema),
     defaultValues: {
@@ -93,9 +94,16 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
         </DialogHeader>
 
         <div className="font-app rounded-md border p-4">
-          <HoverCard openDelay={ 10 } closeDelay={ 100 }>
+          <HoverCard open={ infoOpen } openDelay={ 300 } closeDelay={ 150 }>
             <HoverCardTrigger asChild>
-              <Button className='w-auto text-xs md:text-sm' variant="link">Current Members ({ members.length })</Button>
+              <Button
+                className='w-auto text-xs md:text-sm'
+                variant="link"
+                onMouseEnter={ () => setInfoOpen(true) }
+                onMouseLeave={ () => setInfoOpen(false) }
+              >
+                Current Members ({ members.length })
+              </Button>
             </HoverCardTrigger>
             <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
               <div className="flex items-center gap-1" >

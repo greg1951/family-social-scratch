@@ -24,6 +24,7 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
               <ul className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
                 <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Lovers" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />

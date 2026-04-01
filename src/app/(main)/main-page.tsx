@@ -10,6 +10,11 @@ import PublicHelpMenu from "@/components/common/public-help-menu";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
+  const whatsNewItems = [
+    "TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them out!",
+    "2 new members were suggested to be invited to our family. Keep an eye out for them.",
+    "Stay tuned for more updates 👍",
+  ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
     "px-4 py-2.5 text-center text-[13px] font-bold tracking-[0.01em] text-sky-900",
@@ -32,15 +37,6 @@ export default async function MainPage() {
           <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#d8f4ff] to-[#eef9ff] p-3 shadow-sm md:p-4">
             <div className="flex flex-col items-center justify-between gap-3 md:flex-row md:items-start">
               <div className="flex items-center gap-3">
-                {/* <div className="rounded-full bg-white/80 p-2 shadow-sm">
-                  <Image
-                    src="/icons/investigation.png"
-                    alt="More Information"
-                    width={ 56 }
-                    height={ 56 }
-                    className="h-10 w-10 object-contain md:h-14 md:w-14"
-                  />
-                </div> */}
                 <div>
                   <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
                   <p className="text-xs text-slate-600 md:text-sm">Choose a channel below or learn more first.</p>
@@ -82,7 +78,7 @@ export default async function MainPage() {
                       href="/family-member-dashboard"
                       className={ ctaCardClasses }
                     >
-                      My Dashboard
+                      Family Dashboard
                     </Link>
                   </>
                 ) }
@@ -116,10 +112,37 @@ export default async function MainPage() {
             ) } */}
           </Card>
 
+          <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#efe9ff] to-[#f7f3ff] p-3 shadow-sm md:p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#6b5ca8]">Family Snapshot</p>
+                <h2 className="mt-1 text-lg font-extrabold text-slate-800 md:text-xl">What&apos;s New in the Family?</h2>
+                <ul className="mt-2 space-y-1 text-xs text-slate-700 md:text-sm">
+                  { whatsNewItems.map((item) => (
+                    <li key={ item } className="flex items-start gap-2">
+                      <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#6b5ca8]" />
+                      <span>{ item }</span>
+                    </li>
+                  )) }
+                </ul>
+              </div>
+
+              <div className="shrink-0">
+                <Link
+                  href="/whats-new"
+                  className="inline-flex items-center rounded-full border border-[#bdb0f1] bg-white px-4 py-2 text-sm font-bold text-[#5b4b9a] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f7f3ff]"
+                >
+                  View All Updates
+                </Link>
+              </div>
+            </div>
+          </Card>
+
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/music" src="/images/music-lovers-tablet.png" title="Music Lovers" tw="rounded-xl border border-pink-300 bg-pink-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry" src="/images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/mxtrain" src="/images/mx-train-tablet.png" title="MX Train" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />

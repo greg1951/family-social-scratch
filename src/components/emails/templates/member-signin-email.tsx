@@ -155,7 +155,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
             After you login go to the <b>My Account</b> page and update your profile.
           </Text>
           <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-            When you have signed in, explore the site and all the wonderful features we have to offer! We are so
+            After you have signed in, explore the site and all the wonderful features we have to offer! We are so
             excited to have you as part of the { familyName } family on Family Social!
           </Text>
           <Row><br></br></Row>

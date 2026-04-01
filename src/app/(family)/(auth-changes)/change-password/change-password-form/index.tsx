@@ -16,11 +16,7 @@ import { ChangePasswordFormSchema } from "@/features/family/components/validatio
 
 const formSchema = ChangePasswordFormSchema;
 
-type UserEmailProp = {
-  userEmail: string;
-}
-
-export default function ChangePasswordForm({ userEmail }: UserEmailProp) {
+export default function ChangePasswordForm({ userEmail }: { userEmail: string }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
