@@ -88,7 +88,6 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                   height='300' />
               </Column>
             </Row>
-            <Row><br></br></Row>
             <Row>
               <Column align='center'
                 valign='top'
@@ -101,7 +100,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
             </Row>
             <Row><br></br></Row>
             <Row>
-              <Column align='left'
+              <Column align='center'
                 valign='top'
                 style={ { width: '620px', paddingRight: '20px' } }>
                 <Img src='https://kbgfamilysocial.com/images/emails/login-need-help.png'
@@ -113,18 +112,14 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
           </Section>
           <Section style={ { width: '700px' } }>
             <Text className='m-0 mb-4 font-app text-base leading-6'>
-              After you login go to the <b>My Account</b> page and update your profile.
-            </Text>
-            <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-              After you have signed in, explore the site and all the wonderful features we have to offer! We are so
+              After you login go to the <b>My Account</b> page and update your profile. Then, go explore the site and all the wonderful features we have to offer! We are so
               excited to have you as part of the { familyName } family on Family Social!
             </Text>
-            <Row><br></br></Row>
           </Section>
-          <Section className='mt-4 rounded-lg bg-imageBg px-4 py-6'>
+          <Section style={ { width: '700px' } }>
             <Row>
               <Column align='center'
-                valign='middle'
+                valign='top'
                 style={ { width: '180px', paddingTop: '8px' } }>
                 <Text className='m-0 text-center'>
                   <Button href="https://kbgfamilysocial.com/login"

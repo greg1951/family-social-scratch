@@ -36,7 +36,7 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
     <Head />
     <Tailwind config={ emailTailwindConfig }>
       <Body className='bg-brandBg py-10 text-brandText'>
-        <Container className='mx-auto rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
+        <Container style={ { padding: '20px' } } className='mx-auto rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
           <Section className='mb-4'>
             <Row>
               <Column
