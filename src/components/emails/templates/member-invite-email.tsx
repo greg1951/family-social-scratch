@@ -20,7 +20,7 @@ const emailTailwindConfig = {
       },
       colors: {
         brandBg: '#eff6ff',
-        brandPanel: '#59CDF7',
+        brandPanel: '#ffffff',
         brandBorder: '#93c5fd',
         brandText: '#1e3a8a',
         brandButton: '#1d4ed8',
@@ -39,12 +39,17 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
         <Container className='mx-auto rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
           <Section className='mb-4'>
             <Row>
-              <Column align='left' valign='middle' style={ { width: '120px', paddingRight: '20px' } }>
+              <Column
+                align='left'
+                valign='top'
+                style={ { width: '72px', paddingLeft: '12px', paddingRight: '8px' } }
+              >
                 <Img
-                  src='https://kbgfamilysocial.com/images/family-social-icon-only.png'
+                  src='https://kbgfamilysocial.com/images/emails/family-social-logo-small.png'
                   alt='Family Social'
-                  width='100'
-                  height='100'
+                  width='50'
+                  height='50'
+                  className='rounded-full py-3'
                 />
               </Column>
               <Column align='left' valign='middle' style={ { width: '680px' } }>
@@ -54,7 +59,7 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
               </Column>
             </Row>
           </Section>
-          <Section className='mb-4'>
+          <Section style={ { width: '700px' } }>
             <Row>
               <Column align='left' valign='top' style={ { width: '620px', paddingRight: '20px' } }>
                 <Text className='m-0 font-app text-base leading-6'>
@@ -66,7 +71,7 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
                 <Text className='m-0 text-center'>
                   <Button
                     href="https://kbgfamilysocial.com"
-                    className='font-app inline-block rounded-md bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
+                    className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
                   >
                     Visit Family Social
                   </Button>
@@ -74,29 +79,33 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
               </Column>
             </Row>
           </Section>
-          <Text className='m-0 mb-4 font-app text-base leading-6'>
-            We would be thrilled for you to join us and can't wait for you to experience all the wonderful features we have to offer!
-          </Text>
-          <Text className='m-0 mb-4 text-center font-app text-base font-semibold leading-6 text-brandText'>
-            To get started, click on the <b>Join Family Social</b> button below to register in the "{ familyName }" family network.
-          </Text>
-          <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-            If you have any questions about Family Social, reach out to { founderName }.
-          </Text>
-          <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
-            (The button below is valid for <b>seven days</b>, so check us out! 😁 )
-          </Text>
-          <Section className='mt-4 rounded-lg bg-imageBg px-4 py-6'>
+          <Section style={ { width: '700px' } }>
             <Row>
               <Column align='center' valign='top'>
-                <Text className='m-0 text-center'>
-                  <Button
-                    href={ link }
-                    className='font-app inline-block rounded-md bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
-                  >
-                    Join Family Social
-                  </Button>
+                <Text className='m-0 mb-4 font-app text-base leading-6'>
+                  We would be thrilled for you to join us and can't wait for you to experience all the wonderful features we have to offer!
                 </Text>
+                <Text className='m-0 mb-4 text-center font-app text-base font-semibold leading-6 text-brandText'>
+                  To get started, click on the <b>Join Family Social</b> button below to register in the "{ familyName }" family network.
+                </Text>
+                <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
+                  If you have any questions about Family Social, reach out to { founderName }.
+                </Text>
+                <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
+                  (The button below is valid for <b>seven days</b>, so check us out! 😁 )
+                </Text>
+              </Column>
+            </Row>
+          </Section>
+          <Section style={ { width: '700px' } }>
+            <Row>
+              <Column align='center'>
+                <Button
+                  href={ link }
+                  className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
+                >
+                  Join Family Social
+                </Button>
               </Column>
             </Row>
           </Section>

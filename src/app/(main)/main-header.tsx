@@ -30,12 +30,9 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
                 <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/mxtrain" src="/icons/games.png" title="MX Train" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" />
+                <MainDropMenu firstName={ firstName } email={ email } sessionFound={ session.found } isFounder={ isFounder } />
               </ul>
             </nav>
-
-            <div className="flex items-center justify-center lg:justify-end">
-              <MainDropMenu firstName={ firstName } email={ email } sessionFound={ session.found } isFounder={ isFounder } />
-            </div>
           </div>
         </div>
       </header>

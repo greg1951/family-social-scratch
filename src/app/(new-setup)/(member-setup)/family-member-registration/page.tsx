@@ -4,9 +4,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 
 import Link from "next/link";
 import FamilyMemberRegistrationForm from ".";
-import { CircleX, CircleCheck } from "lucide-react";
+import { CircleX, CircleCheck, CircleHelp } from "lucide-react";
 import { findFamilyMember } from "@/components/db/sql/queries-family-member";
 import { getFounderDetails } from "@/features/family/services/get-founder-details";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Button } from "@/components/ui/button";
 
 export default async function FamilyMemberRegistration({ searchParams }
   : {
@@ -155,16 +157,8 @@ export default async function FamilyMemberRegistration({ searchParams }
             </CardFooter>
           ) }
           { memberToRegister?.isValidExpiry && (
-            <CardDescription className="text-center text-xs text-bold text-slate-800 p-4">
-              When you submit your registration you'll be forwarded to resources to help you get started in your new family.
-            </CardDescription>
+            <FamilyMemberRegistrationForm memberToRegister={ memberToRegister } founderDetails={ founderDetails } />
           ) }
-          <CardContent>
-            { memberToRegister?.isValidExpiry && (
-              <FamilyMemberRegistrationForm memberToRegister={ memberToRegister } founderDetails={ founderDetails } />
-            ) }
-
-          </CardContent>
         </Card>
       </main>
     </div>

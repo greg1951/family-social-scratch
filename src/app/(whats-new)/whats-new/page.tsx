@@ -27,7 +27,7 @@ const updates = [
   },
   {
     title: "New Members Suggested",
-    summary: "In your My Account page, in the Family Members tab you can now suggest other people be invited to join the family. Feel free to invite your friends as well.",
+    summary: "You can now suggest other people be invited to join the family. This feature is available in the Family Members tab of your My Account page. Feel free to invite your friends as well.",
     category: "Family Activity",
     date: "Mar 25, 2026",
   },

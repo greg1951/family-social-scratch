@@ -13,7 +13,7 @@ export default async function MainPage() {
   const whatsNewItems = [
     "TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them out!",
     "2 new members were suggested to be invited to our family. Keep an eye out for them.",
-    "Stay tuned for more updates 👍",
+    "Stay tuned to this channel for future updates. 👍",
   ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
@@ -43,7 +43,7 @@ export default async function MainPage() {
                 </div>
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3">
+              <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3 pt-2">
                 { memberKeyDetails.isFounder && (
                   <>
                     <Link
@@ -112,31 +112,33 @@ export default async function MainPage() {
             ) } */}
           </Card>
 
-          <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#efe9ff] to-[#f7f3ff] p-3 shadow-sm md:p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#6b5ca8]">Family Snapshot</p>
-                <h2 className="mt-1 text-lg font-extrabold text-slate-800 md:text-xl">What&apos;s New in the Family?</h2>
-                <ul className="mt-2 space-y-1 text-xs text-slate-700 md:text-sm">
-                  { whatsNewItems.map((item) => (
-                    <li key={ item } className="flex items-start gap-2">
-                      <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#6b5ca8]" />
-                      <span>{ item }</span>
-                    </li>
-                  )) }
-                </ul>
-              </div>
+          { memberKeyDetails.isLoggedIn && (
+            <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#efe9ff] to-[#f7f3ff] p-3 shadow-sm md:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#6b5ca8]">Family Snapshot</p>
+                  <h2 className="mt-1 text-lg font-extrabold text-slate-800 md:text-xl">What&apos;s New in the Family?</h2>
+                  <ul className="mt-2 space-y-1 text-xs text-slate-700 md:text-sm">
+                    { whatsNewItems.map((item) => (
+                      <li key={ item } className="flex items-start gap-2">
+                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#6b5ca8]" />
+                        <span>{ item }</span>
+                      </li>
+                    )) }
+                  </ul>
+                </div>
 
-              <div className="shrink-0">
-                <Link
-                  href="/whats-new"
-                  className="inline-flex items-center rounded-full border border-[#bdb0f1] bg-white px-4 py-2 text-sm font-bold text-[#5b4b9a] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f7f3ff]"
-                >
-                  View All Updates
-                </Link>
+                <div className="shrink-0">
+                  <Link
+                    href="/whats-new"
+                    className="inline-flex items-center rounded-full border border-[#bdb0f1] bg-white px-4 py-2 text-sm font-bold text-[#5b4b9a] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f7f3ff]"
+                  >
+                    View All Updates
+                  </Link>
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+          ) }
 
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />

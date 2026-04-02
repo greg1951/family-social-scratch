@@ -20,7 +20,7 @@ const emailTailwindConfig = {
       },
       colors: {
         brandBg: '#eff6ff',
-        brandPanel: '#59CDF7',
+        brandPanel: '#ffffff',
         brandBorder: '#93c5fd',
         brandText: '#1e3a8a',
         brandButton: '#1d4ed8',
@@ -34,16 +34,21 @@ export const PasswordResetEmail = ({ link }: { link: string }) => (
   <Html>
     <Head />
     <Tailwind config={ emailTailwindConfig }>
-      <Body className='bg-brandBg py-10 text-brandText'>
-        <Container className='mx-auto rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
+      <Body className='mx-auto bg-brandBg py-10 text-brandText font-app '>
+        <Container style={ { padding: '20px' } } className='rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
           <Section>
             <Row>
-              <Column align='left' valign='top' style={ { width: '120px' } }>
+              <Column
+                align='left'
+                valign='top'
+                style={ { width: '72px', paddingLeft: '12px', paddingRight: '8px' } }
+              >
                 <Img
-                  src='https://kbgfamilysocial.com/images/family-social-icon-only.png'
+                  src='https://kbgfamilysocial.com/images/emails/family-social-logo-small.png'
                   alt='Family Social'
-                  width='100'
-                  height='100'
+                  width='50'
+                  height='50'
+                  className='rounded-full py-3'
                 />
               </Column>
               <Column align='left' valign='middle'>
@@ -54,20 +59,30 @@ export const PasswordResetEmail = ({ link }: { link: string }) => (
               </Column>
             </Row>
           </Section>
-          <Text className='font-app text-base'>
-            If you did not request a password reset, please ignore this email and your password will remain unchanged.
-          </Text>
-          <Text className='m-0 mb-6 text-center text-base leading-6 text-brandText'>
-            (The link is valid for <u>one (1) hour</u>.)
-          </Text>
-          <Text className='flex justify-center items-center m-0 text-base'>
-            <Button
-              href={ link }
-              className='font-app inline-block rounded-md bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
-            >
-              Reset Password
-            </Button>
-          </Text>
+          <Section style={ { width: '700px' } }>
+            <Row>
+              <Column align='center' valign='top'>
+                <Text className='font-app text-base'>
+                  If you did not request a password reset, please ignore this email and your password will remain unchanged.
+                </Text>
+                <Text className='m-0 mb-6 text-center text-base leading-6 text-brandText'>
+                  (The link is valid for <u>one hour</u>, starting now. Go! 😁)
+                </Text>
+              </Column>
+            </Row>
+          </Section>
+          <Section style={ { width: '700px' } }>
+            <Row>
+              <Column align='center'>
+                <Button
+                  href={ link }
+                  className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
+                >
+                  Reset Password
+                </Button>
+              </Column>
+            </Row>
+          </Section>
         </Container>
       </Body>
     </Tailwind>

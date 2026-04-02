@@ -15,8 +15,9 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Eye, EyeOff, LogIn, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, CircleHelp, Eye, EyeOff, LogIn, ShieldCheck, Sparkles } from "lucide-react";
 import { FamilySocialLoginSchema } from "@/features/family/components/validation/schema";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 const formSchema = FamilySocialLoginSchema;
 
@@ -29,6 +30,8 @@ export default function LoginForm() {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [emailAuthError, setEmailAuthError] = useState("");
+  const [infoOpen, setInfoOpen] = useState(false)
+
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -157,19 +160,42 @@ export default function LoginForm() {
                     </Button>
 
                   </div>
-                  <FormField
-                    control={ form.control }
-                    name="family"
-                    render={ ({ field }) => (
-                      <FormItem>
-                        <FormLabel className="font-extrabold text-sm md:text-base">Family Name</FormLabel>
-                        <FormControl>
-                          <Input { ...field } type="text" placeholder="Family name 10-30 characters" className="text-xs" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    ) }
-                  />
+                  <div className="relative">
+                    <FormField
+                      control={ form.control }
+                      name="family"
+                      render={ ({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-extrabold text-sm md:text-base">Family Name</FormLabel>
+                          <FormControl>
+                            <Input { ...field } type="text" placeholder="Family name 10-30 characters" className="text-xs" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      ) }
+                    />
+                    <div className="absolute top-0 right-0 mt-7">
+                      <HoverCard open={ infoOpen } openDelay={ 300 } closeDelay={ 150 }>
+                        <HoverCardTrigger asChild>
+                          <Button
+                            className='w-auto text-xs md:text-sm'
+                            variant="link"
+                            onMouseEnter={ () => setInfoOpen(true) }
+                            onMouseLeave={ () => setInfoOpen(false) }
+                          >
+                            <CircleHelp size={ 6 } className="h-5 w-5 text-[#315363]" />
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
+                          <p className='text-sm p-1'>When you join Family Social you become part of a unique family. Your family name is required to sign in.</p>
+                          <p className='text-sm p-1'>In your email invitation, and in the login instructions email you received after registering,
+                            your family name was prominently mentioned.</p>
+                          <p className='text-sm p-1'>If you have not registered in a family, then there is no signin needed. Select the "Take me home" link below to return to the main page.</p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </div>
+
                   { !!emailAuthError &&
                     <FormMessage>
                       { emailAuthError }

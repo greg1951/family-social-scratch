@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 
 import * as z from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CardContent, CardFooter } from '@/components/ui/card';
+import { CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { CircleCheck, Eye, EyeOff, CircleX } from "lucide-react";
+import { CircleCheck, Eye, EyeOff, CircleX, CircleHelp } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
 import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInviteStatus } from './actions';
 import { SubmissionStep } from '@/features/family/types/family-steps';
@@ -19,6 +19,7 @@ import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-
 import { MemberRegistrationInput } from '@/components/db/types/family-member';
 import { sendLoginInstructionsEmail } from '@/components/emails/send-signin-email';
 import { FounderDetails } from '@/features/family/types/family-members';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 
 const formSchema = MemberRegistrationSchema;
 
@@ -35,6 +36,7 @@ function formatPhoneNumber(value: string): string {
 export default function FamilyMemberRegistrationForm({ memberToRegister, founderDetails }
   : { memberToRegister: MemberRegistrationInput, founderDetails: FounderDetails }) {
 
+  const [infoOpen, setInfoOpen] = useState(false)
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -155,6 +157,34 @@ export default function FamilyMemberRegistrationForm({ memberToRegister, founder
 
   return (
     <>
+      <CardDescription className="text-center text-xs text-bold text-slate-800 p-4">
+        <div className="relative">
+          <p className='ml-10 text-left rounded-md border bg-white p-3 shadow-md'>
+            Please complete the registration form below. Before submitting it, hover over the help icon here more information about what will happen next.
+          </p>
+          <div className="absolute top-2 right-0 ">
+            <HoverCard open={ infoOpen } openDelay={ 300 } closeDelay={ 150 }>
+              <HoverCardTrigger asChild>
+                <Button
+                  className='w-auto text-xs md:text-sm'
+                  variant="link"
+                  onMouseEnter={ () => setInfoOpen(true) }
+                  onMouseLeave={ () => setInfoOpen(false) }
+                >
+                  <CircleHelp size={ 6 } className="h-5 w-5 text-[#315363]" />
+                </Button>
+              </HoverCardTrigger>
+              <HoverCardContent side='right' className="flex w-50 md:w-80 flex-col gap-0.5 text-left rounded-md border bg-white p-3 shadow-md">
+                <p className='text-sm p-1'>After you complete and submit your registration, you will receive an email with instructions on how to signin.</p>
+                <p className='text-sm p-1'>Your email address and password you define here as well as your family name will be needed to signin.</p>
+                <p className='text-sm p-1'>Before signing in, please make sure to check your email for the login instructions.</p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
+        </div>
+
+      </CardDescription>
+
       <Form { ...form }>
         <form onSubmit={ form.handleSubmit(handleFormSubmit) } className="space-y-4">
 
