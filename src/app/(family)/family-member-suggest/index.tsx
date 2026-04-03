@@ -231,8 +231,8 @@ export default function FamilyMemberSuggestForm({
               <div className="flex items-center gap-1" >
                 <CircleCheck size={ 6 } className="md:h-15 md:w-15 text-green-500" />
                 <p className='text-sm p-1'>
-                  If there is another family member or friend you would like to invite to the family,
-                  then add it below.
+                  If there is a family member or friend you would like to invite to the family,
+                  then suggest the person in the form below.
                 </p>
               </div>
               <div className="flex items-center gap-1" >

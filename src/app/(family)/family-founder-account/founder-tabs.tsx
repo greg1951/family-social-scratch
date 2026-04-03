@@ -4,14 +4,12 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MessageCircleMore, UserPenIcon, UserPlus, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AccountDetails } from "@/features/auth/types/auth-types";
 import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
 import FamilyNotificationsForm from "../family-notifications";
-import AccountDetailsForm from "@/app/(family)/family-member-account";
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
 import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
-// import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import FounderDetailsForm from "./index";
 
 type TabValue = "profile" | "notifications" | "current-family" | "new-family";
 
@@ -71,7 +69,7 @@ export default function FounderAccountTabs({
 
       <TabsContent value="profile" className="mt-4">
         { founderDetails && (
-          <AccountDetailsForm founderDetails={ founderDetails } />
+          <FounderDetailsForm founderDetails={ founderDetails } />
         ) }
       </TabsContent>
 

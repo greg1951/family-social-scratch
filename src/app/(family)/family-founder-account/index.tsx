@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState } from "react";
-import { AccountDetails, UpdateAccountDetails } from "@/features/auth/types/auth-types";
-// import { updateMemberDetails } from "@/components/db/sql/queries-family-member";
+import { UpdateAccountDetails } from "@/features/auth/types/auth-types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { ArrowRight, RotateCcw, ShieldCheck } from "lucide-react";
@@ -19,12 +18,12 @@ import { MemberAccountFormSchema } from "@/features/family/components/validation
 
 const formSchema = MemberAccountFormSchema;
 
-export default function AccountDetailsForm({ accountDetails, founderDetails }
-  : { accountDetails: AccountDetails | null, founderDetails: FounderDetails | null }) {
+export default function FounderDetailsForm({ founderDetails }
+  : { founderDetails: FounderDetails | null }) {
 
   const [open, setOpen] = useState(false);
   const [dateNotDirty, setDateNotDirty] = useState(true);
-  const { memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = accountDetails?.accountDetails!;
+  const { memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = founderDetails!;
   const [date, setDate] = useState<Date>(new Date(birthday as string));
   const router = useRouter();
 

@@ -53,21 +53,21 @@ export default function MemberAccountTabs({
       <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 md:grid-cols-3 mb-10 md:mb-1">
         <TabsTrigger value="profile" className="border bg-slate-100 data-[state=active]:bg-white">
           <UserPenIcon className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-          Your Profile
+          My Profile
         </TabsTrigger>
         <TabsTrigger value="settings" className="border bg-slate-100 data-[state=active]:bg-white">
           <MessageCircleMore className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-          Your Settings
+          My Settings
         </TabsTrigger>
         <TabsTrigger value="family-members" className="border bg-slate-100 data-[state=active]:bg-white">
           <Users className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
-          Family Members
+          My Family
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="mt-4">
         { founderDetails && (
-          <AccountDetailsForm founderDetails={ founderDetails } />
+          <AccountDetailsForm accountDetails={ accountDetails } founderDetails={ founderDetails } />
         ) }
       </TabsContent>
 
