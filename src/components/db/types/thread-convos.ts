@@ -64,3 +64,30 @@ export type getConvoRecipientStateReturn =
       success: true;
       recipientStates: RecipientState[];
     };
+
+export type ConvoSummary = {
+  id: number;
+  title: string;
+  visibility: string;
+  status: string;
+  createdAt: Date;
+  senderMemberId: number | null;
+  senderFirstName: string | null;
+  senderLastName: string | null;
+  recipientStateId: number | null;
+  recipientMemberId: number | null;
+  recipientFirstName: string | null;
+  recipientLastName: string | null;
+  deliveryType: string | null;
+  readAt: Date | null;
+  archivedAt: Date | null;
+  postContent: string | null;
+  postType: string | null;
+};
+
+export type getConvoSummariesReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      summaries: ConvoSummary[];
+    };

@@ -92,8 +92,8 @@ export const conversationStatus = pgEnum('status', ['active', 'archived', 'close
 export const postReplyType = pgEnum('type', ['post', 'reply']);
 export const deliveryType = pgEnum('delivery_type', ['threads', 'email', 'sms']);
 export const tagName = pgEnum('tag_name', [
-  'tv', 'movie', 'music', 'books', 'poetry', 'recipe', 'train', 
-  'admin', 'suggestion', 'bug', 'question', 'other',
+  'tv', 'movie', 'music', 'books', 'poetry', 'recipe', 'games', 
+  'founder', 'member', 'admin', 'suggestion', 'bug', 'question', 'other',
 ]);
 
 export const threadTagReference = pgTable("thread_tag_reference", {

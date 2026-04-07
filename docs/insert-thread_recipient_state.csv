@@ -1,0 +1,3 @@
+"id","fk_conversation_id","fk_recipient_member_id","read_at","archived_at","archive_batch_id","archive_object_key","created_at","last_viewed_post_id","delivery_type"
+,"1","65",,,,,"2026-04-07 14:24:51.71847",,"threads"
+,"2","63",,,,,"2026-04-07 14:25:57.843228",,"threads"

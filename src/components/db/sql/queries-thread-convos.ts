@@ -1,9 +1,9 @@
 'use server';
 
 import db from '@/components/db/drizzle';
-import { count, eq, and } from 'drizzle-orm';
-import { family, threadConversation, threadConversationTag, threadPostReply, threadRecipientState, threadTagReference } from '../schema/family-social-schema-tables';
-import { getConvoPostRepliesReturn, getConvoRecipientStateReturn, getConvosReturn } from '../types/thread-convos';
+import { count, eq, and, asc } from 'drizzle-orm';
+import { family, member, threadConversation, threadConversationTag, threadPostReply, threadRecipientState, threadTagReference } from '../schema/family-social-schema-tables';
+import { getConvoPostRepliesReturn, getConvoRecipientStateReturn, getConvosReturn, getConvoSummariesReturn } from '../types/thread-convos';
 
 /*------------------ getConvosBySenderMemberId ------------------ */
 export async function getConvosBySenderMemberId(familyId:number, senderMemberId?:number)
@@ -214,4 +214,91 @@ export async function getConvoRecipientState(conversationId:number, recipientMem
     };
     return recipientStateReturn;
   }
+}
+
+/*------------------ getConvoSummaries ------------------ */
+// Returns one row per conversation enriched with sender name, first post body/type,
+// and the requesting member's recipient state (read/archived timestamps).
+export async function getConvoSummaries(familyId: number, memberId: number)
+  : Promise<getConvoSummariesReturn> {
+
+  const senderMember = db.$with('sender_member').as(
+    db.select({
+      id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+    }).from(member)
+  );
+
+  const recipientMember = db.$with('recipient_member').as(
+    db.select({
+      id: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+    }).from(member)
+  );
+
+  const rows = await db
+    .with(senderMember, recipientMember)
+    .select({
+      id: threadConversation.id,
+      title: threadConversation.title,
+      visibility: threadConversation.visibility,
+      status: threadConversation.status,
+      createdAt: threadConversation.createdAt,
+      senderMemberId: threadConversation.senderMemberId,
+      senderFirstName: senderMember.firstName,
+      senderLastName: senderMember.lastName,
+      recipientStateId: threadRecipientState.id,
+      recipientMemberId: threadRecipientState.recipientMemberId,
+      recipientFirstName: recipientMember.firstName,
+      recipientLastName: recipientMember.lastName,
+      deliveryType: threadRecipientState.deliveryType,
+      readAt: threadRecipientState.readAt,
+      archivedAt: threadRecipientState.archivedAt,
+      postContent: threadPostReply.content,
+      postType: threadPostReply.type,
+    })
+    .from(threadConversation)
+    .leftJoin(senderMember, eq(senderMember.id, threadConversation.senderMemberId))
+    .leftJoin(
+      threadRecipientState,
+      and(
+        eq(threadRecipientState.conversationId, threadConversation.id),
+        eq(threadRecipientState.recipientMemberId, memberId),
+      )
+    )
+    .leftJoin(recipientMember, eq(recipientMember.id, threadRecipientState.recipientMemberId))
+    .leftJoin(
+      threadPostReply,
+      and(
+        eq(threadPostReply.conversationId, threadConversation.id),
+        eq(threadPostReply.seqNo, 1),
+      )
+    )
+    .where(eq(threadConversation.familyId, familyId))
+    .orderBy(asc(threadConversation.createdAt));
+
+  return {
+    success: true,
+    summaries: rows.map(row => ({
+      id: row.id,
+      title: row.title,
+      visibility: row.visibility,
+      status: row.status,
+      createdAt: row.createdAt!,
+      senderMemberId: row.senderMemberId,
+      senderFirstName: row.senderFirstName,
+      senderLastName: row.senderLastName,
+      recipientStateId: row.recipientStateId,
+      recipientMemberId: row.recipientMemberId,
+      recipientFirstName: row.recipientFirstName,
+      recipientLastName: row.recipientLastName,
+      deliveryType: row.deliveryType,
+      readAt: row.readAt,
+      archivedAt: row.archivedAt,
+      postContent: row.postContent,
+      postType: row.postType,
+    })),
+  };
 }

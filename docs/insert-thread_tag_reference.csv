@@ -1,0 +1,13 @@
+"id","tag_name","tag_description","status","seq_no","created_at"
+,"TV","feature","active","1",
+,"Movies","feature","active","2",
+,"Music","feature","active","3",
+,"Books","feature","active","4",
+,"Recipes","feature","active","5",
+,"Games","feature","active","6",
+,"Founder","role","active","20",
+,"Admin","role","active","21",
+,"Member","role","active","22",
+,"Bug","support","active","90",
+,"Question","support","active","91",
+,"Improvement","support","active","92",

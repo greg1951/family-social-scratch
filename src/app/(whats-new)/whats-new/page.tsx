@@ -2,6 +2,18 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Family Threads Home Page Launch",
+    summary: "The Family Threads is where we keep the family conversations. The data you see there are real but there's not a way to reply to the posts yet. That is coming next! ",
+    category: "Features",
+    date: "April 7, 2026",
+  },
+  {
+    title: "Movie Maniacs and Music Lovers Home Page Launches",
+    summary: "The Movie Maniacs and Music Lovers prototype home pages are now available. Check them out and let us know what you think!",
+    category: "Features",
+    date: "Apr 1, 2026",
+  },
+  {
     title: "TV Junkies Home Page Launch",
     summary: "The TV Junkies feature will be the first one to be fully released. Right now it's just a prototype but it will be available to fully functional soon.",
     category: "Features",
@@ -12,12 +24,6 @@ const updates = [
     summary: "The Family Foodies feature is going to be very popular and it comes after the TV Junkies release.",
     category: "Features",
     date: "Mar 16, 2026",
-  },
-  {
-    title: "Movie Maniacs and Music Lovers Home Page Launches",
-    summary: "The Movie Maniacs and Music Lovers prototype home pages are now available. Check them out and let us know what you think!",
-    category: "Features",
-    date: "Apr 1, 2026",
   },
   {
     title: "Family Dashboard",

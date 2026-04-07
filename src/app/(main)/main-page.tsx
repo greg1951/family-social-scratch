@@ -1,18 +1,15 @@
 import MainHeader from "@/app/(main)/main-header";
 import { Card } from "../../components/ui/card";
 import Link from "next/link";
-import { auth } from "@/auth";
 import MainLinkCard from "../../components/common/main-link-card";
-import Image from "next/image";
-import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
-    "TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them out!",
-    "2 new members were suggested to be invited to our family. Keep an eye out for them.",
+    "Family Threads, TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them out!",
+    "A new member was suggested to be invited to our family. Keep an eye out for them.",
     "Stay tuned to this channel for future updates. 👍",
   ];
   const ctaCardClasses = [
@@ -104,12 +101,6 @@ export default async function MainPage() {
                 <PublicHelpMenu />
               </div>
             </div>
-
-            {/* { !memberKeyDetails.isLoggedIn && (
-              <p className="mt-3 text-center text-xs text-slate-600 md:text-left">
-                Sign in to open channels directly from this page.
-              </p>
-            ) } */}
           </Card>
 
           { memberKeyDetails.isLoggedIn && (
