@@ -21,7 +21,7 @@ export async function getMemberNotifications(memberId: number)
         memberOptionId: notification.member_option.id as number,
         optionId: notification.member_option.optionId as number,
         optionName: notification.option_reference.optionName as string,
-        optionDesc: notification.option_reference.optionDesc as string,
+        optionDesc: notification.option_reference.category as string,
         isSelected: notification.member_option.isSelected as boolean,
       }))
 
@@ -138,7 +138,7 @@ async function getAllOptionsRef()
       options=optionsResult.map(option => ({
         id: option.id as number,
         optionName: option.optionName as string,
-        optionDesc: option.optionDesc as string,
+        optionDesc: option.category as string,
       }))
     return {
       success: true,
