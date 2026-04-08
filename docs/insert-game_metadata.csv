@@ -1,0 +1,3 @@
+"id","name","high_or_lo","is_round_based","max_rounds"
+"1","Mexican Train","low","true","12"
+"2","Acquire","high","false","12"

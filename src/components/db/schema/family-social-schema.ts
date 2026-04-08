@@ -11,4 +11,8 @@ export {
   threadConversation,
   threadPostReply,
   threadRecipientState,
+  gameMetadata,
+  gameState,
+  gamePlayerState,
+  gamePlayerRound,
 } from './family-social-schema-tables';

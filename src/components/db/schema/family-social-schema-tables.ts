@@ -1,5 +1,6 @@
 import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
-import {sql } from 'drizzle-orm';
+import {not, sql } from 'drizzle-orm';
+import { number } from "zod";
 
 export const familyStatus = pgEnum('status', ['trial', 'active', 'expired']);
 export const inviteStatus = pgEnum('status', ['invited', 'joined', 'resend', 'declined']);
@@ -113,7 +114,7 @@ export const threadConversationTag = pgTable("thread_conversation_tag", {
 },
   (table) => [
     index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
-    unique().on(table.conversationId, table.tagId),
+    // unique().on(table.conversationId, table.tagId),
 ]);
 
 export const threadConversation = pgTable("thread_conversation", {
@@ -181,3 +182,56 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
     index('thread_recipient_state_conversation_recipient_idx').on(table.conversationId, table.recipientMemberId),
     index('thread_recipient_state_conversation_created_idx').on(table.conversationId, table.createdAt),
 ]);
+
+/*------------------------------- Games Scoreboard ------------------------------ */
+export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
+
+export const gameMetadata = pgTable("game_metadata", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  highOrLo: text("high_or_lo").notNull().default("high"),
+  isRoundBased: boolean("is_round_based").notNull().default(true),
+  maxRounds: integer("max_rounds").notNull().default(12),
+});
+
+export const gameState = pgTable("game_state", {
+  id: serial("id").primaryKey(),
+  gameTitle: text("game_title").notNull().unique(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  gameMetaId: integer("fk_game_meta_id").notNull().references(() => gameMetadata.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('game_state_metadata_id_idx').on(table.gameMetaId),
+    index('game_state_family_id_idx').on(table.familyId),
+]);
+
+export const gamePlayerState = pgTable("game_player_state", {
+  id: serial("id").primaryKey(),
+  playPosition: integer("play_position"),
+  status: text("status").notNull().default("active"),
+  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('game_player_state_member_id_idx').on(table.memberId),
+    index('game_player_state_family_id_idx').on(table.familyId),
+]);
+
+
+export const gamePlayerRound = pgTable("game_player_round", {
+  id: serial("id").primaryKey(),
+  roundNo: integer("round_no").notNull().default(1),
+  roundScore: integer("round_score").notNull().default(0),
+  cumulativeScore: integer("cumulative_score").notNull().default(0),
+  gameId: integer("fk_game_id").notNull().references(() => gameState.id),
+  gamePlayerId: integer("fk_game_player_id").notNull().references(() => gamePlayerState.id),
+},
+  (table) => [
+    index('game_player_round_game_player_id_idx').on(table.gamePlayerId),
+    index('game_player_round_game_id_idx').on(table.gameId),
+]);
+
+
