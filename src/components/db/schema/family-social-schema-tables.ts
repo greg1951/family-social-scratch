@@ -184,7 +184,7 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
 ]);
 
 /*------------------------------- Games Scoreboard ------------------------------ */
-export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
+//export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
 
 export const gameMetadata = pgTable("game_metadata", {
   id: serial("id").primaryKey(),
