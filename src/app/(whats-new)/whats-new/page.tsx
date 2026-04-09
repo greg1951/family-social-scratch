@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Game Scoreboards Home Page Launch",
+    summary: "The Game Scoreboards home page is now available and nearly complete. It support a variety of games like Mexican Train and Acquire.",
+    category: "Features",
+    date: "April 9, 2026",
+  },
+  {
     title: "Family Threads Home Page Launch",
     summary: "The Family Threads is where we keep the family conversations. The data you see there are real but there's not a way to reply to the posts yet. That is coming next! ",
     category: "Features",

@@ -8,9 +8,9 @@ import PublicHelpMenu from "@/components/common/public-help-menu";
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
-    "Family Threads, TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them out!",
-    "A new member was suggested to be invited to our family. Keep an eye out for them.",
-    "Stay tuned to this channel for future updates. 👍",
+    "Game Scoreboards, Family Threads, TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them all out!",
+    "A new member was suggested to be invited to our family. Keep an eye out for them in Family Threads.",
+    "The Family Social team is working hard to bring you new features. Stay tuned to this channel for updates. 👍",
   ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
@@ -137,7 +137,7 @@ export default async function MainPage() {
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/music" src="/images/music-lovers-tablet.png" title="Music Lovers" tw="rounded-xl border border-pink-300 bg-pink-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry" src="/images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/mx-train-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
         </div>
       </section>
