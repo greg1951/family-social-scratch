@@ -24,7 +24,8 @@ export default async function GamesPage() {
       },
       selectablePlayers: [],
       availableGames: [],
-      activeGameStates: [],
+      activeGameStates: [], gamePlayerStates: [],
+      gamePlayerRounds: [],
     };
 
   return (

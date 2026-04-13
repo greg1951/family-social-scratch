@@ -1,5 +1,5 @@
 import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
-import {not, sql } from 'drizzle-orm';
+import {is, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 
 export const familyStatus = pgEnum('status', ['trial', 'active', 'expired']);
@@ -17,6 +17,7 @@ export const user = pgTable("user", {
   createdAt: timestamp("created_at").defaultNow(),
   twoFactorSecret: text("2fa_secret"),
   twoFactorActivated: boolean("2fa_activated").default(false),
+  isSuperAdmin: boolean("is_super_admin").notNull().default(false),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   memberId: integer("fk_member_id").references(() => member.id),
 });
@@ -66,6 +67,8 @@ export const member = pgTable("member", {
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   status: text("status").notNull().default("active"),
   isFounder: boolean("is_family_founder").notNull().default(false),
+  isGuest: boolean("is_guest").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index('member_email_idx').on(table.email),
@@ -190,6 +193,7 @@ export const gameMetadata = pgTable("game_metadata", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   highOrLo: text("high_or_lo").notNull().default("high"),
+  scoreUom: text("score_uom").notNull().default("points"),
   isRoundBased: boolean("is_round_based").notNull().default(true),
   maxRounds: integer("max_rounds").notNull().default(12),
 });

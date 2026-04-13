@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   createGameStateRecord,
+  createGuestMemberRecord,
   getGameScoreboardDetailsByGameId,
   saveGameScoreboardRecord,
 } from "@/components/db/sql/queries-game-scoreboards";
@@ -75,4 +76,15 @@ export async function saveGameScoreboardAction(input: SaveGameScoreboardInput) {
 
 export async function loadGameScoreboardAction(input: LoadGameScoreboardInput) {
   return getGameScoreboardDetailsByGameId(input.gameId, input.familyId);
+}
+
+export interface AddGuestMemberInput {
+  familyId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+}
+
+export async function addGuestMemberAction(input: AddGuestMemberInput) {
+  return createGuestMemberRecord(input);
 }

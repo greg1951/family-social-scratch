@@ -65,6 +65,7 @@ export type GameScoreboardDetails = {
     playPosition: number;
     firstName: string;
     lastName: string;
+    isGuest: boolean;
   }>;
   rounds: Array<{
     roundNo: number;
@@ -91,6 +92,7 @@ export async function getAllGameNames():(Promise<AllGameMetadataReturn>) {
     id: meta.id,
     name: meta.name,
     highOrLo: meta.highOrLo as "high" | "low",
+    scoreUom: meta.scoreUom,
     isRoundBased: meta.isRoundBased,
     maxRounds: meta.maxRounds,
   }));
@@ -115,6 +117,7 @@ export async function getGameMetaDataByName(gameName: string):(Promise<GameMetad
     id: gameMetaData.id,
     name: gameMetaData.name,
     highOrLo: gameMetaData.highOrLo as "high" | "low",
+    scoreUom: gameMetaData.scoreUom,
     isRoundBased: gameMetaData.isRoundBased,
     maxRounds: gameMetaData.maxRounds,
   };
@@ -156,6 +159,7 @@ export async function getSelectableGamePlayersByFamilyId(familyId: number): Prom
       id: member.id,
       firstName: member.firstName,
       lastName: member.lastName,
+      isGuest: member.isGuest,
     })
     .from(member)
     .where(and(
@@ -168,6 +172,7 @@ export async function getSelectableGamePlayersByFamilyId(familyId: number): Prom
     id: row.id,
     firstName: row.firstName,
     lastName: row.lastName,
+    isGuest: row.isGuest,
   }));
 }
 
@@ -202,6 +207,7 @@ export async function getGameScoreboardDetailsByGameId(
       playPosition: gamePlayerState.playPosition,
       firstName: member.firstName,
       lastName: member.lastName,
+      isGuest: member.isGuest,
       gamePlayerId: gamePlayerState.id,
     })
     .from(gamePlayerRound)
@@ -215,6 +221,7 @@ export async function getGameScoreboardDetailsByGameId(
     playPosition: number;
     firstName: string;
     lastName: string;
+    isGuest: boolean;
   }>();
 
   for (const row of playerRows) {
@@ -228,6 +235,7 @@ export async function getGameScoreboardDetailsByGameId(
         playPosition: row.playPosition,
         firstName: row.firstName,
         lastName: row.lastName,
+        isGuest: row.isGuest,
       });
     }
   }
@@ -501,6 +509,7 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
     const roundRows = await db
       .select({
         gameId: gamePlayerRound.gameId,
+        gameMetaId: gameState.gameMetaId,
         roundNo: gamePlayerRound.roundNo,
         cumulativeScore: gamePlayerRound.cumulativeScore,
         gameTitle: gameState.gameTitle,
@@ -521,6 +530,7 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
     const latestScoreByGamePlayer = new Map<string, {
       gameId: number;
       gameTitle: string;
+      gameMetaId: number;
       gameStatus: 'active' | 'in_progress' | 'completed' | 'archived';
       gameStartDate: string;
       playerId: number;
@@ -541,6 +551,7 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
 
       latestScoreByGamePlayer.set(key, {
         gameId: row.gameId,
+        gameMetaId: row.gameMetaId,
         gameTitle: row.gameTitle,
         gameStatus: row.gameStatus as 'active' | 'in_progress' | 'completed' | 'archived',
         gameStartDate,
@@ -554,6 +565,7 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
     const scoresByGameId = new Map<number, Array<{
       gameId: number;
       gameTitle: string;
+      gameMetaId: number;
       gameStatus: 'active' | 'in_progress' | 'completed' | 'archived';
       gameStartDate: string;
       playerId: number;
@@ -589,6 +601,8 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
       sorted.forEach((entry, index) => {
         gameHistory.push({
           gameId: entry.gameId,
+          gameMetaId: entry.gameMetaId,
+          playerId: entry.playerId,
           gameStartDate: entry.gameStartDate,
           playerFirstName: entry.playerFirstName,
           playerLastName: entry.playerLastName,
@@ -681,6 +695,30 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
         }
       : null;
 
+    const playerStateRows = await db
+      .select({
+        id: gamePlayerState.id,
+        playPosition: gamePlayerState.playPosition,
+        status: gamePlayerState.status,
+        memberId: gamePlayerState.memberId,
+        familyId: gamePlayerState.familyId,
+      })
+      .from(gamePlayerState)
+      .where(eq(gamePlayerState.familyId, familyId));
+
+    const playerRoundRows = await db
+      .select({
+        id: gamePlayerRound.id,
+        roundNo: gamePlayerRound.roundNo,
+        roundScore: gamePlayerRound.roundScore,
+        cumulativeScore: gamePlayerRound.cumulativeScore,
+        gameId: gamePlayerRound.gameId,
+        gamePlayerId: gamePlayerRound.gamePlayerId,
+      })
+      .from(gamePlayerRound)
+      .innerJoin(gameState, eq(gameState.id, gamePlayerRound.gameId))
+      .where(eq(gameState.familyId, familyId));
+
     const gamesData: GamesPageData = {
       gameHistory: sortedHistory,
       leaderboards: {
@@ -691,6 +729,8 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
       selectablePlayers,
       availableGames,
       activeGameStates,
+      gamePlayerStates: playerStateRows,
+      gamePlayerRounds: playerRoundRows,
     };
 
     return {
@@ -706,4 +746,51 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
   }
 }
 
+/* ------------------ createGuestMemberRecord ------------------ */
+type CreateGuestMemberInput = {
+  familyId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+};
+
+type CreateGuestMemberResult =
+  | { success: false; message: string }
+  | { success: true; guestMember: SelectableGamePlayer };
+
+export async function createGuestMemberRecord(input: CreateGuestMemberInput): Promise<CreateGuestMemberResult> {
+  const trimmedFirst = input.firstName.trim();
+  const trimmedLast = input.lastName.trim();
+  const trimmedEmail = input.email.trim();
+
+  if (!trimmedFirst || !trimmedLast || !trimmedEmail) {
+    return { success: false, message: 'First name, last name, and email are required.' };
+  }
+
+  const [insertedMember] = await db
+    .insert(member)
+    .values({
+      familyId: input.familyId,
+      firstName: trimmedFirst,
+      lastName: trimmedLast,
+      email: trimmedEmail,
+      isGuest: true,
+      status: 'active',
+    })
+    .returning();
+
+  if (!insertedMember) {
+    return { success: false, message: 'Unable to add guest member.' };
+  }
+
+  return {
+    success: true,
+    guestMember: {
+      id: insertedMember.id,
+      firstName: insertedMember.firstName,
+      lastName: insertedMember.lastName,
+      isGuest: insertedMember.isGuest,
+    },
+  };
+}
 

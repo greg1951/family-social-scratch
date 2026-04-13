@@ -20,9 +20,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
+  addGuestMemberAction,
   loadGameScoreboardAction,
   saveGameScoreboardAction,
   startGameAction,
@@ -45,9 +47,11 @@ interface SelectedPlayer {
   id: number;
   firstName: string;
   lastName: string;
+  isGuest: boolean;
 }
 
 const NEW_GAME_OPTION_VALUE = "new_game";
+const ADD_GUEST_OPTION_VALUE = "add_guest";
 
 export function GamesHomePage({
   gamesData,
@@ -83,6 +87,16 @@ export function GamesHomePage({
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [isSavingGame, setIsSavingGame] = useState(false);
   const [isLoadingSavedGame, setIsLoadingSavedGame] = useState(false);
+  const [localSelectablePlayers, setLocalSelectablePlayers] = useState(
+    gamesData.selectablePlayers
+  );
+  const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
+  const [guestDialogColIndex, setGuestDialogColIndex] = useState<number | null>(null);
+  const [guestFirstName, setGuestFirstName] = useState("");
+  const [guestLastName, setGuestLastName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [isAddingGuest, setIsAddingGuest] = useState(false);
+  const [isContinueGameHidden, setIsContinueGameHidden] = useState(false);
   const [gameStatusFilter, setGameStatusFilter] = useState<string>("all");
   const [gameDateFilter, setGameDateFilter] = useState<string>("all");
   const [gameTitle, setGameTitle] = useState<string>("all");
@@ -99,8 +113,8 @@ export function GamesHomePage({
     [selectedGameId, gamesData.availableGames]
   );
 
-  const getPlayerOptionLabel = (player: { firstName: string; lastName: string }) =>
-    `${ player.firstName } ${ player.lastName }`;
+  const getPlayerOptionLabel = (player: { firstName: string; lastName: string; isGuest?: boolean }) =>
+    `${ player.firstName } ${ player.lastName }${ player.isGuest ? " (g)" : "" }`;
 
   const gameStatesForSelectedMetadata = useMemo(() => {
     if (!selectedGameId) {
@@ -109,13 +123,24 @@ export function GamesHomePage({
 
     return gamesData.activeGameStates
       .filter((state) => state.gameMetaId === selectedGameId)
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      .sort((a, b) => a.gameTitle.localeCompare(b.gameTitle));
   }, [gamesData.activeGameStates, selectedGameId]);
 
   const roundEntries = useMemo(() => {
+    const scoreUomLabel = selectedGame?.scoreUom
+      ? `${ selectedGame.scoreUom.charAt(0).toUpperCase() }${ selectedGame.scoreUom.slice(1) }`
+      : "Score";
+
+    if (selectedGame && !selectedGame.isRoundBased) {
+      return [
+        {
+          roundKey: 1,
+          roundNo: 1,
+          label: `Final ${ scoreUomLabel }`,
+        },
+      ];
+    }
+
     const maxRounds = selectedGame?.maxRounds || 12;
     const numberedRounds = Array.from(
       { length: maxRounds },
@@ -139,6 +164,9 @@ export function GamesHomePage({
   // Filter game history
   const filteredGameHistory = useMemo(() => {
     return gamesData.gameHistory.filter((game) => {
+      if (selectedGameId && game.gameMetaId !== selectedGameId) {
+        return false;
+      }
       if (gameStatusFilter !== "all" && game.gameStatus !== gameStatusFilter) {
         return false;
       }
@@ -152,26 +180,36 @@ export function GamesHomePage({
     });
   }, [
     gamesData.gameHistory,
+    selectedGameId,
     gameStatusFilter,
     gameDateFilter,
     gameTitle,
   ]);
 
-  // Group game history by date
+  // Group game history by date, then by game
   const groupedGameHistory = useMemo(() => {
-    const groups = new Map<string, GameHistoryRow[]>();
+    const groups = new Map<string, Map<number, GameHistoryRow[]>>();
     filteredGameHistory.forEach((game) => {
       const date = game.gameStartDate;
+      const gameId = game.gameId;
       if (!groups.has(date)) {
-        groups.set(date, []);
+        groups.set(date, new Map());
       }
-      const dateGames = groups.get(date)!;
-      dateGames.push(game);
-      // Sort by score (lowest first)
-      dateGames.sort((a, b) => a.gameScore - b.gameScore);
+      const dateMap = groups.get(date)!;
+      if (!dateMap.has(gameId)) {
+        dateMap.set(gameId, []);
+      }
+      const gameRows = dateMap.get(gameId)!;
+      gameRows.push(game);
+      // Sort players by score based on winner direction for selected metadata.
+      gameRows.sort((a, b) =>
+        selectedGame?.highOrLo === "high"
+          ? b.gameScore - a.gameScore
+          : a.gameScore - b.gameScore
+      );
     });
     return groups;
-  }, [filteredGameHistory]);
+  }, [filteredGameHistory, selectedGame?.highOrLo]);
 
   // Calculate cumulative scores from current round entries.
   const computedCumulativeScores = useMemo(() => {
@@ -205,9 +243,8 @@ export function GamesHomePage({
     [cumulativeScores, selectedPlayers]
   );
 
-  // Get score styling
-  const getScoreStyle = (colIndex: number, isHeader: boolean = false) => {
-    if (!isHeader) return "";
+  // Get score styling based on winner direction.
+  const getScoreStyle = (colIndex: number) => {
     const score = cumulativeScores.get(colIndex) ?? 0;
     if (displayedScores.length === 0) return "";
 
@@ -215,8 +252,14 @@ export function GamesHomePage({
     const highestScore = Math.max(...displayedScores);
 
     if (score === lowestScore && score === highestScore) return ""; // Only one non-zero
-    if (score === lowestScore) return "!bg-emerald-300 !text-emerald-950";
-    if (score === highestScore) return "!bg-pink-300 !text-pink-950";
+    if (selectedGame?.highOrLo === "high") {
+      if (score === highestScore) return "!bg-green-400/30 !text-green-400";
+      if (score === lowestScore) return "!bg-red-400/30 !text-red-400";
+      return "";
+    }
+
+    if (score === lowestScore) return "!bg-green-400/30 !text-green-400";
+    if (score === highestScore) return "!bg-red-400/30 !text-red-400";
     return "";
   };
 
@@ -228,6 +271,14 @@ export function GamesHomePage({
     setRoundScores(new Map());
     setPersistedCumulativeScores(null);
     setHasRoundScoreEdits(false);
+  };
+
+  const formatGameTitleWithDate = (title: string): string => {
+    const now = new Date();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    return `${ title }: ${ mm }/${ dd }/${ yy }`;
   };
 
   const handleOpenStartGame = () => {
@@ -247,6 +298,7 @@ export function GamesHomePage({
     }
 
     if (selectedGameState) {
+      setIsContinueGameHidden(true);
       toast.success(`Continuing game \"${ selectedGameState.gameTitle }\".`);
       scoreboardGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       scoreboardGridRef.current?.focus();
@@ -267,12 +319,14 @@ export function GamesHomePage({
       return;
     }
 
+    const titledWithDate = formatGameTitleWithDate(trimmedTitle);
+
     setIsStartingGame(true);
     startTransition(async () => {
       const result = await startGameAction({
         familyId,
         gameMetaId: selectedGame.id,
-        gameTitle: trimmedTitle,
+        gameTitle: titledWithDate,
       });
 
       setIsStartingGame(false);
@@ -325,12 +379,21 @@ export function GamesHomePage({
       .filter((re) => re.roundKey > 0)
       .map((re) => re.roundKey);
     const activeColIndices = activePlayers.map((p) => p.playPosition - 1);
-    const isAllScoresEntered =
-      numberedRoundKeys.length > 0 &&
-      activeColIndices.length > 0 &&
-      numberedRoundKeys.every((roundKey) =>
-        activeColIndices.every(
-          (colIndex) => roundScores.get(roundKey)?.get(colIndex) !== undefined
+    const isAllScoresEntered = selectedGame.isRoundBased
+      ? (
+        numberedRoundKeys.length > 0 &&
+        activeColIndices.length > 0 &&
+        numberedRoundKeys.every((roundKey) =>
+          activeColIndices.every((colIndex) => {
+            const score = roundScores.get(roundKey)?.get(colIndex);
+            return score !== undefined && score !== 0;
+          })
+        )
+      )
+      : (
+        activeColIndices.length > 0 &&
+        activeColIndices.every((colIndex) =>
+          roundScores.get(1)?.get(colIndex) !== undefined
         )
       );
     const saveStatus = isAllScoresEntered ? "completed" : selectedGameState.status;
@@ -429,6 +492,7 @@ export function GamesHomePage({
         id: player.memberId,
         firstName: player.firstName,
         lastName: player.lastName,
+        isGuest: player.isGuest,
       };
     }
 
@@ -467,9 +531,63 @@ export function GamesHomePage({
     setSelectedGameState(result.scoreboard.gameState);
     setGameTitleInput(result.scoreboard.gameState.gameTitle);
     setSelectedPlayers(loadedPlayers);
+    setLocalSelectablePlayers((prev) => {
+      const existingIds = new Set(prev.map((p) => p.id));
+      const missing = loadedPlayers
+        .filter((p): p is SelectedPlayer => p !== null && !existingIds.has(p.id));
+      return missing.length > 0 ? [...prev, ...missing] : prev;
+    });
     setRoundScores(loadedRoundScores);
     setPersistedCumulativeScores(loadedCumulativeScores);
     setHasRoundScoreEdits(false);
+  };
+
+  const handleAddGuest = () => {
+    if (guestDialogColIndex === null) return;
+
+    const trimmedFirst = guestFirstName.trim();
+    const trimmedLast = guestLastName.trim();
+    const trimmedEmail = guestEmail.trim();
+
+    if (!trimmedFirst || !trimmedLast || !trimmedEmail) {
+      toast.error("First name, last name, and email are required.");
+      return;
+    }
+
+    setIsAddingGuest(true);
+    startTransition(async () => {
+      const result = await addGuestMemberAction({
+        familyId,
+        firstName: trimmedFirst,
+        lastName: trimmedLast,
+        email: trimmedEmail,
+      });
+
+      setIsAddingGuest(false);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setLocalSelectablePlayers((prev) => [...prev, result.guestMember]);
+
+      const newPlayers = [...selectedPlayers];
+      newPlayers[guestDialogColIndex] = {
+        id: result.guestMember.id,
+        firstName: result.guestMember.firstName,
+        lastName: result.guestMember.lastName,
+        isGuest: result.guestMember.isGuest,
+      };
+      setSelectedPlayers(newPlayers);
+
+      setIsGuestDialogOpen(false);
+      setGuestFirstName("");
+      setGuestLastName("");
+      setGuestEmail("");
+      setGuestDialogColIndex(null);
+      toast.success(`Guest ${ trimmedFirst } ${ trimmedLast } added.`);
+    });
   };
 
   // Get unique game statuses and dates for filters
@@ -488,9 +606,128 @@ export function GamesHomePage({
     [gamesData.gameHistory]
   );
 
-  const lowestScore = gamesData.leaderboards.lowScore;
-  const highestScore = gamesData.leaderboards.highScore;
-  const playerStats = gamesData.leaderboards.playerStats;
+  // Recalculate leaderboards based on selected game type
+  const gameLeaderboards = useMemo(() => {
+    if (!selectedGameId) {
+      return gamesData.leaderboards;
+    }
+
+    const completedGamesByType = filteredGameHistory.filter(
+      (row) => row.gameStatus === 'completed' && row.gameScore !== 0
+    );
+
+    if (completedGamesByType.length === 0) {
+      return {
+        lowScore: null,
+        highScore: null,
+        playerStats: [],
+      };
+    }
+
+    const playerStatsMap = new Map<number, {
+      playerId: number;
+      playerFirstName: string;
+      playerLastName: string;
+      gamesPlayed: number;
+      gamesWon: number;
+    }>();
+
+    // Calculate player stats
+    const uniqueGameIds = new Set<number>();
+    for (const game of completedGamesByType) {
+      uniqueGameIds.add(game.gameId);
+      const current = playerStatsMap.get(game.playerId) ?? {
+        playerId: game.playerId,
+        playerFirstName: game.playerFirstName,
+        playerLastName: game.playerLastName,
+        gamesPlayed: 0,
+        gamesWon: 0,
+      };
+
+      const isWin = selectedGame?.highOrLo === "high" ? game.isHighest : game.isLowest;
+      if (isWin) {
+        current.gamesWon += 1;
+      }
+
+      playerStatsMap.set(game.playerId, current);
+    }
+
+    // Set games played based on unique games
+    for (const [playerId, stats] of playerStatsMap) {
+      const playerGames = new Set(
+        completedGamesByType
+          .filter((g) => g.playerId === playerId)
+          .map((g) => g.gameId)
+      );
+      stats.gamesPlayed = playerGames.size;
+    }
+
+    const playerStatsArray = Array.from(playerStatsMap.values())
+      .map((row) => ({
+        playerFirstName: row.playerFirstName,
+        playerLastName: row.playerLastName,
+        gamesPlayed: row.gamesPlayed,
+        gamesWon: row.gamesWon,
+        gamesLost: row.gamesPlayed - row.gamesWon,
+      }))
+      .sort((a, b) => {
+        if (a.gamesWon === b.gamesWon) {
+          return a.playerFirstName.localeCompare(b.playerFirstName);
+        }
+        return b.gamesWon - a.gamesWon;
+      });
+
+    const lowScore = completedGamesByType.length > 0
+      ? {
+        playerFirstName: completedGamesByType.reduce((acc, row) =>
+          row.gameScore < acc.gameScore ? row : acc
+        ).playerFirstName,
+        playerLastName: completedGamesByType.reduce((acc, row) =>
+          row.gameScore < acc.gameScore ? row : acc
+        ).playerLastName,
+        gameScore: completedGamesByType.reduce((acc, row) =>
+          row.gameScore < acc.gameScore ? row : acc
+        ).gameScore,
+        gameStartDate: completedGamesByType.reduce((acc, row) =>
+          row.gameScore < acc.gameScore ? row : acc
+        ).gameStartDate,
+      }
+      : null;
+
+    const highScore = completedGamesByType.length > 0
+      ? {
+        playerFirstName: completedGamesByType.reduce((acc, row) =>
+          row.gameScore > acc.gameScore ? row : acc
+        ).playerFirstName,
+        playerLastName: completedGamesByType.reduce((acc, row) =>
+          row.gameScore > acc.gameScore ? row : acc
+        ).playerLastName,
+        gameScore: completedGamesByType.reduce((acc, row) =>
+          row.gameScore > acc.gameScore ? row : acc
+        ).gameScore,
+        gameStartDate: completedGamesByType.reduce((acc, row) =>
+          row.gameScore > acc.gameScore ? row : acc
+        ).gameStartDate,
+      }
+      : null;
+
+    return {
+      lowScore,
+      highScore,
+      playerStats: playerStatsArray,
+    };
+  }, [selectedGameId, filteredGameHistory]);
+
+  const isHighWins = selectedGame?.highOrLo === "high";
+  const scoreUom = selectedGame?.scoreUom || "points";
+  const isDollarScore = scoreUom.toLowerCase() === "dollars";
+  const formatScore = (value: number) => {
+    const formatted = new Intl.NumberFormat("en-US").format(value);
+    return isDollarScore ? `$${ formatted }` : `${ formatted } ${ scoreUom }`;
+  };
+  const lowestScore = gameLeaderboards.lowScore;
+  const highestScore = gameLeaderboards.highScore;
+  const playerStats = gameLeaderboards.playerStats;
 
   return (
     <div className="font-app min-h-screen bg-linear-to-b from-slate-900 via-purple-900 to-slate-900 p-6">
@@ -539,6 +776,7 @@ export function GamesHomePage({
                   setRoundScores(new Map());
                   setPersistedCumulativeScores(null);
                   setHasRoundScoreEdits(false);
+                  router.refresh();
                 } }
               >
                 <SelectTrigger className="w-64 bg-slate-700 border-purple-500/50 text-white">
@@ -586,33 +824,39 @@ export function GamesHomePage({
                 </SelectContent>
               </Select>
 
-              <Button
-                onClick={ handleSetNewGameMode }
-                disabled={ !selectedGameId }
-                variant="outline"
-                className="border-emerald-400/60 bg-slate-800 text-emerald-200 hover:bg-slate-700"
-              >
-                New Game
-              </Button>
+              { !selectedGameState && (
+                <Button
+                  onClick={ handleStartOrContinueGame }
+                  disabled={ !selectedGame || isStartingGame || isLoadingSavedGame }
+                  className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  { isStartingGame ? "Starting..." : "Start New Game" }
+                </Button>
+              ) }
 
-              <Button
-                onClick={ handleStartOrContinueGame }
-                disabled={ !selectedGame || isStartingGame || isLoadingSavedGame }
-                className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
-              >
-                <Play className="w-4 h-4 mr-2" />
-                { selectedGameState ? "Continue Game" : isStartingGame ? "Starting..." : "Start New Game" }
-              </Button>
+              { selectedGameState?.status === "in_progress" && !isContinueGameHidden && (
+                <Button
+                  onClick={ handleStartOrContinueGame }
+                  disabled={ isLoadingSavedGame }
+                  className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Continue Game
+                </Button>
+              ) }
 
-              <Button
-                onClick={ handleSaveGame }
-                disabled={ !selectedGameState || isSavingGame }
-                variant="outline"
-                className="border-cyan-400/60 bg-slate-800 text-cyan-200 hover:bg-slate-700"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                { isSavingGame ? "Saving..." : "Save Game" }
-              </Button>
+              { hasRoundScoreEdits && (
+                <Button
+                  onClick={ handleSaveGame }
+                  disabled={ !selectedGameState || isSavingGame }
+                  variant="outline"
+                  className="border-cyan-400/60 bg-slate-800 text-cyan-200 hover:bg-slate-700"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  { isSavingGame ? "Saving..." : "Save Game" }
+                </Button>
+              ) }
 
               { selectedGameState && persistedCumulativeScores && !hasRoundScoreEdits && (
                 <span className="inline-flex items-center rounded-full border border-cyan-400/60 bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-200">
@@ -643,6 +887,12 @@ export function GamesHomePage({
                           <Select
                             value={ player ? String(player.id) : "" }
                             onValueChange={ (val) => {
+                              if (val === ADD_GUEST_OPTION_VALUE) {
+                                setGuestDialogColIndex(idx);
+                                setIsGuestDialogOpen(true);
+                                return;
+                              }
+
                               const selectedMemberId = Number(val);
                               const selectedInOtherColumn = selectedPlayers.some(
                                 (existingPlayer, existingIdx) =>
@@ -653,7 +903,7 @@ export function GamesHomePage({
                                 return;
                               }
 
-                              const selectedMember = gamesData.selectablePlayers.find(
+                              const selectedMember = localSelectablePlayers.find(
                                 (member) => member.id === selectedMemberId
                               );
 
@@ -666,6 +916,7 @@ export function GamesHomePage({
                                 id: selectedMember.id,
                                 firstName: selectedMember.firstName,
                                 lastName: selectedMember.lastName,
+                                isGuest: selectedMember.isGuest,
                               };
                               setSelectedPlayers(newPlayers);
                             } }
@@ -674,7 +925,10 @@ export function GamesHomePage({
                               <SelectValue placeholder={ `P${ idx + 1 }` } />
                             </SelectTrigger>
                             <SelectContent>
-                              { gamesData.selectablePlayers.map((member) => {
+                              <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
+                                + Add a guest
+                              </SelectItem>
+                              { localSelectablePlayers.map((member) => {
                                 const selectedInOtherColumn = selectedPlayers.some(
                                   (existingPlayer, existingIdx) =>
                                     existingIdx !== idx && existingPlayer?.id === member.id
@@ -697,22 +951,24 @@ export function GamesHomePage({
                     </tr>
 
                     {/* Header Row 2: Cumulative Scores */ }
-                    <tr>
-                      <th className="bg-slate-700 text-purple-300 p-2 border border-slate-600 text-left">
-                        Total
-                      </th>
-                      { selectedPlayers.map((_, idx) => {
-                        const score = cumulativeScores.get(idx) ?? 0;
-                        return (
-                          <th
-                            key={ `score-total-${ idx }` }
-                            className={ `bg-slate-700 text-white p-2 border border-slate-600 font-bold ${ getScoreStyle(idx, true) }` }
-                          >
-                            { score || "-" }
-                          </th>
-                        );
-                      }) }
-                    </tr>
+                    { selectedGame?.isRoundBased !== false && (
+                      <tr>
+                        <th className="bg-slate-700 text-purple-300 p-2 border border-slate-600 text-left">
+                          Total
+                        </th>
+                        { selectedPlayers.map((_, idx) => {
+                          const score = cumulativeScores.get(idx) ?? 0;
+                          return (
+                            <th
+                              key={ `score-total-${ idx }` }
+                              className={ `bg-slate-700 text-white p-2 border border-slate-600 font-bold ${ getScoreStyle(idx) }` }
+                            >
+                              { score || "-" }
+                            </th>
+                          );
+                        }) }
+                      </tr>
+                    ) }
                   </thead>
 
                   {/* Round Scores */ }
@@ -724,28 +980,31 @@ export function GamesHomePage({
                           <td className="bg-slate-750 text-slate-300 p-2 border border-slate-600 text-center font-semibold">
                             { roundEntry.label }
                           </td>
-                          { selectedPlayers.map((_, colIdx) => (
-                            <td
-                              key={ `round-score-${ roundEntry.label }-${ colIdx }` }
-                              className="bg-slate-750 p-2 border border-slate-600"
-                            >
-                              <Input
-                                type="number"
-                                className="w-full bg-slate-600 border-purple-400/30 text-white text-center"
-                                placeholder="0"
-                                value={
-                                  roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
-                                }
-                                onChange={ (e) =>
-                                  handleRoundScoreChange(
-                                    roundEntry.roundKey,
-                                    colIdx,
-                                    e.target.value
-                                  )
-                                }
-                              />
-                            </td>
-                          )) }
+                          { selectedPlayers.map((_, colIdx) => {
+                            const isFinalOnlyRow = selectedGame?.isRoundBased === false && roundEntry.roundNo === 1;
+                            return (
+                              <td
+                                key={ `round-score-${ roundEntry.label }-${ colIdx }` }
+                                className={ `bg-slate-750 p-2 border border-slate-600 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" }` }
+                              >
+                                <Input
+                                  type="number"
+                                  className="w-full bg-slate-600 border-purple-400/30 text-white text-center"
+                                  placeholder="0"
+                                  value={
+                                    roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
+                                  }
+                                  onChange={ (e) =>
+                                    handleRoundScoreChange(
+                                      roundEntry.roundKey,
+                                      colIdx,
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              </td>
+                            );
+                          }) }
                         </tr>
                       );
                     }) }
@@ -761,192 +1020,214 @@ export function GamesHomePage({
         </div>
 
         {/* Parts B & C: Leaderboard and History (right side) */ }
-        <div className="col-span-1 space-y-6">
-          {/* Part B: Leaderboard */ }
-          <Card className="bg-slate-800/50 border-purple-500/30 p-6">
-            <h2 className="text-xl font-bold text-purple-300 mb-4">
-              Leaderboard
-            </h2>
+        { selectedGameId ? (
+          <div className="col-span-1 space-y-6">
+            {/* Part B: Leaderboard */ }
+            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
+              <h2 className="text-xl font-bold text-purple-300 mb-4">
+                Leaderboard
+              </h2>
 
-            {/* Low Score */ }
-            <div className="mb-5 pb-5 border-b border-slate-700">
-              <p className="text-xs text-slate-400 uppercase tracking-wide">
-                Low Score
-              </p>
-              { lowestScore ? (
-                <>
-                  <p className="text-lg font-bold text-green-400 mt-1">
-                    { lowestScore.playerFirstName } { lowestScore.playerLastName }
-                  </p>
-                  <p className="text-sm text-slate-300">
-                    { lowestScore.gameScore } points
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    { lowestScore.gameStartDate }
-                  </p>
-                </>
-              ) : (
-                <p className="text-slate-500 mt-2">No games yet</p>
-              ) }
-            </div>
-
-            {/* High Score */ }
-            <div className="mb-5 pb-5 border-b border-slate-700">
-              <p className="text-xs text-slate-400 uppercase tracking-wide">
-                High Score
-              </p>
-              { highestScore ? (
-                <>
-                  <p className="text-lg font-bold text-pink-400 mt-1">
-                    { highestScore.playerFirstName } { highestScore.playerLastName }
-                  </p>
-                  <p className="text-sm text-slate-300">
-                    { highestScore.gameScore } points
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    { highestScore.gameStartDate }
-                  </p>
-                </>
-              ) : (
-                <p className="text-slate-500 mt-2">No games yet</p>
-              ) }
-            </div>
-
-            {/* Player Stats */ }
-            <div>
-              <p className="text-xs text-slate-400 uppercase tracking-wide mb-3">
-                Player Stats
-              </p>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
-                { playerStats.length > 0 ? (
-                  playerStats.map((stat, idx) => (
-                    <div
-                      key={ idx }
-                      className="text-xs bg-slate-700/50 p-2 rounded"
-                    >
-                      <p className="font-semibold text-slate-200">
-                        { stat.playerFirstName } { stat.playerLastName }
-                      </p>
-                      <p className="text-slate-400">
-                        Played: { stat.gamesPlayed } | Won: { stat.gamesWon } | Lost:{ " " }
-                        { stat.gamesLost }
-                      </p>
-                    </div>
-                  ))
+              {/* High Score */ }
+              <div className="mb-5 pb-5 border-b border-slate-700">
+                <p className="text-xs text-slate-400 uppercase tracking-wide">
+                  High Score
+                </p>
+                { highestScore ? (
+                  <>
+                    <p className={ `text-lg font-bold mt-1 ${ isHighWins ? "text-green-400" : "text-red-400" }` }>
+                      { highestScore.playerFirstName } { highestScore.playerLastName }
+                    </p>
+                    <p className="text-sm text-slate-300">
+                      { formatScore(highestScore.gameScore) }
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      { highestScore.gameStartDate }
+                    </p>
+                  </>
                 ) : (
-                  <p className="text-slate-500">No player stats yet</p>
+                  <p className="text-slate-500 mt-2">No games yet</p>
                 ) }
               </div>
-            </div>
-          </Card>
 
-          {/* Part C: Game History with Filters */ }
-          <Card className="bg-slate-800/50 border-purple-500/30 p-6">
-            <h2 className="text-xl font-bold text-purple-300 mb-4">
-              Game History
-            </h2>
+              {/* Low Score */ }
+              <div className="mb-5 pb-5 border-b border-slate-700">
+                <p className="text-xs text-slate-400 uppercase tracking-wide">
+                  Low Score
+                </p>
+                { lowestScore ? (
+                  <>
+                    <p className={ `text-lg font-bold mt-1 ${ isHighWins ? "text-red-400" : "text-green-400" }` }>
+                      { lowestScore.playerFirstName } { lowestScore.playerLastName }
+                    </p>
+                    <p className="text-sm text-slate-300">
+                      { formatScore(lowestScore.gameScore) }
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      { lowestScore.gameStartDate }
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-slate-500 mt-2">No games yet</p>
+                ) }
+              </div>
 
-            {/* Filter Controls */ }
-            <div className="space-y-2 mb-4">
-              <Select value={ gameStatusFilter } onValueChange={ setGameStatusFilter }>
-                <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
-                  <SelectValue placeholder="Game Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  { uniqueStatuses.map((status) => (
-                    <SelectItem key={ status } value={ status }>
-                      { status }
-                    </SelectItem>
-                  )) }
-                </SelectContent>
-              </Select>
-
-              <Select value={ gameDateFilter } onValueChange={ setGameDateFilter }>
-                <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
-                  <SelectValue placeholder="Game Date" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Dates</SelectItem>
-                  { uniqueDates.map((date) => (
-                    <SelectItem key={ date } value={ date }>
-                      { date }
-                    </SelectItem>
-                  )) }
-                </SelectContent>
-              </Select>
-
-              <Select value={ gameTitle } onValueChange={ setGameTitle }>
-                <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
-                  <SelectValue placeholder="Game Title" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Games</SelectItem>
-                  { uniqueTitles.map((title) => (
-                    <SelectItem key={ title } value={ title }>
-                      { title }
-                    </SelectItem>
-                  )) }
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Game History Table */ }
-            <div className="max-h-96 overflow-y-auto">
-              { groupedGameHistory.size > 0 ? (
-                Array.from(groupedGameHistory.entries()).map(
-                  ([date, games]) => (
-                    <div key={ date } className="mb-4">
-                      <p className="text-xs font-semibold text-slate-400 mb-2">
-                        { date }
-                      </p>
-                      <div className="space-y-1">
-                        { games.map((game, idx) => {
-                          const isLowest = game.isLowest;
-                          const isHighest = game.isHighest;
-                          const bgColor = isLowest
-                            ? "bg-green-900/30"
-                            : isHighest
-                              ? "bg-pink-900/30"
-                              : "bg-slate-700/30";
-
-                          return (
-                            <div
-                              key={ `${ date }-${ idx }` }
-                              className={ `p-2 rounded cursor-pointer hover:bg-slate-600/50 transition ${ bgColor }` }
-                              onClick={ () => {
-                                void handleLoadPersistedGame(game.gameId);
-                              } }
-                            >
-                              <div className="flex justify-between items-center text-xs">
-                                <span className="text-slate-200">
-                                  { game.playerFirstName } { game.playerLastName }
-                                </span>
-                                <span className="font-bold text-slate-300">
-                                  { game.gameScore }
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-500">
-                                { game.gameTitle }
-                              </p>
-                            </div>
-                          );
-                        }) }
+              {/* Player Stats */ }
+              <div>
+                <p className="text-xs text-slate-400 uppercase tracking-wide mb-3">
+                  Player Stats
+                </p>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  { playerStats.length > 0 ? (
+                    playerStats.map((stat, idx) => (
+                      <div
+                        key={ idx }
+                        className="text-xs bg-slate-700/50 p-2 rounded"
+                      >
+                        <p className="font-semibold text-slate-200">
+                          { stat.playerFirstName } { stat.playerLastName }
+                        </p>
+                        <p className="text-slate-400">
+                          Played: { stat.gamesPlayed } | Won: { stat.gamesWon } | Lost:{ " " }
+                          { stat.gamesLost }
+                        </p>
                       </div>
-                    </div>
-                  )
-                )
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  No games matching filters
+                    ))
+                  ) : (
+                    <p className="text-slate-500">No player stats yet</p>
+                  ) }
                 </div>
+              </div>
+            </Card>
+
+            {/* Part C: Game History with Filters */ }
+            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
+              <h2 className="text-xl font-bold text-purple-300 mb-4">
+                Game History
+              </h2>
+
+              {/* Filter Controls */ }
+              <div className="space-y-2 mb-4">
+                <Select value={ gameStatusFilter } onValueChange={ setGameStatusFilter }>
+                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                    <SelectValue placeholder="Game Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    { uniqueStatuses.map((status) => (
+                      <SelectItem key={ status } value={ status }>
+                        { status }
+                      </SelectItem>
+                    )) }
+                  </SelectContent>
+                </Select>
+
+                <Select value={ gameDateFilter } onValueChange={ setGameDateFilter }>
+                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                    <SelectValue placeholder="Game Date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    { uniqueDates.map((date) => (
+                      <SelectItem key={ date } value={ date }>
+                        { date }
+                      </SelectItem>
+                    )) }
+                  </SelectContent>
+                </Select>
+
+                <Select value={ gameTitle } onValueChange={ setGameTitle }>
+                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                    <SelectValue placeholder="Game Title" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Games</SelectItem>
+                    { uniqueTitles.map((title) => (
+                      <SelectItem key={ title } value={ title }>
+                        { title }
+                      </SelectItem>
+                    )) }
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Game History Table */ }
+              <div className="max-h-96 overflow-y-auto">
+                { groupedGameHistory.size > 0 ? (
+                  Array.from(groupedGameHistory.entries()).map(
+                    ([date, gamesByIdMap]) => (
+                      <div key={ date } className="mb-4">
+                        <p className="text-xs font-semibold text-slate-400 mb-2">
+                          { date }
+                        </p>
+                        <div className="space-y-1">
+                          { Array.from(gamesByIdMap.entries()).map(([gameId, playersInGame]) => (
+                            <div key={ `game-${ gameId }` } className="mb-2">
+                              <div className="text-xs text-slate-500 px-2 py-1 bg-slate-800/50 rounded">
+                                { playersInGame[0]?.gameTitle }
+                              </div>
+                              <div className="space-y-1 ml-2">
+                                { playersInGame.map((game, playerIdx) => {
+                                  const isLowest = game.isLowest;
+                                  const isHighest = game.isHighest;
+                                  const bgColor = isHighWins
+                                    ? (isHighest
+                                      ? "bg-emerald-400/30"
+                                      : isLowest
+                                        ? "bg-red-900/30"
+                                        : "bg-slate-700/30")
+                                    : (isLowest
+                                      ? "bg-emerald-400/30"
+                                      : isHighest
+                                        ? "bg-red-900/30"
+                                        : "bg-slate-700/30");
+
+                                  return (
+                                    <div
+                                      key={ `${ gameId }-player-${ playerIdx }` }
+                                      className={ `p-2 rounded cursor-pointer hover:bg-slate-600/50 transition ${ bgColor }` }
+                                      onClick={ () => {
+                                        void handleLoadPersistedGame(game.gameId);
+                                      } }
+                                    >
+                                      <div className="flex justify-between items-center text-xs">
+                                        <span className="text-slate-200">
+                                          { game.playerFirstName } { game.playerLastName }
+                                        </span>
+                                        <span className="font-bold text-slate-300">
+                                          { formatScore(game.gameScore) }
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                }) }
+                              </div>
+                            </div>
+                          )) }
+                        </div>
+                      </div>
+                    )
+                  )
+                ) : (
+                  <div className="text-center py-8 text-slate-500">
+                    No games matching filters
+                  </div>
+                ) }
+              </div>
+              { isLoadingSavedGame && (
+                <p className="text-xs text-cyan-300 mt-3">Loading selected game...</p>
               ) }
-            </div>
-            { isLoadingSavedGame && (
-              <p className="text-xs text-cyan-300 mt-3">Loading selected game...</p>
-            ) }
-          </Card>
-        </div>
+            </Card>
+          </div>
+        ) : (
+          <div className="col-span-1">
+            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
+              <p className="text-center text-slate-400 py-12">
+                Select a game type to view leaderboards and game history.
+              </p>
+            </Card>
+          </div>
+        ) }
       </div>
 
       <Dialog open={ isStartDialogOpen } onOpenChange={ setIsStartDialogOpen }>
@@ -954,7 +1235,7 @@ export function GamesHomePage({
           <DialogHeader>
             <DialogTitle>Start New Game</DialogTitle>
             <DialogDescription className="text-slate-400">
-              Enter a title for the new { selectedGame?.name ?? "game" } session.
+              Enter a title for the new { selectedGame?.name ?? "game" } session. Today&apos;s date will be appended automatically.
             </DialogDescription>
           </DialogHeader>
 
@@ -970,6 +1251,11 @@ export function GamesHomePage({
               }
             } }
           />
+          { gameTitleInput.trim() && (
+            <p className="text-xs text-slate-400 -mt-1">
+              Will be saved as: <span className="text-slate-200">{ formatGameTitleWithDate(gameTitleInput.trim()) }</span>
+            </p>
+          ) }
 
           <DialogFooter>
             <Button variant="outline" onClick={ () => setIsStartDialogOpen(false) }>
@@ -981,6 +1267,90 @@ export function GamesHomePage({
               className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
             >
               { isStartingGame ? "Starting..." : "Start Game" }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={ isGuestDialogOpen }
+        onOpenChange={ (open) => {
+          if (!open) {
+            setIsGuestDialogOpen(false);
+            setGuestFirstName("");
+            setGuestLastName("");
+            setGuestEmail("");
+            setGuestDialogColIndex(null);
+          }
+        } }
+      >
+        <DialogContent className="border-purple-500/40 bg-slate-900 text-slate-100">
+          <DialogHeader>
+            <DialogTitle>Add a Guest</DialogTitle>
+            <DialogDescription className="text-slate-400">
+              Enter the guest&apos;s information. They will be added as a guest member.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label htmlFor="guest-first-name" className="text-slate-300">First Name</Label>
+              <Input
+                id="guest-first-name"
+                autoFocus
+                value={ guestFirstName }
+                onChange={ (e) => setGuestFirstName(e.target.value) }
+                placeholder="First name"
+                className="bg-slate-800 border-purple-500/40 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="guest-last-name" className="text-slate-300">Last Name</Label>
+              <Input
+                id="guest-last-name"
+                value={ guestLastName }
+                onChange={ (e) => setGuestLastName(e.target.value) }
+                placeholder="Last name"
+                className="bg-slate-800 border-purple-500/40 text-white"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="guest-email" className="text-slate-300">Email Address</Label>
+              <Input
+                id="guest-email"
+                type="email"
+                value={ guestEmail }
+                onChange={ (e) => setGuestEmail(e.target.value) }
+                placeholder="email@example.com"
+                className="bg-slate-800 border-purple-500/40 text-white"
+                onKeyDown={ (e) => {
+                  if (e.key === "Enter") {
+                    handleAddGuest();
+                  }
+                } }
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={ () => {
+                setIsGuestDialogOpen(false);
+                setGuestFirstName("");
+                setGuestLastName("");
+                setGuestEmail("");
+                setGuestDialogColIndex(null);
+              } }
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={ handleAddGuest }
+              disabled={ isAddingGuest }
+              className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+            >
+              { isAddingGuest ? "Adding..." : "Add Guest" }
             </Button>
           </DialogFooter>
         </DialogContent>

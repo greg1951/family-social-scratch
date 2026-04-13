@@ -4,6 +4,7 @@ export interface GameMetadata {
   id: number;
   name: string;
   highOrLo: "high" | "low";
+  scoreUom: string;
   isRoundBased: boolean;
   maxRounds: number;
 }
@@ -54,6 +55,8 @@ export interface GamePlayerRound {
 
 export interface GameHistoryRow {
   gameId: number;
+  gameMetaId: number;
+  playerId: number;
   gameStartDate: string;
   playerFirstName: string;
   playerLastName: string;
@@ -91,6 +94,7 @@ export interface SelectableGamePlayer {
   id: number;
   firstName: string;
   lastName: string;
+  isGuest: boolean;
 }
 
 export interface ScoreboardRow {
@@ -122,6 +126,8 @@ export interface GamesPageData {
   selectablePlayers: SelectableGamePlayer[];
   availableGames: GameMetadata[];
   activeGameStates: GameState[];
+  gamePlayerStates: GamePlayerState[];
+  gamePlayerRounds: GamePlayerRound[];
 }
 
 export type GamesPageDataReturn =
