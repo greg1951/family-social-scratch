@@ -1,7 +1,7 @@
 import NavBar from "@/components/common/nav-bar";
 import { getSessionEmail } from "@/features/auth/services/auth-utils";
 import HeaderImage from "@/components/common/header-img";
-import MainDropMenu from "../../components/common/main-dropmenu";
+import MainDropMenu from "../../../components/common/main-dropmenu";
 
 export default async function MainHeader({ isLoggedIn, isFounder, firstName }: { isLoggedIn: boolean; isFounder: boolean; firstName: string }) {
   const session = await getSessionEmail();

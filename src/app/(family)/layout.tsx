@@ -18,12 +18,8 @@ export default async function TrialLayout({
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-10 pt-4 sm:px-6 lg:px-8">
         <header className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-[0_20px_80px_-38px_rgba(16,54,74,0.45)] backdrop-blur">
           <div className="grid gap-3 px-4 py-3 md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-start md:px-6 lg:px-8">
-            <BackButton />
-            {/* <Link
-              href="/"
-              className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white-/35 transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-              Back to Main Page
-            </Link> */}
+
+            <BackButton tw="border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]" />
 
             <div className="flex justify-center md:pt-1">
               <div className="w-full max-w-2xl rounded-[1.5rem] border border-white/65 bg-white/58 px-4 py-3 shadow-[0_18px_45px_-35px_rgba(16,54,74,0.65)] backdrop-blur">

@@ -58,44 +58,6 @@ export default async function FamilyMyAccountPage() {
   }
 
 
-  // let accountDetails: AccountDetails | null = null;
-  // if (memberDetails.success) {
-  //   accountDetails = {
-  //     accountDetails: {
-  //       email: memberDetails.email as string,
-  //       familyName: memberDetails.familyName,
-  //       userId,
-  //       memberId: memberDetails.memberId as number,
-  //       firstName: memberDetails.firstName as string,
-  //       lastName: memberDetails.lastName as string,
-  //       nickName: memberDetails.nickName as string,
-  //       birthday: memberDetails.birthday as string,
-  //       cellPhone: memberDetails.cellPhone as string,
-  //       mfaActive: memberDetails.mfaActive as boolean,
-  //     }
-  //   }
-  // }
-
-  // const founderDetailsResult = await getFounderDetails(memberKeyDetails.familyId);
-  // let founderDetails: FounderDetails | null = null;
-  // if (!founderDetailsResult.success) {
-  //   console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }: ${ founderDetailsResult.message }`);
-  //   toast.error('Error fetching family founder details. Please try again later.');
-  //   redirect("/");
-  // }
-  // else {
-  //   founderDetails = {
-  //     email: founderDetailsResult.email,
-  //     status: founderDetailsResult.status,
-  //     memberId: founderDetailsResult.memberId,
-  //     firstName: founderDetailsResult.firstName,
-  //     lastName: founderDetailsResult.lastName,
-  //     nickName: founderDetailsResult.nickName!,
-  //     birthday: founderDetailsResult.birthday!,
-  //     cellPhone: founderDetailsResult.cellPhone!,
-  //   };
-  // }
-
   const founderDetailsResult = await getFounderDetails(memberKeyDetails.familyId);
   let founderDetails: FounderDetails | null = null;
   if (founderDetailsResult.success && founderDetailsResult.founderDetails) {

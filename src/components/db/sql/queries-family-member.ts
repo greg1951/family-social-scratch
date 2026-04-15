@@ -97,6 +97,7 @@ export async function getMemberDetailsByUserId(userId:number)
       birthday: member.birthday,
       cellPhone: member.cellPhone,
       isFounder: member.isFounder,
+      isAdmin: member.isAdmin,
       status: member.status,
       memberId: member.id,
       familyId: user.familyId,
@@ -127,6 +128,7 @@ export async function getMemberDetailsByUserId(userId:number)
       birthday: selectResult.birthday!,
       cellPhone: selectResult?.cellPhone!,
       isFounder: selectResult.isFounder,
+      isAdmin: selectResult.isAdmin,
       mfaActive: selectResult.mfaActive as boolean,
     } ;
   return memberDetails;
@@ -150,6 +152,7 @@ export async function getMemberDetailsByEmail(email:string)
       birthday: member.birthday,
       cellPhone: member.cellPhone,
       isFounder: member.isFounder,
+      isAdmin: member.isAdmin,
       mfaActive: user.twoFactorActivated,
     })
     .from(user).rightJoin(member, eq(user.memberId, member.id)).leftJoin(family, eq(member.familyId, family.id))
@@ -177,6 +180,7 @@ export async function getMemberDetailsByEmail(email:string)
     familyName: selectResult.familyName!,
     memberId: selectResult.memberId,
     isFounder: selectResult.isFounder,
+    isAdmin: selectResult.isAdmin,
     mfaActive: selectResult.mfaActive as boolean,
   }  
   return memberDetails;

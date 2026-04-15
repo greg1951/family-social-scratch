@@ -1,7 +1,7 @@
-import MainHeader from "@/app/(main)/main-header";
-import { Card } from "../../components/ui/card";
+import MainHeader from "@/features/main/components/main-header";
+import { Card } from "../../../components/ui/card";
 import Link from "next/link";
-import MainLinkCard from "../../components/common/main-link-card";
+import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 

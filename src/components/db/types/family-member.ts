@@ -30,11 +30,13 @@ export type GetMemberDetailsReturn =
       birthday?: string;
       cellPhone?: string;
       isFounder: boolean;
+      isAdmin?: boolean;
       familyId: number;
       familyName: string;
       memberId: number;
       mfaActive: boolean;
     };
+    
 export type GetFounderDetailsReturn =
   | { success: false; message: string }
   | {

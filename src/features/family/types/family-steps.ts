@@ -9,6 +9,7 @@ export type MemberKeyDetails = {
   isLoggedIn: boolean;
   email: string;
   isFounder: boolean;
+  isAdmin?: boolean;
   firstName: string;
   lastName: string;
   familyId: number;

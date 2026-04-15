@@ -130,3 +130,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+.tiptap {
+  p {
+    @apply my-4 first:mt-0 last:mb-0 text-base leading-relaxed;
+  }
+
+  h2 {
+    @apply text-2xl font-bold mt-6 mb-3 first:mt-0 last:mb-0;
+  }
+
+  h3 {
+    @apply text-xl font-bold mt-4 mb-2 first:mt-0 last:mb-0;
+  }
+
+  h1 {
+    @apply text-3xl font-bold mt-8 mb-4 first:mt-0 last:mb-0;
+  }
+}

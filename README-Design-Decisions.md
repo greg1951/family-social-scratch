@@ -14,6 +14,10 @@
 8. [Await All](#await-all)
 9. [Multi-Step Forms](#multi-step-forms)
 10. [Running PSQL Locally to Neon](#running-psql-locally-to-neon)
+11. [TipTap Headless](#tiptap-headless)
+    1. [Installation](#installation)
+    2. [Configuration](#configuration)
+    3. [Persistence](#persistence)
 
 ---
 # Overview
@@ -264,5 +268,66 @@ Neon let's you export data from the database tables (one at a time) but the impo
 5. The output is fairly terse: `COPY 10` so go confirm the data copy made it to the table in Neon.
 
     **Note**: Use `\q` to exit the psql database prompt.
+
+# TipTap Headless
+The Poetry Cafe and Family Foodies features will implement a rich text editor. It will be used to a greater degree in the Family Foodies rather than the Poetry Cafe. Saving the content will use a JSON output rather than HTML. 
+
+[TipTap Headless](https://tiptap.dev/product) is a free version of their editor that allows you to build an an RTE into different client (e.g. React) and it supports typescript. As it is headless it will require Tailwindcss to pretty up the RTE interface.
+
+## Installation
+
+Below are various `npm` installation commands.
+
+```bash
+npm install @tiptap/core @tiptap/pm @tiptap/starter-kit
+npm install @tiptap/react
+```
+
+## Configuration
+Below is a sample tsx file.
+
+```tsx
+import { useEditor, EditorContent } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+
+const Tiptap = () => {
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '<p>Hello World! 🌎</p>',
+  })
+
+  return <EditorContent editor={editor} />
+}
+```
+
+## Persistence
+Saving via database endpoint shown below.
+
+```tsx
+// Save the editor content to a database
+fetch('/api/editor/content', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify(editor.getJSON()),
+})
+```
+Restoring the content from endpont is shown below.
+
+```tsx
+// Restore the editor content from a database
+fetch('/api/editor/content')
+  .then(response => response.json())
+  .then(data => {
+    editor.setContent(data)
+  })
+  .catch(error => {
+    console.error('Error fetching editor content:', error)
+  })
+```
+
+
+
 
 

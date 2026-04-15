@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="S7uF9vUim60ZgLowzAht" name="Page-1">
-        <mxGraphModel dx="1048" dy="477" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="917" dy="556" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -63,7 +63,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="16" value="game_player_round" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="306" y="479" width="154" height="151" as="geometry">
+                    <mxGeometry x="304" y="479" width="154" height="151" as="geometry">
                         <mxRectangle x="40" y="270" width="90" height="50" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>

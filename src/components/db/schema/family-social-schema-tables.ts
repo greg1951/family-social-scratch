@@ -1,6 +1,7 @@
 import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
 import {is, not, sql } from 'drizzle-orm';
 import { number } from "zod";
+import { ta } from "date-fns/locale";
 
 export const familyStatus = pgEnum('status', ['trial', 'active', 'expired']);
 export const inviteStatus = pgEnum('status', ['invited', 'joined', 'resend', 'declined']);
@@ -238,4 +239,154 @@ export const gamePlayerRound = pgTable("game_player_round", {
     index('game_player_round_game_id_idx').on(table.gameId),
 ]);
 
+/*------------------------------- Poetry Cafe ------------------------------ */
+//export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
+export const poem = pgTable("poem", {
+  id: serial("id").primaryKey(),
+  poemTitle: text("poem_title").notNull().unique(),
+  poetName: text("poet_name").notNull().default("Anonymous"),
+  poemSource: text("poem_source").notNull().default("Unknown"),
+  poemYear: integer("poem_year").notNull().default(0),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('poem_member_id_idx').on(table.memberId),
+    index('poem_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const poemVerse = pgTable("poem_verse", {
+  id: serial("id").primaryKey(),
+  verseJson: text("verse_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_verse_poem_id_idx').on(table.poemId),
+  ]
+);
+
+export const poemComment = pgTable("poem_comment", {
+  id: serial("id").primaryKey(),
+  isPoemAnalysis: boolean("is_poem_analysis").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  poemVerseId: integer("fk_poem_verse_id").notNull().references(() => poemVerse.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_comment_poem_verse_id_idx').on(table.poemVerseId),
+  ]
+);
+
+export const poemTagReference = pgTable("poem_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const poemTag = pgTable("poem_tag", {
+  id: serial("id").primaryKey(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => poemTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_tag_poem_id_idx').on(table.poemId),
+    index('poem_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const poemLike = pgTable("poem_like", {
+  id: serial("id").primaryKey(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("poem_like_poem_id_idx").on(table.poemId),
+    index("poem_like_member_id_idx").on(table.memberId),
+    unique("poem_like_poem_member_id_uq").on(table.poemId, table.memberId),
+  ]
+);
+
+export const poemTerm = pgTable("poem_term", {
+  id: serial("id").primaryKey(),
+  term: text("term").notNull().default(""),
+  termJson: text("term_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+
+/*------------------------------- Book Besties ------------------------------ */
+//export const status = pgEnum('status', ['draft', 'published', 'archived']);
+
+export const book = pgTable("book", {
+  id: serial("id").primaryKey(),
+  bookTitle: text("book_title").notNull().unique(),
+  authorName: text("author_name").notNull().default("Anonymous"),
+  bookSource: text("book_source").notNull().default("Unknown"),
+  bookYear: integer("book_year").notNull().default(0),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('book_member_id_idx').on(table.memberId),
+    index('book_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const bookComment = pgTable("book_comment", {
+  id: serial("id").primaryKey(),
+  isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id),
+},
+  (table) => [
+    index('book_comment_book_id_idx').on(table.bookId),
+    index('book_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const bookTagReference = pgTable("book_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const bookTag = pgTable("book_fact_tag", {
+  id: serial("id").primaryKey(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => bookTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_fact_tag_book_id_idx').on(table.bookId),
+    index('book_fact_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const bookLike = pgTable("book_like", {
+  id: serial("id").primaryKey(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("book_like_book_id_idx").on(table.bookId),
+    index("book_like_member_id_idx").on(table.memberId),
+    unique("book_like_member_id_uq").on(table.bookId, table.memberId),
+  ]
+);
