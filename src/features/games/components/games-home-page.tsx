@@ -751,9 +751,9 @@ export function GamesHomePage({
 
 
       {/* Main Layout: Part A (Scoreboard) | Parts B & C (Leaderboard & History) */ }
-      <div className="grid grid-cols-4 gap-6">
-        {/* Part A: Game Scoreboard (left, spans 3 cols) */ }
-        <div className="col-span-3">
+      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,3fr)_minmax(360px,1fr)]">
+        {/* Part A: Game Scoreboard (left) */ }
+        <div className="min-w-0">
           <Card className="bg-slate-800/50 border-purple-500/30 p-6">
             <h2 className="text-2xl font-bold text-purple-300 mb-6">
               Scoreboard
@@ -1021,7 +1021,7 @@ export function GamesHomePage({
 
         {/* Parts B & C: Leaderboard and History (right side) */ }
         { selectedGameId ? (
-          <div className="col-span-1 space-y-6">
+          <div className="min-w-0 space-y-6">
             {/* Part B: Leaderboard */ }
             <Card className="bg-slate-800/50 border-purple-500/30 p-6">
               <h2 className="text-xl font-bold text-purple-300 mb-4">
@@ -1220,7 +1220,7 @@ export function GamesHomePage({
             </Card>
           </div>
         ) : (
-          <div className="col-span-1">
+          <div className="min-w-0">
             <Card className="bg-slate-800/50 border-purple-500/30 p-6">
               <p className="text-center text-slate-400 py-12">
                 Select a game type to view leaderboards and game history.

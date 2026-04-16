@@ -2,40 +2,28 @@ import Link from "next/link";
 
 const updates = [
   {
-    title: "Game Scoreboards Home Page Launch",
-    summary: "The Game Scoreboards home page is now available and nearly complete. It support a variety of games like Mexican Train and Acquire.",
+    title: "Live Features!",
+    summary: "The Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
     category: "Features",
-    date: "April 9, 2026",
+    date: "April 16, 2026",
   },
   {
-    title: "Family Threads Home Page Launch",
-    summary: "The Family Threads is where we keep the family conversations. The data you see there are real but there's not a way to reply to the posts yet. That is coming next! ",
+    title: "Game Scoreboards Supports Mexican Train and Acquire!",
+    summary: "The Game Scoreboards feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
     category: "Features",
-    date: "April 7, 2026",
+    date: "April 16, 2026",
   },
   {
-    title: "Movie Maniacs and Music Lovers Home Page Launches",
-    summary: "The Movie Maniacs and Music Lovers prototype home pages are now available. Check them out and let us know what you think!",
+    title: "Family Foodies Underway!",
+    summary: "The Family Foodies feature is now in development and we are excited to share it with you soon. Stay tuned for more updates!",
+    category: "Features",
+    date: "April 16, 2026",
+  },
+  {
+    title: "All Feature Home Pages are Seeded!",
+    summary: "Aside from the Live Features, all the other feature home pages are now seeded with some initial content. This is just the beginning and we will be adding more content and functionality to these pages in the coming weeks.",
     category: "Features",
     date: "Apr 1, 2026",
-  },
-  {
-    title: "TV Junkies Home Page Launch",
-    summary: "The TV Junkies feature will be the first one to be fully released. Right now it's just a prototype but it will be available to fully functional soon.",
-    category: "Features",
-    date: "Mar 15, 2026",
-  },
-  {
-    title: "Family Foodies Home Page Launch",
-    summary: "The Family Foodies feature is going to be very popular and it comes after the TV Junkies release.",
-    category: "Features",
-    date: "Mar 16, 2026",
-  },
-  {
-    title: "Family Dashboard",
-    summary: "On the home page is a link to the Family Dashboard. Right now the two charts are hard-coded but the idea is to provide some graphical view of who's doing what where in the family.",
-    category: "Dashboard",
-    date: "Mar 27, 2026",
   },
   {
     title: "New Members Suggested",

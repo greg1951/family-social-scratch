@@ -8,8 +8,8 @@ import PublicHelpMenu from "@/components/common/public-help-menu";
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
-    "Game Scoreboards, Family Threads, TV Junkies, Family Foodies, Movie Maniacs, and Music Lovers home pages are available. Check them all out!",
-    "A new member was suggested to be invited to our family. Keep an eye out for them in Family Threads.",
+    "Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
+    "New member suggestion is available in the My Family section of your profile. Feel free to invite your friends to join the family!",
     "The Family Social team is working hard to bring you new features. Stay tuned to this channel for updates. 👍",
   ];
   const ctaCardClasses = [
