@@ -1,5 +1,5 @@
 import db from '@/components/db/drizzle';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import { member, poemComment, poem, poemTag, poemLike, poemTagReference, poemTerm, poemVerse } from "../schema/family-social-schema-tables";
 import {
   createTextTipTapDocument,
@@ -828,6 +828,23 @@ export async function savePoemTerm(input: SavePoemTermInput)
     termJson: serializeTipTapDocument(parsedTermJson.content),
     status: input.status.trim(),
   };
+
+  const duplicateConditions = input.id
+    ? and(ilike(poemTerm.term, termPayload.term), ne(poemTerm.id, input.id))
+    : ilike(poemTerm.term, termPayload.term);
+
+  const [existingTerm] = await db
+    .select({ id: poemTerm.id })
+    .from(poemTerm)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingTerm) {
+    return {
+      success: false,
+      message: `A term named "${ termPayload.term }" already exists. Term names must be unique.`,
+    };
+  }
 
   if (input.id) {
     const [result] = await db

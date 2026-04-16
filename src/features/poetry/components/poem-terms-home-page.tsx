@@ -3,7 +3,7 @@
 import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookText, Eye, PenSquare, Plus } from "lucide-react";
+import { BookText, PenSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import BackButton from "@/components/common/back-button";
@@ -15,13 +15,6 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { PoemTerm } from "@/components/db/types/poem-verses";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 type PoemTermsHomePageProps = {
   poemTerms: PoemTerm[];
@@ -42,21 +35,8 @@ function parseTermContent(termJson: string | undefined) {
   return createTextTipTapDocument(parsed.message);
 }
 
-function formatCreatedAt(createdAt: Date): string {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(createdAt));
-}
-
-export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps) {
-  const [selectedTermId, setSelectedTermId] = useState<number | null>(poemTerms[0]?.id ?? null);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-
-  const selectedTerm = poemTerms.find((term) => term.id === selectedTermId) ?? null;
-
-  const editor = useEditor({
+function PoemTermPreview({ termJson }: { termJson?: string }) {
+  const previewEditor = useEditor({
     extensions: [
       StarterKit,
       LinkExtension.configure({
@@ -65,30 +45,43 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
         openOnClick: true,
       }),
     ],
-    content: parseTermContent(selectedTerm?.termJson),
+    content: parseTermContent(termJson),
     editable: false,
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class:
-          "tiptap min-h-[14rem] rounded-2xl border border-[#d7d0ea] bg-white px-5 py-4 text-[#3b244c] shadow-inner focus:outline-none",
+        class: "tiptap text-sm leading-6 text-[#5f466f] focus:outline-none",
       },
     },
   });
 
   useEffect(() => {
-    if (!editor) {
+    if (!previewEditor) {
       return;
     }
 
-    const nextContent = parseTermContent(selectedTerm?.termJson);
-    const editorJson = serializeTipTapDocument(editor.getJSON());
+    const nextContent = parseTermContent(termJson);
+    const editorJson = serializeTipTapDocument(previewEditor.getJSON());
     const nextJson = serializeTipTapDocument(nextContent);
 
     if (editorJson !== nextJson) {
-      editor.commands.setContent(nextContent);
+      previewEditor.commands.setContent(nextContent);
     }
-  }, [editor, selectedTerm]);
+  }, [previewEditor, termJson]);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#e5daf0] bg-white">
+      <div className="max-h-40 overflow-hidden px-3 py-3">
+        <EditorContent editor={ previewEditor } />
+      </div>
+    </div>
+  );
+}
+
+export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps) {
+  const [selectedTermId, setSelectedTermId] = useState<number | null>(poemTerms[0]?.id ?? null);
+
+  const selectedTerm = poemTerms.find((term) => term.id === selectedTermId) ?? null;
 
   return (
     <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -99,19 +92,16 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#f1deff]">
                 Family Poetry Cafe
               </p>
-              <BackButton />
-              {/* <Link
-                href="/"
+              {/* <BackButton /> */ }
+              <Link
+                href="/poetry"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Back to Main Page
-              </Link> */}
+                Back to Poetry Home Page
+              </Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Browse the family&apos;s poetry glossary and open each term in a reader-friendly view.
+                Browse the Poetry Terms below.
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f3e8ff]">
-                Pick a term from the list below, preview its status, and open the full definition in a dialog.
-              </p>
             </div>
 
             <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[20rem]">
@@ -130,28 +120,32 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  onClick={ () => setIsViewDialogOpen(true) }
-                  disabled={ !selectedTerm }
-                  className="rounded-full bg-white text-[#4e2374] hover:bg-[#f6ebff]"
-                >
-                  <Eye />
-                  View Term
-                </Button>
-
                 { isAdmin ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    asChild
-                    className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  >
-                    <Link href={ selectedTerm ? `/poem-terms/manage?id=${ selectedTerm.id }` : "/poem-terms/manage" }>
-                      { selectedTerm ? <PenSquare /> : <Plus /> }
-                      { selectedTerm ? "Edit Selected Term" : "Add Term" }
-                    </Link>
-                  </Button>
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      asChild
+                      disabled={ !selectedTerm }
+                      className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"
+                    >
+                      <Link href={ selectedTerm ? `/poem-terms/manage?id=${ selectedTerm.id }` : "#" }>
+                        <PenSquare />
+                        Edit Selected Term
+                      </Link>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      asChild
+                      className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                    >
+                      <Link href="/poem-terms/manage">
+                        <Plus />
+                        Add Term
+                      </Link>
+                    </Button>
+                  </>
                 ) : null }
               </div>
             </div>
@@ -165,11 +159,8 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                   Term Directory
                 </p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-[#43245d]">
-                  Select a Poetry Term
-                </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
-                  Choose a term to inspect its status and open the full content in the viewer.
+                  Editors can select a term to edit.
                 </p>
               </div>
 
@@ -184,7 +175,7 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
               <div className="rounded-[1.5rem] border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-6 py-10 text-center text-[#77578f]">
                 <BookText className="mx-auto mb-3 size-10 text-[#9a79b8]" />
                 <p className="text-lg font-semibold text-[#43245d]">No poem terms are available yet.</p>
-                <p className="mt-2 text-sm">Add your first glossary term in Neon, then reopen this page.</p>
+                <p className="mt-2 text-sm">Add your first glossary term, then reopen this page.</p>
               </div>
             ) : (
               <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
@@ -196,24 +187,18 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
                       key={ term.id }
                       type="button"
                       onClick={ () => setSelectedTermId(term.id) }
-                      className={ `flex w-full items-start justify-between gap-4 rounded-[1.4rem] border px-4 py-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] ${ isSelected
+                      className={ `flex w-full flex-col gap-3 rounded-[1.4rem] border px-4 py-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] ${ isSelected
                         ? "border-[#8c62b5] bg-[linear-gradient(135deg,rgba(244,236,255,0.95),rgba(252,248,255,0.95))] shadow-[0_18px_45px_-35px_rgba(80,40,120,0.7)]"
                         : "border-[#e6deef] bg-white hover:border-[#c7b2db] hover:bg-[#fcfaff]"
                         }` }
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <p className="text-lg font-bold text-[#43245d]">{ term.term }</p>
-                          <span className="rounded-full bg-[#f1e8fb] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#7b54a0]">
-                            { term.status }
-                          </span>
-                        </div>
-                        <p className="mt-2 text-sm text-[#77578f]">
-                          Created { formatCreatedAt(term.createdAt) }
-                        </p>
+                      <div className="min-w-0 w-full">
+                        <p className="text-lg font-bold text-[#43245d]">{ term.term }</p>
                       </div>
 
-                      <div className="shrink-0 rounded-full border border-[#dacdea] px-3 py-1 text-xs font-semibold text-[#7b54a0]">
+                      <PoemTermPreview termJson={ term.termJson } />
+
+                      <div className="self-start rounded-full border border-[#dacdea] px-3 py-1 text-xs font-semibold text-[#7b54a0]">
                         { isSelected ? "Selected" : "Select" }
                       </div>
                     </button>
@@ -224,23 +209,6 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
           </div>
         </div>
       </div>
-
-      <Dialog open={ isViewDialogOpen } onOpenChange={ setIsViewDialogOpen }>
-        <DialogContent className="max-h-[85vh] overflow-hidden border-[#d7d0ea] bg-[#fcf9ff] sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="text-[#43245d]">
-              { selectedTerm?.term ?? "Poetry Term" }
-            </DialogTitle>
-            <DialogDescription className="text-[#77578f]">
-              Viewing the saved term content from the poem term record.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="max-h-[60vh] overflow-y-auto pr-1">
-            <EditorContent editor={ editor } />
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }
