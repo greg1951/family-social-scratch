@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:poem-terms": "node ./scripts/import-poem-terms.mjs"
+    "seed:poem-terms": "node ./scripts/import-poem-terms.mjs",
+    "seed:book-besties": "node ./scripts/seed-book-besties.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

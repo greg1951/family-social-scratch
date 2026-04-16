@@ -82,19 +82,6 @@ async function loadPoetryHomePoems(
   }
 
   const poemFactIds = poemFactRows.map((row) => row.id);
-  const memberIds = [...new Set(poemFactRows.map((row) => row.memberId))];
-
-  const memberRows = memberIds.length > 0
-    ? await db
-      .select({
-        id: member.id,
-        firstName: member.firstName,
-        lastName: member.lastName,
-      })
-      .from(member)
-      .where(inArray(member.id, memberIds))
-    : [];
-
   const verseRows = await db
     .select()
     .from(poemVerse)
@@ -107,6 +94,22 @@ async function loadPoetryHomePoems(
       .from(poemComment)
       .where(inArray(poemComment.poemVerseId, verseIds))
       .orderBy(asc(poemComment.createdAt))
+    : [];
+
+  const memberIds = [...new Set([
+    ...poemFactRows.map((row) => row.memberId),
+    ...commentRows.map((row) => row.memberId),
+  ])];
+
+  const memberRows = memberIds.length > 0
+    ? await db
+      .select({
+        id: member.id,
+        firstName: member.firstName,
+        lastName: member.lastName,
+      })
+      .from(member)
+      .where(inArray(member.id, memberIds))
     : [];
 
   const likeRows = await db
@@ -163,6 +166,7 @@ async function loadPoetryHomePoems(
       return {
         id: commentRow.id,
         createdAt: commentRow.createdAt as Date,
+        commenterName: memberNameById.get(commentRow.memberId) ?? `Member #${ commentRow.memberId }`,
         text: parsedComment.success
           ? extractTipTapText(parsedComment.content)
           : '',
@@ -469,6 +473,7 @@ export async function savePoetryHomePoem(
         .insert(poemComment)
         .values({
           poemVerseId: savedVerse.id,
+          memberId: savedPoemFact.memberId,
           isPoemAnalysis: true,
           commentJson: serializedAnalysisJson,
         })
@@ -543,6 +548,7 @@ export async function savePoetryHomePoem(
               .insert(poemComment)
               .values({
                 poemVerseId: existingVerse.id,
+                memberId: existingPoem!.memberId,
                 isPoemAnalysis: true,
                 commentJson: existingAnalysis.commentJson,
               });
@@ -726,6 +732,7 @@ export async function addPoemComment(
     .insert(poemComment)
     .values({
       poemVerseId: existingVerse.id,
+      memberId: actor.memberId,
       isPoemAnalysis: false,
       commentJson,
     });
@@ -746,7 +753,7 @@ export async function addPoemComment(
   };
 }
 
-/*-------- findFamilyMember ------------------ */
+/*------------------ getPoemTerms ------------------ */
 export async function getPoemTerms()
   : Promise<PoemTermsReturn> {
   const result = await db

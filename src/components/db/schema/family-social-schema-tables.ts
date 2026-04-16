@@ -276,9 +276,11 @@ export const poemComment = pgTable("poem_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   poemVerseId: integer("fk_poem_verse_id").notNull().references(() => poemVerse.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id),
 },
   (table) => [
     index('poem_comment_poem_verse_id_idx').on(table.poemVerseId),
+    index('poem_comment_member_id_idx').on(table.memberId),
   ]
 );
 
@@ -330,8 +332,8 @@ export const poemTerm = pgTable("poem_term", {
 export const book = pgTable("book", {
   id: serial("id").primaryKey(),
   bookTitle: text("book_title").notNull().unique(),
-  authorName: text("author_name").notNull().default("Anonymous"),
-  bookSource: text("book_source").notNull().default("Unknown"),
+  authorName: text("author_name").notNull().default("anonymous"),
+  bookLanguage: text("book_language").notNull().default("english"),
   bookYear: integer("book_year").notNull().default(0),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -367,14 +369,14 @@ export const bookTagReference = pgTable("book_tag_reference", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const bookTag = pgTable("book_fact_tag", {
+export const bookTag = pgTable("book_tag", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
   tagId: integer("fk_tag_id").notNull().references(() => bookTagReference.id, {onDelete: 'cascade'}),
 },
   (table) => [
-    index('book_fact_tag_book_id_idx').on(table.bookId),
-    index('book_fact_tag_tag_id_idx').on(table.tagId),
+    index('book_tag_book_id_idx').on(table.bookId),
+    index('book_tag_tag_id_idx').on(table.tagId),
   ]
 );
 
@@ -390,3 +392,11 @@ export const bookLike = pgTable("book_like", {
     unique("book_like_member_id_uq").on(table.bookId, table.memberId),
   ]
 );
+
+export const bookTerm = pgTable("book_term", {
+  id: serial("id").primaryKey(),
+  term: text("term").notNull().default(""),
+  termJson: text("term_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at").defaultNow(),
+});

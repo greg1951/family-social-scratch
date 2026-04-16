@@ -27,4 +27,5 @@ export {
   bookComment,
   bookTagReference,
   bookTag,
+  bookTerm,
 } from './family-social-schema-tables';

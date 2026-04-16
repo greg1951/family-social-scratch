@@ -1,9 +1,9 @@
-export interface Poem {
+export interface Book {
   id: number;
-  poemTitle: string;
-  poetName: string;
-  poemSource: string;
-  poemYear: number;
+  bookTitle: string;
+  authorName: string;
+  bookLanguage: string;
+  bookYear: number;
   status: string;
   createdAt: Date;
   memberId: number;
@@ -16,19 +16,12 @@ export interface Poem {
   selectedTagIds?: number[];
 }
 
-export type PoemsReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      poems: Poem[];
-    };
-
-export interface PoetryHomePoem {
+export interface BooksHomeBook {
   id: number;
-  poemTitle: string;
-  poetName: string;
-  poemSource: string;
-  poemYear: number;
+  bookTitle: string;
+  authorName: string;
+  bookLanguage: string;
+  bookYear: number;
   status: string;
   createdAt: Date;
   memberId: number;
@@ -37,87 +30,92 @@ export interface PoetryHomePoem {
   likesCount: number;
   commentCount: number;
   likedByMember: boolean;
-  verseJson?: string;
   analysisJson?: string;
   selectedTagIds: number[];
-  poemComments: PoetryHomeComment[];
+  bookComments: BookHomeComment[];
 }
 
-export interface PoetryHomeComment {
+export interface BookHomeComment {
   id: number;
   createdAt: Date;
   commenterName: string;
   text: string;
 }
 
-export interface PoemTagOption {
+export interface BookTagOption {
   id: number;
   tagName: string;
   tagDesc?: string | null;
   status: string;
 }
 
-export type PoetryHomePageDataReturn =
+export type BooksHomePageDataReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poems: PoetryHomePoem[];
-      poemTags: PoemTagOption[];
+      books: BooksHomeBook[];
+      bookTags: BookTagOption[];
     };
 
-export interface SavePoetryHomePoemInput {
+export interface SaveBooksHomeBookInput {
   id?: number;
-  poemTitle: string;
-  poetName: string;
-  poemSource: string;
-  poemYear: number;
+  bookTitle: string;
+  authorName: string;
+  bookLanguage: string;
+  bookYear: number;
   status: string;
-  verseJson: string;
   analysisJson: string;
   selectedTagIds: number[];
 }
 
-export type SavePoetryHomePoemReturn =
+export type SaveBooksHomeBookReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poem: PoetryHomePoem;
+      book: BooksHomeBook;
       message: string;
     };
 
-export interface TogglePoemLikeInput {
-  poemId: number;
+export interface ToggleBookLikeInput {
+  bookId: number;
 }
 
-export type TogglePoemLikeReturn =
+export type ToggleBookLikeReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poem: PoetryHomePoem;
+      book: BooksHomeBook;
       message: string;
     };
 
-export interface AddPoemCommentInput {
-  poemId: number;
+export interface AddBookCommentInput {
+  bookId: number;
   commentText: string;
 }
 
-export type AddPoemCommentReturn =
+export type AddBookCommentReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poem: PoetryHomePoem;
+      book: BooksHomeBook;
       message: string;
     };
 
-export type PoemTagOptionsReturn =
+export type BookTagOptionsReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poemTags: PoemTagOption[];
+      bookTags: BookTagOption[];
     };
 
-export interface PoemTerm {
+export type BooksReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      books: Book[];
+    };
+
+export interface BookTerm {
   id: number;
   term: string;
   termJson: string;
@@ -125,30 +123,31 @@ export interface PoemTerm {
   createdAt: Date;
 }
 
-export interface SavePoemTermInput {
+export interface SaveBookTermInput {
   id?: number;
   term: string;
   termJson: string;
   status: string;
 }
 
-export type SavePoemTermReturn =
+export type SaveBookTermReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poemTerm: PoemTerm;
+      bookTerm: BookTerm;
     };
 
-export type GetPoemTermReturn =
+export type GetBookTermReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poemTerm: PoemTerm;
+      bookTerm: BookTerm;
     };
 
-export type PoemTermsReturn =
+export type BookTermsReturn =
   | { success: false; message: string }
   | {
       success: true;
-      poemTerms: PoemTerm[];
+      bookTerms: BookTerm[];
     };
+
