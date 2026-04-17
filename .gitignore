@@ -40,3 +40,4 @@ yarn-error.log*
 *.tsbuildinfo
 #next-env.d.ts
 family-social-s3-user_accessKeys.csv
+.env.local

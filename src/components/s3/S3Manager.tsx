@@ -7,6 +7,7 @@ import { Info, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { saveMemberImageUrl } from "@/app/(family)/(family-members)/family-image-upload/actions";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 type S3ManagerProps = {
   memberId: number;
@@ -14,15 +15,6 @@ type S3ManagerProps = {
 };
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024;
-
-function toS3Key(value: string) {
-  if (value.includes("amazonaws.com/")) {
-    const keyWithMaybeQuery = value.split("amazonaws.com/")[1] ?? "";
-    return keyWithMaybeQuery.split("?")[0] ?? "";
-  }
-
-  return value.split("?")[0] ?? "";
-}
 
 function uploadWithProgress(url: string, file: File, contentType: string, onProgress: (percent: number) => void) {
   return new Promise<void>((resolve, reject) => {
@@ -86,7 +78,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
         return;
       }
 
-      const key = toS3Key(memberImageUrl);
+      const key = extractS3KeyFromValue(memberImageUrl);
       if (!key) {
         if (!isCancelled) {
           setSignedPreviewUrl(memberImageUrl);
@@ -187,13 +179,17 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       const { url, fileUrl, s3Key, signedContentType } = await signRes.json();
       await uploadWithProgress(url, selectedFile, signedContentType ?? selectedFile.type, setUploadProgress);
 
-      const imageUrlToPersist = fileUrl ?? s3Key;
-      const saveResult = await saveMemberImageUrl(imageUrlToPersist);
+      const imageKeyToPersist = extractS3KeyFromValue(s3Key) ?? extractS3KeyFromValue(fileUrl);
+      if (!imageKeyToPersist) {
+        throw new Error("Upload succeeded but no valid S3 key was returned.");
+      }
+
+      const saveResult = await saveMemberImageUrl(imageKeyToPersist);
       if (!saveResult.success) {
         throw new Error(saveResult.message ?? "Upload succeeded but failed to save member image URL.");
       }
 
-      setMemberImageUrl(imageUrlToPersist);
+      setMemberImageUrl(imageKeyToPersist);
       setSelectedFile(null);
       setUploadProgress(100);
       toast.success("Profile image uploaded successfully.");
@@ -212,9 +208,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       return;
     }
 
-    const key = persisted.includes("amazonaws.com/")
-      ? persisted.split("amazonaws.com/")[1]
-      : persisted;
+    const key = extractS3KeyFromValue(persisted);
 
     if (!key) {
       toast.error("Unable to determine the S3 key for this image.");
@@ -314,7 +308,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       </div>
 
       <p className="text-xs text-[#315363]">
-        Saved member image URL: { memberImageUrl ?? "No image has been saved yet." }
+        Saved member image key: { memberImageUrl ?? "No image has been saved yet." }
       </p>
     </div>
   );

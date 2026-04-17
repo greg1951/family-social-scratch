@@ -57,6 +57,22 @@ export const familyInvitation = pgTable("family_invitation", {
   index('invite_token_idx').on(table.inviteToken),
 ]);
 
+export const familyS3Credentials = pgTable("family_s3_credentials", {
+  id: serial("id").primaryKey(),
+  encryptedAccessKey: text("encrypted_access_key").notNull(),
+  encryptedSecretKey: text("encrypted_secret_key").notNull(),
+  bucketName: text("bucket_name").notNull(),
+  region: text("region").notNull().default("us-east-2"),  
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+}, (table) => [
+  index('family_id_idx').on(table.familyId),
+  index('active_credential_idx').on(table.familyId, table.isActive),
+  // uniqueIndex('family_active_credential_uniq').on(table.familyId).where(sql`${table.isActive} = true`),
+]);
+
 export const member = pgTable("member", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),

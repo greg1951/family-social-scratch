@@ -2,6 +2,7 @@ export {
   user, 
   passwordReset, 
   family, 
+  familyS3Credentials,
   member, 
   memberOption, 
   optionReference, 

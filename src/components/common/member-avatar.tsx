@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from "react";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 type MemberAvatarProps = {
   imageUrl?: string | null;
@@ -8,15 +9,6 @@ type MemberAvatarProps = {
   lastName?: string;
   sizeClassName?: string;
 };
-
-function toS3Key(value: string) {
-  if (value.includes("amazonaws.com/")) {
-    const keyWithMaybeQuery = value.split("amazonaws.com/")[1] ?? "";
-    return keyWithMaybeQuery.split("?")[0] ?? "";
-  }
-
-  return value.split("?")[0] ?? "";
-}
 
 function getInitials(firstName?: string, lastName?: string) {
   const first = firstName?.trim()?.[0] ?? "";
@@ -48,7 +40,7 @@ export default function MemberAvatar({
         return;
       }
 
-      const key = toS3Key(imageUrl);
+      const key = extractS3KeyFromValue(imageUrl);
       if (!key) {
         if (!isCancelled) {
           setSignedImageUrl(imageUrl);
