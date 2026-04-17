@@ -2,10 +2,16 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "It's Family Picture Day!",
+    summary: "Upload your favority mugshot (of yourself) to be featured across the family social experience. Your image will be used in your profile and across various features to help your family members recognize you and feel more connected. To upload your image, go to the My Account page and click on the Upload Image button. We can't wait to see your smiling face!",
+    category: "Features",
+    date: "April 16, 2026",
+  },
+  {
     title: "Live Features!",
     summary: "The Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
     category: "Features",
-    date: "April 16, 2026",
+    date: "April 15, 2026",
   },
   {
     title: "Game Scoreboards Supports Mexican Train and Acquire!",

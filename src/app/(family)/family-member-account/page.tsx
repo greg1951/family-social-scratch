@@ -9,9 +9,10 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { Sparkles } from "lucide-react";
 import MemberAccountTabs from "./member-tabs";
-import { getAllFamilyMembers, getFamilyFounderDetails } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getFamilyFounderDetails, getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
 import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import { toast } from "sonner";
+import MemberAvatar from "@/components/common/member-avatar";
 
 export default async function FamilyMemberAccount() {
   const session = await auth();
@@ -31,10 +32,13 @@ export default async function FamilyMemberAccount() {
     redirect("/family-founder-account");
   }
 
-  const [memberDetails, memberNotificationsResult] = await Promise.all([
+  const [memberDetails, memberNotificationsResult, memberImageResult] = await Promise.all([
     getMemberDetails(userId),
     getMemberNotifications(memberKeyDetails.memberId),
+    getMemberImageDetailsByMemberId(memberKeyDetails.memberId),
   ]);
+
+  const memberImageUrl = memberImageResult.success ? memberImageResult.memberImageUrl : null;
 
   const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];
   let accountDetails: AccountDetails | null = null;
@@ -65,6 +69,7 @@ export default async function FamilyMemberAccount() {
         lastName: member.lastName,
         email: member.email,
         status: member.status,
+        memberImageUrl: member.memberImageUrl ?? null,
       })) as CurrentFamilyMember[];
     }
 
@@ -99,6 +104,14 @@ export default async function FamilyMemberAccount() {
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Your Space
+            </div>
+            <div className="mt-3 flex justify-center">
+              <MemberAvatar
+                imageUrl={ memberImageUrl }
+                firstName={ memberDetails.firstName }
+                lastName={ memberDetails.lastName }
+                sizeClassName="h-20 w-20"
+              />
             </div>
             <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">My Account</CardTitle>
             <div className="pt-1">

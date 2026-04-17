@@ -39,3 +39,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 #next-env.d.ts
+family-social-s3-user_accessKeys.csv

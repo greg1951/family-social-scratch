@@ -1,14 +1,15 @@
 import NavBar from "@/components/common/nav-bar";
-import { getSessionEmail } from "@/features/auth/services/auth-utils";
 import HeaderImage from "@/components/common/header-img";
 import MainDropMenu from "../../../components/common/main-dropmenu";
+import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
 
 export default async function MainHeader({ isLoggedIn, isFounder, firstName }: { isLoggedIn: boolean; isFounder: boolean; firstName: string }) {
-  const session = await getSessionEmail();
-  let email: string = "";
-  if (session.found) {
-    email = session.userEmail!;
-  }
+  const memberAvatarDetails = await getCurrentMemberAvatarDetails();
+
+  const menuFirstName = memberAvatarDetails.firstName || firstName;
+  const menuEmail = memberAvatarDetails.email;
+  const menuSessionFound = memberAvatarDetails.isLoggedIn;
+  const menuIsFounder = memberAvatarDetails.isLoggedIn ? memberAvatarDetails.isFounder : isFounder;
 
   return (
     <>
@@ -25,7 +26,13 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
                 <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Scoreboards" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" />
-                <MainDropMenu firstName={ firstName } email={ email } sessionFound={ session.found } isFounder={ isFounder } />
+                <MainDropMenu
+                  firstName={ menuFirstName }
+                  email={ menuEmail }
+                  sessionFound={ menuSessionFound }
+                  isFounder={ menuIsFounder }
+                  memberImageUrl={ memberAvatarDetails.memberImageUrl }
+                />
               </ul>
             </nav>
           </div>

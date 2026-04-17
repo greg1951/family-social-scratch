@@ -204,6 +204,34 @@ export async function findMemberIdByEmail(email:string)
   }
 }
 
+/*----------------- getMemberImageDetailsByMemberId ------------------ */
+export async function getMemberImageDetailsByMemberId(memberId: number) {
+  const [result] = await db
+    .select({
+      memberId: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      memberImageUrl: member.memberImageUrl,
+    })
+    .from(member)
+    .where(eq(member.id, memberId));
+
+  if (!result) {
+    return {
+      success: false,
+      message: `Member image details NOT FOUND for memberId ${memberId}`,
+    };
+  }
+
+  return {
+    success: true,
+    memberId: result.memberId,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    memberImageUrl: result.memberImageUrl,
+  };
+}
+
 /*----------------- updateMemberDetails ------------------ */
 export async function updateMemberDetails(updateAccountDetails: UpdateAccountDetails)
   : Promise<UpdateMemberReturn> {
@@ -231,13 +259,57 @@ export async function updateMemberDetails(updateAccountDetails: UpdateAccountDet
   }
 }
 
+/*----------------- updateMemberImageUrl ------------------ */
+export async function updateMemberImageUrl(memberId: number, memberImageUrl: string)
+  : Promise<UpdateMemberReturn> {
+
+  const [result] = await db
+    .update(member)
+    .set({
+      memberImageUrl,
+    })
+    .where(eq(member.id, memberId))
+    .returning({
+      memberId: member.id,
+    });
+
+  if (!result) {
+    return {
+      success: false,
+      message: `Failed to update memberImageUrl for memberId ${memberId}`,
+    };
+  }
+
+  return {
+    success: true,
+  };
+}
+
 /*----------------- getAllFamilyMembers ------------------ */
 export async function getAllFamilyMembers(familyId: number)
   :(Promise<GetAllFamilyMembersReturn>) {
 
   const result = await db
-    .select()
+    .select({
+      id: familyInvitation.id,
+      email: familyInvitation.email,
+      firstName: familyInvitation.firstName,
+      lastName: familyInvitation.lastName,
+      status: familyInvitation.status,
+      inviteToken: familyInvitation.inviteToken,
+      expirationDate: familyInvitation.expirationDate,
+      createdAt: familyInvitation.createdAt,
+      familyId: familyInvitation.familyId,
+      memberImageUrl: member.memberImageUrl,
+    })
     .from(familyInvitation)
+    .leftJoin(
+      member,
+      and(
+        eq(familyInvitation.familyId, member.familyId),
+        eq(familyInvitation.email, member.email),
+      ),
+    )
     .where(eq(familyInvitation.familyId, familyId));
   
   if (result[0]) 
@@ -249,6 +321,7 @@ export async function getAllFamilyMembers(familyId: number)
         firstName: member.firstName as string,
         lastName: member.lastName as string,
         status: member.status as string,
+        memberImageUrl: member.memberImageUrl as string | null,
         inviteToken: member.inviteToken as string,
         expirationDate: member.expirationDate as Date,
         createdAt: member.createdAt as Date,

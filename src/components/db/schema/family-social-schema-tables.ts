@@ -67,6 +67,7 @@ export const member = pgTable("member", {
   cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
   status: text("status").notNull().default("active"),
+  memberImageUrl: text("member_image_url"),
   isFounder: boolean("is_family_founder").notNull().default(false),
   isGuest: boolean("is_guest").notNull().default(false),
   isAdmin: boolean("is_admin").notNull().default(false),

@@ -38,6 +38,7 @@ export default async function FamilyCurrentMembersPage() {
       lastName: member.lastName,
       email: member.email,
       status: member.status,
+      memberImageUrl: member.memberImageUrl ?? null,
     })) as CurrentFamilyMember[];
   }
 

@@ -24,6 +24,7 @@ import {
   initializeRecordCounts
 } from "@/features/family/services/client-side";
 import { ArrowRight } from "lucide-react";
+import MemberListIdentity from "@/components/common/member-list-identity";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
@@ -197,12 +198,12 @@ export default function CurrentMembersAccountForm({ familyMembers, founderDetail
                   { members.map((member) => (
                     <li key={ member.id } className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold leading-tight text-slate-900">
-                            { member.firstName } { member.lastName }
-                          </p>
-                          <p className="break-all text-xs text-slate-600">{ member.email }</p>
-                        </div>
+                        <MemberListIdentity
+                          firstName={ member.firstName }
+                          lastName={ member.lastName }
+                          email={ member.email }
+                          memberImageUrl={ member.memberImageUrl }
+                        />
 
                         <div className="flex shrink-0 items-center gap-1.5">
                           <span className={ `rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ getStatusClasses(member.status) }` }>

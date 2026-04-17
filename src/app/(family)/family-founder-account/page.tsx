@@ -12,6 +12,8 @@ import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
 import { toast } from "sonner";
 import { getFounderDetails } from "@/features/family/services/get-founder-details";
+import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
+import MemberAvatar from "@/components/common/member-avatar";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -32,11 +34,15 @@ export default async function FamilyMyAccountPage() {
 
   const [
     memberNotificationsResult,
-    currentMembersResult
+    currentMembersResult,
+    memberImageResult,
   ] = await Promise.all([
     getMemberNotifications(memberKeyDetails.memberId),
     getAllFamilyMembers(memberKeyDetails.familyId),
+    getMemberImageDetailsByMemberId(memberKeyDetails.memberId),
   ]);
+
+  const memberImageUrl = memberImageResult.success ? memberImageResult.memberImageUrl : null;
 
 
   const notifications = memberNotificationsResult.success
@@ -54,6 +60,7 @@ export default async function FamilyMyAccountPage() {
       lastName: member.lastName,
       email: member.email,
       status: member.status,
+      memberImageUrl: member.memberImageUrl ?? null,
     })) as CurrentFamilyMember[];
   }
 
@@ -76,6 +83,14 @@ export default async function FamilyMyAccountPage() {
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Founder Dashboard
+            </div>
+            <div className="mt-3 flex justify-center">
+              <MemberAvatar
+                imageUrl={ memberImageUrl }
+                firstName={ founderDetails.firstName }
+                lastName={ founderDetails.lastName }
+                sizeClassName="h-20 w-20"
+              />
             </div>
             <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
               My Family Account

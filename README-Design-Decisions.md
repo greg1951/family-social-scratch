@@ -18,6 +18,7 @@
     1. [Installation](#installation)
     2. [Configuration](#configuration)
     3. [Persistence](#persistence)
+12. [Amazon S3](#amazon-s3)
 
 ---
 # Overview
@@ -326,6 +327,24 @@ fetch('/api/editor/content')
     console.error('Error fetching editor content:', error)
   })
 ```
+
+# Amazon S3
+A storage service is needed as there will be a great many files uploaded (and downloaded) in the application. 
+
+The plan is to create an S3 bucket for each new family. There is no other means of assuring the privacy of the content consumed by a family. 
+
+(The same will be true for the family database tables; more on that later).
+
+As a template, the `thosecrazyhughletts` S3 bucket was created in the `us-east-2` region. The naming of the bucket will be a conversion of the family name to lowercase. The `family-social-s3-user` was defined in AWS IAM with `AmazonS3FullAccess` permission.
+
+Within the bucket the following folders were created to store the content for each of the features. (The folder names don't need to be created up front. appending a folder to the s3 bucket name will create the folder anyway; it's just FYI).
+
+![](docs/s3-bucket-folders.png)
+
+Members who want to add a profile picture can select the file and upload it to the `members` folder. TV, Movies, Foodies, and Threads are other features where images come into play.
+
+The S3 client install command line in VS Code is: `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner`
+
 
 
 

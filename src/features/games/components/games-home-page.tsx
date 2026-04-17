@@ -161,6 +161,21 @@ export function GamesHomePage({
     ];
   }, [selectedGame]);
 
+  const visiblePlayerColumnIndices = useMemo(() => {
+    const visible = selectedPlayers
+      .map((player, idx) => {
+        const hasPlayer = Boolean(player);
+        const hasRoundValue = roundEntries.some((roundEntry) =>
+          roundScores.get(roundEntry.roundKey)?.has(idx)
+        );
+        return hasPlayer || hasRoundValue ? idx : null;
+      })
+      .filter((idx): idx is number => idx !== null);
+
+    // Keep one column available so a brand-new game can still select players.
+    return visible.length > 0 ? visible : [0];
+  }, [roundEntries, roundScores, selectedPlayers]);
+
   // Filter game history
   const filteredGameHistory = useMemo(() => {
     return gamesData.gameHistory.filter((game) => {
@@ -730,10 +745,10 @@ export function GamesHomePage({
   const playerStats = gameLeaderboards.playerStats;
 
   return (
-    <div className="font-app min-h-screen bg-linear-to-b from-slate-900 via-purple-900 to-slate-900 p-6">
+    <div className="font-app min-h-screen bg-linear-to-b from-slate-900 via-amber-900 to-slate-900 p-6">
       {/* Header */ }
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-fuchsia-400 via-purple-400 to-cyan-400">
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-yellow-300 to-orange-300">
           Game Scoreboards
         </h1>
         <div className="px-6 pt-6 pb-0">
@@ -751,11 +766,11 @@ export function GamesHomePage({
 
 
       {/* Main Layout: Part A (Scoreboard) | Parts B & C (Leaderboard & History) */ }
-      <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,3fr)_minmax(360px,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2.2fr)_minmax(320px,1fr)]">
         {/* Part A: Game Scoreboard (left) */ }
         <div className="min-w-0">
-          <Card className="bg-slate-800/50 border-purple-500/30 p-6">
-            <h2 className="text-2xl font-bold text-purple-300 mb-6">
+          <Card className="bg-slate-800/50 border-amber-500/30 p-6">
+            <h2 className="text-2xl font-bold text-amber-300 mb-6">
               Scoreboard
             </h2>
 
@@ -779,7 +794,7 @@ export function GamesHomePage({
                   router.refresh();
                 } }
               >
-                <SelectTrigger className="w-64 bg-slate-700 border-purple-500/50 text-white">
+                <SelectTrigger className="w-64 bg-slate-700 border-amber-500/50 text-white">
                   <SelectValue placeholder="Select a game..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -811,7 +826,7 @@ export function GamesHomePage({
                 } }
                 disabled={ !selectedGameId }
               >
-                <SelectTrigger className="w-72 bg-slate-700 border-purple-500/50 text-white">
+                <SelectTrigger className="w-72 bg-slate-700 border-amber-500/50 text-white">
                   <SelectValue placeholder="Select game title..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -828,7 +843,7 @@ export function GamesHomePage({
                 <Button
                   onClick={ handleStartOrContinueGame }
                   disabled={ !selectedGame || isStartingGame || isLoadingSavedGame }
-                  className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+                  className="bg-linear-to-r from-amber-600 to-yellow-500 hover:from-amber-700 hover:to-yellow-600 text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   { isStartingGame ? "Starting..." : "Start New Game" }
@@ -839,7 +854,7 @@ export function GamesHomePage({
                 <Button
                   onClick={ handleStartOrContinueGame }
                   disabled={ isLoadingSavedGame }
-                  className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+                  className="bg-linear-to-r from-amber-600 to-yellow-500 hover:from-amber-700 hover:to-yellow-600 text-white"
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Continue Game
@@ -851,7 +866,7 @@ export function GamesHomePage({
                   onClick={ handleSaveGame }
                   disabled={ !selectedGameState || isSavingGame }
                   variant="outline"
-                  className="border-cyan-400/60 bg-slate-800 text-cyan-200 hover:bg-slate-700"
+                  className="border-amber-400/60 bg-slate-800 text-amber-200 hover:bg-slate-700"
                 >
                   <Save className="w-4 h-4 mr-2" />
                   { isSavingGame ? "Saving..." : "Save Game" }
@@ -859,7 +874,7 @@ export function GamesHomePage({
               ) }
 
               { selectedGameState && persistedCumulativeScores && !hasRoundScoreEdits && (
-                <span className="inline-flex items-center rounded-full border border-cyan-400/60 bg-cyan-500/15 px-3 py-1 text-xs font-semibold text-cyan-200">
+                <span className="inline-flex items-center rounded-full border border-amber-400/60 bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-200">
                   Loaded from Saved Game
                 </span>
               ) }
@@ -872,17 +887,19 @@ export function GamesHomePage({
                 tabIndex={ -1 }
                 className="overflow-x-auto"
               >
-                <table className="w-full text-sm border-collapse">
+                <table className="w-full max-w-245 table-fixed text-sm border-collapse">
                   <thead>
                     {/* Header Row 1: Column Headers with Player Selection */ }
                     <tr>
-                      <th className="bg-slate-700 text-purple-300 p-2 border border-slate-600 text-left">
+                      <th className="w-16 bg-slate-700 text-amber-300 p-2 border border-slate-600 text-left">
                         Round
                       </th>
-                      { selectedPlayers.map((player, idx) => (
+                      { visiblePlayerColumnIndices.map((idx, visibleIdx) => {
+                        const player = selectedPlayers[idx];
+                        return (
                         <th
                           key={ `player-header-${ idx }` }
-                          className="bg-slate-700 text-purple-300 p-2 border border-slate-600"
+                          className="w-32 bg-slate-700 text-amber-300 p-2 border border-slate-600"
                         >
                           <Select
                             value={ player ? String(player.id) : "" }
@@ -921,8 +938,8 @@ export function GamesHomePage({
                               setSelectedPlayers(newPlayers);
                             } }
                           >
-                            <SelectTrigger className="w-full bg-slate-600 border-purple-400/50 text-white text-xs">
-                              <SelectValue placeholder={ `P${ idx + 1 }` } />
+                            <SelectTrigger className="w-full bg-slate-600 border-amber-400/50 text-white text-xs">
+                              <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
@@ -947,21 +964,22 @@ export function GamesHomePage({
                             </SelectContent>
                           </Select>
                         </th>
-                      )) }
+                        );
+                      }) }
                     </tr>
 
                     {/* Header Row 2: Cumulative Scores */ }
                     { selectedGame?.isRoundBased !== false && (
                       <tr>
-                        <th className="bg-slate-700 text-purple-300 p-2 border border-slate-600 text-left">
+                        <th className="w-16 bg-slate-700 text-amber-300 p-2 border border-slate-600 text-left">
                           Total
                         </th>
-                        { selectedPlayers.map((_, idx) => {
+                        { visiblePlayerColumnIndices.map((idx) => {
                           const score = cumulativeScores.get(idx) ?? 0;
                           return (
                             <th
                               key={ `score-total-${ idx }` }
-                              className={ `bg-slate-700 text-white p-2 border border-slate-600 font-bold ${ getScoreStyle(idx) }` }
+                              className={ `w-32 bg-slate-700 text-white p-2 border border-slate-600 font-bold ${ getScoreStyle(idx) }` }
                             >
                               { score || "-" }
                             </th>
@@ -977,19 +995,19 @@ export function GamesHomePage({
                       const roundNo = roundEntry.roundNo;
                       return (
                         <tr key={ `round-${ roundEntry.label }` }>
-                          <td className="bg-slate-750 text-slate-300 p-2 border border-slate-600 text-center font-semibold">
+                          <td className="w-16 bg-slate-750 text-slate-300 p-2 border border-slate-600 text-center font-semibold">
                             { roundEntry.label }
                           </td>
-                          { selectedPlayers.map((_, colIdx) => {
+                          { visiblePlayerColumnIndices.map((colIdx) => {
                             const isFinalOnlyRow = selectedGame?.isRoundBased === false && roundEntry.roundNo === 1;
                             return (
                               <td
                                 key={ `round-score-${ roundEntry.label }-${ colIdx }` }
-                                className={ `bg-slate-750 p-2 border border-slate-600 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" }` }
+                                className={ `w-32 bg-slate-750 p-2 border border-slate-600 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" }` }
                               >
                                 <Input
                                   type="number"
-                                  className="w-full bg-slate-600 border-purple-400/30 text-white text-center"
+                                  className="w-full bg-slate-600 border-amber-400/30 text-white text-center"
                                   placeholder="0"
                                   value={
                                     roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
@@ -1023,8 +1041,8 @@ export function GamesHomePage({
         { selectedGameId ? (
           <div className="min-w-0 space-y-6">
             {/* Part B: Leaderboard */ }
-            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
-              <h2 className="text-xl font-bold text-purple-300 mb-4">
+            <Card className="bg-slate-800/50 border-amber-500/30 p-6">
+              <h2 className="text-xl font-bold text-amber-300 mb-4">
                 Leaderboard
               </h2>
 
@@ -1101,15 +1119,15 @@ export function GamesHomePage({
             </Card>
 
             {/* Part C: Game History with Filters */ }
-            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
-              <h2 className="text-xl font-bold text-purple-300 mb-4">
+            <Card className="bg-slate-800/50 border-amber-500/30 p-6">
+              <h2 className="text-xl font-bold text-amber-300 mb-4">
                 Game History
               </h2>
 
               {/* Filter Controls */ }
               <div className="space-y-2 mb-4">
                 <Select value={ gameStatusFilter } onValueChange={ setGameStatusFilter }>
-                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                  <SelectTrigger className="w-full bg-slate-700 border-amber-500/50 text-white text-xs">
                     <SelectValue placeholder="Game Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1123,7 +1141,7 @@ export function GamesHomePage({
                 </Select>
 
                 <Select value={ gameDateFilter } onValueChange={ setGameDateFilter }>
-                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                  <SelectTrigger className="w-full bg-slate-700 border-amber-500/50 text-white text-xs">
                     <SelectValue placeholder="Game Date" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1137,7 +1155,7 @@ export function GamesHomePage({
                 </Select>
 
                 <Select value={ gameTitle } onValueChange={ setGameTitle }>
-                  <SelectTrigger className="w-full bg-slate-700 border-purple-500/50 text-white text-xs">
+                  <SelectTrigger className="w-full bg-slate-700 border-amber-500/50 text-white text-xs">
                     <SelectValue placeholder="Game Title" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1215,13 +1233,13 @@ export function GamesHomePage({
                 ) }
               </div>
               { isLoadingSavedGame && (
-                <p className="text-xs text-cyan-300 mt-3">Loading selected game...</p>
+                <p className="text-xs text-amber-300 mt-3">Loading selected game...</p>
               ) }
             </Card>
           </div>
         ) : (
           <div className="min-w-0">
-            <Card className="bg-slate-800/50 border-purple-500/30 p-6">
+            <Card className="bg-slate-800/50 border-amber-500/30 p-6">
               <p className="text-center text-slate-400 py-12">
                 Select a game type to view leaderboards and game history.
               </p>
@@ -1231,7 +1249,7 @@ export function GamesHomePage({
       </div>
 
       <Dialog open={ isStartDialogOpen } onOpenChange={ setIsStartDialogOpen }>
-        <DialogContent className="border-purple-500/40 bg-slate-900 text-slate-100">
+        <DialogContent className="border-amber-500/40 bg-slate-900 text-slate-100">
           <DialogHeader>
             <DialogTitle>Start New Game</DialogTitle>
             <DialogDescription className="text-slate-400">
@@ -1244,7 +1262,7 @@ export function GamesHomePage({
             value={ gameTitleInput }
             onChange={ (e) => setGameTitleInput(e.target.value) }
             placeholder="Enter game title"
-            className="bg-slate-800 border-purple-500/40 text-white"
+            className="bg-slate-800 border-amber-500/40 text-white"
             onKeyDown={ (e) => {
               if (e.key === "Enter") {
                 handleConfirmStartGame();
@@ -1264,7 +1282,7 @@ export function GamesHomePage({
             <Button
               onClick={ handleConfirmStartGame }
               disabled={ isStartingGame }
-              className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+              className="bg-linear-to-r from-amber-600 to-yellow-500 hover:from-amber-700 hover:to-yellow-600 text-white"
             >
               { isStartingGame ? "Starting..." : "Start Game" }
             </Button>
@@ -1284,7 +1302,7 @@ export function GamesHomePage({
           }
         } }
       >
-        <DialogContent className="border-purple-500/40 bg-slate-900 text-slate-100">
+        <DialogContent className="border-amber-500/40 bg-slate-900 text-slate-100">
           <DialogHeader>
             <DialogTitle>Add a Guest</DialogTitle>
             <DialogDescription className="text-slate-400">
@@ -1301,7 +1319,7 @@ export function GamesHomePage({
                 value={ guestFirstName }
                 onChange={ (e) => setGuestFirstName(e.target.value) }
                 placeholder="First name"
-                className="bg-slate-800 border-purple-500/40 text-white"
+                className="bg-slate-800 border-amber-500/40 text-white"
               />
             </div>
             <div className="space-y-1">
@@ -1311,7 +1329,7 @@ export function GamesHomePage({
                 value={ guestLastName }
                 onChange={ (e) => setGuestLastName(e.target.value) }
                 placeholder="Last name"
-                className="bg-slate-800 border-purple-500/40 text-white"
+                className="bg-slate-800 border-amber-500/40 text-white"
               />
             </div>
             <div className="space-y-1">
@@ -1322,7 +1340,7 @@ export function GamesHomePage({
                 value={ guestEmail }
                 onChange={ (e) => setGuestEmail(e.target.value) }
                 placeholder="email@example.com"
-                className="bg-slate-800 border-purple-500/40 text-white"
+                className="bg-slate-800 border-amber-500/40 text-white"
                 onKeyDown={ (e) => {
                   if (e.key === "Enter") {
                     handleAddGuest();
@@ -1348,7 +1366,7 @@ export function GamesHomePage({
             <Button
               onClick={ handleAddGuest }
               disabled={ isAddingGuest }
-              className="bg-linear-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white"
+              className="bg-linear-to-r from-amber-600 to-yellow-500 hover:from-amber-700 hover:to-yellow-600 text-white"
             >
               { isAddingGuest ? "Adding..." : "Add Guest" }
             </Button>

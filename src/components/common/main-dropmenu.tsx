@@ -2,10 +2,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import Link from "next/link";
 import { mainLogout } from "../../app/(main)/actions";
 import { SettingsIcon } from 'lucide-react';
+import MemberAvatar from "@/components/common/member-avatar";
 
 
-export default function MainDropMenu({ firstName, email, sessionFound, isFounder }
-  : { firstName: string; email: string; sessionFound: boolean; isFounder: boolean; }) {
+export default function MainDropMenu({ firstName, email, sessionFound, isFounder, memberImageUrl }
+  : { firstName: string; email: string; sessionFound: boolean; isFounder: boolean; memberImageUrl?: string | null; }) {
   let title: string = "";
   if (firstName.length === 0) title = 'Settings'
   else title = `${ firstName }'s Settings`
@@ -27,7 +28,16 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
       <DropdownMenuTrigger asChild>
         <button type="button" className="group relative cursor-pointer" aria-label={ title }>
           <div className={ tileClasses }>
-            <SettingsIcon className="h-6 w-6 md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110" />
+            { sessionFound ? (
+              <MemberAvatar
+                imageUrl={ memberImageUrl ?? null }
+                firstName={ firstName }
+                lastName=""
+                sizeClassName="h-8 w-8 md:h-14 md:w-14"
+              />
+            ) : (
+              <SettingsIcon className="h-6 w-6 md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110" />
+            ) }
           </div>
           <span className={ tooltipClasses }>
             { title }

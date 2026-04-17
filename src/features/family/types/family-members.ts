@@ -29,6 +29,7 @@ export type CurrentFamilyMember = {
   lastName: string;
   email: string;
   status: string;
+  memberImageUrl?: string | null;
 }
 
 export type CurrentMemberDirtyFields = {

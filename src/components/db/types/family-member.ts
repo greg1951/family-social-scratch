@@ -168,6 +168,7 @@ export type GetAllFamilyMembersReturn =
         firstName: string;
         lastName: string;
         status?: string;
+        memberImageUrl?: string | null;
         inviteToken?: string;
         expirationDate?: Date;
         createdAt: Date;

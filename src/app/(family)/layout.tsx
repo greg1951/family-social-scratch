@@ -1,16 +1,16 @@
-import Image from "next/image";
 import Link from "next/link";
+import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 
 import MainDropMenu from "@/components/common/main-dropmenu";
 import BackButton from "@/components/common/back-button";
-import { getMemberPageDetails } from "@/features/family/services/family-services";
+import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
 
 export default async function TrialLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const memberKeyDetails = await getMemberPageDetails();
+  const memberAvatarDetails = await getCurrentMemberAvatarDetails();
 
   return (
     <div className="font-app min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f5fbff_34%,_#dff6ff_100%)] text-[#10364a]">
@@ -34,7 +34,7 @@ export default async function TrialLayout({
                     className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
                   >
                     <span className="flex items-center gap-2">
-                      <Image src="/icons/change-password.png" alt="Change password" width={ 16 } height={ 16 } className="h-4 w-4" />
+                      <KeyRound className="h-4 w-4 text-[#005472]" />
                       Change Password
                     </span>
                     {/* <span className="text-[#2f7a95]">Go</span> */ }
@@ -45,10 +45,20 @@ export default async function TrialLayout({
                     className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
                   >
                     <span className="flex items-center gap-2">
-                      <Image src="/icons/mfa.png" alt="Update two-factor authentication" width={ 16 } height={ 16 } className="h-4 w-4" />
+                      <ShieldCheck className="h-4 w-4 text-[#005472]" />
                       Update 2FA
                     </span>
                     {/* <span className="text-[#2f7a95]">Go</span> */ }
+                  </Link>
+                  <Link
+                    href="/family-image-upload"
+                    prefetch={ false }
+                    className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                  >
+                    <span className="flex items-center gap-2">
+                      <ImagePlus className="h-4 w-4 text-[#005472]" />
+                      Upload Profile Image
+                    </span>
                   </Link>
                 </div>
               </div>
@@ -62,10 +72,11 @@ export default async function TrialLayout({
             <div className="flex items-start justify-end md:pt-1 md:self-start">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-white/75 text-[#005472] shadow-[0_10px_40px_-18px_rgba(0,84,114,0.65)] backdrop-blur">
                 <MainDropMenu
-                  firstName={ memberKeyDetails.firstName }
-                  email={ memberKeyDetails.email }
-                  sessionFound={ memberKeyDetails.isLoggedIn }
-                  isFounder={ memberKeyDetails.isFounder }
+                  firstName={ memberAvatarDetails.firstName }
+                  email={ memberAvatarDetails.email }
+                  sessionFound={ memberAvatarDetails.isLoggedIn }
+                  isFounder={ memberAvatarDetails.isFounder }
+                  memberImageUrl={ memberAvatarDetails.memberImageUrl }
                 />
               </div>
             </div>
