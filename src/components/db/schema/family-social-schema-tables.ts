@@ -1,5 +1,5 @@
 import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
-import {is, not, sql } from 'drizzle-orm';
+import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
 
@@ -416,4 +416,103 @@ export const bookTerm = pgTable("book_term", {
   termJson: text("term_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+/*------------------------------- Family Foodies ------------------------------ */
+//export const likenessDegree = pgEnum('likenessDegree', [-1, 0, 1, 2]);
+
+export const recipe = pgTable("recipe", {
+  id: serial("id").primaryKey(),
+  recipeTitle: text("recipe_title").notNull().unique(),
+  recipeShortSummary: text("recipe_short_summary").notNull().default(""),
+  recipeJson: text("recipe_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  recipeImageUrl: text("recipe_image_url"),
+  prepTimeMins: integer("prep_time_minutes").notNull().default(0),
+  cookTimeMins: integer("cook_time_minutes").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('recipe_member_id_idx').on(table.memberId),
+    index('recipe_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const recipeComment = pgTable("recipe_comment", {
+  id: serial("id").primaryKey(),
+  isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('recipe_comment_recipe_id_idx').on(table.recipeId),
+    index('recipe_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const recipeTemplate = pgTable("recipe_template", {
+  id: serial("id").primaryKey(),
+  isRecipeAnalysis: boolean("is_recipe_analysis").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('recipe_template_recipe_id_idx').on(table.recipeId),
+    index('recipe_template_member_id_idx').on(table.memberId),
+    index('recipe_template_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const recipeTagReference = pgTable("recipe_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("global"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const recipeTag = pgTable("recipe_tag", {
+  id: serial("id").primaryKey(),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('recipe_tag_recipe_id_idx').on(table.recipeId),
+    index('recipe_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const recipeLike = pgTable("recipe_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("recipe_like_recipe_id_idx").on(table.recipeId),
+    index("recipe_like_member_id_idx").on(table.memberId),
+    unique("recipe_like_member_id_degree_uq")
+      .on(table.recipeId, 
+          table.memberId, 
+          table.likenessDegree
+      ),
+  ]
+);
+
+export const recipeTerm = pgTable("recipe_term", {
+  id: serial("id").primaryKey(),
+  term: text("term").notNull().default(""),
+  termJson: text("term_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });

@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="dIR63-4ekWE_VDctrdEv" name="Page-1">
-        <mxGraphModel dx="641" dy="543" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="731" dy="713" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -17,7 +17,7 @@
                         <mxRectangle x="420" y="130" width="160" height="50" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="9" value="&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+id (PK)&lt;br&gt;+visibility&lt;br&gt;+status&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+updatedAt&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;subject&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;primaryCategory&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+createdAt&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;updatedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;closedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archivedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archiveBatchId&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archiveObjectKey&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+familyId (FK)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+senderMemberId (FK)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="8" vertex="1">
+                <mxCell id="9" value="&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+id (&lt;b&gt;PK&lt;/b&gt;)&lt;br&gt;+visibility&lt;br&gt;+status&lt;/font&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+updatedAt&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;subject&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;primaryCategory&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+createdAt&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;updatedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;closedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archivedAt&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archiveBatchId&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+&lt;i&gt;archiveObjectKey&lt;/i&gt;&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+familyId (&lt;b&gt;FK&lt;/b&gt;)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(26, 26, 26);&quot;&gt;+senderMemberId (&lt;b&gt;FK&lt;/b&gt;)&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="8" vertex="1">
                     <mxGeometry y="50" width="160" height="220" as="geometry"/>
                 </mxCell>
                 <mxCell id="12" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;" parent="1" edge="1">
@@ -32,7 +32,7 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="13" value="member" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1" collapsed="1">
-                    <mxGeometry x="668" y="450" width="80" height="50" as="geometry">
+                    <mxGeometry x="624" y="450" width="80" height="50" as="geometry">
                         <mxRectangle x="160" y="380" width="160" height="120" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
@@ -50,7 +50,7 @@
                         <mxRectangle x="320" y="460" width="160" height="50" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="19" value="+id (PK)&lt;br&gt;+sequenceNo&lt;br&gt;+body&lt;div&gt;+visibility&lt;/div&gt;&lt;div&gt;+status&lt;/div&gt;&lt;div&gt;+type&lt;/div&gt;&lt;div&gt;+&lt;i&gt;softDeleteAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+conversationId (FK)&lt;/div&gt;&lt;div&gt;+authorMember (FK)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;parentPostId &lt;/i&gt;(FK)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;postId &lt;/i&gt;(FK)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="18" vertex="1">
+                <mxCell id="19" value="+id (&lt;b&gt;PK&lt;/b&gt;)&lt;br&gt;+sequenceNo&lt;br&gt;+body&lt;div&gt;+visibility&lt;/div&gt;&lt;div&gt;+status&lt;/div&gt;&lt;div&gt;+type&lt;/div&gt;&lt;div&gt;+&lt;i&gt;softDeleteAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+conversationId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+authorMember (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;parentPostId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;postId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="18" vertex="1">
                     <mxGeometry y="50" width="160" height="190" as="geometry"/>
                 </mxCell>
                 <mxCell id="21" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;exitX=0.597;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitPerimeter=0;" parent="1" source="13" target="19" edge="1">
@@ -80,11 +80,11 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="28" value="thread_recipient_state" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="640" y="160" width="160" height="199" as="geometry">
+                    <mxGeometry x="596" y="165" width="160" height="199" as="geometry">
                         <mxRectangle x="320" y="460" width="160" height="50" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="29" value="+id (PK)&lt;br&gt;+deliveryType&lt;br&gt;&lt;div&gt;+&lt;i&gt;readAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+&lt;i&gt;answeredAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+&lt;i&gt;archivedAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+recipientMemberId (FK)&lt;/div&gt;&lt;div&gt;+lastViewedPostId (FK)&lt;/div&gt;&lt;div&gt;+conversationId (FK)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="28" vertex="1">
+                <mxCell id="29" value="+id (&lt;b&gt;PK&lt;/b&gt;)&lt;br&gt;+deliveryType&lt;br&gt;&lt;div&gt;+&lt;i&gt;readAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+&lt;i&gt;answeredAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+&lt;i&gt;archivedAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+recipientMemberId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+lastViewedPostId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+conversationId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="28" vertex="1">
                     <mxGeometry y="50" width="160" height="149" as="geometry"/>
                 </mxCell>
                 <mxCell id="30" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.009;entryY=0.294;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="9" target="29" edge="1">
@@ -105,8 +105,8 @@
                 </mxCell>
                 <mxCell id="33" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.422;entryY=1.015;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="13" target="29" edge="1">
                     <mxGeometry width="100" height="100" relative="1" as="geometry">
-                        <mxPoint x="259" y="476" as="sourcePoint"/>
-                        <mxPoint x="770" y="420" as="targetPoint"/>
+                        <mxPoint x="215" y="476" as="sourcePoint"/>
+                        <mxPoint x="726" y="420" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="38" value="acts on" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="33" vertex="1" connectable="0">
@@ -115,19 +115,19 @@
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="40" value="thread_tag_reference" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="25" y="400" width="160" height="160" as="geometry">
+                    <mxGeometry x="46" y="400" width="160" height="160" as="geometry">
                         <mxRectangle x="30" y="320" width="100" height="160" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="41" value="+id&lt;br&gt;+tagName&lt;br&gt;+tagDesc&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+status&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+sequenceNo&lt;br&gt;&lt;/font&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="40" vertex="1">
+                <mxCell id="41" value="+id&lt;span style=&quot;color: rgb(26, 26, 26);&quot;&gt;&amp;nbsp;(&lt;/span&gt;&lt;b style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;PK&lt;/b&gt;&lt;span style=&quot;color: rgb(26, 26, 26);&quot;&gt;)&lt;/span&gt;&lt;br&gt;+tagName&lt;br&gt;+tagDesc&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+status&lt;/font&gt;&lt;/div&gt;&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+sequenceNo&lt;br&gt;&lt;/font&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="40" vertex="1">
                     <mxGeometry y="50" width="160" height="110" as="geometry"/>
                 </mxCell>
                 <mxCell id="42" value="thread_conversation_tag" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-                    <mxGeometry x="30" y="212" width="170" height="108" as="geometry">
+                    <mxGeometry x="51" y="212" width="170" height="108" as="geometry">
                         <mxRectangle x="30" y="320" width="100" height="160" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="43" value="+id&lt;br&gt;+coversationId (FK)&lt;br&gt;+tagId (FK)&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="42" vertex="1">
+                <mxCell id="43" value="+id&lt;span style=&quot;color: rgb(26, 26, 26);&quot;&gt;&amp;nbsp;(&lt;/span&gt;&lt;b style=&quot;color: rgb(63, 63, 63); scrollbar-color: rgb(226, 226, 226) rgb(251, 251, 251);&quot;&gt;PK&lt;/b&gt;&lt;span style=&quot;color: rgb(26, 26, 26);&quot;&gt;)&lt;/span&gt;&lt;br&gt;+coversationId (&lt;b&gt;FK&lt;/b&gt;)&lt;br&gt;+tagId (&lt;b&gt;FK&lt;/b&gt;)&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="42" vertex="1">
                     <mxGeometry y="50" width="170" height="58" as="geometry"/>
                 </mxCell>
                 <mxCell id="44" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;entryX=1.001;entryY=0.125;entryDx=0;entryDy=0;exitX=-0.006;exitY=0.297;exitDx=0;exitDy=0;exitPerimeter=0;entryPerimeter=0;" parent="1" source="9" target="43" edge="1">
@@ -143,8 +143,8 @@
                 </mxCell>
                 <mxCell id="46" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;entryX=0.443;entryY=0.986;entryDx=0;entryDy=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryPerimeter=0;" parent="1" source="40" target="43" edge="1">
                     <mxGeometry width="100" height="100" relative="1" as="geometry">
-                        <mxPoint x="299" y="359" as="sourcePoint"/>
-                        <mxPoint x="190" y="360" as="targetPoint"/>
+                        <mxPoint x="320" y="359" as="sourcePoint"/>
+                        <mxPoint x="211" y="360" as="targetPoint"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="47" value="belongs to" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="46" vertex="1" connectable="0">

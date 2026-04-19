@@ -29,4 +29,11 @@ export {
   bookTagReference,
   bookTag,
   bookTerm,
+  recipe,
+  recipeLike,
+  recipeTagReference,
+  recipeTag,
+  recipeTerm,
+  recipeComment,
+  recipeTemplate,
 } from './family-social-schema-tables';

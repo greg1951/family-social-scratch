@@ -1,12 +1,12 @@
 <mxfile host="65bd71144e">
     <diagram id="S7uF9vUim60ZgLowzAht" name="Page-1">
-        <mxGraphModel dx="917" dy="556" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="701" dy="440" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
                 <mxCell id="2" value="member" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1" collapsed="1">
                     <mxGeometry x="573" y="158" width="90" height="50" as="geometry">
-                        <mxRectangle x="573" y="80" width="157" height="157" as="alternateBounds"/>
+                        <mxRectangle x="573" y="158" width="157" height="157" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="3" value="+id&lt;br&gt;+firstName&lt;br&gt;+lastName&lt;div&gt;&lt;font color=&quot;#000000&quot;&gt;+status&lt;br&gt;&lt;/font&gt;&lt;div&gt;+familyId&lt;/div&gt;&lt;/div&gt;&lt;div&gt;+isGuest&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="2" vertex="1">
@@ -14,7 +14,7 @@
                 </mxCell>
                 <mxCell id="4" value="family" style="swimlane;childLayout=stackLayout;horizontal=1;startSize=50;horizontalStack=0;rounded=1;fontSize=14;fontStyle=0;strokeWidth=2;resizeParent=0;resizeLast=1;shadow=0;dashed=0;align=center;arcSize=4;whiteSpace=wrap;html=1;" parent="1" vertex="1" collapsed="1">
                     <mxGeometry x="334" y="158" width="90" height="50" as="geometry">
-                        <mxRectangle x="40" y="110" width="160" height="120" as="alternateBounds"/>
+                        <mxRectangle x="334" y="158" width="160" height="120" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
                 <mxCell id="5" value="+id&lt;br&gt;+name&lt;br&gt;+status&lt;div&gt;+createdAt&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="4" vertex="1">
