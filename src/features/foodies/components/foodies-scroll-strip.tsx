@@ -1,17 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star, ThumbsUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
 
 type LatestRecipe = {
   kind: "latest";
   name: string;
   date: string;
+  commentsCount: number;
+  thumbsUp: number;
+  love: number;
   imageSrc: string;
   imageAlt: string;
 };
@@ -19,8 +22,10 @@ type LatestRecipe = {
 type TopRatedRecipe = {
   kind: "top-rated";
   name: string;
-  rating: number;
-  recommendations: number;
+  noRating: number;
+  thumbsUp: number;
+  love: number;
+  commentsCount: number;
   imageSrc: string;
   imageAlt: string;
 };
@@ -33,6 +38,64 @@ type FoodiesScrollStripProps = {
   items: RecipeScrollItem[];
   accentClassName: string;
 };
+
+function RecipeImage({ src, alt }: { src: string; alt: string }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(src);
+
+      if (!key || !key.startsWith("foodies/")) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
+}
 
 export function FoodiesScrollStrip({
   title,
@@ -125,40 +188,59 @@ export function FoodiesScrollStrip({
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
                   <div className="relative aspect-16/10 overflow-hidden">
-                    <Image
-                      src={ item.imageSrc }
-                      alt={ item.imageAlt }
-                      fill
-                      sizes="(max-width: 767px) 100vw, 288px"
-                      className="object-cover"
-                    />
+                    <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                    <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                      { item.kind === "latest" ? "Fresh recipe" : "Fan favorite" }
-                    </div>
+                    { item.kind === "latest" ? (
+                      <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                        Fresh recipe
+                      </div>
+                    ) : item.thumbsUp + item.love > 0 ? (
+                      <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                        Fan favorite
+                      </div>
+                    ) : null }
                   </div>
 
                   <div className="space-y-3 px-4 py-4">
                     <div>
                       <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
                       { item.kind === "latest" ? (
-                        <p className="mt-1 text-sm text-[#607887]">Added { item.date }</p>
+                        <div className="mt-1 flex items-center justify-between gap-3 text-sm text-[#607887]">
+                          <span>Added { item.date }</span>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                              <ThumbsUp className="size-4 text-[#2d87a8]" />
+                              { item.thumbsUp.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                              <Heart className="size-4 text-[#cf3f7f]" />
+                              { item.love.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                              <MessageSquareText className="size-4 text-[#2d87a8]" />
+                              { item.commentsCount.toLocaleString() }
+                            </span>
+                          </div>
+                        </div>
                       ) : (
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span className="inline-flex items-center gap-1.5 text-[#d08d11]">
-                            { Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={ `${ item.name }-star-${ index }` }
-                                className={ cn(
-                                  "size-4",
-                                  index < item.rating ? "fill-current text-[#d08d11]" : "text-[#d8dee3]"
-                                ) }
-                              />
-                            )) }
-                          </span>
+                        <div className="mt-2 grid gap-2 text-sm text-[#607887]">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#425e6d]">
+                              <ThumbsDown className="size-4 text-[#7e99a7]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                              <ThumbsUp className="size-4 text-[#2d87a8]" />
+                              { item.thumbsUp.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                              <Heart className="size-4 text-[#cf3f7f]" />
+                              { item.love.toLocaleString() }
+                            </span>
+                          </div>
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                            <ThumbsUp className="size-4 text-[#2d87a8]" />
-                            { item.recommendations.toLocaleString() } recommendations
+                            <MessageSquareText className="size-4 text-[#2d87a8]" />
+                            { item.commentsCount.toLocaleString() }
                           </span>
                         </div>
                       ) }

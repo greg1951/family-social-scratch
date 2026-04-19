@@ -1,148 +1,114 @@
 "use client";
 
-import { Clock3, MessageSquareText, Search, Star, Utensils } from "lucide-react";
-import { useDeferredValue, useState } from "react";
+import { Clock3, Heart, MessageSquareText, Search, Sparkles, ThumbsUp, Utensils } from "lucide-react";
+import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 
+import {
+  toggleRecipeLikeAction,
+  addRecipeCommentAction,
+  getFoodiesRecipeDetailAction,
+} from "@/app/(features)/(foodies)/foodies/actions";
+import { FoodiesRecipe, FoodiesRecipeDetail } from "@/components/db/types/recipes";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
+import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
-const latestRecipes = [
-  {
-    kind: "latest" as const,
-    name: "Steamed Dumplings",
-    date: "March 12, 2026",
-    imageSrc: "/images/foodies/steamed-dumplings-tablet.png",
-    imageAlt: "Steamed dumplings recipe photo",
-  },
-  {
-    kind: "latest" as const,
-    name: "Tofu Burger",
-    date: "March 3, 2026",
-    imageSrc: "/images/foodies/tofu-burger-tablet.png",
-    imageAlt: "Tofu burger recipe photo",
-  },
-  {
-    kind: "latest" as const,
-    name: "Banana Bread",
-    date: "February 24, 2026",
-    imageSrc: "/images/foodies/banana-bread-tablet.png",
-    imageAlt: "Banana bread recipe photo",
-  },
-  {
-    kind: "latest" as const,
-    name: "Vegetable Soup",
-    date: "February 11, 2026",
-    imageSrc: "/images/foodies/vegetable-soup-tablet.png",
-    imageAlt: "Vegetable soup recipe photo",
-  },
-];
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(value));
+}
 
-const topRatedRecipes = [
-  {
-    kind: "top-rated" as const,
-    name: "Mac N Cheese",
-    rating: 5,
-    recommendations: 226,
-    imageSrc: "/images/foodies/mac-n-cheese-tablet.png",
-    imageAlt: "Mac and cheese recipe photo",
-  },
-  {
-    kind: "top-rated" as const,
-    name: "Veggie Pizza",
-    rating: 5,
-    recommendations: 192,
-    imageSrc: "/images/foodies/veggie-pizza-tablet.png",
-    imageAlt: "Veggie pizza recipe photo",
-  },
-  {
-    kind: "top-rated" as const,
-    name: "Scalloped Pineapple",
-    rating: 4,
-    recommendations: 168,
-    imageSrc: "/images/foodies/scalloped-pineapple-tablet.png",
-    imageAlt: "Scalloped pineapple recipe photo",
-  },
-  {
-    kind: "top-rated" as const,
-    name: "Wiener Schnizel",
-    rating: 4,
-    recommendations: 154,
-    imageSrc: "/images/foodies/wiener-schnizel-tablet.png",
-    imageAlt: "Wiener schnizel recipe photo",
-  },
-];
+function formatCreatedAt(createdAt: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(createdAt));
+}
 
-const recipeFinderRows = [
-  {
-    name: "Steamed Dumplings",
-    chef: "Nina",
-    category: "Dinner",
-    prepTime: "25 min",
-    cookTime: "15 min",
-    comments: 33,
-  },
-  {
-    name: "Tofu Burger",
-    chef: "Isaac",
-    category: "Lunch",
-    prepTime: "20 min",
-    cookTime: "12 min",
-    comments: 24,
-  },
-  {
-    name: "Banana Bread",
-    chef: "Grace",
-    category: "Dessert",
-    prepTime: "15 min",
-    cookTime: "55 min",
-    comments: 41,
-  },
-  {
-    name: "Vegetable Soup",
-    chef: "Ruth",
-    category: "Soup",
-    prepTime: "18 min",
-    cookTime: "35 min",
-    comments: 28,
-  },
-  {
-    name: "Mac N Cheese",
-    chef: "Mila",
-    category: "Comfort Food",
-    prepTime: "14 min",
-    cookTime: "22 min",
-    comments: 47,
-  },
-  {
-    name: "Veggie Pizza",
-    chef: "Ben",
-    category: "Dinner",
-    prepTime: "25 min",
-    cookTime: "18 min",
-    comments: 36,
-  },
-  {
-    name: "Scalloped Pineapple",
-    chef: "Henry",
-    category: "Side Dish",
-    prepTime: "20 min",
-    cookTime: "40 min",
-    comments: 19,
-  },
-  {
-    name: "Wiener Schnizel",
-    chef: "Owen",
-    category: "Dinner",
-    prepTime: "22 min",
-    cookTime: "16 min",
-    comments: 22,
-  },
-];
+function createFinderCategory(recipe: FoodiesRecipe) {
+  const primaryTag = recipe.tagNamesByType.course_type?.[0]
+    ?? recipe.tagNamesByType.cuisine?.[0]
+    ?? recipe.tagNamesByType.meal_time?.[0]
+    ?? recipe.tagNamesByType.cooking_method?.[0]
+    ?? recipe.tagNamesByType.dietary?.[0];
 
-export function FoodiesHomePage() {
+  return primaryTag ?? "General";
+}
+
+export function FoodiesHomePage({
+  recipes,
+  member,
+}: {
+  recipes: FoodiesRecipe[];
+  member: MemberKeyDetails;
+}) {
+  const [isEngaging, startEngageTransition] = useTransition();
+  const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
+  const [commentText, setCommentText] = useState("");
+
+  const selectedRecipeRecord = recipes[0] ?? null;
+  const latestRecipeRecords = [...recipes]
+    .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
+    .slice(0, 8);
+
+  const latestRecipes = latestRecipeRecords
+    .map((recipe) => ({
+      kind: "latest" as const,
+      name: recipe.recipeTitle,
+      date: formatDate(recipe.updatedAt),
+      commentsCount: recipe.commentCount,
+      thumbsUp: recipe.thumbsUpCount,
+      love: recipe.loveCount,
+      imageSrc: recipe.recipeImageUrl ?? "/images/foodies/banana-bread-tablet.png",
+      imageAlt: `${ recipe.recipeTitle } recipe photo`,
+    }));
+
+  const topRatedRecipes = [...recipes]
+    .sort((leftRecipe, rightRecipe) => {
+      const leftScore = (leftRecipe.thumbsUpCount + (leftRecipe.loveCount * 2));
+      const rightScore = (rightRecipe.thumbsUpCount + (rightRecipe.loveCount * 2));
+
+      if (leftScore !== rightScore) {
+        return rightScore - leftScore;
+      }
+
+      if (leftRecipe.commentCount !== rightRecipe.commentCount) {
+        return rightRecipe.commentCount - leftRecipe.commentCount;
+      }
+
+      return +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt);
+    })
+    .slice(0, 8)
+    .map((recipe) => ({
+      kind: "top-rated" as const,
+      name: recipe.recipeTitle,
+      noRating: recipe.noRatingCount,
+      thumbsUp: recipe.thumbsUpCount,
+      love: recipe.loveCount,
+      commentsCount: recipe.commentCount,
+      imageSrc: recipe.recipeImageUrl ?? "/images/foodies/vegetable-soup-tablet.png",
+      imageAlt: `${ recipe.recipeTitle } recipe photo`,
+    }));
+
+  const recipeFinderRows = recipes.map((recipe) => ({
+    id: recipe.id,
+    name: recipe.recipeTitle,
+    chef: recipe.submitterName,
+    category: createFinderCategory(recipe),
+    prepTimeMins: recipe.prepTimeMins,
+    cookTimeMins: recipe.cookTimeMins,
+    comments: recipe.commentCount,
+  }));
+
   const [searchValue, setSearchValue] = useState("");
-  const [selectedRecipe, setSelectedRecipe] = useState(recipeFinderRows[0]?.name ?? "");
+  const [selectedRecipe, setSelectedRecipe] = useState(recipeFinderRows[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
   const filteredRecipes = recipeFinderRows.filter((recipe) => {
@@ -152,11 +118,107 @@ export function FoodiesHomePage() {
       return true;
     }
 
-    return [recipe.name, recipe.chef, recipe.category]
+    return [recipe.name, recipe.chef, recipe.category, String(recipe.prepTimeMins), String(recipe.cookTimeMins)]
       .join(" ")
       .toLowerCase()
       .includes(query);
   });
+
+  useEffect(() => {
+    if (!selectedRecipe) {
+      setSelectedRecipeDetail(null);
+      return;
+    }
+
+    let isCancelled = false;
+
+    startEngageTransition(async () => {
+      const result = await getFoodiesRecipeDetailAction({ recipeId: selectedRecipe });
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (!result.success) {
+        setSelectedRecipeDetail(null);
+        return;
+      }
+
+      setSelectedRecipeDetail(result.recipe);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedRecipe]);
+
+  const selectedRecipeName = recipeFinderRows.find((recipe) => recipe.id === selectedRecipe)?.name ?? "";
+  const selectedRecipeBasic =
+    (selectedRecipeDetail?.id === selectedRecipe
+      ? selectedRecipeDetail
+      : recipes.find((recipe) => recipe.id === selectedRecipe))
+    ?? selectedRecipeRecord;
+  const canEditSelectedRecipe = selectedRecipeBasic?.memberId === member.memberId;
+  const topRatedRecipesWithReactions = topRatedRecipes.filter((recipe) => recipe.thumbsUp + recipe.love > 0).length;
+
+  function handleSelectRecipe(recipeId: number) {
+    setCommentText("");
+    const recipe = recipes.find((r) => r.id === recipeId);
+    if (recipe) {
+      setSelectedRecipe(recipeId);
+      setSelectedRecipeDetail(null);
+    }
+  }
+
+  function handleToggleLike(likenessDegree: number) {
+    if (!selectedRecipeBasic) {
+      return;
+    }
+
+    startEngageTransition(async () => {
+      const result = await toggleRecipeLikeAction({
+        recipeId: selectedRecipeBasic.id,
+        likenessDegree,
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSelectedRecipeDetail(result.recipe);
+      toast.success(result.message);
+    });
+  }
+
+  function handleAddComment() {
+    if (!selectedRecipeBasic) {
+      return;
+    }
+
+    const normalizedComment = commentText.trim();
+
+    if (normalizedComment.length < 2) {
+      toast.error("Enter at least 2 characters before posting your comment.");
+      return;
+    }
+
+    startEngageTransition(async () => {
+      const result = await addRecipeCommentAction({
+        recipeId: selectedRecipeBasic.id,
+        commentText: normalizedComment,
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSelectedRecipeDetail(result.recipe);
+      setCommentText("");
+      toast.success(result.message);
+    });
+  }
 
   return (
     <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -175,25 +237,56 @@ export function FoodiesHomePage() {
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Keep your family&apos;s recipes together in one place
               </h1>
-              {/* <p className="mt-4 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
-                Discover the latest dishes, see the top-rated classics, and quickly find the next recipe your family wants to cook.
-              </p> */}
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
+                Browse the latest uploads and top family favorites. , then add your own.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/foodies/add-recipe"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <Sparkles className="mr-2 size-4" />
+                  Add Recipe
+                </Link>
+                <Link
+                  href="/foodies/templates"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  Manage Templates
+                </Link>
+                { canEditSelectedRecipe && selectedRecipeBasic ? (
+                  <Link
+                    href={ `/foodies/edit-recipe/${ selectedRecipeBasic.id }` }
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    Edit Recipe
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled
+                    className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white/55"
+                  >
+                    Edit Recipe
+                  </button>
+                ) }
+              </div>
             </div>
 
             <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-3 lg:min-w-[24rem]">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Latest</p>
-                <p className="mt-2 text-2xl font-black">4</p>
+                <p className="mt-2 text-2xl font-black">{ latestRecipes.length }</p>
                 <p className="text-sm text-[#f1ffe4]">fresh recipes</p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Top Rated</p>
-                <p className="mt-2 text-2xl font-black">4.6</p>
-                <p className="text-sm text-[#f1ffe4]">average rating</p>
+                <p className="mt-2 text-2xl font-black">{ topRatedRecipesWithReactions }</p>
+                <p className="text-sm text-[#f1ffe4]">with reactions</p>
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Finder</p>
-                <p className="mt-2 text-2xl font-black">8</p>
+                <p className="mt-2 text-2xl font-black">{ recipes.length }</p>
                 <p className="text-sm text-[#f1ffe4]">searchable recipes</p>
               </div>
             </div>
@@ -211,7 +304,7 @@ export function FoodiesHomePage() {
 
             <FoodiesScrollStrip
               title="Top Rated Recipes"
-              description="Favorites with star ratings and recommendation totals from your family cooking circle."
+              description="Family reaction totals based on no-rating, thumbs-up, and love reactions, plus comment counts."
               items={ topRatedRecipes }
               accentClassName="bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]"
             />
@@ -241,7 +334,7 @@ export function FoodiesHomePage() {
                   type="search"
                   value={ searchValue }
                   onChange={ (event) => setSearchValue(event.target.value) }
-                  placeholder="Search by recipe, chef, or category"
+                  placeholder="Search by recipe, chef, category, or time"
                   className="h-12 rounded-full border-[#ccdfb9] bg-white pl-11 pr-4 text-sm text-[#2f4820] shadow-sm"
                   aria-label="Search recipes"
                 />
@@ -252,7 +345,7 @@ export function FoodiesHomePage() {
               <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#f4fae7,#fbfff3)] px-4 py-3 text-sm text-[#4f6f36]">
                 <Utensils className="size-4 text-[#5e8a2f]" />
                 <span className="font-semibold text-[#2f4820]">Selected recipe:</span>
-                <span>{ selectedRecipe || "Choose a recipe from the list" }</span>
+                <span>{ selectedRecipeName || "Choose a recipe from the list" }</span>
               </div>
 
               <div className="overflow-hidden rounded-[1.4rem] border border-[#dbeacc]">
@@ -270,17 +363,17 @@ export function FoodiesHomePage() {
                     </thead>
                     <tbody>
                       { filteredRecipes.map((recipe) => {
-                        const isSelected = selectedRecipe === recipe.name;
+                        const isSelected = selectedRecipe === recipe.id;
 
                         return (
                           <tr
-                            key={ recipe.name }
+                            key={ recipe.id }
                             className="border-t border-[#e7f0d9] bg-white transition hover:bg-[#fbfff3]"
                           >
                             <td className="px-2 py-2 sm:px-3">
                               <button
                                 type="button"
-                                onClick={ () => setSelectedRecipe(recipe.name) }
+                                onClick={ () => handleSelectRecipe(recipe.id) }
                                 className={ [
                                   "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9fd46a]",
                                   isSelected ? "bg-[#f3fce7] shadow-sm" : "hover:bg-[#f7fde9]",
@@ -299,10 +392,12 @@ export function FoodiesHomePage() {
                             <td className="px-4 py-3 text-sm text-[#4e6640]">
                               <span className="inline-flex items-center gap-2 font-semibold text-[#476232]">
                                 <Clock3 className="size-4 text-[#5d7f3f]" />
-                                { recipe.prepTime }
+                                { recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins } min` : "-" }
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-sm text-[#4e6640]">{ recipe.cookTime }</td>
+                            <td className="px-4 py-3 text-sm text-[#4e6640]">
+                              { recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins } min` : "-" }
+                            </td>
                             <td className="px-4 py-3 text-sm font-semibold text-[#476232]">
                               <span className="inline-flex items-center gap-2">
                                 <MessageSquareText className="size-4 text-[#5d7f3f]" />
@@ -321,6 +416,122 @@ export function FoodiesHomePage() {
                     No recipes match that search yet.
                   </div>
                 ) : null }
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)]">
+              <div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
+                      Recipe Reactions
+                    </p>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
+                      Like or love this recipe, and share your thoughts with the family.
+                    </p>
+                  </div>
+                  <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
+                    <MessageSquareText className="mr-2 size-3.5" />
+                    { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic?.commentCount ?? 0 } comments
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-5 px-5 py-5 sm:px-6">
+                { selectedRecipeBasic ? (
+                  <>
+                    <div className="space-y-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] p-4">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(1) }
+                          disabled={ !selectedRecipeBasic || isEngaging }
+                          className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
+                          aria-label={ selectedRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                        >
+                          <ThumbsUp className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(2) }
+                          disabled={ !selectedRecipeBasic || isEngaging }
+                          className="rounded-full bg-[#d9842a] text-white hover:bg-[#c5731f]"
+                          aria-label={ selectedRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
+                        >
+                          <Heart className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4">
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#476232]">
+                          <ThumbsUp className="size-4 text-[#578c24]" />
+                          { (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic?.thumbsUpCount ?? 0).toLocaleString() }
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#476232]">
+                          <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" />
+                          { (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic?.loveCount ?? 0).toLocaleString() }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] p-4">
+                      <div>
+                        <p className="text-sm font-semibold text-[#2f4820]">Family Comments</p>
+                        <p className="text-sm text-[#647a50]">Share your thoughts on this recipe with your family.</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#2f4820]" htmlFor="recipe-comment-input">
+                          Add Comment
+                        </label>
+                        <textarea
+                          id="recipe-comment-input"
+                          value={ commentText }
+                          onChange={ (event) => setCommentText(event.target.value) }
+                          placeholder="What do you think about this recipe?"
+                          disabled={ !selectedRecipeBasic || isEngaging }
+                          className="min-h-24 w-full rounded-xl border border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#2f4820] outline-none transition focus-visible:ring-2 focus-visible:ring-[#578c24]"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            onClick={ handleAddComment }
+                            disabled={ !selectedRecipeBasic || isEngaging || commentText.trim().length < 2 }
+                            className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
+                          >
+                            Post Comment
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        { selectedRecipeDetail?.id === selectedRecipe && selectedRecipeDetail.recipeComments.length === 0 ? (
+                          <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
+                            No comments yet. Be the first family member to add one.
+                          </p>
+                        ) : selectedRecipeDetail?.id !== selectedRecipe ? (
+                          <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
+                            Loading comments...
+                          </p>
+                        ) : (
+                          (selectedRecipeDetail?.recipeComments ?? []).map((comment) => (
+                            <article key={ comment.id } className="rounded-2xl border border-[#dbeacc] bg-white px-3 py-3 text-sm text-[#4e6640]">
+                              <p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p>
+                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
+                                { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
+                              </p>
+                            </article>
+                          ))
+                        ) }
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-[#dbeacc] bg-[#faf8ff] px-6 py-10 text-center text-[#647a50]">
+                    <MessageSquareText className="mx-auto mb-3 size-10 text-[#8fa973]" />
+                    <p className="text-lg font-semibold text-[#2f4820]">Select a recipe to view comments.</p>
+                    <p className="mt-2 text-sm">Choose a recipe from the finder list to see and post comments.</p>
+                  </div>
+                ) }
               </div>
             </div>
           </div>

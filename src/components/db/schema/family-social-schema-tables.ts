@@ -433,16 +433,18 @@ export const recipe = pgTable("recipe", {
   updatedAt: timestamp("updated_at").defaultNow(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+  templateId: integer("fk_template_id").references(() => recipeTemplate.id, {onDelete: 'set null'}),
 },
   (table) => [
     index('recipe_member_id_idx').on(table.memberId),
     index('recipe_family_id_idx').on(table.familyId),
+    index('recipe_template_id_idx').on(table.templateId),
   ]
 );
 
 export const recipeComment = pgTable("recipe_comment", {
   id: serial("id").primaryKey(),
-  isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
+  isRecipeAnalysis: boolean("is_recipe_analysis").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
@@ -456,17 +458,18 @@ export const recipeComment = pgTable("recipe_comment", {
 
 export const recipeTemplate = pgTable("recipe_template", {
   id: serial("id").primaryKey(),
-  isRecipeAnalysis: boolean("is_recipe_analysis").notNull().default(false),
+  templateName: text("template_name").notNull().default("").unique(),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
   templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
   memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'set null'}),
   familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'set null'}),
 },
   (table) => [
-    index('recipe_template_recipe_id_idx').on(table.recipeId),
     index('recipe_template_member_id_idx').on(table.memberId),
     index('recipe_template_family_id_idx').on(table.familyId),
+    unique('recipe_template_family_id_name_uq').on(table.familyId, table.templateName),
   ]
 );
 
