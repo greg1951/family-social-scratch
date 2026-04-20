@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "It's alive! See Family Foodies in action.",
+    summary: "Family Foodies is now live in the family social experience! You can access it from the main navigation and start sharing your favorite recipes with your family. It comes with a recipe template but you can create your own recipe template, if you hate ours 😒 ",
+    category: "Features",
+    date: "April 20, 2026",
+  },
+  {
     title: "It's Family Picture Day!",
     summary: "Upload your favority mugshot (of yourself) to be featured across the family social experience. Your image will be used in your profile and across various features to help your family members recognize you and feel more connected. To upload your image, go to the My Account page and click on the Upload Image button. We can't wait to see your smiling face!",
     category: "Features",
