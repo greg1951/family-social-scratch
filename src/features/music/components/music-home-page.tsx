@@ -143,7 +143,7 @@ export function MusicHomePage() {
   });
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(36,30,79,0.95),rgba(69,55,132,0.86)_56%,rgba(126,110,202,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(26,20,60,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">

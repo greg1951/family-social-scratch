@@ -19,5 +19,5 @@ export default async function FoodiesPage() {
 
   const recipes = foodiesData.success ? foodiesData.recipes : [];
 
-  return <FoodiesHomePage recipes={ recipes } member={ memberKeyDetails } />;
+  return <FoodiesHomePage recipes={ recipes } member={ memberKeyDetails } isAdmin={ memberKeyDetails.isAdmin ?? false } />;
 }

@@ -236,7 +236,7 @@ export function FoodiesTemplatePage({
   }
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -254,7 +254,7 @@ export function FoodiesTemplatePage({
                 Recipe Templates
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
-                Create templates in draft or published status, browse your family template catalog, and edit only the templates you own.
+                A global recipe template is defined (but not listed). Here you may create family templates for your own use.
               </p>
             </div>
 
@@ -289,7 +289,7 @@ export function FoodiesTemplatePage({
             <div className="max-h-128 overflow-y-auto p-3">
               { templates.length === 0 ? (
                 <p className="rounded-xl border border-[#dbeacc] bg-[#f8fce9] px-3 py-4 text-sm text-[#5f7a40]">
-                  No templates found for this family.
+                  No family templates found.
                 </p>
               ) : (
                 <div className="space-y-2">

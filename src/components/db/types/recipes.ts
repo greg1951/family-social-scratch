@@ -183,3 +183,30 @@ export type AddRecipeCommentReturn =
       recipe: FoodiesRecipeDetail;
       message: string;
     };
+
+export interface RecipeTerm {
+  id: number;
+  term: string;
+  termJson: string;
+  status: string;
+  updatedAt: Date;
+}
+
+export interface SaveRecipeTermInput {
+  id?: number;
+  term: string;
+  termJson: string;
+  status: string;
+}
+
+export type SaveRecipeTermReturn =
+  | { success: false; message: string }
+  | { success: true; recipeTerm: RecipeTerm; message: string };
+
+export type GetRecipeTermReturn =
+  | { success: false; message: string }
+  | { success: true; recipeTerm: RecipeTerm };
+
+export type RecipeTermsReturn =
+  | { success: false; message: string }
+  | { success: true; recipeTerms: RecipeTerm[] };

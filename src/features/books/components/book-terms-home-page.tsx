@@ -3,7 +3,7 @@
 import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookText, PenSquare, Plus } from "lucide-react";
+import { BookText, Eye, PenSquare, Plus } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -14,6 +14,13 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { BookTerm } from "@/components/db/types/books";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type BookTermsHomePageProps = {
   bookTerms: BookTerm[];
@@ -34,7 +41,7 @@ function parseTermContent(termJson: string | undefined) {
   return createTextTipTapDocument(parsed.message);
 }
 
-function BookTermPreview({ termJson }: { termJson?: string }) {
+function BookTermPreview({ termJson, expanded = false }: { termJson?: string; expanded?: boolean }) {
   const previewEditor = useEditor({
     extensions: [
       StarterKit,
@@ -70,7 +77,10 @@ function BookTermPreview({ termJson }: { termJson?: string }) {
 
   return (
     <div className="overflow-hidden rounded-2xl border border-[#d9e5ea] bg-white">
-      <div className="max-h-40 overflow-hidden px-3 py-3">
+      <div className={ expanded
+        ? "px-4 py-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#b9d2dd] [&_.tiptap_blockquote]:pl-4"
+        : "max-h-40 overflow-hidden px-3 py-3 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#b9d2dd] [&_.tiptap_blockquote]:pl-4" }
+      >
         <EditorContent editor={ previewEditor } />
       </div>
     </div>
@@ -79,11 +89,12 @@ function BookTermPreview({ termJson }: { termJson?: string }) {
 
 export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps) {
   const [selectedTermId, setSelectedTermId] = useState<number | null>(bookTerms[0]?.id ?? null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
   const selectedTerm = bookTerms.find((term) => term.id === selectedTermId) ?? null;
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -118,6 +129,16 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
               </div>
 
               <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={ !selectedTerm }
+                  onClick={ () => setIsViewDialogOpen(true) }
+                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"
+                >
+                  <Eye />
+                  View Selected Term
+                </Button>
                 { isAdmin ? (
                   <>
                     <Button
@@ -161,7 +182,7 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
                   Browse Book Vocabulary
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
-                  Editors can select a term to edit.
+                  { isAdmin ? "View any term in full, or select one to edit." : "Select a term, then use View Selected Term to read the full glossary entry." }
                 </p>
               </div>
               <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
@@ -209,6 +230,22 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
           </div>
         </div>
       </div>
+
+      <Dialog open={ isViewDialogOpen } onOpenChange={ setIsViewDialogOpen }>
+        <DialogContent className="border-[#d9e5ea] bg-[#f4fbff] sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#183746]">{ selectedTerm?.term ?? "Book Term" }</DialogTitle>
+            <DialogDescription className="text-[#51707e]">
+              Read the full book glossary entry.
+            </DialogDescription>
+          </DialogHeader>
+          { selectedTerm ? (
+            <div className="max-h-[70vh] overflow-auto rounded-2xl border border-[#d9e5ea] bg-white">
+              <BookTermPreview termJson={ selectedTerm.termJson } expanded />
+            </div>
+          ) : null }
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

@@ -97,15 +97,31 @@ type ToolbarButtonProps = {
   onClick: () => void;
   active?: boolean;
   disabled?: boolean;
+  preserveSelection?: boolean;
+  onMouseDownAction?: () => void;
   children: React.ReactNode;
 };
 
-function ToolbarButton({ label, onClick, active = false, disabled = false, children }: ToolbarButtonProps) {
+function ToolbarButton({
+  label,
+  onClick,
+  active = false,
+  disabled = false,
+  preserveSelection = false,
+  onMouseDownAction,
+  children,
+}: ToolbarButtonProps) {
   return (
     <Button
       type="button"
       size="sm"
       variant="outline"
+      onMouseDown={ preserveSelection || onMouseDownAction
+        ? (event) => {
+          event.preventDefault();
+          onMouseDownAction?.();
+        }
+        : undefined }
       onClick={ onClick }
       disabled={ disabled }
       aria-label={ label }
@@ -312,7 +328,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
   }
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,27,88,0.96),rgba(104,53,148,0.88)_56%,rgba(195,150,110,0.84))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(46,18,70,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -412,7 +428,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
                       <FormControl>
                         <input { ...field } type="hidden" />
                       </FormControl>
-                      <div className="overflow-hidden rounded-2xl border border-[#d7d0ea] bg-[#f9f4ff]">
+                      <div className="overflow-hidden rounded-2xl border border-[#d7d0ea] bg-[#f9f4ff] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#cfbbe3] [&_.tiptap_blockquote]:pl-4">
                         <div className="flex flex-wrap gap-2 border-b border-[#d7d0ea] px-3 py-3">
                           <ToolbarButton
                             label="Heading 2"
@@ -459,6 +475,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
                             onClick={ () => editor?.chain().focus().toggleBulletList().run() }
                             active={ editor?.isActive("bulletList") }
                             disabled={ !editor?.can().chain().focus().toggleBulletList().run() }
+                            preserveSelection
                           >
                             <List />
                           </ToolbarButton>
@@ -467,6 +484,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
                             onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
                             active={ editor?.isActive("orderedList") }
                             disabled={ !editor?.can().chain().focus().toggleOrderedList().run() }
+                            preserveSelection
                           >
                             <ListOrdered />
                           </ToolbarButton>
@@ -498,6 +516,8 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
                             onClick={ openLinkDialog }
                             active={ editor?.isActive("link") }
                             disabled={ !editor }
+                            preserveSelection
+                            onMouseDownAction={ openLinkDialog }
                           >
                             <Link2 />
                           </ToolbarButton>

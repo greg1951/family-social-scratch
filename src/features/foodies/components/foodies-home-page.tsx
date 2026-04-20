@@ -1,6 +1,12 @@
 "use client";
 
-import { Clock3, Heart, MessageSquareText, Search, Sparkles, ThumbsUp, Utensils } from "lucide-react";
+import type { JSONContent } from "@tiptap/core";
+import LinkExtension from "@tiptap/extension-link";
+import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import { EditorContent, useEditor } from "@tiptap/react";
+import { Clock3, Eye, Heart, MessageSquareText, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -11,8 +17,19 @@ import {
   getFoodiesRecipeDetailAction,
 } from "@/app/(features)/(foodies)/foodies/actions";
 import { FoodiesRecipe, FoodiesRecipeDetail } from "@/components/db/types/recipes";
+import {
+  createEmptyTipTapDocument,
+  parseSerializedTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
@@ -42,16 +59,68 @@ function createFinderCategory(recipe: FoodiesRecipe) {
   return primaryTag ?? "General";
 }
 
+function getRecipeDocument(recipeJson?: string): JSONContent {
+  if (!recipeJson) {
+    return createEmptyTipTapDocument();
+  }
+
+  const parsed = parseSerializedTipTapDocument(recipeJson);
+  return parsed.success ? parsed.content : createEmptyTipTapDocument();
+}
+
+function RecipeViewer({ recipeJson }: { recipeJson?: string }) {
+  const viewer = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
+    ],
+    content: getRecipeDocument(recipeJson),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-112 text-[#2f4820] focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!viewer) {
+      return;
+    }
+
+    viewer.commands.setContent(getRecipeDocument(recipeJson));
+  }, [viewer, recipeJson]);
+
+  return (
+    <div className="rounded-2xl border border-[#cadfbb] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+      <EditorContent editor={ viewer } />
+    </div>
+  );
+}
+
 export function FoodiesHomePage({
   recipes,
   member,
+  isAdmin,
 }: {
   recipes: FoodiesRecipe[];
   member: MemberKeyDetails;
+  isAdmin: boolean;
 }) {
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
 
   const selectedRecipeRecord = recipes[0] ?? null;
   const latestRecipeRecords = [...recipes]
@@ -159,7 +228,6 @@ export function FoodiesHomePage({
       : recipes.find((recipe) => recipe.id === selectedRecipe))
     ?? selectedRecipeRecord;
   const canEditSelectedRecipe = selectedRecipeBasic?.memberId === member.memberId;
-  const topRatedRecipesWithReactions = topRatedRecipes.filter((recipe) => recipe.thumbsUp + recipe.love > 0).length;
 
   function handleSelectRecipe(recipeId: number) {
     setCommentText("");
@@ -221,7 +289,7 @@ export function FoodiesHomePage({
   }
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -242,52 +310,80 @@ export function FoodiesHomePage({
               </p>
               <div className="mt-4 flex flex-wrap gap-3">
                 <Link
-                  href="/foodies/add-recipe"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                >
-                  <Sparkles className="mr-2 size-4" />
-                  Add Recipe
-                </Link>
-                <Link
                   href="/foodies/templates"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   Manage Templates
                 </Link>
-                { canEditSelectedRecipe && selectedRecipeBasic ? (
-                  <Link
-                    href={ `/foodies/edit-recipe/${ selectedRecipeBasic.id }` }
-                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  >
-                    Edit Recipe
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    disabled
-                    className="inline-flex items-center rounded-full border border-white/20 bg-white/5 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-white/55"
-                  >
-                    Edit Recipe
-                  </button>
-                ) }
+                <Link
+                  href="/recipe-terms"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  Recipe Terms
+                </Link>
               </div>
             </div>
 
-            <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-3 lg:min-w-[24rem]">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Latest</p>
-                <p className="mt-2 text-2xl font-black">{ latestRecipes.length }</p>
-                <p className="text-sm text-[#f1ffe4]">fresh recipes</p>
+            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[24rem]">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Recipes</p>
+                  <p className="mt-2 text-2xl font-black">{ recipes.length }</p>
+                  <p className="text-sm text-[#f1ffe4]">records in view</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Selected</p>
+                  <p className="mt-2 text-lg font-black leading-tight">
+                    { selectedRecipeBasic?.recipeTitle ?? "None" }
+                  </p>
+                  <p className="text-sm text-[#f1ffe4]">active recipe</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Top Rated</p>
-                <p className="mt-2 text-2xl font-black">{ topRatedRecipesWithReactions }</p>
-                <p className="text-sm text-[#f1ffe4]">with reactions</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Finder</p>
-                <p className="mt-2 text-2xl font-black">{ recipes.length }</p>
-                <p className="text-sm text-[#f1ffe4]">searchable recipes</p>
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  onClick={ () => setIsViewRecipeOpen(true) }
+                  disabled={ !selectedRecipeBasic }
+                  className="rounded-full bg-white text-[#2f4820] hover:bg-[#f1ffe4]"
+                >
+                  <Eye className="size-4" />
+                  View Recipe
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  asChild
+                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                >
+                  <Link href="/foodies/add-recipe">
+                    <Sparkles className="size-4" />
+                    Add Recipe
+                  </Link>
+                </Button>
+
+                { canEditSelectedRecipe && selectedRecipeBasic ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+                  >
+                    <Link href={ `/foodies/edit-recipe/${ selectedRecipeBasic.id }` }>
+                      Edit Recipe
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled
+                    className="rounded-full border-white/20 bg-white/5 text-white/55"
+                  >
+                    Edit Recipe
+                  </Button>
+                ) }
               </div>
             </div>
           </div>
@@ -297,7 +393,7 @@ export function FoodiesHomePage({
           <div className="space-y-6">
             <FoodiesScrollStrip
               title="Latest Recipes"
-              description="New dishes added by family members. Use arrows on larger screens, or scroll vertically on small screens."
+              description="New dishes added by family members."
               items={ latestRecipes }
               accentClassName="bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
             />
@@ -537,6 +633,66 @@ export function FoodiesHomePage({
           </div>
         </div>
       </div>
+
+      <Dialog open={ isViewRecipeOpen } onOpenChange={ setIsViewRecipeOpen }>
+        <DialogContent className="border-[#cadfbb] bg-[#f7fce8] sm:max-w-5xl">
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle className="text-[#2f4820]">{ selectedRecipeBasic?.recipeTitle ?? "Recipe" }</DialogTitle>
+                <DialogDescription className="mt-2 text-[#647a50]">
+                  Read the selected recipe in full.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          { selectedRecipeBasic ? (
+            <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+                <RecipeViewer recipeJson={ selectedRecipeBasic.recipeJson } />
+
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Summary</p>
+                    <p className="mt-2 text-sm leading-6 text-[#4e6640]">
+                      { selectedRecipeBasic.recipeShortSummary || "No summary provided." }
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Details</p>
+                    <div className="mt-3 space-y-3 text-sm text-[#4e6640]">
+                      <p><span className="font-semibold text-[#2f4820]">Submitter:</span> { selectedRecipeBasic.submitterName }</p>
+                      <p><span className="font-semibold text-[#2f4820]">Updated:</span> { formatDate(selectedRecipeBasic.updatedAt) }</p>
+                      <p><span className="font-semibold text-[#2f4820]">Prep:</span> { selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-" }</p>
+                      <p><span className="font-semibold text-[#2f4820]">Cook:</span> { selectedRecipeBasic.cookTimeMins > 0 ? `${ selectedRecipeBasic.cookTimeMins } min` : "-" }</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Reactions</p>
+                    <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#476232]">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
+                        <ThumbsUp className="size-4 text-[#578c24]" />
+                        { (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0).toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#fff4e8] px-3 py-1 text-[#9a5e18]">
+                        <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" />
+                        { (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0).toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
+                        <MessageSquareText className="size-4 text-[#5d7f3f]" />
+                        { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0 }
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null }
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

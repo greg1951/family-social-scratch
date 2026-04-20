@@ -79,7 +79,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   ).length;
 
   return (
-    <section className="w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
 
         {/* ── Hero banner ─────────────────────────────────────────────── */ }

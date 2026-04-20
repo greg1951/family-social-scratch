@@ -9,6 +9,7 @@ import {
   recipeTag,
   recipeTagReference,
   recipeTemplate,
+  recipeTerm,
 } from "../schema/family-social-schema-tables";
 import {
   FoodiesTemplateManagementDataReturn,
@@ -28,6 +29,11 @@ import {
   ToggleRecipeLikeReturn,
   AddRecipeCommentReturn,
   GetFoodiesRecipeDetailReturn,
+  RecipeTerm,
+  GetRecipeTermReturn,
+  RecipeTermsReturn,
+  SaveRecipeTermInput,
+  SaveRecipeTermReturn,
 } from "../types/recipes";
 import {
   createEmptyTipTapDocument,
@@ -1158,4 +1164,120 @@ export async function addRecipeComment(
       message: error instanceof Error ? error.message : "Failed to add comment.",
     };
   }
+}
+
+/*------------------ getRecipeTerms ------------------ */
+export async function getRecipeTerms(): Promise<RecipeTermsReturn> {
+  const result = await db
+    .select()
+    .from(recipeTerm)
+    .orderBy(asc(recipeTerm.term));
+
+  const recipeTerms = result.map((row) => ({
+    id: row.id,
+    term: row.term,
+    termJson: row.termJson,
+    status: row.status,
+    updatedAt: row.updatedAt as Date,
+  }));
+
+  return { success: true, recipeTerms };
+}
+
+export async function getRecipeTermById(id: number): Promise<GetRecipeTermReturn> {
+  const [result] = await db
+    .select()
+    .from(recipeTerm)
+    .where(eq(recipeTerm.id, id));
+
+  if (!result) {
+    return { success: false, message: `No recipe term found for id: ${id}` };
+  }
+
+  return {
+    success: true,
+    recipeTerm: {
+      id: result.id,
+      term: result.term,
+      termJson: result.termJson,
+      status: result.status,
+      updatedAt: result.updatedAt as Date,
+    },
+  };
+}
+
+export async function saveRecipeTerm(input: SaveRecipeTermInput): Promise<SaveRecipeTermReturn> {
+  const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
+
+  if (!parsedTermJson.success) {
+    return { success: false, message: parsedTermJson.message };
+  }
+
+  const termPayload = {
+    term: input.term.trim(),
+    termJson: serializeTipTapDocument(parsedTermJson.content),
+    status: input.status.trim(),
+  };
+
+  const duplicateConditions = input.id
+    ? and(ilike(recipeTerm.term, termPayload.term), ne(recipeTerm.id, input.id))
+    : ilike(recipeTerm.term, termPayload.term);
+
+  const [existingTerm] = await db
+    .select({ id: recipeTerm.id })
+    .from(recipeTerm)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingTerm) {
+    return {
+      success: false,
+      message: `A term named "${termPayload.term}" already exists. Term names must be unique.`,
+    };
+  }
+
+  if (input.id) {
+    const [result] = await db
+      .update(recipeTerm)
+      .set(termPayload)
+      .where(eq(recipeTerm.id, input.id))
+      .returning();
+
+    if (!result) {
+      return { success: false, message: `Failed to update recipe term with id: ${input.id}` };
+    }
+
+    return {
+      success: true,
+      recipeTerm: {
+        id: result.id,
+        term: result.term,
+        termJson: result.termJson,
+        status: result.status,
+        updatedAt: result.updatedAt as Date,
+      },
+      message: `Saved changes to "${result.term}".`,
+    };
+  }
+
+  const [result] = await db
+    .insert(recipeTerm)
+    .values(termPayload)
+    .returning();
+
+  if (!result) {
+    return { success: false, message: "Failed to create recipe term." };
+  }
+
+  return {
+    success: true,
+    recipeTerm: {
+      id: result.id,
+      term: result.term,
+      termJson: result.termJson,
+      status: result.status,
+      updatedAt: result.updatedAt as Date,
+    },
+    message: `Created "${result.term}".`,
+  };
 }
