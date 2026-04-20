@@ -20,11 +20,11 @@ export async function getS3ClientForFamily(familyId: number): Promise<FamilyS3Cl
   const cached = familyS3ClientCache.get(familyId);
 
   if (cached && cached.expiresAt > now) {
-    console.info("[s3-client-factory] using cached S3 client", {
-      familyId,
-      bucketName: cached.bucketName,
-      region: cached.region,
-    });
+    // console.info("[s3-client-factory] using cached S3 client", {
+    //   familyId,
+    //   bucketName: cached.bucketName,
+    //   region: cached.region,
+    // });
     return {
       client: cached.client,
       bucketName: cached.bucketName,
@@ -60,12 +60,12 @@ export async function getS3ClientForFamily(familyId: number): Promise<FamilyS3Cl
     throw error;
   }
 
-  console.info("[s3-client-factory] resolved active credentials", {
-    familyId,
-    credentialId: credentialsResult.credentialId,
-    bucketName: credentialsResult.bucketName,
-    region: credentialsResult.region,
-  });
+  // console.info("[s3-client-factory] resolved active credentials", {
+  //   familyId,
+  //   credentialId: credentialsResult.credentialId,
+  //   bucketName: credentialsResult.bucketName,
+  //   region: credentialsResult.region,
+  // });
 
   const context: CachedS3ClientContext = {
     client: new S3Client({
@@ -91,11 +91,11 @@ export async function getS3ClientForFamily(familyId: number): Promise<FamilyS3Cl
 
 export function clearFamilyS3ClientCache(familyId?: number) {
   if (typeof familyId === "number") {
-    console.info("[s3-client-factory] clearing S3 client cache for family", { familyId });
+    // console.info("[s3-client-factory] clearing S3 client cache for family", { familyId });
     familyS3ClientCache.delete(familyId);
     return;
   }
 
-  console.info("[s3-client-factory] clearing S3 client cache for all families");
+  // console.info("[s3-client-factory] clearing S3 client cache for all families");
   familyS3ClientCache.clear();
 }

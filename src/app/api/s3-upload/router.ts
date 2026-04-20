@@ -53,15 +53,15 @@ export async function POST(request: Request) {
 
   const { fileName, contentType, action, folder } = await request.json();
 
-  console.info("[api/s3-upload] incoming request", {
-    requestId,
-    action,
-    folder,
-    fileName,
-    contentType,
-    memberId: memberDetails.memberId,
-    familyId: memberDetails.familyId,
-  });
+  // console.info("[api/s3-upload] incoming request", {
+  //   requestId,
+  //   action,
+  //   folder,
+  //   fileName,
+  //   contentType,
+  //   memberId: memberDetails.memberId,
+  //   familyId: memberDetails.familyId,
+  // });
 
   if (!ALLOWED_ACTIONS.has(action)) {
     console.warn("[api/s3-upload] invalid action", { requestId, action });
@@ -107,14 +107,14 @@ export async function POST(request: Request) {
 
   try {
     const s3Context = await getS3ClientForFamily(memberDetails.familyId);
-    console.info("[api/s3-upload] resolved S3 context", {
-      requestId,
-      familyId: memberDetails.familyId,
-      bucketName: s3Context.bucketName,
-      region: s3Context.region,
-      action,
-      objectKey,
-    });
+    // console.info("[api/s3-upload] resolved S3 context", {
+    //   requestId,
+    //   familyId: memberDetails.familyId,
+    //   bucketName: s3Context.bucketName,
+    //   region: s3Context.region,
+    //   action,
+    //   objectKey,
+    // });
 
     let command;
     if (action === "upload") {
@@ -132,14 +132,14 @@ export async function POST(request: Request) {
 
     // URL expires in 60 seconds
     const url = await getSignedUrl(s3Context.client, command, { expiresIn: 60 });
-    console.info("[api/s3-upload] generated signed URL", {
-      requestId,
-      action,
-      expiresInSeconds: 60,
-      objectKey,
-      bucketName: s3Context.bucketName,
-      region: s3Context.region,
-    });
+    // console.info("[api/s3-upload] generated signed URL", {
+    //   requestId,
+    //   action,
+    //   expiresInSeconds: 60,
+    //   objectKey,
+    //   bucketName: s3Context.bucketName,
+    //   region: s3Context.region,
+    // });
     if (action === "upload") {
       return NextResponse.json({
         url,

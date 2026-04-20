@@ -2,22 +2,32 @@
 
 import type { JSONContent } from "@tiptap/core";
 import LinkExtension from "@tiptap/extension-link";
+import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
+import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
+  Columns2,
+  Combine,
   Clock3,
   Heading2,
+  Heading3,
   Italic,
   Link2,
   List,
   ListOrdered,
+  Minus,
+  Rows2,
   Save,
   Soup,
   Sparkles,
+  Table2,
+  Underline as UnderlineIcon,
   Unlink,
   Upload,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -52,6 +62,7 @@ const TAG_TYPE_LABELS: Array<{ type: RecipeTagType; label: string }> = [
 ];
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
+const TEMPLATE_NONE_VALUE = "none";
 
 type ToolbarButtonProps = {
   label: string;
@@ -65,14 +76,17 @@ function ToolbarButton({ label, active = false, onClick, disabled = false, child
   return (
     <Button
       type="button"
-      size="sm"
+      size="icon-sm"
       variant="outline"
       onClick={ onClick }
       disabled={ disabled }
       aria-label={ label }
-      className={ active ? "border-[#3d7a27] bg-[#ecf8e5] text-[#2c5c1a]" : "border-[#cadfbb]" }
+      className={ [
+        "h-8 w-8 p-0",
+        active ? "border-[#3d7a27] bg-[#ecf8e5] text-[#2c5c1a]" : "border-[#cadfbb]",
+      ].join(" ") }
     >
-      { children }
+      <span className="inline-flex items-center justify-center gap-0.5">{ children }</span>
       <span className="sr-only">{ label }</span>
     </Button>
   );
@@ -126,7 +140,7 @@ export function FoodiesAddRecipePage({
       }
     }
 
-    return String(recipeTemplates[0]?.id ?? "");
+    return TEMPLATE_NONE_VALUE;
   }, [initialRecipe, recipeTemplates]);
   const [recipeTitle, setRecipeTitle] = useState(initialRecipe?.recipeTitle ?? "");
   const [recipeShortSummary, setRecipeShortSummary] = useState(initialRecipe?.recipeShortSummary ?? "");
@@ -154,44 +168,110 @@ export function FoodiesAddRecipePage({
   const [recipeImageUrl, setRecipeImageUrl] = useState<string | null>(initialRecipe?.recipeImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialRecipe?.recipeImageUrl ?? null);
   const isEditing = mode === "edit";
+  const canSelectTemplate = !isEditing;
+  const isTemplateDebug = process.env.NODE_ENV !== "production";
 
   const selectedTemplate = useMemo(
-    () => recipeTemplates.find((template) => String(template.id) === selectedTemplateId),
+    () => selectedTemplateId === TEMPLATE_NONE_VALUE
+      ? undefined
+      : recipeTemplates.find((template) => String(template.id) === selectedTemplateId),
     [recipeTemplates, selectedTemplateId]
   );
+
+  useEffect(() => {
+    if (!isTemplateDebug) {
+      return;
+    }
+
+    console.log(
+      "[FoodiesAddRecipe] templates prop",
+      recipeTemplates.map((template) => ({
+        id: template.id,
+        label: template.label,
+        isGlobalTemplate: template.isGlobalTemplate,
+        status: template.status,
+        hasTemplateJson: Boolean(template.templateJson && template.templateJson.trim().length > 0),
+        templateJsonLength: template.templateJson?.length ?? 0,
+      }))
+    );
+  }, [isTemplateDebug, recipeTemplates]);
+
+  useEffect(() => {
+    if (!isTemplateDebug) {
+      return;
+    }
+
+    console.log("[FoodiesAddRecipe] selectedTemplateId", selectedTemplateId);
+    console.log(
+      "[FoodiesAddRecipe] selectedTemplate",
+      selectedTemplate
+        ? {
+          id: selectedTemplate.id,
+          label: selectedTemplate.label,
+          isGlobalTemplate: selectedTemplate.isGlobalTemplate,
+          status: selectedTemplate.status,
+          hasTemplateJson: Boolean(selectedTemplate.templateJson && selectedTemplate.templateJson.trim().length > 0),
+          templateJsonLength: selectedTemplate.templateJson?.length ?? 0,
+        }
+        : null
+    );
+  }, [isTemplateDebug, selectedTemplate, selectedTemplateId]);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Underline,
       LinkExtension.configure({
         autolink: true,
         defaultProtocol: "https",
         openOnClick: false,
       }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: getTemplateDocument(selectedTemplate),
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
         class:
-          "tiptap min-h-[18rem] rounded-b-2xl border border-t-0 border-[#cadfbb] bg-white px-4 py-4 text-[#2f4820] shadow-xs outline-none focus:outline-none",
+          "tiptap min-h-[18rem] rounded-2xl border border-[#cadfbb] bg-white px-4 py-4 text-[#2f4820] shadow-xs outline-none focus:outline-none",
       },
     },
   });
 
   useEffect(() => {
-    if (!editor || !selectedTemplate) {
+    if (!recipeTemplates.length || !isEditing) {
       return;
     }
 
-    const nextDoc = getTemplateDocument(selectedTemplate);
-    const currentJson = serializeTipTapDocument(editor.getJSON());
-    const nextJson = serializeTipTapDocument(nextDoc);
-
-    if (currentJson !== nextJson) {
-      editor.commands.setContent(nextDoc);
+    const hasSelectedTemplate = recipeTemplates.some((template) => String(template.id) === selectedTemplateId);
+    if (hasSelectedTemplate) {
+      return;
     }
-  }, [editor, selectedTemplate]);
+
+    const globalTemplate = recipeTemplates.find((template) => template.isGlobalTemplate);
+    setSelectedTemplateId(String(globalTemplate?.id ?? recipeTemplates[0].id));
+  }, [isEditing, recipeTemplates, selectedTemplateId]);
+
+  useEffect(() => {
+    if (!editor || isEditing) {
+      return;
+    }
+
+    if (isTemplateDebug) {
+      console.log("[FoodiesAddRecipe] setContent trigger", {
+        selectedTemplateId,
+        isEditing,
+        loadingEmptyDoc: !selectedTemplate,
+      });
+    }
+
+    // In add mode, always load whichever template was selected last.
+    editor.commands.setContent(selectedTemplate ? getTemplateDocument(selectedTemplate) : createEmptyTipTapDocument());
+  }, [editor, isEditing, isTemplateDebug, selectedTemplate, selectedTemplateId]);
 
   useEffect(() => {
     if (!editor || !initialRecipe || !isEditing) {
@@ -454,7 +534,7 @@ export function FoodiesAddRecipePage({
           </div>
 
           <div className="space-y-6 px-5 py-6 sm:px-6">
-            <fieldset className="grid gap-5 md:grid-cols-2" disabled={ isSaving }>
+            <fieldset className="grid gap-5 md:grid-cols-3" disabled={ isSaving }>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeTitle">Recipe title</label>
                 <Input
@@ -468,11 +548,21 @@ export function FoodiesAddRecipePage({
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[#2f4820]" htmlFor="template">Template</label>
-                <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
-                  <SelectTrigger id="template" className="border-[#cadfbb]">
+                <Select
+                  value={ selectedTemplateId }
+                  onValueChange={ (value) => {
+                    if (isTemplateDebug) {
+                      console.log("[FoodiesAddRecipe] onValueChange template", value);
+                    }
+                    setSelectedTemplateId(value);
+                  } }
+                  disabled={ !canSelectTemplate }
+                >
+                  <SelectTrigger id="template" className="border-[#cadfbb]" disabled={ !canSelectTemplate }>
                     <SelectValue placeholder="Select recipe template" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={ TEMPLATE_NONE_VALUE }>Select Template</SelectItem>
                     { recipeTemplates.map((template) => (
                       <SelectItem key={ template.id } value={ String(template.id) }>
                         { template.label }
@@ -480,17 +570,24 @@ export function FoodiesAddRecipePage({
                     )) }
                   </SelectContent>
                 </Select>
+                { !canSelectTemplate ? (
+                  <p className="text-xs text-[#647a50]">
+                    Template selection is locked after a recipe is saved to protect existing instructions.
+                  </p>
+                ) : null }
               </div>
 
-              <div className="space-y-2 md:col-span-2">
+              <div className="space-y-2">
                 <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeSummary">Short summary</label>
-                <textarea
+                <Input
                   id="recipeSummary"
                   value={ recipeShortSummary }
                   onChange={ (event) => setRecipeShortSummary(event.target.value) }
-                  className="min-h-24 w-full rounded-md border border-[#cadfbb] bg-white px-3 py-2 text-sm text-[#2f4820]"
+                  maxLength={ 120 }
+                  className="border-[#cadfbb]"
                   placeholder="Give your family a quick summary of this dish"
                 />
+                <p className="text-xs text-[#607a4e]">{ recipeShortSummary.length } / 120 characters</p>
               </div>
 
               <div className="space-y-2">
@@ -623,85 +720,163 @@ export function FoodiesAddRecipePage({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-bold text-[#2f4820]">Recipe instructions (TipTap)</p>
+                <p className="text-base font-bold text-[#2f4820]">Recipe instructions </p>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs text-[#486532]">
                   <Clock3 className="size-3.5" />
                   Prep { Number(prepTimeMins || 0) } min / Cook { Number(cookTimeMins || 0) } min
                 </div>
               </div>
 
-              <div className="rounded-t-2xl border border-[#cadfbb] bg-[#f4fae7] px-3 py-2">
-                <div className="flex flex-wrap gap-2">
-                  <ToolbarButton
-                    label="Bold"
-                    onClick={ () => editor?.chain().focus().toggleBold().run() }
-                    active={ editor?.isActive("bold") }
-                    disabled={ !editor }
-                  >
-                    <Bold className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Italic"
-                    onClick={ () => editor?.chain().focus().toggleItalic().run() }
-                    active={ editor?.isActive("italic") }
-                    disabled={ !editor }
-                  >
-                    <Italic className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Heading"
-                    onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
-                    active={ editor?.isActive("heading", { level: 2 }) }
-                    disabled={ !editor }
-                  >
-                    <Heading2 className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Bullet list"
-                    onClick={ () => editor?.chain().focus().toggleBulletList().run() }
-                    active={ editor?.isActive("bulletList") }
-                    disabled={ !editor }
-                  >
-                    <List className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Ordered list"
-                    onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
-                    active={ editor?.isActive("orderedList") }
-                    disabled={ !editor }
-                  >
-                    <ListOrdered className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Add link"
-                    onClick={ () => {
-                      if (!editor) {
-                        return;
-                      }
+              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
+                <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-1.5 py-2">
+                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+                    <ToolbarButton
+                      label="Heading 2"
+                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
+                      active={ editor?.isActive("heading", { level: 2 }) }
+                      disabled={ !editor }
+                    >
+                      <Heading2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Heading 3"
+                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
+                      active={ editor?.isActive("heading", { level: 3 }) }
+                      disabled={ !editor }
+                    >
+                      <Heading3 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bold"
+                      onClick={ () => editor?.chain().focus().toggleBold().run() }
+                      active={ editor?.isActive("bold") }
+                      disabled={ !editor }
+                    >
+                      <Bold className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Italic"
+                      onClick={ () => editor?.chain().focus().toggleItalic().run() }
+                      active={ editor?.isActive("italic") }
+                      disabled={ !editor }
+                    >
+                      <Italic className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Underline"
+                      onClick={ () => editor?.chain().focus().toggleUnderline().run() }
+                      active={ editor?.isActive("underline") }
+                      disabled={ !editor }
+                    >
+                      <UnderlineIcon className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bullet list"
+                      onClick={ () => editor?.chain().focus().toggleBulletList().run() }
+                      active={ editor?.isActive("bulletList") }
+                      disabled={ !editor }
+                    >
+                      <List className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Numbered list"
+                      onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
+                      active={ editor?.isActive("orderedList") }
+                      disabled={ !editor }
+                    >
+                      <ListOrdered className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add link"
+                      onClick={ () => {
+                        if (!editor) {
+                          return;
+                        }
 
-                      const value = window.prompt("Enter a URL", "https://");
-                      if (!value) {
-                        return;
-                      }
+                        const value = window.prompt("Enter a URL", "https://");
+                        if (!value) {
+                          return;
+                        }
 
-                      editor.chain().focus().setLink({ href: value }).run();
-                    } }
-                    disabled={ !editor }
-                  >
-                    <Link2 className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Remove link"
-                    onClick={ () => editor?.chain().focus().unsetLink().run() }
-                    disabled={ !editor }
-                  >
-                    <Unlink className="size-4" />
-                  </ToolbarButton>
+                        editor.chain().focus().setLink({ href: value }).run();
+                      } }
+                      disabled={ !editor }
+                    >
+                      <Link2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Remove link"
+                      onClick={ () => editor?.chain().focus().unsetLink().run() }
+                      disabled={ !editor }
+                    >
+                      <Unlink className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Insert horizontal line"
+                      onClick={ () => editor?.chain().focus().setHorizontalRule().run() }
+                      disabled={ !editor }
+                    >
+                      <Minus className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Insert table"
+                      onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() }
+                      active={ editor?.isActive("table") }
+                      disabled={ !editor }
+                    >
+                      <Table2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete table"
+                      onClick={ () => editor?.chain().focus().deleteTable().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Table2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add column after"
+                      onClick={ () => editor?.chain().focus().addColumnAfter().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Columns2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete column"
+                      onClick={ () => editor?.chain().focus().deleteColumn().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Columns2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add row after"
+                      onClick={ () => editor?.chain().focus().addRowAfter().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Rows2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete row"
+                      onClick={ () => editor?.chain().focus().deleteRow().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Rows2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Toggle header row"
+                      onClick={ () => editor?.chain().focus().toggleHeaderRow().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Combine className="size-4" />
+                    </ToolbarButton>
+                  </div>
                 </div>
-              </div>
 
-              <div className="[&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
-                <EditorContent editor={ editor } />
+                <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap]:min-h-[28rem] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                  <EditorContent editor={ editor } />
+                </div>
               </div>
             </div>
 

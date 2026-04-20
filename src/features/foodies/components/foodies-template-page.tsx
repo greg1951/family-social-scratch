@@ -2,10 +2,30 @@
 
 import type { JSONContent } from "@tiptap/core";
 import LinkExtension from "@tiptap/extension-link";
+import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Bold, Edit3, Heading2, Heading3, Italic, Link2, List, ListOrdered, Plus, Save, Underline as UnderlineIcon, Unlink } from "lucide-react";
+import {
+  Bold,
+  Combine,
+  Columns2,
+  Edit3,
+  Heading2,
+  Heading3,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Minus,
+  Plus,
+  Rows2,
+  Save,
+  Table2,
+  Underline as UnderlineIcon,
+  Unlink,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
@@ -50,14 +70,17 @@ function ToolbarButton({ label, active = false, onClick, disabled = false, child
   return (
     <Button
       type="button"
-      size="sm"
+      size="icon-sm"
       variant="outline"
       onClick={ onClick }
       disabled={ disabled }
       aria-label={ label }
-      className={ active ? "border-[#3d7a27] bg-[#ecf8e5] text-[#2c5c1a]" : "border-[#cadfbb]" }
+      className={ [
+        "h-8 w-8 p-0",
+        active ? "border-[#3d7a27] bg-[#ecf8e5] text-[#2c5c1a]" : "border-[#cadfbb]",
+      ].join(" ") }
     >
-      { children }
+      <span className="inline-flex items-center justify-center gap-0.5">{ children }</span>
       <span className="sr-only">{ label }</span>
     </Button>
   );
@@ -71,7 +94,15 @@ function parseTemplateJson(templateJson: string): JSONContent {
 function TemplateViewer({ templateJson }: { templateJson: string }) {
   const previewEditor = useEditor({
     editable: false,
-    extensions: [StarterKit, Underline, LinkExtension.configure({ openOnClick: true })],
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({ openOnClick: true }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
+    ],
     content: parseTemplateJson(templateJson),
     immediatelyRender: false,
     editorProps: {
@@ -125,9 +156,14 @@ export function FoodiesTemplatePage({
         defaultProtocol: "https",
         openOnClick: false,
       }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
     ],
     content: createEmptyTipTapDocument(),
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
         class:
@@ -304,7 +340,7 @@ export function FoodiesTemplatePage({
 
             <div className="p-5 sm:p-6">
               { selectedTemplate ? (
-                <div className="rounded-xl border border-[#dbeacc] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
+                <div className="rounded-xl border border-[#dbeacc] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
                   <TemplateViewer templateJson={ selectedTemplate.templateJson } />
                 </div>
               ) : (
@@ -316,7 +352,7 @@ export function FoodiesTemplatePage({
       </div>
 
       <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(96vw,72rem)] max-w-none max-h-[85vh] overflow-hidden border-[#cadfbb] bg-[#fbfff3]">
+        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#cadfbb] bg-[#fbfff3]">
           <DialogHeader>
             <DialogTitle className="text-[#2f4820]">
               { dialogMode === "create" ? "Create Recipe Template" : "Update Recipe Template" }
@@ -355,94 +391,156 @@ export function FoodiesTemplatePage({
 
             <div className="space-y-3">
               <p className="text-sm font-bold text-[#2f4820]">Template content (TipTap)</p>
-              <div className="rounded-t-2xl border border-[#cadfbb] bg-[#f4fae7] px-3 py-2">
-                <div className="flex flex-wrap gap-2">
-                  <ToolbarButton
-                    label="Heading 2"
-                    onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
-                    active={ editor?.isActive("heading", { level: 2 }) }
-                    disabled={ !editor }
-                  >
-                    <Heading2 className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Heading 3"
-                    onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
-                    active={ editor?.isActive("heading", { level: 3 }) }
-                    disabled={ !editor }
-                  >
-                    <Heading3 className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Bold"
-                    onClick={ () => editor?.chain().focus().toggleBold().run() }
-                    active={ editor?.isActive("bold") }
-                    disabled={ !editor }
-                  >
-                    <Bold className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Italic"
-                    onClick={ () => editor?.chain().focus().toggleItalic().run() }
-                    active={ editor?.isActive("italic") }
-                    disabled={ !editor }
-                  >
-                    <Italic className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Underline"
-                    onClick={ () => editor?.chain().focus().toggleUnderline().run() }
-                    active={ editor?.isActive("underline") }
-                    disabled={ !editor }
-                  >
-                    <UnderlineIcon className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Bullet list"
-                    onClick={ () => editor?.chain().focus().toggleBulletList().run() }
-                    active={ editor?.isActive("bulletList") }
-                    disabled={ !editor }
-                  >
-                    <List className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Numbered list"
-                    onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
-                    active={ editor?.isActive("orderedList") }
-                    disabled={ !editor }
-                  >
-                    <ListOrdered className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Add link"
-                    onClick={ () => {
-                      if (!editor) {
-                        return;
-                      }
+              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
+                <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-1.5 py-2">
+                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+                    <ToolbarButton
+                      label="Heading 2"
+                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
+                      active={ editor?.isActive("heading", { level: 2 }) }
+                      disabled={ !editor }
+                    >
+                      <Heading2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Heading 3"
+                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
+                      active={ editor?.isActive("heading", { level: 3 }) }
+                      disabled={ !editor }
+                    >
+                      <Heading3 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bold"
+                      onClick={ () => editor?.chain().focus().toggleBold().run() }
+                      active={ editor?.isActive("bold") }
+                      disabled={ !editor }
+                    >
+                      <Bold className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Italic"
+                      onClick={ () => editor?.chain().focus().toggleItalic().run() }
+                      active={ editor?.isActive("italic") }
+                      disabled={ !editor }
+                    >
+                      <Italic className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Underline"
+                      onClick={ () => editor?.chain().focus().toggleUnderline().run() }
+                      active={ editor?.isActive("underline") }
+                      disabled={ !editor }
+                    >
+                      <UnderlineIcon className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bullet list"
+                      onClick={ () => editor?.chain().focus().toggleBulletList().run() }
+                      active={ editor?.isActive("bulletList") }
+                      disabled={ !editor }
+                    >
+                      <List className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Numbered list"
+                      onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
+                      active={ editor?.isActive("orderedList") }
+                      disabled={ !editor }
+                    >
+                      <ListOrdered className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add link"
+                      onClick={ () => {
+                        if (!editor) {
+                          return;
+                        }
 
-                      const value = window.prompt("Enter a URL", "https://");
-                      if (!value) {
-                        return;
-                      }
+                        const value = window.prompt("Enter a URL", "https://");
+                        if (!value) {
+                          return;
+                        }
 
-                      editor.chain().focus().setLink({ href: value }).run();
-                    } }
-                    disabled={ !editor }
-                  >
-                    <Link2 className="size-4" />
-                  </ToolbarButton>
-                  <ToolbarButton
-                    label="Remove link"
-                    onClick={ () => editor?.chain().focus().unsetLink().run() }
-                    disabled={ !editor }
-                  >
-                    <Unlink className="size-4" />
-                  </ToolbarButton>
+                        editor.chain().focus().setLink({ href: value }).run();
+                      } }
+                      disabled={ !editor }
+                    >
+                      <Link2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Remove link"
+                      onClick={ () => editor?.chain().focus().unsetLink().run() }
+                      disabled={ !editor }
+                    >
+                      <Unlink className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Insert horizontal line"
+                      onClick={ () => editor?.chain().focus().setHorizontalRule().run() }
+                      disabled={ !editor }
+                    >
+                      <Minus className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Insert table"
+                      onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() }
+                      active={ editor?.isActive("table") }
+                      disabled={ !editor }
+                    >
+                      <Table2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete table"
+                      onClick={ () => editor?.chain().focus().deleteTable().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Table2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add column after"
+                      onClick={ () => editor?.chain().focus().addColumnAfter().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Columns2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete column"
+                      onClick={ () => editor?.chain().focus().deleteColumn().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Columns2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add row after"
+                      onClick={ () => editor?.chain().focus().addRowAfter().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Rows2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Delete row"
+                      onClick={ () => editor?.chain().focus().deleteRow().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Rows2 className="size-4" />
+                      <X className="size-3" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Toggle header row"
+                      onClick={ () => editor?.chain().focus().toggleHeaderRow().run() }
+                      disabled={ !editor || !editor.isActive("table") }
+                    >
+                      <Combine className="size-4" />
+                    </ToolbarButton>
+                  </div>
                 </div>
-              </div>
 
-              <div className="[&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
-                <EditorContent editor={ editor } />
+                <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap]:min-h-[28rem] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                  <EditorContent editor={ editor } />
+                </div>
               </div>
             </div>
           </div>

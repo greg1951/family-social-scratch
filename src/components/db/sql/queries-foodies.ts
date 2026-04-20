@@ -1,5 +1,5 @@
 import db from "@/components/db/drizzle";
-import { and, asc, desc, eq, ilike, inArray, ne } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 
 import {
   member,
@@ -157,15 +157,21 @@ async function loadRecipeTemplates(
   options: {
     includeDraft: boolean;
     includeGlobal: boolean;
+    ensureGlobalTemplate?: boolean;
   }
 ): Promise<RecipeTemplateOption[]> {
-  const { includeDraft, includeGlobal } = options;
-  const defaultTemplate = includeGlobal
+  const { includeDraft, includeGlobal, ensureGlobalTemplate = false } = options;
+  const isTemplateDebug = process.env.NODE_ENV !== "production";
+  const defaultTemplate = includeGlobal && ensureGlobalTemplate
     ? await ensureGlobalRecipeTemplate(familyId, memberId)
     : null;
   const whereCondition = and(
     eq(recipeTemplate.familyId, familyId),
-    includeDraft ? undefined : eq(recipeTemplate.status, "published"),
+    includeDraft
+      ? undefined
+      : includeGlobal
+        ? or(eq(recipeTemplate.status, "published"), eq(recipeTemplate.isGlobalTemplate, true))
+        : eq(recipeTemplate.status, "published"),
     includeGlobal ? undefined : eq(recipeTemplate.isGlobalTemplate, false)
   );
 
@@ -182,6 +188,27 @@ async function loadRecipeTemplates(
     .from(recipeTemplate)
     .where(whereCondition)
     .orderBy(desc(recipeTemplate.isGlobalTemplate), asc(recipeTemplate.templateName));
+
+  // if (isTemplateDebug) {
+  //   console.log("[Foodies][loadRecipeTemplates] input", {
+  //     familyId,
+  //     memberId,
+  //     includeDraft,
+  //     includeGlobal,
+  //     ensureGlobalTemplate,
+  //   });
+  //   console.log(
+  //     "[Foodies][loadRecipeTemplates] rows",
+  //     templateRows.map((template) => ({
+  //       id: template.id,
+  //       templateName: template.templateName,
+  //       isGlobalTemplate: template.isGlobalTemplate,
+  //       status: template.status,
+  //       hasTemplateJson: Boolean(template.templateJson && template.templateJson.trim().length > 0),
+  //       templateJsonLength: template.templateJson?.length ?? 0,
+  //     }))
+  //   );
+  // }
 
   const templateMap = new Map<number, RecipeTemplateOption>();
 
@@ -202,13 +229,29 @@ async function loadRecipeTemplates(
     });
   }
 
-  return Array.from(templateMap.values()).sort((leftTemplate, rightTemplate) => {
+  const finalTemplates = Array.from(templateMap.values()).sort((leftTemplate, rightTemplate) => {
     if (leftTemplate.isGlobalTemplate !== rightTemplate.isGlobalTemplate) {
       return leftTemplate.isGlobalTemplate ? -1 : 1;
     }
 
     return leftTemplate.label.localeCompare(rightTemplate.label);
   });
+
+  // if (isTemplateDebug) {
+  //   console.log(
+  //     "[Foodies][loadRecipeTemplates] final",
+  //     finalTemplates.map((template) => ({
+  //       id: template.id,
+  //       label: template.label,
+  //       isGlobalTemplate: template.isGlobalTemplate,
+  //       status: template.status,
+  //       hasTemplateJson: Boolean(template.templateJson && template.templateJson.trim().length > 0),
+  //       templateJsonLength: template.templateJson?.length ?? 0,
+  //     }))
+  //   );
+  // }
+
+  return finalTemplates;
 }
 
 async function loadFoodiesTemplateManagementRecords(
@@ -421,11 +464,30 @@ export async function getFoodiesHomePageData(
   isAdmin = false
 ): Promise<FoodiesHomePageDataReturn> {
   try {
+    const isTemplateDebug = process.env.NODE_ENV !== "production";
     const [recipes, recipeTags, recipeTemplates] = await Promise.all([
       loadFoodiesRecipes(familyId),
       loadRecipeTagOptions(),
-      loadRecipeTemplates(familyId, memberId, { includeDraft: false, includeGlobal: isAdmin }),
+      loadRecipeTemplates(familyId, memberId, {
+        includeDraft: false,
+        includeGlobal: true,
+        ensureGlobalTemplate: isAdmin,
+      }),
     ]);
+
+    // if (isTemplateDebug) {
+    //   console.log(
+    //     "[Foodies][getFoodiesHomePageData] recipeTemplates",
+    //     recipeTemplates.map((template) => ({
+    //       id: template.id,
+    //       label: template.label,
+    //       isGlobalTemplate: template.isGlobalTemplate,
+    //       status: template.status,
+    //       hasTemplateJson: Boolean(template.templateJson && template.templateJson.trim().length > 0),
+    //       templateJsonLength: template.templateJson?.length ?? 0,
+    //     }))
+    //   );
+    // }
 
     return {
       success: true,
@@ -527,7 +589,8 @@ export async function saveFoodiesRecipe(
 
   const templates = await loadRecipeTemplates(actor.familyId, actor.memberId, {
     includeDraft: false,
-    includeGlobal: actor.isAdmin ?? false,
+    includeGlobal: true,
+    ensureGlobalTemplate: actor.isAdmin ?? false,
   });
   const selectedTemplate = templates.find((template) => template.id === input.templateId);
 
