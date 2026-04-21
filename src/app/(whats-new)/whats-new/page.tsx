@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "TV Junkies Unite!",
+    summary: "TV Junkies is now live in the Family Social! Check it out and start adding your favorite shows.",
+    category: "Features",
+    date: "April 21, 2026",
+  },
+  {
     title: "It's alive! See Family Foodies in action.",
     summary: "Family Foodies is now live in the family social experience! You can access it from the main navigation and start sharing your favorite recipes with your family. It comes with a recipe template but you can create your own recipe template, if you hate ours 😒 ",
     category: "Features",
@@ -14,7 +20,7 @@ const updates = [
     date: "April 16, 2026",
   },
   {
-    title: "Live Features!",
+    title: "First Live Features!",
     summary: "The Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
     category: "Features",
     date: "April 15, 2026",
@@ -24,24 +30,6 @@ const updates = [
     summary: "The Game Scoreboards feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
     category: "Features",
     date: "April 16, 2026",
-  },
-  {
-    title: "Family Foodies Underway!",
-    summary: "The Family Foodies feature is now in development and we are excited to share it with you soon. Stay tuned for more updates!",
-    category: "Features",
-    date: "April 16, 2026",
-  },
-  {
-    title: "All Feature Home Pages are Seeded!",
-    summary: "Aside from the Live Features, all the other feature home pages are now seeded with some initial content. This is just the beginning and we will be adding more content and functionality to these pages in the coming weeks.",
-    category: "Features",
-    date: "Apr 1, 2026",
-  },
-  {
-    title: "New Members Suggested",
-    summary: "You can now suggest other people be invited to join the family. This feature is available in the Family Members tab of your My Account page. Feel free to invite your friends as well.",
-    category: "Family Activity",
-    date: "Mar 25, 2026",
   },
 ];
 

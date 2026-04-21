@@ -8,11 +8,11 @@ import PublicHelpMenu from "@/components/common/public-help-menu";
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
+    "TV Junkies unite! TV Junkies is now live in Family Social! Step away from the 📺 and check it out!",
     "It's alive! Family Foodies is now live in the family social experience!",
     "It's Picture Day in the Family! Updated your profile with a lovely 📸 of yourself.",
     "Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
     "New member suggestion is available in the My Family section of your profile. Feel free to invite your friends to join the family!",
-    "The Family Social team is working hard to bring you new features. Stay tuned to this channel for updates. 👍",
   ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",

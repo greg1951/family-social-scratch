@@ -584,7 +584,7 @@ export const showTagReference = pgTable("show_tag_reference", {
 export const showTag = pgTable("show_tag", {
   id: serial("id").primaryKey(),
   showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => showTagReference.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('show_tag_show_id_idx').on(table.showId),
@@ -673,7 +673,7 @@ export const movieTagReference = pgTable("movie_tag_reference", {
 export const movieTag = pgTable("movie_tag", {
   id: serial("id").primaryKey(),
   movieId: integer("fk_movie_id").notNull().references(() => movie.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => movieTagReference.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('movie_tag_movie_id_idx').on(table.movieId),

@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
 import { getTvHomePageData } from "@/components/db/sql/queries-tv";
-import { TvHomePage } from "@/features/tv/components/tv-home-page";
+import { TvAddShowPage } from "@/features/tv/components/tv-add-show-page";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 
-export default async function TvPage() {
+export default async function AddShowPage() {
   const memberKeyDetails = await getMemberPageDetails();
 
   if (!memberKeyDetails.isLoggedIn) {
@@ -17,7 +17,14 @@ export default async function TvPage() {
     memberKeyDetails.isAdmin ?? false
   );
 
-  const shows = tvData.success ? tvData.shows : [];
+  const showTags = tvData.success ? tvData.showTags : [];
+  const showTemplates = tvData.success ? tvData.showTemplates : [];
 
-  return <TvHomePage shows={ shows } member={ memberKeyDetails } />;
+  return (
+    <TvAddShowPage
+      showTags={ showTags }
+      showTemplates={ showTemplates }
+      member={ memberKeyDetails }
+    />
+  );
 }
