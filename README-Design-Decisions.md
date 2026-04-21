@@ -255,18 +255,18 @@ Although they are user friendly they may implement very length form pages. Case 
 Neon let's you export data from the database tables (one at a time) but the import of a CSV file into the table didn't work and their AI was not helpful. The AI did suggest using a psql command to do the copy.
 
 1. Had to [install PostgreSql locally](https://www.postgresql.org/download/windows/) (database and tools) 
-2. Set the Windows path to reference the bin directory in the installation folder.
+2. Set the Windows path to reference the bin directory in the installation folder (`C:\Program Files\PostgreSQL\18\bin`).
 3. Run the following psql command to connect to the family social database:
 
    `psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"`
 
     **Note**: important to use double-quotes after the `psql` keyword.
 
-4. The `copy` command is next to first name the table to copy records to, the path to the CSV file and then some CSV parsing parameters:
+4. The `copy` command is next to first name the table to copy records to, the path to the CSV file and then some CSV parsing parameters: 
 
     `neondb=> \copy option_reference FROM 'C:\Users\ghughlett\Projects\my-projects\family-social-scratch\docs\insert-option-reference-records.csv' DELIMITER ',' CSV HEADER`
 
-5. The output is fairly terse: `COPY 10` so go confirm the data copy made it to the table in Neon.
+5. The output is fairly terse, e.g.: `COPY 10` so go confirm the data copy made it to the table in Neon.
 
     **Note**: Use `\q` to exit the psql database prompt.
 

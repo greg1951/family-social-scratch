@@ -419,7 +419,6 @@ export const bookTerm = pgTable("book_term", {
 });
 
 /*------------------------------- Family Foodies ------------------------------ */
-//export const likenessDegree = pgEnum('likenessDegree', [-1, 0, 1, 2]);
 
 export const recipe = pgTable("recipe", {
   id: serial("id").primaryKey(),
@@ -519,3 +518,183 @@ export const recipeTerm = pgTable("recipe_term", {
   status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+/*------------------------------- TV Junkies ------------------------------ */
+
+export const show = pgTable("show", {
+  id: serial("id").primaryKey(),
+  showTitle: text("show_title").notNull().unique(),
+  showCaption: text("show_caption").notNull().default(""),
+  showJson: text("show_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  showImageUrl: text("show_image_url"),
+  showFirstYear: integer("show_first_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  showLastYear: integer("show_last_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  seasonCount: integer("season_count").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('show_member_id_idx').on(table.memberId),
+    index('show_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const showComment = pgTable("show_comment", {
+  id: serial("id").primaryKey(),
+  isShowReviewer: boolean("is_show_reviewer").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('show_comment_show_id_idx').on(table.showId),
+    index('show_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const showTemplate = pgTable("show_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id"),
+  familyId: integer("fk_family_id"),
+},
+  (table) => [
+    index('show_template_member_id_idx').on(table.memberId),
+    index('show_template_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const showTagReference = pgTable("show_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("global"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const showTag = pgTable("show_tag", {
+  id: serial("id").primaryKey(),
+  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('show_tag_show_id_idx').on(table.showId),
+    index('show_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const showLike = pgTable("show_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  showId: integer("fk_show_id").notNull().references(() => show.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("show_like_show_id_idx").on(table.showId),
+    index("show_like_member_id_idx").on(table.memberId),
+    unique("show_like_member_id_degree_uq")
+      .on(table.showId,
+          table.memberId, 
+          table.likenessDegree
+      ),
+  ]
+);
+
+/*------------------------------- Movie Maniacs ------------------------------ */
+
+export const movie = pgTable("movie", {
+  id: serial("id").primaryKey(),
+  movieTitle: text("movie_title").notNull().unique(),
+  movieCaption: text("movie_caption").notNull().default(""),
+  movieJson: text("movie_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  movieImageUrl: text("movie_image_url"),
+  movieDebutYear: integer("movie_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('movie_member_id_idx').on(table.memberId),
+    index('movie_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const movieComment = pgTable("movie_comment", {
+  id: serial("id").primaryKey(),
+  ismovieReviewer: boolean("is_movie_reviewer").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  movieId: integer("fk_movie_id").notNull().references(() => movie.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('movie_comment_movie_id_idx').on(table.movieId),
+    index('movie_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const movieTemplate = pgTable("movie_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id"),
+  familyId: integer("fk_family_id"),
+},
+  (table) => [
+    index('movie_template_member_id_idx').on(table.memberId),
+    index('movie_template_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const movieTagReference = pgTable("movie_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("global"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const movieTag = pgTable("movie_tag", {
+  id: serial("id").primaryKey(),
+  movieId: integer("fk_movie_id").notNull().references(() => movie.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('movie_tag_movie_id_idx').on(table.movieId),
+    index('movie_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const movieLike = pgTable("movie_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  movieId: integer("fk_movie_id").notNull().references(() => movie.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("movie_like_movie_id_idx").on(table.movieId),
+    index("movie_like_member_id_idx").on(table.memberId),
+    unique("movie_like_member_id_degree_uq")
+      .on(table.movieId,
+          table.memberId, 
+          table.likenessDegree
+      ),
+  ]
+);
