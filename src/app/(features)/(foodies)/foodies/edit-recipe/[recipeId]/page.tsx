@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getFoodiesHomePageData, getFoodiesRecipeById } from "@/components/db/sql/queries-foodies";
+import { getFoodiesHomePageData, getFoodiesRecipeById, getFoodiesRecipeDetail } from "@/components/db/sql/queries-foodies";
 import { FoodiesAddRecipePage } from "@/features/foodies/components/foodies-add-recipe-page";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 
@@ -21,13 +21,14 @@ export default async function EditRecipePage({
     redirect("/foodies");
   }
 
-  const [foodiesData, recipeResult] = await Promise.all([
+  const [foodiesData, recipeResult, recipeDetailResult] = await Promise.all([
     getFoodiesHomePageData(
       memberKeyDetails.familyId,
       memberKeyDetails.memberId,
       memberKeyDetails.isAdmin ?? false
     ),
     getFoodiesRecipeById(memberKeyDetails.familyId, parsedRecipeId),
+    getFoodiesRecipeDetail(memberKeyDetails.familyId, parsedRecipeId, memberKeyDetails.memberId),
   ]);
 
   if (!recipeResult.success || recipeResult.recipe.memberId !== memberKeyDetails.memberId) {
@@ -36,6 +37,9 @@ export default async function EditRecipePage({
 
   const recipeTags = foodiesData.success ? foodiesData.recipeTags : [];
   const recipeTemplates = foodiesData.success ? foodiesData.recipeTemplates : [];
+  const initialRecipeProTipsJson = recipeDetailResult.success
+    ? recipeDetailResult.recipe.recipeProTips.find((proTip) => proTip.memberId === memberKeyDetails.memberId)?.proTipJson
+    : undefined;
 
   return (
     <FoodiesAddRecipePage
@@ -43,6 +47,7 @@ export default async function EditRecipePage({
       recipeTemplates={ recipeTemplates }
       member={ memberKeyDetails }
       initialRecipe={ recipeResult.recipe }
+      initialRecipeProTipsJson={ initialRecipeProTipsJson }
       mode="edit"
     />
   );

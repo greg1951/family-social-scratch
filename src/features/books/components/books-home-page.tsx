@@ -745,7 +745,7 @@ export default function BooksHomePage({
               </div>
 
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                The family&apos;s books and commentary in one place.
+                Think of Book Besties as your family&apos;s book club.
               </h1>
             </div>
 
@@ -1019,20 +1019,20 @@ export default function BooksHomePage({
           <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
             <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
-                Book Commentary
+                Book Analysis, Tags and Family Comments
               </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
+              {/* <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
                 Notes, Tags, and Family Comments
-              </h2>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
+              </h2> */}
+              {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
                 Use the commentary editor for your description, analysis, or why the book matters to the family.
-              </p>
+              </p> */}
             </div>
 
             <div className="space-y-5 px-5 py-5 sm:px-6">
               <div className="space-y-3">
                 <div className="flex flex-col gap-1">
-                  <p className="text-sm font-semibold text-[#355161]">Book Commentary</p>
+                  <p className="text-base font-semibold text-[#355161]">Book Analysis</p>
                 </div>
                 <RichTextField
                   editor={ analysisEditor }
@@ -1044,7 +1044,7 @@ export default function BooksHomePage({
               <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-[#355161]">Book Tags</p>
+                    <p className="text-base font-semibold text-[#355161]">Book Tags</p>
                     <p className="text-sm text-[#51707e]">Choose up to three tags for this book submission.</p>
                   </div>
                   <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
@@ -1093,7 +1093,7 @@ export default function BooksHomePage({
                 <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-[#355161]">Family Comments</p>
+                      <p className="text-base font-semibold text-[#355161]">Family Comments</p>
                       <p className="text-sm text-[#51707e]">Share your thoughts on this book with your family.</p>
                     </div>
                     <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">

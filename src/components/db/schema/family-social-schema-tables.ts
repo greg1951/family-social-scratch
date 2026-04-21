@@ -444,7 +444,7 @@ export const recipe = pgTable("recipe", {
 
 export const recipeComment = pgTable("recipe_comment", {
   id: serial("id").primaryKey(),
-  isRecipeAnalysis: boolean("is_recipe_analysis").notNull().default(false),
+  isRecipeProTip: boolean("is_recipe_pro_tip").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),

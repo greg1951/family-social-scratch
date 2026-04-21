@@ -117,17 +117,29 @@ function getTemplateDocument(template?: RecipeTemplateOption): JSONContent {
   return createEmptyTipTapDocument();
 }
 
+function getRecipeProTipsDocument(value?: string): JSONContent {
+  const parsed = parseSerializedTipTapDocument(value);
+
+  if (parsed.success) {
+    return parsed.content;
+  }
+
+  return createEmptyTipTapDocument();
+}
+
 export function FoodiesAddRecipePage({
   recipeTags,
   recipeTemplates,
   member,
   initialRecipe,
+  initialRecipeProTipsJson,
   mode = "add",
 }: {
   recipeTags: RecipeTagOption[];
   recipeTemplates: RecipeTemplateOption[];
   member: MemberKeyDetails;
   initialRecipe?: FoodiesRecipe | null;
+  initialRecipeProTipsJson?: string;
   mode?: "add" | "edit";
 }) {
   const router = useRouter();
@@ -168,6 +180,15 @@ export function FoodiesAddRecipePage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [recipeImageUrl, setRecipeImageUrl] = useState<string | null>(initialRecipe?.recipeImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialRecipe?.recipeImageUrl ?? null);
+  const [recipeProTipsJson, setRecipeProTipsJson] = useState(() => {
+    const parsedProTips = parseSerializedTipTapDocument(initialRecipeProTipsJson);
+
+    if (parsedProTips.success) {
+      return serializeTipTapDocument(parsedProTips.content);
+    }
+
+    return serializeTipTapDocument(createEmptyTipTapDocument());
+  });
   const isEditing = mode === "edit";
   const canSelectTemplate = !isEditing;
   const isTemplateDebug = process.env.NODE_ENV !== "production";
@@ -243,6 +264,28 @@ export function FoodiesAddRecipePage({
     },
   });
 
+  const proTipsEditor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: false,
+      }),
+    ],
+    content: getRecipeProTipsDocument(recipeProTipsJson),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-[10rem] rounded-2xl border border-[#cadfbb] bg-white px-4 py-4 text-[#2f4820] shadow-xs outline-none focus:outline-none",
+      },
+    },
+    onUpdate({ editor: tipEditor }) {
+      setRecipeProTipsJson(serializeTipTapDocument(tipEditor.getJSON()));
+    },
+  });
+
   useEffect(() => {
     if (!recipeTemplates.length || !isEditing) {
       return;
@@ -288,6 +331,18 @@ export function FoodiesAddRecipePage({
       }
     }
   }, [editor, initialRecipe, isEditing]);
+
+  useEffect(() => {
+    if (!proTipsEditor) {
+      return;
+    }
+
+    const currentProTipsJson = serializeTipTapDocument(proTipsEditor.getJSON());
+
+    if (currentProTipsJson !== recipeProTipsJson) {
+      proTipsEditor.commands.setContent(getRecipeProTipsDocument(recipeProTipsJson));
+    }
+  }, [proTipsEditor, recipeProTipsJson]);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -477,6 +532,7 @@ export function FoodiesAddRecipePage({
         status,
         recipeImageUrl: uploadedRecipeImageUrl,
         recipeJson: serializeTipTapDocument(editor.getJSON()),
+        recipeProTipsJson,
         templateId: selectedTemplate.id,
         selectedTagIds,
       });
@@ -878,6 +934,95 @@ export function FoodiesAddRecipePage({
                 <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap]:min-h-112 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
                   <EditorContent editor={ editor } />
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-2xl border border-[#dbeacc] bg-[#fbfff3] p-4">
+              <div>
+                <p className="text-base font-bold text-[#2f4820]">Recipe Pro Tips</p>
+                <p className="mt-1 text-xs text-[#607a4e]">
+                  Add optional notes your family should know before they make this recipe.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
+                <ToolbarButton
+                  label="Heading 2"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 2 }).run() }
+                  active={ proTipsEditor?.isActive("heading", { level: 2 }) }
+                  disabled={ !proTipsEditor }
+                >
+                  <Heading2 className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Heading 3"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 3 }).run() }
+                  active={ proTipsEditor?.isActive("heading", { level: 3 }) }
+                  disabled={ !proTipsEditor }
+                >
+                  <Heading3 className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Bold"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleBold().run() }
+                  active={ proTipsEditor?.isActive("bold") }
+                  disabled={ !proTipsEditor }
+                >
+                  <Bold className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Italic"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleItalic().run() }
+                  active={ proTipsEditor?.isActive("italic") }
+                  disabled={ !proTipsEditor }
+                >
+                  <Italic className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Underline"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleUnderline().run() }
+                  active={ proTipsEditor?.isActive("underline") }
+                  disabled={ !proTipsEditor }
+                >
+                  <UnderlineIcon className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Bullet list"
+                  onClick={ () => proTipsEditor?.chain().focus().toggleBulletList().run() }
+                  active={ proTipsEditor?.isActive("bulletList") }
+                  disabled={ !proTipsEditor }
+                >
+                  <List className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Add link"
+                  onClick={ () => {
+                    if (!proTipsEditor) {
+                      return;
+                    }
+
+                    const value = window.prompt("Enter a URL", "https://");
+                    if (!value) {
+                      return;
+                    }
+
+                    proTipsEditor.chain().focus().setLink({ href: value }).run();
+                  } }
+                  disabled={ !proTipsEditor }
+                >
+                  <Link2 className="size-4" />
+                </ToolbarButton>
+                <ToolbarButton
+                  label="Remove link"
+                  onClick={ () => proTipsEditor?.chain().focus().unsetLink().run() }
+                  disabled={ !proTipsEditor }
+                >
+                  <Unlink className="size-4" />
+                </ToolbarButton>
+              </div>
+
+              <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
+                <EditorContent editor={ proTipsEditor } />
               </div>
             </div>
 

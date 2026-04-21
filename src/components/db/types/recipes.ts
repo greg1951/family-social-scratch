@@ -5,6 +5,14 @@ export interface RecipeComment {
   text: string;
 }
 
+export interface RecipeProTip {
+  id: number;
+  createdAt: Date;
+  commenterName: string;
+  memberId: number;
+  proTipJson: string;
+}
+
 export interface FoodiesRecipeDetail {
   id: number;
   recipeTitle: string;
@@ -27,6 +35,7 @@ export interface FoodiesRecipeDetail {
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<RecipeTagType, string[]>>;
   templateId: number | null;
+  recipeProTips: RecipeProTip[];
   recipeComments: RecipeComment[];
 }
 
@@ -117,6 +126,7 @@ export interface SaveFoodiesRecipeInput {
   status: string;
   recipeImageUrl?: string | null;
   recipeJson: string;
+  recipeProTipsJson?: string;
   templateId: number;
   selectedTagIds: number[];
 }

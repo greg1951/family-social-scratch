@@ -6,8 +6,8 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Clock3, Eye, Heart, MessageSquareText, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { Clock3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
+import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -49,6 +49,15 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
 function createFinderCategory(recipe: FoodiesRecipe) {
   const primaryTag = recipe.tagNamesByType.course_type?.[0]
     ?? recipe.tagNamesByType.cuisine?.[0]
@@ -65,6 +74,15 @@ function getRecipeDocument(recipeJson?: string): JSONContent {
   }
 
   const parsed = parseSerializedTipTapDocument(recipeJson);
+  return parsed.success ? parsed.content : createEmptyTipTapDocument();
+}
+
+function getRecipeProTipDocument(proTipJson?: string): JSONContent {
+  if (!proTipJson) {
+    return createEmptyTipTapDocument();
+  }
+
+  const parsed = parseSerializedTipTapDocument(proTipJson);
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
@@ -108,6 +126,42 @@ function RecipeViewer({ recipeJson }: { recipeJson?: string }) {
   );
 }
 
+function RecipeProTipViewer({ proTipJson }: { proTipJson: string }) {
+  const viewer = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+    ],
+    content: getRecipeProTipDocument(proTipJson),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap text-[#2f4820] focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!viewer) {
+      return;
+    }
+
+    viewer.commands.setContent(getRecipeProTipDocument(proTipJson));
+  }, [viewer, proTipJson]);
+
+  return (
+    <div className="rounded-2xl border border-[#dbeacc] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_h2]:mb-2 [&_.tiptap_h2]:text-lg [&_.tiptap_h2]:font-bold [&_.tiptap_h3]:mb-2 [&_.tiptap_h3]:font-semibold">
+      <EditorContent editor={ viewer } />
+    </div>
+  );
+}
+
 export function FoodiesHomePage({
   recipes,
   member,
@@ -121,6 +175,7 @@ export function FoodiesHomePage({
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
+  const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
 
   const selectedRecipeRecord = recipes[0] ?? null;
   const latestRecipeRecords = [...recipes]
@@ -288,11 +343,311 @@ export function FoodiesHomePage({
     });
   }
 
+  function handleOpenRecipePrintPreview() {
+    if (!selectedRecipeBasic) {
+      return;
+    }
+
+    // Open the window immediately from the click handler so browsers treat it as a direct user gesture.
+    const printWindow = window.open("", "foodies-print-preview", "width=1080,height=900");
+
+    if (!printWindow) {
+      toast.error("Popup blocked. Please allow popups for localhost and disable popup-blocking extensions for this site.");
+      return;
+    }
+
+    try {
+      printWindow.opener = null;
+    } catch {
+      // Ignore cross-browser opener assignment issues.
+    }
+
+    const printRoot = recipePrintContentRef.current;
+    const tiptapBlocks = Array.from(printRoot?.querySelectorAll(".tiptap") ?? []);
+    const recipeBodyHtml = tiptapBlocks[0]?.innerHTML?.trim() ?? "";
+
+    if (!recipeBodyHtml) {
+      printWindow.close();
+      toast.error("Recipe content is still loading. Try again in a moment.");
+      return;
+    }
+
+    const proTipBodyBlocks = tiptapBlocks
+      .slice(1)
+      .map((element) => element.innerHTML.trim())
+      .filter((html) => html.length > 0);
+
+    const detailRecipeProTips = selectedRecipeDetail?.recipeProTips ?? [];
+    const printableProTipsHtml = detailRecipeProTips.length === 0
+      ? '<p class="preview-muted">No pro tips were added for this recipe yet.</p>'
+      : detailRecipeProTips.map((proTip, index) => {
+        const proTipBody = proTipBodyBlocks[index] || '<p class="preview-muted">No TipTap content found.</p>';
+        return `<article class="preview-pro-tip">
+          <div class="preview-rich-text">${ proTipBody }</div>
+          <p class="preview-tip-meta">${ escapeHtml(proTip.commenterName) } - ${ escapeHtml(formatCreatedAt(proTip.createdAt)) }</p>
+        </article>`;
+      }).join("");
+
+    const title = escapeHtml(selectedRecipeBasic.recipeTitle || "Recipe Print Preview");
+    const summary = escapeHtml(selectedRecipeBasic.recipeShortSummary || "No summary provided.");
+    const submitter = escapeHtml(selectedRecipeBasic.submitterName || "Unknown");
+    const updatedAt = escapeHtml(formatDate(selectedRecipeBasic.updatedAt));
+    const prep = selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-";
+    const cook = selectedRecipeBasic.cookTimeMins > 0 ? `${ selectedRecipeBasic.cookTimeMins } min` : "-";
+    const thumbsUp = (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0).toLocaleString();
+    const love = (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0).toLocaleString();
+    const commentCount = selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0;
+
+    printWindow.document.write(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${ title }</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        color: #1f2f14;
+        background: #f3f9e8;
+      }
+
+      .preview-toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: #2f4820;
+        color: #f8ffe9;
+      }
+
+      .preview-toolbar button {
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.16);
+        color: #ffffff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+      }
+
+      .preview-toolbar button:hover {
+        background: rgba(255, 255, 255, 0.26);
+      }
+
+      .preview-page {
+        max-width: 980px;
+        margin: 18px auto;
+        padding: 0 14px 18px;
+      }
+
+      .preview-card {
+        background: #ffffff;
+        border: 1px solid #d5e5c7;
+        border-radius: 16px;
+        padding: 18px;
+      }
+
+      .preview-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(16rem, 0.75fr);
+        gap: 16px;
+      }
+
+      .preview-pane {
+        border: 1px solid #d5e5c7;
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .preview-pane + .preview-pane {
+        margin-top: 12px;
+      }
+
+      .preview-label {
+        margin: 0;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #4f6a39;
+        font-weight: 700;
+      }
+
+      .preview-muted {
+        margin-top: 8px;
+        color: #5e7a49;
+        font-size: 13px;
+      }
+
+      .preview-metrics {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .preview-metrics span {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid #d5e5c7;
+        border-radius: 999px;
+        padding: 4px 10px;
+        background: #f6fbe9;
+      }
+
+      .preview-rich-text ul,
+      .preview-rich-text ol {
+        margin: 0.75rem 0;
+        padding-left: 1.35rem;
+      }
+
+      .preview-pro-tip + .preview-pro-tip {
+        margin-top: 10px;
+      }
+
+      .preview-tip-meta {
+        margin-top: 8px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #6e8759;
+      }
+
+      .preview-card h1,
+      .preview-card h2,
+      .preview-card h3 {
+        color: #1f2f14;
+      }
+
+      .preview-card p,
+      .preview-card li,
+      .preview-card td,
+      .preview-card th {
+        color: #324d24;
+        line-height: 1.6;
+      }
+
+      .preview-card ul,
+      .preview-card ol {
+        margin: 0.75rem 0;
+        padding-left: 1.35rem;
+      }
+
+      .preview-card table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .preview-card th,
+      .preview-card td {
+        border: 1px solid #d5e5c7;
+        padding: 6px 8px;
+      }
+
+      .preview-card hr {
+        border: none;
+        border-top: 1px solid #d5e5c7;
+        margin: 1rem 0;
+      }
+
+      @media print {
+        .preview-toolbar {
+          display: none;
+        }
+
+        .preview-grid {
+          grid-template-columns: 1fr;
+        }
+
+        body {
+          background: #fff;
+        }
+
+        .preview-page {
+          margin: 0;
+          max-width: none;
+          padding: 0;
+        }
+
+        .preview-card {
+          border: none;
+          border-radius: 0;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="preview-toolbar">
+      <strong>${ title }</strong>
+      <button type="button" onclick="window.print()">Print</button>
+    </div>
+    <main class="preview-page">
+      <section class="preview-card">
+        <h1>${ title }</h1>
+        <div class="preview-grid">
+          <div class="preview-pane">
+            <p class="preview-label">Recipe</p>
+            <div class="preview-rich-text">${ recipeBodyHtml }</div>
+          </div>
+
+          <div>
+            <section class="preview-pane">
+              <p class="preview-label">Summary</p>
+              <p>${ summary }</p>
+            </section>
+
+            <section class="preview-pane">
+              <p class="preview-label">Details</p>
+              <p><strong>Submitter:</strong> ${ submitter }</p>
+              <p><strong>Updated:</strong> ${ updatedAt }</p>
+              <p><strong>Prep:</strong> ${ prep }</p>
+              <p><strong>Cook:</strong> ${ cook }</p>
+            </section>
+
+            <section class="preview-pane">
+              <p class="preview-label">Pro Tips</p>
+              ${ printableProTipsHtml }
+            </section>
+
+            <section class="preview-pane">
+              <p class="preview-label">Reactions</p>
+              <div class="preview-metrics">
+                <span>Thumbs Up: ${ thumbsUp }</span>
+                <span>Love: ${ love }</span>
+                <span>Comments: ${ commentCount }</span>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>`);
+
+    printWindow.document.close();
+    printWindow.focus();
+  }
+
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 md:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 md:px-10">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 Family Foodies
@@ -522,14 +877,14 @@ export function FoodiesHomePage({
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
                       Recipe Reactions
                     </p>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
+                    <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
                       Like or love this recipe, and share your thoughts with the family.
                     </p>
                   </div>
-                  <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
+                  {/* <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
                     <MessageSquareText className="mr-2 size-3.5" />
                     { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic?.commentCount ?? 0 } comments
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
@@ -571,8 +926,8 @@ export function FoodiesHomePage({
 
                     <div className="space-y-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] p-4">
                       <div>
-                        <p className="text-sm font-semibold text-[#2f4820]">Family Comments</p>
-                        <p className="text-sm text-[#647a50]">Share your thoughts on this recipe with your family.</p>
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Family Comments</p>
+                        <p className="text-xs text-[#647a50]">Share your thoughts on this recipe with your family.</p>
                       </div>
 
                       <div className="space-y-2">
@@ -644,12 +999,23 @@ export function FoodiesHomePage({
                   Read the selected recipe in full.
                 </DialogDescription>
               </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={ handleOpenRecipePrintPreview }
+                disabled={ !selectedRecipeBasic }
+                className="rounded-full border-[#cadfbb] bg-white text-[#2f4820] hover:bg-[#f1f8e4]"
+              >
+                <Printer className="size-4" />
+                Print Preview
+              </Button>
             </div>
           </DialogHeader>
 
           { selectedRecipeBasic ? (
-            <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
+            <div ref={ recipePrintContentRef } className="max-h-[75vh] space-y-4 overflow-auto pr-1">
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
                 <RecipeViewer recipeJson={ selectedRecipeBasic.recipeJson } />
 
                 <div className="space-y-4">
@@ -667,6 +1033,27 @@ export function FoodiesHomePage({
                       <p><span className="font-semibold text-[#2f4820]">Updated:</span> { formatDate(selectedRecipeBasic.updatedAt) }</p>
                       <p><span className="font-semibold text-[#2f4820]">Prep:</span> { selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-" }</p>
                       <p><span className="font-semibold text-[#2f4820]">Cook:</span> { selectedRecipeBasic.cookTimeMins > 0 ? `${ selectedRecipeBasic.cookTimeMins } min` : "-" }</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Pro Tips</p>
+                    <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
+                      Submitter notes and extra guidance saved with this recipe.
+                    </p>
+                    <div className="mt-3 space-y-3">
+                      { selectedRecipeDetail?.recipeProTips.length === 0 ? (
+                        <p className="text-sm text-[#647a50]">No pro tips were added for this recipe yet.</p>
+                      ) : (
+                        selectedRecipeDetail?.recipeProTips.map((proTip) => (
+                          <div key={ proTip.id } className="space-y-2">
+                            <RecipeProTipViewer proTipJson={ proTip.proTipJson } />
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
+                              { proTip.commenterName } · { formatCreatedAt(proTip.createdAt) }
+                            </p>
+                          </div>
+                        ))
+                      ) }
                     </div>
                   </div>
 

@@ -37,6 +37,7 @@ import {
 } from "../types/recipes";
 import {
   createEmptyTipTapDocument,
+  isTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
@@ -344,6 +345,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
       .select({
         id: recipeComment.id,
         recipeId: recipeComment.recipeId,
+        isRecipeProTip: recipeComment.isRecipeProTip,
       })
       .from(recipeComment)
       .where(inArray(recipeComment.recipeId, recipeIds)),
@@ -390,6 +392,10 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
   const tagNamesByTypeByRecipeId = new Map<number, Partial<Record<RecipeTagType, string[]>>>();
 
   for (const commentRow of commentRows) {
+    if (commentRow.isRecipeProTip) {
+      continue;
+    }
+
     commentCountByRecipeId.set(commentRow.recipeId, (commentCountByRecipeId.get(commentRow.recipeId) ?? 0) + 1);
   }
 
@@ -620,6 +626,20 @@ export async function saveFoodiesRecipe(
   }
 
   const recipeJsonToSave = serializeTipTapDocument(parsedRecipeJson.content);
+  const incomingRecipeProTipsJson = input.recipeProTipsJson?.trim() ?? "";
+  const parsedRecipeProTipsJson = incomingRecipeProTipsJson
+    ? parseSerializedTipTapDocument(incomingRecipeProTipsJson)
+    : { success: true as const, content: createEmptyTipTapDocument() };
+
+  if (!parsedRecipeProTipsJson.success) {
+    return {
+      success: false,
+      message: parsedRecipeProTipsJson.message,
+    };
+  }
+
+  const recipeProTipsJsonToSave = serializeTipTapDocument(parsedRecipeProTipsJson.content);
+  const hasRecipeProTips = !isTipTapDocumentEmpty(parsedRecipeProTipsJson.content);
 
   if (uniqueTagIds.length > 0) {
     const validTags = await db
@@ -687,6 +707,45 @@ export async function saveFoodiesRecipe(
           recipeId: savedRecipe.id,
           tagId,
         })));
+    }
+
+    const existingActorProTip = await db
+      .select({
+        id: recipeComment.id,
+      })
+      .from(recipeComment)
+      .where(
+        and(
+          eq(recipeComment.recipeId, savedRecipe.id),
+          eq(recipeComment.memberId, actor.memberId),
+          eq(recipeComment.isRecipeProTip, true)
+        )
+      )
+      .orderBy(desc(recipeComment.createdAt))
+      .then((rows) => rows[0] ?? null);
+
+    if (hasRecipeProTips) {
+      if (existingActorProTip) {
+        await db
+          .update(recipeComment)
+          .set({
+            commentJson: recipeProTipsJsonToSave,
+          })
+          .where(eq(recipeComment.id, existingActorProTip.id));
+      } else {
+        await db
+          .insert(recipeComment)
+          .values({
+            recipeId: savedRecipe.id,
+            memberId: actor.memberId,
+            isRecipeProTip: true,
+            commentJson: recipeProTipsJsonToSave,
+          });
+      }
+    } else if (existingActorProTip) {
+      await db
+        .delete(recipeComment)
+        .where(eq(recipeComment.id, existingActorProTip.id));
     }
 
     const [savedFoodiesRecipe] = await loadFoodiesRecipes(actor.familyId).then((rows) => rows.filter((row) => row.id === savedRecipe.id));
@@ -917,6 +976,8 @@ async function loadFoodiesRecipeDetail(
   const noRatingCount = likeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = likeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = likeRows.filter((row) => row.likenessDegree === 2).length;
+  const recipeProTipRows = commentRows.filter((row) => row.isRecipeProTip);
+  const familyCommentRows = commentRows.filter((row) => !row.isRecipeProTip);
 
   const viewerLike = viewerMemberId
     ? likeRows.find((row) => row.memberId === viewerMemberId)
@@ -960,7 +1021,7 @@ async function loadFoodiesRecipeDetail(
     memberId: recipeRow.memberId,
     familyId: recipeRow.familyId,
     submitterName: memberNameById.get(recipeRow.memberId) ?? `Member #${recipeRow.memberId}`,
-    commentCount: commentRows.length,
+    commentCount: familyCommentRows.length,
     noRatingCount,
     thumbsUpCount,
     loveCount,
@@ -969,7 +1030,14 @@ async function loadFoodiesRecipeDetail(
     selectedTagIds: tagIdsByRecipeId.get(recipeId) ?? [],
     tagNamesByType: tagNamesByTypeByRecipeId.get(recipeId) ?? {},
     templateId: recipeRow.templateId ?? null,
-    recipeComments: commentRows.map((row) => ({
+    recipeProTips: recipeProTipRows.map((row) => ({
+      id: row.id,
+      createdAt: row.createdAt ?? new Date(),
+      commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
+      memberId: row.memberId ?? 0,
+      proTipJson: row.commentJson,
+    })),
+    recipeComments: familyCommentRows.map((row) => ({
       id: row.id,
       createdAt: row.createdAt ?? new Date(),
       commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
@@ -1141,7 +1209,7 @@ export async function addRecipeComment(
         recipeId,
         memberId: actor.memberId,
         commentJson: normalizedComment,
-        isRecipeAnalysis: false,
+        isRecipeProTip: false,
       });
 
     const updatedRecipe = await loadFoodiesRecipeDetail(actor.familyId, recipeId, actor.memberId);
