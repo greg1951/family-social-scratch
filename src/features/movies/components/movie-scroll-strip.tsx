@@ -1,17 +1,20 @@
 "use client";
 
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star, ThumbsUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
 
 type LatestMovieItem = {
   kind: "latest";
   name: string;
   date: string;
+  commentsCount: number;
+  thumbsUp: number;
+  love: number;
   imageSrc: string;
   imageAlt: string;
 };
@@ -19,8 +22,10 @@ type LatestMovieItem = {
 type TopRatedMovieItem = {
   kind: "top-rated";
   name: string;
-  rating: number;
-  recommendations: number;
+  noRating: number;
+  thumbsUp: number;
+  love: number;
+  commentsCount: number;
   imageSrc: string;
   imageAlt: string;
 };
@@ -40,6 +45,65 @@ export function MovieScrollStrip({
   items,
   accentClassName,
 }: MovieScrollStripProps) {
+
+  function MovieImage({ src, alt }: { src: string; alt: string }) {
+    const [resolvedSrc, setResolvedSrc] = useState(src);
+
+    useEffect(() => {
+      let isCancelled = false;
+
+      const resolveSignedUrl = async () => {
+        const key = extractS3KeyFromValue(src);
+
+        if (!key) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/s3-upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "download",
+              fileName: key,
+            }),
+          });
+
+          if (!response.ok) {
+            if (!isCancelled) {
+              setResolvedSrc(src);
+            }
+            return;
+          }
+
+          const body = await response.json();
+
+          if (!isCancelled) {
+            setResolvedSrc(body.url ?? src);
+          }
+        } catch {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+        }
+      };
+
+      void resolveSignedUrl();
+
+      return () => {
+        isCancelled = true;
+      };
+    }, [src]);
+
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
+  }
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -125,16 +189,10 @@ export function MovieScrollStrip({
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(92,46,26,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
                   <div className="relative aspect-16/10 overflow-hidden">
-                    <Image
-                      src={ item.imageSrc }
-                      alt={ item.imageAlt }
-                      fill
-                      sizes="(max-width: 767px) 100vw, 288px"
-                      className="object-cover"
-                    />
+                    <MovieImage src={ item.imageSrc } alt={ item.imageAlt } />
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                     <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5c2e1a] shadow-sm">
-                      { item.kind === "latest" ? "Recently added" : "Fan favorite" }
+                      { item.kind === "latest" ? "Recently added" : "Top rated" }
                     </div>
                   </div>
 
@@ -142,20 +200,40 @@ export function MovieScrollStrip({
                     <div>
                       <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
                       { item.kind === "latest" ? (
-                        <p className="mt-1 text-sm text-[#607887]">Added { item.date }</p>
-                      ) : (
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span className="inline-flex items-center gap-1.5 text-[#d68a0f]">
-                            { Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={ index }
-                                className={ cn("size-3.5", index < item.rating ? "fill-[#d68a0f]" : "fill-[#e8d5c0]") }
-                              />
-                            )) }
+                        <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
+                          <span>Added { item.date }</span>
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
+                            <ThumbsUp className="size-4 text-[#b8581a]" />
+                            { item.thumbsUp.toLocaleString() }
                           </span>
-                          <span className="inline-flex items-center gap-1.5 text-[#5c7987]">
-                            <ThumbsUp className="size-3.5 fill-[#5c7987]" />
-                            { item.recommendations }
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                            <Heart className="size-4 text-[#cf3f7f]" />
+                            { item.love.toLocaleString() }
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
+                            <MessageSquareText className="size-4 text-[#b8581a]" />
+                            { item.commentsCount.toLocaleString() }
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="mt-2 space-y-2 text-sm text-[#607887]">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#6d5c52]">
+                              <ThumbsDown className="size-4 text-[#6d5c52]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
+                              <ThumbsUp className="size-4 text-[#b8581a]" />
+                              { item.thumbsUp.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                              <Heart className="size-4 text-[#cf3f7f]" />
+                              { item.love.toLocaleString() }
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
+                            <MessageSquareText className="size-4 text-[#b8581a]" />
+                            { item.commentsCount.toLocaleString() } comments
                           </span>
                         </div>
                       ) }

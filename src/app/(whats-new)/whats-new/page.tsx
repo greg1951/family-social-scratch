@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Movie Maniacs Go Crazy!",
+    summary: "Add your favorite movies to Movie Maniacs! See what movies other family members like.",
+    category: "Features",
+    date: "April 21, 2026",
+  },
+  {
     title: "TV Junkies Unite!",
     summary: "TV Junkies is now live in the Family Social! Check it out and start adding your favorite shows.",
     category: "Features",

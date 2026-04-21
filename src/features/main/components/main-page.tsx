@@ -8,6 +8,7 @@ import PublicHelpMenu from "@/components/common/public-help-menu";
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
+    "Movie Maniacs go crazy! Add your favorite 🎞️ review to Movie Maniacs and see what other family members think about it.",
     "TV Junkies unite! TV Junkies is now live in Family Social! Step away from the 📺 and check it out!",
     "It's alive! Family Foodies is now live in the family social experience!",
     "It's Picture Day in the Family! Updated your profile with a lovely 📸 of yourself.",
