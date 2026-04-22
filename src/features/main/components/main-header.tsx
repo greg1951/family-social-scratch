@@ -2,9 +2,13 @@ import NavBar from "@/components/common/nav-bar";
 import HeaderImage from "@/components/common/header-img";
 import MainDropMenu from "../../../components/common/main-dropmenu";
 import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
+import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
 
 export default async function MainHeader({ isLoggedIn, isFounder, firstName }: { isLoggedIn: boolean; isFounder: boolean; firstName: string }) {
   const memberAvatarDetails = await getCurrentMemberAvatarDetails();
+  const unreadThreadCount = memberAvatarDetails.isLoggedIn
+    ? await getUnreadThreadCountForRecipient(memberAvatarDetails.memberId)
+    : 0;
 
   const menuFirstName = memberAvatarDetails.firstName || firstName;
   const menuEmail = memberAvatarDetails.email;
@@ -32,6 +36,7 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
                   sessionFound={ menuSessionFound }
                   isFounder={ menuIsFounder }
                   memberImageUrl={ memberAvatarDetails.memberImageUrl }
+                  unreadThreadCount={ unreadThreadCount }
                 />
               </ul>
             </nav>

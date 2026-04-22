@@ -12,6 +12,7 @@ export {
   threadConversation,
   threadPostReply,
   threadRecipientState,
+  threadPostAttachment,
   gameMetadata,
   gameState,
   gamePlayerState,

@@ -1,10 +1,13 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
-import { MessageSquareText, Search, Lock, Globe, Eye, EyeOff, Archive, Reply } from "lucide-react";
+import { useDeferredValue, useState, useTransition } from "react";
+import { MessageSquareText, Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ConvoSummary } from "@/components/db/types/thread-convos";
+import { archiveReadThreadsAction, updateThreadArchiveStateAction, updateThreadReadStateAction } from "@/app/(features)/(threads)/threads/actions";
 
 type ThreadsHomePageProps = {
   summaries: ConvoSummary[];
@@ -32,6 +36,9 @@ function formatDate(date: Date | null): string {
 }
 
 export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomePageProps) {
+  const router = useRouter();
+  const [isArchiving, startArchivingTransition] = useTransition();
+  const [isUpdatingRowState, startRowUpdateTransition] = useTransition();
   const [searchValue, setSearchValue] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "sent" | "received">("all");
   const [readFilter, setReadFilter] = useState<"all" | "read" | "unread">("all");
@@ -41,10 +48,12 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
 
   const filtered = summaries
     .filter((s) => {
+      const isRecipientRow = s.recipientMemberId === memberId;
       // role filter
       if (roleFilter === "sent" && s.senderMemberId !== memberId) return false;
       if (roleFilter === "received" && s.recipientMemberId !== memberId) return false;
       // read filter
+      if (readFilter !== "all" && !isRecipientRow) return false;
       if (readFilter === "read" && !s.readAt) return false;
       if (readFilter === "unread" && !!s.readAt) return false;
       // text search
@@ -77,6 +86,49 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   const unreadCount = summaries.filter(
     (s) => s.recipientMemberId === memberId && !s.readAt,
   ).length;
+  const privateCount = summaries.filter((s) => s.visibility === "private").length;
+
+  function handleArchiveReadThreads() {
+    startArchivingTransition(async () => {
+      const result = await archiveReadThreadsAction();
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function handleToggleRowArchive(conversationId: number, shouldArchive: boolean) {
+    startRowUpdateTransition(async () => {
+      const result = await updateThreadArchiveStateAction({ conversationId, shouldArchive });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function handleToggleRowRead(conversationId: number, shouldMarkUnread: boolean) {
+    startRowUpdateTransition(async () => {
+      const result = await updateThreadReadStateAction({ conversationId, shouldMarkUnread });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -100,7 +152,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
               </h1>
             </div>
 
-            <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-3 lg:min-w-[24rem]">
+            <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-4 lg:min-w-120">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Total</p>
                 <p className="mt-2 text-2xl font-black">{ totalCount }</p>
@@ -115,6 +167,11 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Showing</p>
                 <p className="mt-2 text-2xl font-black">{ filtered.length }</p>
                 <p className="text-sm text-[#f0d8ff]">after filters</p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Private</p>
+                <p className="mt-2 text-2xl font-black">{ privateCount }</p>
+                <p className="text-sm text-[#f0d8ff]">secured threads</p>
               </div>
             </div>
           </div>
@@ -138,8 +195,28 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 </p>
               </div>
 
-              <div className="rounded-full border border-[#e8d0f8] bg-[#faf5ff] px-4 py-2 text-sm font-semibold text-[#7a4a9a]">
-                { filtered.length } thread{ filtered.length !== 1 ? "s" : "" } found
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={ handleArchiveReadThreads }
+                  disabled={ isArchiving }
+                  className="rounded-full bg-[#6d2f93] text-white hover:bg-[#5a2679]"
+                >
+                  <Archive className="mr-1 size-4" />
+                  { isArchiving ? "Archiving..." : "Archive All Read" }
+                </Button>
+
+                <Button asChild size="sm" className="rounded-full bg-[#8840b0] text-white hover:bg-[#6d2f93]">
+                  <Link href="/threads/compose">
+                    <PencilLine className="mr-1 size-4" />
+                    Compose
+                  </Link>
+                </Button>
+
+                <div className="rounded-full border border-[#e8d0f8] bg-[#faf5ff] px-4 py-2 text-sm font-semibold text-[#7a4a9a]">
+                  { filtered.length } thread{ filtered.length !== 1 ? "s" : "" } found
+                </div>
               </div>
             </div>
 
@@ -215,8 +292,10 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                   </thead>
                   <tbody>
                     { filtered.map((s) => {
+                      const isRecipientRow = s.recipientMemberId === memberId;
                       const isUnread = s.recipientMemberId === memberId && !s.readAt;
                       const isArchived = !!s.archivedAt;
+                      const canManageRecipientState = isRecipientRow;
 
                       return (
                         <tr
@@ -233,7 +312,9 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
 
                           {/* Title */ }
                           <td className="px-4 py-3">
-                            <span className="font-semibold text-[#4a1a6a]">{ s.title }</span>
+                            <Link href={ `/threads/${ s.id }` } className="font-semibold text-[#4a1a6a] underline-offset-4 hover:underline">
+                              { s.title }
+                            </Link>
                             { isUnread && (
                               <span className="ml-2 inline-block rounded-full bg-[#8840b0] px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider text-white">
                                 New
@@ -295,13 +376,17 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                             <div className="flex flex-col gap-1">
                               <span className={ [
                                 "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
-                                s.readAt
-                                  ? "bg-[#e8f8e8] text-[#208040]"
-                                  : "bg-[#fff0e0] text-[#a06020]",
+                                !isRecipientRow
+                                  ? "bg-[#f5f0ff] text-[#8060a0]"
+                                  : s.readAt
+                                    ? "bg-[#e8f8e8] text-[#208040]"
+                                    : "bg-[#fff0e0] text-[#a06020]",
                               ].join(" ") }>
-                                { s.readAt
-                                  ? <><Eye className="size-3" /> Read</>
-                                  : <><EyeOff className="size-3" /> Unread</> }
+                                { !isRecipientRow
+                                  ? <>N/A</>
+                                  : s.readAt
+                                    ? <><Eye className="size-3" /> Read</>
+                                    : <><EyeOff className="size-3" /> Unread</> }
                               </span>
                               { isArchived && (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-[#f0e8ff] px-2 py-0.5 text-[0.65rem] font-semibold text-[#7050a0]">
@@ -318,6 +403,32 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                               ].join(" ") }>
                                 { s.status }
                               </span>
+
+                              { canManageRecipientState && (
+                                <div className="mt-1 flex flex-wrap gap-1">
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={ isUpdatingRowState }
+                                    onClick={ () => handleToggleRowRead(s.id, !isUnread) }
+                                    className="h-6 rounded-full bg-[#efe3fa] px-2 text-[0.62rem] font-semibold text-[#5a2a78] hover:bg-[#e1cff2]"
+                                  >
+                                    { isUnread ? <Eye className="mr-1 size-3" /> : <EyeOff className="mr-1 size-3" /> }
+                                    { isUnread ? "Mark Read" : "Mark Unread" }
+                                  </Button>
+
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={ isUpdatingRowState }
+                                    onClick={ () => handleToggleRowArchive(s.id, !isArchived) }
+                                    className="h-6 rounded-full bg-[#efe3fa] px-2 text-[0.62rem] font-semibold text-[#5a2a78] hover:bg-[#e1cff2]"
+                                  >
+                                    { isArchived ? <ArchiveRestore className="mr-1 size-3" /> : <Archive className="mr-1 size-3" /> }
+                                    { isArchived ? "Unarchive" : "Archive" }
+                                  </Button>
+                                </div>
+                              ) }
                             </div>
                           </td>
 

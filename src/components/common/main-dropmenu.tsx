@@ -5,8 +5,15 @@ import { SettingsIcon } from 'lucide-react';
 import MemberAvatar from "@/components/common/member-avatar";
 
 
-export default function MainDropMenu({ firstName, email, sessionFound, isFounder, memberImageUrl }
-  : { firstName: string; email: string; sessionFound: boolean; isFounder: boolean; memberImageUrl?: string | null; }) {
+export default function MainDropMenu({ firstName, email, sessionFound, isFounder, memberImageUrl, unreadThreadCount }
+  : {
+    firstName: string;
+    email: string;
+    sessionFound: boolean;
+    isFounder: boolean;
+    memberImageUrl?: string | null;
+    unreadThreadCount?: number;
+  }) {
   let title: string = "";
   if (firstName.length === 0) title = 'Settings'
   else title = `${ firstName }'s Settings`
@@ -37,6 +44,14 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
               />
             ) : (
               <SettingsIcon className="h-6 w-6 md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110" />
+            ) }
+
+            { sessionFound && (unreadThreadCount ?? 0) > 0 && (
+              <span
+                className="absolute -right-0.5 -top-0.5 inline-flex h-2.5 w-2.5 rounded-full border border-white bg-red-600"
+                aria-label={ `${ unreadThreadCount } unread thread${ unreadThreadCount === 1 ? '' : 's' }` }
+                title={ `${ unreadThreadCount } unread thread${ unreadThreadCount === 1 ? '' : 's' }` }
+              />
             ) }
           </div>
           <span className={ tooltipClasses }>

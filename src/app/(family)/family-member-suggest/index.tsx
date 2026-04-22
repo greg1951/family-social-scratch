@@ -133,7 +133,7 @@ export default function FamilyMemberSuggestForm({
 
     // Step 1: Create suggested invite
     updateStepStatus(1, 'inProgress');
-    // await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+    updateStepStatus(2, 'inProgress');
     const suggestedInvite = {
       firstName: normalizedValues.firstName,
       lastName: normalizedValues.lastName,
@@ -143,17 +143,34 @@ export default function FamilyMemberSuggestForm({
     };
     console.log('FamilyMemberSuggestForm->SubmitHandler->before createSuggestedInvite->currentFamilyMembers: ', currentFamilyMembers);
     const createInviteResult = await createSuggestedInvite({ suggestedInvite });
+
+    if (!createInviteResult) {
+      updateStepStatus(1, 'error', 'Failed to create suggested invite.');
+      updateStepStatus(2, 'error', 'Founder notification did not run.');
+      throw new Error('Failed to create suggested invite.');
+    }
+
+    if (createInviteResult.inviteCreated) {
+      updateStepStatus(1, 'completed');
+    }
+
+    if (createInviteResult.threadNotificationRequired) {
+      if (createInviteResult.threadNotificationSent) {
+        updateStepStatus(2, 'completed');
+      } else {
+        updateStepStatus(2, 'error', createInviteResult.message ?? 'Founder notification thread failed.');
+      }
+    } else {
+      updateStepStatus(2, 'completed');
+    }
+
     if (!createInviteResult || createInviteResult.error) {
       const error = `Failed to create suggested invite: ${ createInviteResult?.message }`;
-      updateStepStatus(1, 'error', error);
+      if (!createInviteResult.inviteCreated) {
+        updateStepStatus(1, 'error', error);
+      }
       throw new Error(error);
     }
-    updateStepStatus(1, 'completed');
-
-    // Step 2: Notify founder (simulated with timeout here)
-    updateStepStatus(2, 'inProgress');
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-    updateStepStatus(2, 'completed');
 
     form.reset(values);
   };

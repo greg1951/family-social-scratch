@@ -135,7 +135,7 @@ export const threadConversationTag = pgTable("thread_conversation_tag", {
 },
   (table) => [
     index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
-    // unique().on(table.conversationId, table.tagId),
+    unique('thread_conversation_tag_conversation_tag_uq').on(table.conversationId, table.tagId),
 ]);
 
 export const threadConversation = pgTable("thread_conversation", {
@@ -153,7 +153,12 @@ export const threadConversation = pgTable("thread_conversation", {
   archiveObjectKey: text("archive_object_key"),
   senderMemberId: integer("fk_sender_member_id").references(() => member.id),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
-});
+},
+  (table) => [
+    index('thread_conversation_family_created_idx').on(table.familyId, table.createdAt),
+    index('thread_conversation_family_status_created_idx').on(table.familyId, table.status, table.createdAt),
+    index('thread_conversation_sender_created_idx').on(table.senderMemberId, table.createdAt),
+]);
 
 export const threadPostReply = pgTable("thread_post_reply", {
   id: serial("id").primaryKey(),
@@ -161,6 +166,7 @@ export const threadPostReply = pgTable("thread_post_reply", {
   authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id),
   type: text("type").notNull().default("post"),
   content: text("content").notNull(),
+  contentJson: text("content_json").notNull().default("{}"),
   seqNo: integer("seq_no").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
   softDeletedAt: timestamp("soft_deleted_at"),
@@ -180,6 +186,25 @@ export const threadPostReply = pgTable("thread_post_reply", {
     }),
     index('thread_post_reply_conversation_seq_idx').on(table.conversationId, table.seqNo),
     index('thread_post_reply_conversation_created_idx').on(table.conversationId, table.createdAt),
+    index('thread_post_reply_parent_post_idx').on(table.parentPostId),
+    index('thread_post_reply_author_created_idx').on(table.authorMemberId, table.createdAt),
+    unique('thread_post_reply_conversation_seq_uq').on(table.conversationId, table.seqNo),
+]);
+
+export const threadPostAttachment = pgTable("thread_post_attachment", {
+  id: serial("id").primaryKey(),
+  postId: integer("fk_post_id").notNull().references(() => threadPostReply.id, { onDelete: 'cascade' }),
+  attachmentType: text("attachment_type").notNull().default("image"),
+  s3ObjectKey: text("s3_object_key").notNull(),
+  displayUrl: text("display_url"),
+  fileName: text("file_name"),
+  fileSizeBytes: integer("file_size_bytes"),
+  mimeType: text("mime_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index('thread_post_attachment_post_idx').on(table.postId),
+    index('thread_post_attachment_object_key_idx').on(table.s3ObjectKey),
 ]);
 
 export const threadRecipientState = pgTable("thread_recipient_state", {
@@ -188,6 +213,7 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
   recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id),
   deliveryType: text("delivery_type").notNull().default("threads"),
   readAt: timestamp("read_at"),
+  answeredAt: timestamp("answered_at"),
   archivedAt: timestamp("archived_at"),
   archiveBatchId: integer("archive_batch_id"),
   archiveObjectKey: text("archive_object_key"),
@@ -202,6 +228,8 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
     }),
     index('thread_recipient_state_conversation_recipient_idx').on(table.conversationId, table.recipientMemberId),
     index('thread_recipient_state_conversation_created_idx').on(table.conversationId, table.createdAt),
+    index('thread_recipient_state_recipient_read_archive_idx').on(table.recipientMemberId, table.readAt, table.archivedAt),
+    unique('thread_recipient_state_conversation_recipient_uq').on(table.conversationId, table.recipientMemberId),
 ]);
 
 /*------------------------------- Games Scoreboard ------------------------------ */

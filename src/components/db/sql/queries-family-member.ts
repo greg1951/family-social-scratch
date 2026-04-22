@@ -357,7 +357,10 @@ export async function getFamilyFounderDetails(familyId:number)
     })
     .from(family)
       .leftJoin(member, eq(family.id, member.familyId))
-        .where(eq(member.isFounder, true));
+        .where(and(
+          eq(family.id, familyId),
+          eq(member.isFounder, true),
+        ));
 
   if (!selectResult) {
     return {

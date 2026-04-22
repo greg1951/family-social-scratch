@@ -4,6 +4,7 @@ import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 import MainDropMenu from "@/components/common/main-dropmenu";
 import BackButton from "@/components/common/back-button";
 import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
+import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
 
 export default async function TrialLayout({
   children,
@@ -11,9 +12,12 @@ export default async function TrialLayout({
   children: React.ReactNode
 }) {
   const memberAvatarDetails = await getCurrentMemberAvatarDetails();
+  const unreadThreadCount = memberAvatarDetails.isLoggedIn
+    ? await getUnreadThreadCountForRecipient(memberAvatarDetails.memberId)
+    : 0;
 
   return (
-    <div className="font-app min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f5fbff_34%,_#dff6ff_100%)] text-[#10364a]">
+    <div className="font-app min-h-screen bg-[radial-gradient(circle_at_top,#ffffff_0%,#f5fbff_34%,#dff6ff_100%)] text-[#10364a]">
       <div className="absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(89,205,247,0.28),rgba(255,255,255,0))]" />
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-10 pt-4 sm:px-6 lg:px-8">
         <header className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-[0_20px_80px_-38px_rgba(16,54,74,0.45)] backdrop-blur">
@@ -77,6 +81,7 @@ export default async function TrialLayout({
                   sessionFound={ memberAvatarDetails.isLoggedIn }
                   isFounder={ memberAvatarDetails.isFounder }
                   memberImageUrl={ memberAvatarDetails.memberImageUrl }
+                  unreadThreadCount={ unreadThreadCount }
                 />
               </div>
             </div>
