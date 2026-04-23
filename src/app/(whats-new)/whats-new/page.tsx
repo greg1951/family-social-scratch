@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const updates = [
   {
-    title: "Family Thread is Live!",
+    title: "Family Threads is Live!",
     summary: "It's the Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
     category: "Features",
     date: "April 22, 2026",
