@@ -170,7 +170,6 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
 
   useEffect(() => {
     if (!selectedMovie) {
-      setSelectedMovieDetail(null);
       return;
     }
 
@@ -264,13 +263,13 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-start">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+          <div className="min-w-0 space-y-6">
             <MovieScrollStrip title="Latest Movie Reviews" description="Fresh movie reviews shared by the family." items={ latestMovies } accentClassName="bg-[linear-gradient(135deg,#ffb366,#ff8866)]" />
             <MovieScrollStrip title="Top Rated Movies" description="Top rated movies based on family thumbs down, thumbs up, and love reactions." items={ topRatedMovies } accentClassName="bg-[linear-gradient(135deg,#ffa84d,#ff9933)]" />
           </div>
 
-          <div className="space-y-6">
+          <div className="min-w-0 space-y-6">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
               <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.85))] px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

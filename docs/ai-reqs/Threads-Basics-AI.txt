@@ -1,0 +1,43 @@
+THREADS BASICS OVERVIEW
+The intent of Family Threads feature is to centralize the family member communications on the platform. It was not meant to replace texting or picture sharing people do on picture galleries and other social media platforms (like Fakebook).
+However, as family members are already aggregated on the Family Social, it makes sense to implement features that allow the members to easily converse and share an image on the platform.
+
+BASIC USE CASES
+* Member Sender-to-Member Recipient
+* Member Recipient response-to-Member Sender
+* Founder Sender-to-Family member recipients broadcast
+* Member recipient response to Founder Sender
+* Sender image attachments 
+* Recipient opens images
+
+VARIATIONS
+* private member sender sender-to-member recipient (could be founder)
+* private recipient response to private member sender
+* private recipient response to Founder
+
+
+USER INTERFACE REQUIREMENTS
+
+Message Composition
+
+* Rich Text Editor will be provided for message composition
+* Member should be able to select multiple recipients and privacy settings
+* Member should be able to select one or more images to send
+* An option to send it as an email as well 
+
+Messages List
+* Provide a filterable list of threads, in descending create data order.
+* Thread counts: total threads, unread threads, private threads
+* Thread archive (archive all read or selected threads)
+* Notifications badge (the little red dot)  on the user dropdown icon
+
+* The current Family Threads home page resides in "src/features/threads/components/threads-home-page.tsx" file.
+
+Schema 
+* The current schema resides in the "src/components/db/schema/family-social-schema-tables.ts" file, with a "thread" prefix.
+
+Questions
+* What changes need to be made to the schema to address the above requirements?
+* what are the recommended changes for the user interface?
+
+

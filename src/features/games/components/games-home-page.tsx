@@ -1032,7 +1032,7 @@ export function GamesHomePage({
               </div>
             ) : (
               <div className="text-center py-12 text-slate-400">
-                Select a game and click "Start Game" to begin scoring
+                Select a game and click &quot;Start Game&quot; to begin scoring
               </div>
             ) }
           </Card>

@@ -58,7 +58,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               </Column>
               <Column align='left' valign='middle'>
                 <Text className='m-0 mb-4 font-app text-base leading-7'>
-                  { founderName } welcomes you to the { familyName } family, { memberName }! Here you'll find some
+                  { founderName } welcomes you to the { familyName } family, { memberName }! Here you&apos;ll find some
                   information about how to sign in and get started.
                 </Text>
               </Column>
@@ -93,7 +93,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                 valign='top'
                 style={ { width: '620px', paddingRight: '20px' } }>
                 <Text className='m-0 font-app text-base leading-6'>
-                  If you are experiencing any issues signing in, like you don't know your family name, or you forgot
+                  If you are experiencing any issues signing in, like you don&apos;t know your family name, or you forgot
                   your password, there are helpful links on the login page to assist you. You can also reach out to { founderName } for help.
                 </Text>
               </Column>

@@ -30,7 +30,7 @@ export default async function FamilyMemberSuggestPage() {
     redirect("/");
   }
   // const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
-  let newFamilyMembers: NewFamilyInvite[] = [];
+  const newFamilyMembers: NewFamilyInvite[] = [];
 
   const currentMembersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
   let currentFamilyMembers: CurrentFamilyMember[] = [];

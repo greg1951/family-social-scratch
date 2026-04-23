@@ -364,7 +364,12 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
 
                           {/* Message preview */ }
                           <td className="max-w-[18rem] px-4 py-3 text-sm text-[#5c3a7a]">
-                            { s.postContent ? (
+                            { s.visibility === "private" ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#f5ecff] px-2 py-1 text-[0.72rem] font-semibold text-[#7a4a9a]">
+                                <Lock className="size-3" />
+                                Private thread message hidden
+                              </span>
+                            ) : s.postContent ? (
                               <span className="line-clamp-2 leading-snug">{ s.postContent }</span>
                             ) : (
                               <span className="text-[#b0a0c0]">No message yet</span>

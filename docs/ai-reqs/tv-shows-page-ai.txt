@@ -1,0 +1,53 @@
+
+Create a home page in the (features)/(tv) router group that consists of three sections. In the first section, entitled "Latest tv shows" create a horizontally scrollable (use arrow icons for left and right) set of four tv show images, each with the name of the show and a date. If it is a small screen then the scrolling should be vertical. 
+
+There are sample images to be found at this location on the file system: 
+C:\Users\ghughlett\Projects\my-projects\family-social-prototype-images\photos\tv-shows
+
+In the second section of the page, create a another scrollable list of four pictures for a section entitled "Top Rated TV Shows". Each of the pictures should have a caption consisting of the show name, a five-star rating icons and a thumbs up icons with the number of recommendations. 
+
+The third section of the page will be a section entitled "Show Finder" with a search bar. Below the Show Finder form will be a list of selectable TV shows. The columns in the TV Shows list are: Show Name, Thumbs Up number of recommendations, Average Rating, # of Seasons, Genre, Channel, Added By (member first name) and the number of comments on the show. The first and second sections will occupy half the page and the third section the remainder.
+
+The layout.tsx for this page should reuse the root app folder layout.tsx.
+
+
+
+---------------------------------
+
+Create a home page in the (features)/(foodies)/foodies folder that consists of three sections. In the first section, entitled "Latest Recipes" create a horizontally scrollable (use arrow icons for left and right) set of four tv show images, each with the name of the show and a date. If it is a small screen then the scrolling should be vertical. 
+
+There are sample images to be found at this location on the file system: 
+C:\Users\ghughlett\Projects\my-projects\family-social-prototype-images\photos\foodies
+
+In the second section of the page, create a another scrollable list of four pictures for a section entitled "Top Rated Recipes". Each of the pictures should have a caption consisting of the recipe name, a five-star rating icons and a thumbs up icons with the number of recommendations. 
+
+The third section of the page will be a section entitled "Recipe Finder" with a search bar. Below the Recipe Finder form will be a list of selectable recipes. The columns in the Recipes list are: Recipe Name, Chef (member first name), Category, Prep Time, Cook Time and the number of comments on the show. The first and second sections will occupy half the page and the third section the remainder.
+
+The layout.tsx for this page should reuse the root app folder layout.tsx.
+
+---------------------------------
+
+Create a Music Lovers home page in the (features)/(music)/music folder that consists of three sections. It should the same pattern as implemented in the (features)/(tv)/tv folder. In the first section, entitled "Latest Songs" create a horizontally scrollable (use arrow icons for left and right) set of four artist images, each with the name of the artist and a date added. If it is a small screen then the scrolling should be vertical. 
+
+There are sample images to be found at this location on the file system: 
+C:\Users\ghughlett\Projects\my-projects\family-social-prototype-images\photos\music
+
+In the second section of the page, create a another scrollable list of four images for a section entitled "Top Rated Albums". Each of the pictures should have a caption consisting of the album name, a five-star rating icons and a thumbs up icons with the number of recommendations. 
+
+The third section of the page will be a section entitled "Music Finder" with a search bar. Below the Music Finder form will be a list of selectable recipes. The columns in the Recipes list are: Artist Name, Contributed By (member first name), Category, and the number of comments on the artist. The first and second sections will occupy half the page and the third section the remainder.
+
+The layout.tsx for this page should follow the same pattern as implemented in the tv group.
+
+
+--------------------------
+
+Create a Movie Maniacs home page in the (features)/(movies)/movies folder that consists of three sections. It should the same pattern as implemented in the (features)/(tv)/tv folder. In the first section, entitled "Latest Movie Reviews" create a horizontally scrollable (use arrow icons for left and right) set of four artist images, each with the name of the artist and a date added. If it is a small screen then the scrolling should be vertical. 
+
+There are sample images to be found at this location on the file system: 
+C:\Users\ghughlett\Projects\my-projects\family-social-prototype-images\photos\movies
+
+In the second section of the page, create a another scrollable list of four images for a section entitled "Top Rated Movies". Each of the pictures should have a caption consisting of the album name, a five-star rating icons and a thumbs up icons with the number of recommendations. 
+
+The third section of the page will be a section entitled "Movie Finder" with a search bar. Below the Music Finder form will be a list of selectable recipes. The columns in the Recipes list are: Movie Name, Contributed By (member first name), Channel (Streaming service or theater), Category, Kid Friendly (use an icon for this), and the number of comments on the movie. The first and second sections will occupy half the page and the third section the remainder.
+
+The layout.tsx for this page should follow the same pattern as implemented in the tv group.

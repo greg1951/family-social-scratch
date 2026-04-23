@@ -1,0 +1,32 @@
+OVERVIEW
+
+- One of the application's main features is called Family Threads. It's like a blog site but restricted to members of the family.
+- Presently emails are the primary vehicle for notifications which is OK but emails get lost or forgotten about or end up in spam.
+- Family Threads is currently a planned feature and provides a way to do this without a lot of emails or text messages.
+- The emails/texts could be short and sweet, a link to the Family Threads response.
+
+DATABASE DESIGN
+
+Family threads is premised on it being like a message board or blogging paradigm. The `Thread` database table would need to support the following.
+
+- Who sent it (sender) to whom (recipient),
+  -  Recipient could be "All" or specific member
+- Message type (e.g. public or private)
+- Category of message (e.g. Suggestion, TV, Movies, etc.)
+  - Perhaps it's a number of "tags" 
+- Status: Read, Unread, Answered, Archive
+- Send timestamp,
+- Text of message 
+- Level sequence# (e.g. "1" first message, "2" response to message "1"). 
+  - There could be multiple level threads targeting a parent thread.
+- Thread relationship (e.g. message "2" is related to "1")
+- The PK would need to be a composite of threadId, sequence#, 
+- There would need to a lot of indexes created on the table
+
+QUESTIONS
+
+- First, is the PostgreSQL relational database a good way to implement the Family Threads schema or are there other non-relational databases better suited?
+- If a  relational database is a viable approach, what tables are recommended?
+- Using the Amazon Web Services platform, what are the best services for archiving of closed or expired Family Threads?
+
+

@@ -455,7 +455,9 @@ export default function PoetryHomePage({
       ? pendingSelectedPoemId
       : selectedPoemId;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoemItems(nextPoemItems);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedPoemId((currentSelectedPoemId) => {
       const preferredPoemId = resolvedSelectedPoemId ?? currentSelectedPoemId;
 
@@ -470,8 +472,10 @@ export default function PoetryHomePage({
       const nextSelectedPoem = nextPoemItems.find((poemItem) => poemItem.id === resolvedSelectedPoemId) ?? nextPoemItems[0] ?? null;
 
       if (nextSelectedPoem) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft(nextSelectedPoem);
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft(createEmptyDraft(member));
       }
     }
@@ -479,10 +483,13 @@ export default function PoetryHomePage({
     const receivedRefreshedPoems = previousPoemsRef.current !== poems;
 
     if (receivedRefreshedPoems && pendingSelectedPoemId && nextPoemItems.some((poemItem) => poemItem.id === pendingSelectedPoemId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingSelectedPoemId(null);
 
       if (savePhase === "saving") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSavePhase("saved");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSaveMessage("Poem synced with the server order.");
       }
     }
@@ -889,8 +896,8 @@ export default function PoetryHomePage({
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)] backdrop-blur xl:row-span-2">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)] backdrop-blur xl:row-span-2">
             <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -977,7 +984,7 @@ export default function PoetryHomePage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
             <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -1079,7 +1086,7 @@ export default function PoetryHomePage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
             <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                 Poem Analysis

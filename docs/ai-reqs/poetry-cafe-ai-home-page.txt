@@ -1,0 +1,49 @@
+BACKGROUND
+
+- There are six poem tables (poem_fact, poem_verse, poem_comment, poem_term, poem_tag_reference, and poem_fact_tag) defined in the "src/components/db/schema/family-social-schema-tables.ts" file. 
+- There is data in the poem_term table that is deployed to the Neon platform.
+- Database queries for poem_fact and poem_term have been written and reside in the "src/components/db/sql/queries-poetry-cafe.ts" file.
+
+- The "src/app/(features)/(poetry)/poetry/page.tsx" file references a "poemFacts" object that contains an array of poemFact table rows. The member details are also retrieved and passed to the "PoetryHomePage" which references component "PoetryHomePage". 
+- There is currently no data in the poem_fact table. 
+- The "PoetryHomePage" component resides in the "src/features/poetry/components/poem-terms-home-page.tsx" file.
+
+OBJECTIVE
+
+- The purpose of this request is to generate React and TipTap code for the "PoetryHomePage" as described below. 
+- The "PoetryHomePage" page should consists of 4 parts (A, B, C, D) as depicted below. 
+
++--------------------+
+|         A          |
++-----------+--------|
+|           |        |
+|     B     |   C    |
+|           |        |
+|           +--------|
+|           |   D    |
++-----------+--------+
+
+- SECTION A is a header that provides buttons to view and edit or add a poem. 
+  - The header format should follow what has been done elsewhere (e.g. "src/features/poetry/components/poem-terms-home-page.tsx") which provides a button to return to the main page. Use the same color schema as in this page.
+  - The header should also have a button that inks to the poem-terms-home-page.tsx.
+
+- SECTION B consists of a selectable list of poems (see poemFacts array passed from page.tsx). 
+  - The columns in the list are: 
+  - poetTitle, poetName, poemYear, member name submitting poem, number of likes and number of comments.
+
+- SECTION C 
+  - The add or edit buttons in Section A will initialize this form area.
+  - The form area should have a Cancel and Save button.
+  - The submitter must provide the poem name, poet name, poem year and then the poem verse. 
+  - The poem verse will be edited in TipTap and saved to the poem_verse table in the verseJson, as was done for the termJson in the poem_term table earlier.
+
+- SECTION D 
+  - This section requires an explanation as where the data come from. It contains the poem analysis the poem submitter will provide when editing a new poem submission. 
+  - The poem analysis will be saved to the poem_comment table. When this comment is saved, the "isPoemAnalysis" column will be set to "true". If there is no analysis, then the section should be empty but still editable by the poem submitter (at a later time). 
+  - The UI for the poem analysis should be TipTap, similar to what was done for the PoemTermHomePage.
+  - The analysis comment must be extracted from the "commentJson" for the comment.
+  - Below the poem analysis textarea are 1-3 tags that can be added by the poem submitter, from tags in the poem_tag_reference table. The assigned tags should be saved in the "poem-fact-tag" table.
+
+
+
+

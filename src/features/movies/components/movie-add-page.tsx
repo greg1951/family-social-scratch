@@ -100,6 +100,12 @@ function slugifyTitle(value: string) {
   return compressed || "movie";
 }
 
+function revokeBlobUrl(url: string | null) {
+  if (url?.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function getTemplateDocument(template?: MovieTemplateOption): JSONContent {
   if (!template?.templateJson) {
     return createEmptyTipTapDocument();
@@ -220,14 +226,9 @@ export function MovieAddPage({
     return () => { isCancelled = true; };
   }, [movieImageUrl, selectedFile]);
 
-  useEffect(() => {
-    if (!selectedFile) {
-      return;
-    }
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setImagePreviewUrl(objectUrl);
-    return () => { URL.revokeObjectURL(objectUrl); };
-  }, [selectedFile]);
+  useEffect(() => () => {
+    revokeBlobUrl(imagePreviewUrl);
+  }, [imagePreviewUrl]);
 
   function setSelectedTagForType(tagType: MovieTagType, tagId: string) {
     setSelectedTagsByType((currentState) => ({ ...currentState, [tagType]: tagId }));
@@ -248,6 +249,10 @@ export function MovieAddPage({
       event.target.value = "";
       return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    revokeBlobUrl(imagePreviewUrl);
+    setImagePreviewUrl(objectUrl);
     setSelectedFile(file);
   }
 
@@ -454,7 +459,17 @@ export function MovieAddPage({
                   <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */ }
                     <img src={ imagePreviewUrl } alt="Selected movie preview" className="h-48 w-full object-cover" />
-                    <button type="button" onClick={ () => { setSelectedFile(null); setMovieImageUrl(null); setImagePreviewUrl(null); } } className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white" aria-label="Remove image">
+                    <button
+                      type="button"
+                      onClick={ () => {
+                        revokeBlobUrl(imagePreviewUrl);
+                        setSelectedFile(null);
+                        setMovieImageUrl(null);
+                        setImagePreviewUrl(null);
+                      } }
+                      className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white"
+                      aria-label="Remove image"
+                    >
                       <X className="size-4" />
                     </button>
                   </div>

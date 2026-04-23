@@ -190,7 +190,7 @@ export default function LoginForm() {
                           <p className='text-sm p-1'>When you join Family Social you become part of a unique family. Your family name is required to sign in.</p>
                           <p className='text-sm p-1'>In your email invitation, and in the login instructions email you received after registering,
                             your family name was prominently mentioned.</p>
-                          <p className='text-sm p-1'>If you have not registered in a family, then there is no signin needed. Select the "Take me home" link below to return to the main page.</p>
+                          <p className='text-sm p-1'>If you have not registered in a family, then there is no signin needed. Select the &quot;Take me home&quot; link below to return to the main page.</p>
                         </HoverCardContent>
                       </HoverCard>
                     </div>

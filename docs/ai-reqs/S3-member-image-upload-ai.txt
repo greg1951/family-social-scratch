@@ -1,0 +1,24 @@
+S3 BACKGROUND
+- I've done S3 setup on AWS as well as installing s3 packages using npm. 
+- The root env.local has been updated with the AWS API key and secret, as well as the "thosecrazyhughletts" bucket name.
+- The "src/api/s3-upload/router.ts" file contains the S3Client configuration that uses those AWS env properties.
+- There is a POST API function define in the router.ts file that will handle uploads and downloads to S3.
+- The S3 content will in the "thosecrazyhughletts" bucket will be separated by using the following folder structure
+  - members: where member profile images (png or jpeg) will be uploaded from their My-Account setup.
+  - movies: images of movies to be used by the Movie Maniacs feature
+  - tv: images of movies to be used by the TV Junkies feature
+  - music: images of movies to be used by the Music Lovers feature
+  - foodies: images of food recipes to be used in the Family Foodies feature
+  - threads: images uploaded in in the Family Threads feature
+- The member table has been updated to include a memberImageUrl which is a URL to the S3 "/members" folder 
+  - The memberImageUrl also contains the  jpeg or png file name appended to the "/members" folder.
+  - The file name format will be named "memberId-zzz0" where "zzz0" is the numeric memberId number, for example, "memberId-63"
+- A component to call the POST for the upload or download has been created in "src/components/s3/S3Manager.tsx" file.
+
+OBJECTIVE
+- The purpose of this request is to provide a new form link in the "src/app/(family)/layout.tsx" file in header bar used by the member and founder family functions.
+- The icon to be used could be a suitable icon from "lucide/icons", like "image-plus". You can swap out the change password and 2FA image files for other lucide/icons, to be consistent in appearance.
+- The member image upload form can be added to a new folder in "src/app/(family)/(family-members)/family-image-upload".
+- The file size of the member image file should not exceed 7K.
+- Include an upload progress bar when the upload begins and a sonner toast message when done.
+

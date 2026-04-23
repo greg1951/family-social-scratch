@@ -358,7 +358,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                               name="email"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">Founder's Email</FormLabel>
+                                  <FormLabel className="font-extrabold">Founder&apos;s Email</FormLabel>
                                   <FormControl>
                                     <Input type="email" placeholder="your email address" { ...field } className="text-xs font-extralight" />
                                   </FormControl>
@@ -484,7 +484,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                               </div>
                               <div className="flex items-center gap-1" >
                                 <CircleSlash size={ 6 } className="md:h-10 md:w-10 text-red-500" />
-                                <p className='text-sm p-1'>"TexasJonesFamily" is not the same as "texasjonesfamily"</p>
+                                <p className='text-sm p-1'>&quot;TexasJonesFamily&quot; is not the same as &quot;texasjonesfamily&quot;</p>
                               </div>
                               <div className="flex items-center gap-1" >
                                 <CircleCheck size={ 6 } className="md:h-10 md:w-10 text-green-500" />

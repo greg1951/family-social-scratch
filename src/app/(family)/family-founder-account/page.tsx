@@ -49,7 +49,7 @@ export default async function FamilyMyAccountPage() {
     ? memberNotificationsResult.notifications
     : [];
 
-  let newFamilyMembers: NewFamilyInvite[] = [];
+  const newFamilyMembers: NewFamilyInvite[] = [];
   let currentFamilyMembers: CurrentFamilyMember[] = [];
 
   if (currentMembersResult.success && currentMembersResult.members) {

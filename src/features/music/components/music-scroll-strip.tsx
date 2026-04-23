@@ -1,31 +1,38 @@
 "use client";
 
-import Image from "next/image";
-import { ChevronLeft, ChevronRight, Star, ThumbsUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
 
-type LatestSongItem = {
+type LatestMusicItem = {
   kind: "latest";
   name: string;
   date: string;
+  submitterLikenessDegree: number | null;
+  commentsCount: number;
+  thumbsUp: number;
+  love: number;
   imageSrc: string;
   imageAlt: string;
 };
 
-type TopAlbumItem = {
+type TopRatedMusicItem = {
   kind: "top-rated";
   name: string;
-  rating: number;
-  recommendations: number;
+  submitterLikenessDegree: number | null;
+  noRating: number;
+  thumbsUp: number;
+  love: number;
+  commentsCount: number;
   imageSrc: string;
   imageAlt: string;
 };
 
-type MusicScrollItem = LatestSongItem | TopAlbumItem;
+type MusicScrollItem = LatestMusicItem | TopRatedMusicItem;
 
 type MusicScrollStripProps = {
   title: string;
@@ -34,12 +41,94 @@ type MusicScrollStripProps = {
   accentClassName: string;
 };
 
+function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
+  if (likenessDegree === 1) {
+    return <ThumbsUp className="size-4 text-[#245475]" aria-label="Submitter rated thumbs up" />;
+  }
+
+  if (likenessDegree === 2) {
+    return <Heart className="size-4 text-[#b33f6c]" aria-label="Submitter rated love" />;
+  }
+
+  return null;
+}
+
+function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | null }) {
+  if (![1, 2].includes(likenessDegree ?? -1)) {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#eef6fb] p-2 shadow-sm">
+      <SubmitterRatingIcon likenessDegree={ likenessDegree } />
+    </span>
+  );
+}
+
 export function MusicScrollStrip({
   title,
   description,
   items,
   accentClassName,
 }: MusicScrollStripProps) {
+  function MusicImage({ src, alt }: { src: string; alt: string }) {
+    const [resolvedSrc, setResolvedSrc] = useState(src);
+
+    useEffect(() => {
+      let isCancelled = false;
+
+      const resolveSignedUrl = async () => {
+        const key = extractS3KeyFromValue(src);
+
+        if (!key) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/s3-upload", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              action: "download",
+              fileName: key,
+            }),
+          });
+
+          if (!response.ok) {
+            if (!isCancelled) {
+              setResolvedSrc(src);
+            }
+            return;
+          }
+
+          const body = await response.json();
+
+          if (!isCancelled) {
+            setResolvedSrc(body.url ?? src);
+          }
+        } catch {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+        }
+      };
+
+      void resolveSignedUrl();
+
+      return () => {
+        isCancelled = true;
+      };
+    }, [src]);
+
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
+  }
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -125,43 +214,44 @@ export function MusicScrollStrip({
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
                   <div className="relative aspect-16/10 overflow-hidden">
-                    <Image
-                      src={ item.imageSrc }
-                      alt={ item.imageAlt }
-                      fill
-                      sizes="(max-width: 767px) 100vw, 288px"
-                      className="object-cover"
-                    />
+                    <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
                     <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                     <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                      { item.kind === "latest" ? "Recently added" : "Fan favorite" }
+                      { item.kind === "latest" ? "Latest review" : "Top rated" }
                     </div>
                   </div>
 
                   <div className="space-y-3 px-4 py-4">
-                    <div>
-                      <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
-                      { item.kind === "latest" ? (
-                        <p className="mt-1 text-sm text-[#607887]">Added { item.date }</p>
-                      ) : (
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span className="inline-flex items-center gap-1.5 text-[#d08d11]">
-                            { Array.from({ length: 5 }).map((_, index) => (
-                              <Star
-                                key={ `${ item.name }-star-${ index }` }
-                                className={ cn(
-                                  "size-4",
-                                  index < item.rating ? "fill-current text-[#d08d11]" : "text-[#d8dee3]"
-                                ) }
-                              />
-                            )) }
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                            <ThumbsUp className="size-4 text-[#2d87a8]" />
-                            { item.recommendations.toLocaleString() } recommendations
-                          </span>
-                        </div>
-                      ) }
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                        { item.kind === "latest" ? (
+                          <p className="mt-1 text-sm text-[#607887]">Updated { item.date }</p>
+                        ) : null }
+                      </div>
+
+                      <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#21536a]">
+                      { item.kind === "top-rated" ? (
+                        <span className="inline-flex items-center gap-1.5 text-[#5f6a70]">
+                          <ThumbsDown className="size-4 text-[#66757d]" />
+                          { item.noRating.toLocaleString() }
+                        </span>
+                      ) : null }
+                      <span className="inline-flex items-center gap-1.5 text-[#245475]">
+                        <ThumbsUp className="size-4 text-[#2d87a8]" />
+                        { item.thumbsUp.toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[#8d2f59]">
+                        <Heart className="size-4 fill-[#bf3f73] text-[#bf3f73]" />
+                        { item.love.toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 text-[#245475]">
+                        <MessageSquareText className="size-4 text-[#2d87a8]" />
+                        { item.commentsCount.toLocaleString() }
+                      </span>
                     </div>
                   </div>
                 </div>

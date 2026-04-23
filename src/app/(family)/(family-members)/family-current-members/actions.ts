@@ -177,7 +177,7 @@ try {
         }
 
         const inviteResult = await getInvitebyInviteId(updatedInvites[ix].inviteId);
-        let familyInvites: FamilyInvites = [];
+        const familyInvites: FamilyInvites = [];
         if (!inviteResult.error) {
           familyInvites.push({
             id: inviteResult.inviteId,

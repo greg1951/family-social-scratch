@@ -89,7 +89,7 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
         <DialogHeader>
           <DialogTitle>Update Family Members</DialogTitle>
           <DialogDescription className="text-xs">
-            Select an action on a member. When done, close the dialog and click the "Update Marked Changes"
+            Select an action on a member. When done, close the dialog and click the &quot;Update Marked Changes&quot;
             button to apply your changes.
           </DialogDescription>
         </DialogHeader>
@@ -127,7 +127,7 @@ export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, 
           </HoverCard>
 
           { members.length === 0 ? (
-            <p className="text-sm text-neutral-500">No family members? Get crackin'</p>
+            <p className="text-sm text-neutral-500">No family members? Get crackin&apos;</p>
           ) : (
             <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
               { members.map((member) => (

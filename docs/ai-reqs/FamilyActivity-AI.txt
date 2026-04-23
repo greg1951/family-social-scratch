@@ -1,0 +1,17 @@
+FAMILY ACTIVITY
+
+I want to track family activity in Family Social and eventually then create metric dashboards for the members to see who's doing what where in Family Social. However, at this stage I want to simply add records to the "family_activity" table that has been created in the application schema.
+
+- See the "familyActivity" table in "src/components/db/schema/family-social-schema-tables.ts"
+
+I would like a record added to the table for the following activities performed in all of the features.
+
+- Posting a book, poem, tv, music, movie, recipe 
+- Sending a family thread message (do not record reply)
+- Creating a comment on book, poem, tv, music, recipe
+- Starting a game in the game scoreboards
+
+For each of those activities, create an entry in the "familyActivity" table containing:
+- The featureName: see the "name" attribute in the "familyFeatures" constant defined in "src/features/family/constants/family-steps.ts" 
+- The activityName: either "post", "comment" or "thread"
+- Record the memberId and familyId of the family member in the table

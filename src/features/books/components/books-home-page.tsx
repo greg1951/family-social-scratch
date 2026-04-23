@@ -404,7 +404,9 @@ export default function BooksHomePage({
       ? pendingSelectedBookId
       : selectedBookId;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBookItems(nextBookItems);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedBookId((currentSelectedBookId) => {
       const preferredBookId = resolvedSelectedBookId ?? currentSelectedBookId;
 
@@ -419,8 +421,10 @@ export default function BooksHomePage({
       const nextSelectedBook = nextBookItems.find((bookItem) => bookItem.id === resolvedSelectedBookId) ?? nextBookItems[0] ?? null;
 
       if (nextSelectedBook) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft(nextSelectedBook);
       } else {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDraft(createEmptyDraft(member));
       }
     }
@@ -428,10 +432,13 @@ export default function BooksHomePage({
     const receivedRefreshedBooks = previousBooksRef.current !== books;
 
     if (receivedRefreshedBooks && pendingSelectedBookId && nextBookItems.some((bookItem) => bookItem.id === pendingSelectedBookId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingSelectedBookId(null);
 
       if (savePhase === "saving") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSavePhase("saved");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSaveMessage("Book synced with the server order.");
       }
     }
@@ -826,8 +833,8 @@ export default function BooksHomePage({
           </div>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)] backdrop-blur xl:row-span-2">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)] backdrop-blur xl:row-span-2">
             <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -917,7 +924,7 @@ export default function BooksHomePage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
             <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
@@ -1016,7 +1023,7 @@ export default function BooksHomePage({
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
             <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
                 Book Analysis, Tags and Family Comments

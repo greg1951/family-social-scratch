@@ -150,7 +150,6 @@ export const threadConversationTag = pgTable("thread_conversation_tag", {
 },
   (table) => [
     index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
-    unique('thread_conversation_tag_conversation_tag_uq').on(table.conversationId, table.tagId),
 ]);
 
 export const threadConversation = pgTable("thread_conversation", {
@@ -546,11 +545,6 @@ export const recipeLike = pgTable("recipe_like", {
   (table) => [
     index("recipe_like_recipe_id_idx").on(table.recipeId),
     index("recipe_like_member_id_idx").on(table.memberId),
-    unique("recipe_like_member_id_degree_uq")
-      .on(table.recipeId, 
-          table.memberId, 
-          table.likenessDegree
-      ),
   ]
 );
 
@@ -645,11 +639,6 @@ export const showLike = pgTable("show_like", {
   (table) => [
     index("show_like_show_id_idx").on(table.showId),
     index("show_like_member_id_idx").on(table.memberId),
-    unique("show_like_member_id_degree_uq")
-      .on(table.showId,
-          table.memberId, 
-          table.likenessDegree
-      ),
   ]
 );
 
@@ -734,8 +723,106 @@ export const movieLike = pgTable("movie_like", {
   (table) => [
     index("movie_like_movie_id_idx").on(table.movieId),
     index("movie_like_member_id_idx").on(table.memberId),
-    unique("movie_like_member_id_degree_uq")
-      .on(table.movieId,
+  ]
+);
+
+/*------------------------------- Music Lovers ------------------------------ */
+export const music = pgTable("music", {
+  id: serial("id").primaryKey(),
+  musicTitle: text("music_title").notNull().unique(),
+  artistName: text("artist_name").notNull().default(""),
+  musicJson: text("music_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  isSong: boolean("is_song").notNull().default(true),
+  musicImageUrl: text("music_image_url"),
+  musicDebutYear: integer("music_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('music_member_id_idx').on(table.memberId),
+    index('music_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const musicComment = pgTable("music_comment", {
+  id: serial("id").primaryKey(),
+  isMusicReviewer: boolean("is_music_reviewer").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('music_comment_music_id_idx').on(table.musicId),
+    index('music_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const musicLyrics = pgTable("music_lyrics", {
+  id: serial("id").primaryKey(),
+  lyricsJson: text("lyrics_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  status: text("status").notNull().default("draft"),
+  musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('music_lyrics_music_id_idx').on(table.musicId),
+    index('music_lyrics_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const musicTemplate = pgTable("music_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'set null'}),
+  familyId: integer("fk_family_id"),
+},
+  (table) => [
+    index('music_template_member_id_idx').on(table.memberId),
+    index('music_template_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const musicTagReference = pgTable("music_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("genre"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const musicTag = pgTable("music_tag", {
+  id: serial("id").primaryKey(),
+  musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => musicTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('music_tag_music_id_idx').on(table.musicId),
+    index('music_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const musicLike = pgTable("music_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  musicId: integer("fk_music_id").notNull().references(() => music.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("music_like_music_id_idx").on(table.musicId),
+    index("music_like_member_id_idx").on(table.memberId),
+    unique("music_like_member_id_degree_uq")
+      .on(table.musicId,
           table.memberId, 
           table.likenessDegree
       ),

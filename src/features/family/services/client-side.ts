@@ -30,7 +30,7 @@ export function initializeFormProcessingArray({formCurrentMembers, originalMembe
       })),
     };
 
-    let updatedInvites: StatusUpdateProcessing[] = [];
+    const updatedInvites: StatusUpdateProcessing[] = [];
     for (let i = 0; i < originalMemberValues.currentMembers.length; i++) {
       const currentMember = currentMemberValues.currentMembers[i];
       const originalMember = originalMemberValues.currentMembers[i];
@@ -53,7 +53,7 @@ export function initializeFormProcessingArray({formCurrentMembers, originalMembe
 
 export function initializeProcessUpdateCounts() : StatusUpdateCounts {
 
-  let statusUpdateCounts: StatusUpdateCounts = {
+  const statusUpdateCounts: StatusUpdateCounts = {
     totalUpdateCount: 0,
     totalInviteRecordsCount: 0,
     inviteAddCount: 0,

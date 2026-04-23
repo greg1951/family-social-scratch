@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Music Lovers will love this!",
+    summary: "Music stirs the soul and brings people together 💘. The Music Lovers feature is up and running! You can share your favorite songs and albums, write reviews, and see what music other family members are enjoying. Start sharing your music love today!",
+    category: "Features",
+    date: "April 22, 2026",
+  },
+  {
     title: "Family Threads is Live!",
     summary: "It's the Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
     category: "Features",
@@ -32,7 +38,7 @@ const updates = [
     date: "April 16, 2026",
   },
   {
-    title: "First Live Features!",
+    title: "The Very First Live Features!",
     summary: "The Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
     category: "Features",
     date: "April 15, 2026",
@@ -41,7 +47,13 @@ const updates = [
     title: "Game Scoreboards Supports Mexican Train and Acquire!",
     summary: "The Game Scoreboards feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
     category: "Features",
-    date: "April 16, 2026",
+    date: "April 13, 2026",
+  },
+  {
+    title: "Photo Galleries Coming Soon!",
+    summary: "The Photo Galleries feature is currently in development! You'll soon be able to create albums, upload photos, and share them with your family. Stay tuned for more updates!",
+    category: "In Development",
+    date: "",
   },
 ];
 

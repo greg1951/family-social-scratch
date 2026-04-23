@@ -1,0 +1,76 @@
+Music Lovers Background
+- The request will be to convert the existing Music Lovers home page to utilize the new music schema that has been created and pushed to Neon via drizzle.
+- The music schema can be found in the "src/components/db/schema/family-social-schema-tables.ts" file. 
+- The relevant tables have a "music" prefix.
+- The app router Music Lovers page and layout reside in "src/app/(features)/(music)/music" directory.
+- The Music Lovers home page resides in the "src/features/music/components/music-home-page.tsx" file.
+
+- The "music-scroll-strip.tsx" file allows music music images and associated metadata to be displayed on the home page. The images for recipes need to be stored and retrieved from AWS S3. 
+  - Presently only member profile images are being retrieved from S3. These images reside in the "music" folder in the bucket. 
+  - The S3 bucket name is stored in the "familyS3Credentials" table in the "bucketName" column.
+  - For testing purposes the "thosecrazyhughletts" bucket name on S3 will be used. 
+  - The components to interface with S3 reside in the "src/api/s3-upload" folder.
+  - The music table itself has a column "musicImageUrl" which contains the full url of the image on S3. 
+  - The recipe image should be stored in the "music" folder in the bucket.
+  - The memberId of the family member creating a recipe should be part of the recipe stored on S3, e.g. "memberId-63-musicTitle.jpg" where "musicTitle" is a compressed version of the value in the music.musicTitle column.  
+  - I have uploaded an image to the "thosecrazyhughletts/music" folder on S3.
+
+The AI Request
+
+- The Music Lovers home page presently is a prototype with no underlying implementation of the music schema. 
+- Its general layout should be used when performing this conversion to use the new music schema, with exceptions that are noted below.
+- Consult the Movie Maniacs pages whenever there is a question about format. 
+- Use TipTap for rich text editing and save to the appropriate table columns with a "Json" suffix, e.g. "musicJson", "commentJson".
+  - Follow the exactly same TipTap toolbar button usages as implemented in various Movies edit pages. 
+
+The heading part of the Music Home page needs to look like what was done for the Movies Home Page. 
+- On the right side of the heading there should be a section that contains two rows.
+- In the first rows display a count of the musics, remove the Thumbs Up and Love counts and replace with the name of the selected music.
+- In the second row of that section, move the View Music, Add Music, and Edit Music button (which is not implemented yet).
+
+- We will keep the music-scroll-strip layout for the Latest Music Reviews and Top Rated Music. 
+- The Top Rated Music will use a thumbs down, thumbs up, love system rather than the star rating implemented in the prototype.
+  - Thumbs up is derived from the music_like table, where the likenessDegree === 1
+  - Love is derived from music_like table, where likenessDegree === 2
+  - music_like.likenessDegree === -1 means no rating
+  - Use icons rather than words for the thumbs Up and Love Music reactions.
+- Provide a comments count for both the latest and top rated musics based on musics_comment.
+- In the Top Rated Music strip in the Music home page, a music without any music_comment.likenessDegree should not be in the list.
+  - Once there is at least a like or love, then it can be musicn in the list.
+
+- Create an Add Music page that is accessible from the music home page that uses TipTap functionality implemented elsewhere in the application (see the "src/features/components/book-terms-home-page.tsx" for an example of TipTap).
+
+- When a music is to be created, the family member should select an entry from "music_template" table. 
+  - There a global template will be provided by default, where musicTemplate.isGlobalTemplate === true) 
+  - When the template is selected, the templateJson needs to be copied into the music.musicJson column.
+
+- The music.isSong when true means the music review is for a song. When false it means the posted review is for an album. 
+  - This should be a selection list when creating a music review.
+- There are other selection lists the member can use to categorize their musics. 
+  - The "music-tag-reference" table contains a "tagType" column with the following values that should go into each of the selection lists. 
+    - genre
+    - subGenre
+  - The entries in each of the selection lists should be rendered in tag_type and seqNo order.
+
+- Implement a new Music Lovers Music Templates capability for family members to create a custom music_template.
+  - As a guide, follow the same pattern as implemented in the "src/app/(features)/(movies)/templates/page.tsx"
+  - Add a button in the Music Lovers home page needs to be added to navigate to this new Music Music Template page.
+  - Presently a global music_template exists but only a member admin (member.isAdmin) can see or change it.
+  - Use the TipTap dialog with same toolbar buttons as implemented for the Add Music dialog, for the Add/Edit music template.
+  - When saved, associate both the memberId and the familyId to the save music_template table entry. The isGlobalTemplate should be set to "false" for a family member template. 
+  - The family member should be able to leave in "draft" status but then edit it to change the status to "published".
+  - A template in "draft" status should not appear in the Add Music template selection list.
+
+- Implement a function on a posted music song (music.isSong === true) to allow a family member to enter lyrics for a song.
+  - The lyrics should be stored in the music_lyrics table which has a foreign key relationship to the music table.
+  - The lyrics should be entered and edited using TipTap with the same toolbar buttons as used in the Add Music Template dialog.
+
+- Implement the Edit Music button if the logged in memberId is the same as the music's memberId.
+- A member cannot like or love their own Music music.
+
+
+
+----------------------------
+
+
+

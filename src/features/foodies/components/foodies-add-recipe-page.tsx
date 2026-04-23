@@ -106,6 +106,12 @@ function slugifyTitle(value: string) {
   return compressed || "recipe";
 }
 
+function revokeBlobUrl(url: string | null) {
+  if (url?.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function getTemplateDocument(template?: RecipeTemplateOption): JSONContent {
   if (!template?.templateJson) {
     return createEmptyTipTapDocument();
@@ -305,6 +311,8 @@ export function FoodiesAddRecipePage({
     }
 
     const globalTemplate = recipeTemplates.find((template) => template.isGlobalTemplate);
+    // This keeps edit mode valid when templates are refreshed and the selected one no longer exists.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedTemplateId(String(globalTemplate?.id ?? recipeTemplates[0].id));
   }, [isEditing, recipeTemplates, selectedTemplateId]);
 
@@ -352,19 +360,9 @@ export function FoodiesAddRecipePage({
     }
   }, [proTipsEditor, recipeProTipsJson]);
 
-  useEffect(() => {
-    if (!selectedFile) {
-      setImagePreviewUrl(recipeImageUrl ?? null);
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setImagePreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [recipeImageUrl, selectedFile]);
+  useEffect(() => () => {
+    revokeBlobUrl(imagePreviewUrl);
+  }, [imagePreviewUrl]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -503,6 +501,10 @@ export function FoodiesAddRecipePage({
       event.target.value = "";
       return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    revokeBlobUrl(imagePreviewUrl);
+    setImagePreviewUrl(objectUrl);
 
     setSelectedFile(file);
   }

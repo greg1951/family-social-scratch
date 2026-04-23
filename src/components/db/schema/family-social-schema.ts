@@ -50,4 +50,11 @@ export {
   movieTemplate,
   movieTagReference,
   movieTag,
+  music,
+  musicLike,
+  musicComment,
+  musicLyrics,
+  musicTemplate,
+  musicTagReference,
+  musicTag,
 } from './family-social-schema-tables';

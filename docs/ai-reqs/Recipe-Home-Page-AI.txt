@@ -1,0 +1,96 @@
+RECIPE BACKGROUND
+- The request will be to convert the existing Family Foodies home page to utilize the new recipe schema that has been created and pushed to Neon via drizzle.
+- The schema can be found in the "src/components/db/schema/family-social-schema-tables.ts" file. 
+- The relevant tables have a "recipe" prefix.
+- The app router foodies page and layout reside in "src/app/(features)/(foodies)/foodies" directory.
+- The foodies home page resides in the "src/features/foodies/components/foodies-home-page.tsx" file.
+
+- The "foodies-scroll-strip.tsx" file allows recipe images and associated metadata to be displayed on the home page. The images for recipes need to be stored and retrieved from AWS S3. 
+  - Presently only member profile images are being retrieved from S3. These images reside in the "members" folder in the bucket. 
+  - The S3 bucket name is stored in the "familyS3Credentials" table in the "bucketName" column.
+  - For testing purposes the "thosecrazyhughletts" bucket name on S3 will be used. 
+  - The components to interface with S3 reside in the "src/api/s3-upload" folder.
+  - The recipe itself has a column "recipeImageUrl" which contains the full url of the image on S3. 
+  - The recipe image should be stored in the "foodies" folder in the bucket.
+  - The memberId of the family member creating a recipe should be part of the recipe stored on S3, e.g. "memberId-63-recipeTitle.jpg" where "recipeTitle" is a compressed version of the value in the recipe.recipeTitle column.  
+  - I have uploaded eight images to the "thosecrazyhughletts/foodies" folder on S3.
+
+
+REQUEST
+
+- The Foodies home page presently is a prototype whose general layout should be used when performing this conversion to use the new recipe schema, with exceptions that are noted below.
+
+- We will keep the foodies-scroll-strip layout for the Latest Recipes and Top Rated Recipes. 
+- The Top Rated Recipes will use a thumbs down, thumbs up, love system rather than the star rating in the prototype.
+  - Thumbs up is derived from the recipe_like.likenessDegree === 1
+  - Love is derived from recipe_like.likenessDegree === 2
+  - recipe_like.likenessDegree === -1 means no rating
+- provide a comments count for both the latest recipes and top rated based on recipes-comment.
+
+- Create an Add Recipe page that is accessible from the foodies home page that uses TipTap functionality implemented elsewhere in the application (see the "src/features/components/book-terms-home-page.tsx" for an example of TipTap).
+
+- When a recipe is to be created, the family member should select an entry from "recipe-template" table. 
+  - There a template will be selected 
+  - By default recipeTemplate.isGlobalTemplate === true) provides what should be seeded in the recipeTemplate.templateJSon for the recipe being created, in the recipe.recipeJson column.
+
+  - As a part of this request, create a global templateJson entry that contains five H2 headings: "General", "Main Ingredients", "Spices", "Preparation", "Cooking". 
+
+- There are various selection lists the member can use to categorize their recipe. 
+  - The "recipe-tag-reference" table contains a "tagType" column with the following values that should go into each of the selection lists. 
+    - cuisine
+    - course_type
+    - cooking_method
+    - dietary
+    - meal_time
+  - The entries in each of the selection lists should be rendered in tag_type and seqNo order.
+
+- The Add Recipe screen does not provide a preview of the uploaded recipe image. Include this.
+- Add an "Edit Recipe" next to the Add Recipe button. Enable it if the logged in memberId is the same as the recipe memberId.
+- The member should be allowed to change the recipe image and preview it before saving.
+- Show an "Edit Recipe" screen with the details from the member's recipe and update the details when saved.
+
+- Implement TWO new features for members to perform the following.
+  - FEATURE 1:
+    - Provide a dialog where a member can create a recipe_template, giving it a name and creating the templateJson content.
+    - Use the TipTap dialog with H2, H3, B, I, U, Link buttons
+    - When saved associate both the member and the family ids to the recipe_template entry. The family member should be able to leave in "draft" status.
+    - As a note, only templates that are have a "published" status should show up in the Add Recipe template list.
+
+  - FEATURE 2:
+    - Provide an Update Template interface that allows the member to change their template. 
+    - A family member can view another family member's template but not edit it. (They may want to copy the text from that member's template into a new one they might create.)
+    - The "global" template should not be in the template list of regular family members. Only if the member.isAdmin === true should the global template appear in the list and be fully editable by the admin.
+ 
+- The Update Selected dialog occupies the entire height of the view port. It should be wider and not as high, as I am unable to see or reach any save or cancel buttons that are in the edit dialog.
+- The edit dialog itself is missing buttons for bullets and numbers.
+
+Some rules about loading them template into the Recipe Instuctions of the foodies home page:
+- If only the global template exists for a family then always load that template into the Recipe Instructions. 
+- Even if a user selects a custom template and then selects another template, always load whichever template was selected last.
+- Once a recipe is saved, do not allow the a template to be selected as it will destroy what instructions were added for the recipe.
+
+I would like the TipTap editor buttons as implemented in the Template editor to also be used in the Add Recipe TipTap editor. Another change I would like is for the buttons to be displayed on the left side of the editor window instead of the top. Make sure the toolbar buttons are at a narrow width so the editor windown is as wide as it can be.
+
+Alright, let's tighten up the Recipe Details section.
+
+Currently there are two fields displayed per row. Let's change this to three fields per row.
+The Short Summary is currently a textarea. let's change this to a text input field of no more than 120 characters.
+
+Create a recipe-term-editor-page.tsx that provides a means to manage recipe_term table. 
+- The new recipe terms dialog should be accessible by all family members. 
+- Famiy members should have a Recipe Terms button on the Foodies Home page that takes them to the recipe terms page where they can view recipe terms.
+- In the new recipe editor the guard for isAdmin only applies to being able to Add or Edit a term.- The TipTap editor toolbar buttons of H2, B, I, U, Bullets, Numbers, and Url link should be available. 
+- The toolbar buttons were stealing selection before the TipTap command ran, so I updated each editor’s toolbar button component to prevent the mouse-down focus shift. I also added explicit list-rendering classes to the poetry term and recipe term editor surfaces so successful list commands display visible bullets and numbers, matching the recipe editor behavior.
+- On the link toolbar button: the blanket onMouseDown prevention on every toolbar button is what’s blocking the link dialog. I’m switching to an opt-in selection-preservation flag and applying it only to list buttons across all term editors.
+
+In the Recipe home page: 
+- Move the View Recipe, Add Recipe, Edit Recipe buttons into the section that has the Latest, Top Rated, and Finder counts, so it looks the same as what was done in the Poetry home page. 
+- similar to what was done in the Poetry home page, also include the name of the selected recipe in the section where the buttons will be moved to.
+
+A new section is to be added to the Add Recipe UI in the foodies-add-recipe-page.tsx file.
+- The recipe submitter when adding a new recipe can provides some additional notes about the recipe that will be known as "Recipe Pro Tips".
+- When saved, the Recipe Pro Tips will be saved as a comment to the recipe_comment table, setting the isRecipeProTip to true.
+- The Pro Tips will appear above the Recipe Reactions and Family Content sections of the Recipe home page.
+- The Pro Tips will use TipTap and will follow the same pattern as implemented in the Book Commentary section of the Book hope page.
+
+- In the View Recipe dialog, implement a Tiptop Print Preview button

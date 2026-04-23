@@ -54,7 +54,7 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
               </Column>
               <Column align='left' valign='middle' style={ { width: '680px' } }>
                 <Text className='m-0 font-app text-base leading-6'>
-                  Good News, { memberName }! You have been invited by 👉{ founderName }👈 to join the "{ familyName }" on the Family Social website.
+                  Good News, { memberName }! You have been invited by 👉{ founderName }👈 to join the &quot;{ familyName }&quot; on the Family Social website.
                 </Text>
               </Column>
             </Row>
@@ -83,10 +83,10 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
             <Row>
               <Column align='center' valign='top'>
                 <Text className='m-0 mb-4 font-app text-base leading-6'>
-                  We would be thrilled for you to join us and can't wait for you to experience all the wonderful features we have to offer!
+                  We would be thrilled for you to join us and can&apos;t wait for you to experience all the wonderful features we have to offer!
                 </Text>
                 <Text className='m-0 mb-4 text-center font-app text-base font-semibold leading-6 text-brandText'>
-                  To get started, click on the <b>Join Family Social</b> button below to register in the "{ familyName }" family network.
+                  To get started, click on the <b>Join Family Social</b> button below to register in the &quot;{ familyName }&quot; family network.
                 </Text>
                 <Text className='m-0 mb-4 text-center font-app text-base leading-6 text-brandText'>
                   If you have any questions about Family Social, reach out to { founderName }.

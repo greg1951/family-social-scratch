@@ -41,7 +41,7 @@ export default async function FamilyMemberAccount() {
   const memberImageUrl = memberImageResult.success ? memberImageResult.memberImageUrl : null;
 
   const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];
-  let accountDetails: AccountDetails | null = null;
+  const accountDetails: AccountDetails | null = null;
   if (memberDetails.success) {
     const accountDetails: AccountDetails = {
       accountDetails: {
@@ -116,7 +116,7 @@ export default async function FamilyMemberAccount() {
             <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">My Account</CardTitle>
             <div className="pt-1">
               <CardDescription className="mx-auto max-w-2xl text-center text-sm leading-6 text-[#315363]">
-                Manage <b>{ memberDetails.firstName } { memberDetails.lastName }'s</b> settings in the <b>{ memberKeyDetails.familyName }</b> family
+                Manage <b>{ memberDetails.firstName } { memberDetails.lastName }&apos;s</b> settings in the <b>{ memberKeyDetails.familyName }</b> family
               </CardDescription>
             </div>
           </CardHeader>

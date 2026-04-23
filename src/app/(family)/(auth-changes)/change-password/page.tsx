@@ -9,8 +9,7 @@ export default async function ChangePassword() {
   if (!session) {
     redirect('/login');
   }
-  const name: string = session.user?.name!;
-  const email: string = session.user?.email!;
+  const email: string = session.user?.email ?? "";
 
   return (
     <main className="font-app flex justify-center pt-0">

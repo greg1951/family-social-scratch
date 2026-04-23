@@ -8,7 +8,7 @@ During development all schema is pushed to the Neon `family-social-dev` branch. 
 # Family Social Schema
 The ERD to support the login and family registration process is shown below (notes follow). 
 
-![](./docs/members-schema.png)
+![](./docs/pngs/members-schema.png)
 
 - The tables shown above are color coded where the **blue tables** are related to the authentication process and the **yellow tables** related to the family registration process.
 - The `user` table is referenced for the login process but as the `family_name` is required as a part of the login, a foreign key to retrieve the `family_name` in the `family` table was added to the `user` table. 
@@ -18,7 +18,7 @@ The ERD to support the login and family registration process is shown below (not
   - When a family member initially registers, all of the options will be inserted into the `member option` table. Thereafter, only if an option is checked or unchecked wlll the table be updated.
   - The member profile prototype dialog is shown below to provide a picture of the data the tables must support.
 
-    ![](./docs/member-profile.png)
+    ![](./docs/pngs/member-profile.png)
 
 # Family Social Queries
 

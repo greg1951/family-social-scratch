@@ -19,6 +19,7 @@
     2. [Configuration](#configuration)
     3. [Persistence](#persistence)
 12. [Amazon S3](#amazon-s3)
+13. [Lint and Build Cleanup](#lint-and-build-cleanup)
 
 ---
 # Overview
@@ -32,7 +33,7 @@ During development all schema is pushed to the Neon `family-social-dev` branch. 
 ## Family Social Schema
 The ERD to support the login and family registration process is shown below (notes follow). 
 
-![](./docs/new-schema.png)
+![](./docs/pngs/new-schema.png)
 
 - The tables shown above are color coded where the **blue tables** are related to the authentication process and the **yellow tables** related to the family registration process.
 - The `user` table is referenced for the login process but as the `family_name` is required as a part of the login, a foreign key to retrieve the `family_name` in the `family` table was added to the `user` table. 
@@ -42,7 +43,7 @@ The ERD to support the login and family registration process is shown below (not
   - When a family member initially registers, all of the options will be inserted into the `member option` table. Thereafter, only if an option is checked or unchecked wlll the table be updated.
   - The member profile prototype dialog is shown below to provide a picture of the data the tables must support.
 
-    ![](./docs/member-profile.png)
+    ![](./docs/pngs/member-profile.png)
 
 ## Family Social Queries
 
@@ -262,9 +263,9 @@ Neon let's you export data from the database tables (one at a time) but the impo
 
     **Note**: important to use double-quotes after the `psql` keyword.
 
-4. The `copy` command is next to first name the table to copy records to, the path to the CSV file and then some CSV parsing parameters: 
+4. The `copy` command shown in the neondb connection prompt below. The first argument is the **table name** to copy to, and the second argument is the **path** to the CSV file and then some CSV parsing parameters: 
 
-    `neondb=> \copy option_reference FROM 'C:\Users\ghughlett\Projects\my-projects\family-social-scratch\docs\insert-option-reference-records.csv' DELIMITER ',' CSV HEADER`
+    neondb=> `\copy option_reference FROM 'C:\Users\ghughlett\Projects\my-projects\family-social-scratch\docs\csv-inserts\insert-option-reference-records.csv' DELIMITER ',' CSV HEADER`
 
 5. The output is fairly terse, e.g.: `COPY 10` so go confirm the data copy made it to the table in Neon.
 
@@ -339,12 +340,24 @@ As a template, the `thosecrazyhughletts` S3 bucket was created in the `us-east-2
 
 Within the bucket the following folders were created to store the content for each of the features. (The folder names don't need to be created up front. appending a folder to the s3 bucket name will create the folder anyway; it's just FYI).
 
-![](docs/s3-bucket-folders.png)
+![](docs/pngs/s3-bucket-folders.png)
 
 Members who want to add a profile picture can select the file and upload it to the `members` folder. TV, Movies, Foodies, and Threads are other features where images come into play.
 
 The S3 client install command line in VS Code is: `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner`
 
+# Lint and Build Cleanup
+There is a concept called `lint debt` which arises from unresolved warning and errors the linter finds. Rather than waiting a long time between reducing the `lint debt` follow the practices below.
+
+* Before merging and committing to the main branch, run the `npm run build` command to catch any unseen errors that lurk in the files.
+
+  * The production build on the EC2 server may fail due to packages that are installed locally during development. Simply run the `npm i` command for the missing module.
+
+* During development it's a good practice to run various commands to check for lint and typescript errors: 
+
+  * `npm run link -- file1 file2`   <<<files will be within src/* directories (use wildcards)
+  * `npx tsc --noEmit`              <<<noEmit will suppress generation of output files
+  * `npx eslint . --quiet`          <<<eslint check
 
 
 

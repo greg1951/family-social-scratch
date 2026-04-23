@@ -1,0 +1,48 @@
+BACKGROUND
+- In this request a home page to be generated for the Family Social "Games" feature. This page is to accessed from the main page for family members who are logged in.
+
+- There are four game tables (gameMetadata, gameState, gamePlayerState, and gamePlayerRound) defined in the src/components/db/schema/family-social-schema-tables.ts file. They have been deployed to the Neon platform using drizzle.
+
+- The database queries against the those table have not been written yet but when written will reside in the src/components/db/sql/queries-game-scoreboard.ts file. Do not generate any database query code to the tables in this request, as the query code will be developed at a later time.
+
+OBJECTIVE
+- What is needed now is a main page and layout to be generated into the src/app/(features)/(games) router group that will render the games from the games tables.
+
+- When generating the Games home page follow the same UI layout patterns as used for the movies implementation. As stated before, this home page is accessible only for members who are logged in.
+
+This home page should consists of 3 parts (A, B, C) as depicted below. 
+
++---------+-----+
+|         |  B  |
+|    A    +-----|
+|         |  C  |
++---------+-----+
+
+- Part A is reserved for the game Scoreboard and it is described in more detail in another section.
+
+- Part B is the Leaderboard that lists the player with the "Low Game Score", their name and the game date started. Below it that it lists the player with the the "High Game Score", with the player name and game start date. Below it will be the "Player Stats" that lists the players, the games played, games won and games lost. (Lost is defined as not being having the lowest score in a game; basically everyone who didn't win.)
+
+- Part C is a scrollable list of "Game History". The Game History consists of three columns containing the player first name, the game started date and the game score. 
+
+  - The rows are grouped by game started date, with the player with the lowest score listed first in the group, highlighted in Green listed in ascending order until the last player in the game with the highest score. That player's row should be highlighted in Pink. 
+
+  - There should be several filtering dropdowns for:
+    - game status: e.g. in_progress or completed
+    - game date started
+    - the gameTitle
+
+  - A game listed in Part C should be selectable so the game details (derived from game_state, game_player_round tables) can be rendered in Part A, described below.
+
+- Part A is the game scoreboard area of the home where a game is selected from a list of game_metadata (table). There should be a button to start a selected game and the game scoreboard is then rendered below the selection. 
+
+  - The scoreboard consists of two header rows, followed by rows for each of the game rounds. 
+
+  - The first header row will contain 9 columns, with a selection list in columns 2-9 that will contain a player first selected from a player dropdown list in the column header. 
+
+  - The second header row will contain a read-only cummulative score for each of the selected players in columns 2-9, accumulated from the total score of the rounds below the header lines, in the round scores. The lowest score in the second header row in columns 2-9 will be highlighted in Green, while the lowest score in Pink. There should be no highlighting if the score is zero however.
+
+  - In this prototype, the round scores will contain the round number 1-13 (read-only) in the first column. 
+  - In columns 2-9 of each round score row there will be a round score number entered for player columns 2-9. 
+  - The value of the round score will be summed in the second header row column of each player. 
+  - When a round score is entered for a player in columns 2-9 this should trigger an event to save the data in the game_player_round table. (The code to update the table will be created later.)
+

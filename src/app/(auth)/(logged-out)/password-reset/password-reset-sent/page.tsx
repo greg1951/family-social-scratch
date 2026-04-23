@@ -19,7 +19,7 @@ export default function HandleReset() {
             </div>
             <CardTitle className="mt-3 text-center text-2xl font-extrabold text-[#10364a] md:text-[2rem]">Reset Password Sent</CardTitle>
             <CardDescription>
-              If you have an account with us you will receive a password reset email at '{ email }'. { " " }
+              If you have an account with us you will receive a password reset email at { email }. { " " }
               Open the email and follow the link to reset your password.
             </CardDescription>
           </CardHeader>

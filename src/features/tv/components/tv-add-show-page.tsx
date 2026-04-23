@@ -103,6 +103,12 @@ function slugifyTitle(value: string) {
   return compressed || "show";
 }
 
+function revokeBlobUrl(url: string | null) {
+  if (url?.startsWith("blob:")) {
+    URL.revokeObjectURL(url);
+  }
+}
+
 function getTemplateDocument(template?: ShowTemplateOption): JSONContent {
   if (!template?.templateJson) {
     return createEmptyTipTapDocument();
@@ -279,18 +285,9 @@ export function TvAddShowPage({
     };
   }, [showImageUrl, selectedFile]);
 
-  useEffect(() => {
-    if (!selectedFile) {
-      return;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setImagePreviewUrl(objectUrl);
-
-    return () => {
-      URL.revokeObjectURL(objectUrl);
-    };
-  }, [selectedFile]);
+  useEffect(() => () => {
+    revokeBlobUrl(imagePreviewUrl);
+  }, [imagePreviewUrl]);
 
   function setSelectedTagForType(tagType: ShowTagType, tagId: string) {
     setSelectedTagsByType((currentState) => ({
@@ -317,6 +314,10 @@ export function TvAddShowPage({
       event.target.value = "";
       return;
     }
+
+    const objectUrl = URL.createObjectURL(file);
+    revokeBlobUrl(imagePreviewUrl);
+    setImagePreviewUrl(objectUrl);
 
     setSelectedFile(file);
   }
@@ -584,7 +585,7 @@ export function TvAddShowPage({
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Template</label>
                   <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
@@ -599,7 +600,6 @@ export function TvAddShowPage({
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Status</label>
                   <Select value={ status } onValueChange={ setStatus }>
@@ -613,6 +613,7 @@ export function TvAddShowPage({
                     </SelectContent>
                   </Select>
                 </div>
+
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Your Rating</label>
@@ -671,6 +672,7 @@ export function TvAddShowPage({
                     <button
                       type="button"
                       onClick={ () => {
+                        revokeBlobUrl(imagePreviewUrl);
                         setSelectedFile(null);
                         setShowImageUrl(null);
                         setImagePreviewUrl(null);

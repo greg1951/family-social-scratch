@@ -22,10 +22,18 @@ const formSchema = MemberAccountFormSchema;
 export default function AccountDetailsForm({ accountDetails, founderDetails }
   : { accountDetails: AccountDetails | null, founderDetails: FounderDetails | null }) {
 
+  const account = accountDetails?.accountDetails;
+
   const [open, setOpen] = useState(false);
   const [dateNotDirty, setDateNotDirty] = useState(true);
-  const { memberId, firstName, lastName, nickName, birthday, cellPhone, mfaActive } = accountDetails?.accountDetails!;
-  const [date, setDate] = useState<Date>(new Date(birthday as string));
+  const memberId = account?.memberId ?? 0;
+  const firstName = account?.firstName ?? "";
+  const lastName = account?.lastName ?? "";
+  const nickName = account?.nickName ?? "";
+  const birthday = account?.birthday ?? "";
+  const cellPhone = account?.cellPhone ?? "";
+  const mfaActive = account?.mfaActive ?? false;
+  const [date, setDate] = useState<Date>(birthday ? new Date(birthday as string) : new Date());
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
