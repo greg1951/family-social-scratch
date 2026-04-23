@@ -109,6 +109,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       kind: "latest" as const,
       name: movie.movieTitle,
       date: formatDate(movie.updatedAt),
+      submitterLikenessDegree: movie.submitterLikenessDegree,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
@@ -136,6 +137,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     .map((movie) => ({
       kind: "top-rated" as const,
       name: movie.movieTitle,
+      submitterLikenessDegree: movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,

@@ -115,6 +115,7 @@ export function TvHomePage({
     kind: "latest" as const,
     name: show.showTitle,
     date: formatDate(show.updatedAt),
+    submitterLikenessDegree: show.submitterLikenessDegree,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
     love: show.loveCount,
@@ -142,6 +143,7 @@ export function TvHomePage({
     .map((show) => ({
       kind: "top-rated" as const,
       name: show.showTitle,
+      submitterLikenessDegree: show.submitterLikenessDegree,
       noRating: show.noRatingCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
@@ -217,6 +219,16 @@ export function TvHomePage({
     ?? null;
   const canEditSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId === member.memberId);
   const canReactToSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId !== member.memberId);
+  const selectedShowThumbsUpCount = selectedShowDetail?.id === selectedShow
+    ? selectedShowDetail.thumbsUpCount
+    : canReactToSelectedShow
+      ? (selectedShowBasic?.thumbsUpCount ?? 0)
+      : 0;
+  const selectedShowLoveCount = selectedShowDetail?.id === selectedShow
+    ? selectedShowDetail.loveCount
+    : canReactToSelectedShow
+      ? (selectedShowBasic?.loveCount ?? 0)
+      : 0;
 
   function handleSelectShow(showId: number) {
     setCommentText("");
@@ -554,11 +566,11 @@ export function TvHomePage({
                       <div className="flex flex-wrap items-center gap-4">
                         <span className="inline-flex items-center gap-1.5 font-semibold text-[#285b73]">
                           <ThumbsUp className="size-4 text-[#2d87a8]" />
-                          { (selectedShowDetail?.thumbsUpCount ?? selectedShowBasic?.thumbsUpCount ?? 0).toLocaleString() }
+                          { selectedShowThumbsUpCount.toLocaleString() }
                         </span>
                         <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
                           <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
-                          { (selectedShowDetail?.loveCount ?? selectedShowBasic?.loveCount ?? 0).toLocaleString() }
+                          { selectedShowLoveCount.toLocaleString() }
                         </span>
                       </div>
                     </div>
@@ -665,11 +677,11 @@ export function TvHomePage({
                     <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#285b73]">
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-1">
                         <ThumbsUp className="size-4 text-[#2d87a8]" />
-                        { (selectedShowDetail?.thumbsUpCount ?? selectedShowBasic.thumbsUpCount ?? 0).toLocaleString() }
+                        { selectedShowThumbsUpCount.toLocaleString() }
                       </span>
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]">
                         <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
-                        { (selectedShowDetail?.loveCount ?? selectedShowBasic.loveCount ?? 0).toLocaleString() }
+                        { selectedShowLoveCount.toLocaleString() }
                       </span>
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-1">
                         <MessageSquareText className="size-4 text-[#2d87a8]" />

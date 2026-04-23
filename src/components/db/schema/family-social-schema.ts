@@ -7,6 +7,7 @@ export {
   memberOption, 
   optionReference, 
   familyInvitation,
+  familyActivity,
   threadTagReference,
   threadConversationTag,
   threadConversation,

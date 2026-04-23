@@ -26,6 +26,7 @@ export interface FoodiesRecipeDetail {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterLikenessDegree: number | null;
   commentCount: number;
   noRatingCount: number;
   thumbsUpCount: number;
@@ -52,6 +53,7 @@ export interface FoodiesRecipe {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterLikenessDegree: number | null;
   commentCount: number;
   noRatingCount: number;
   thumbsUpCount: number;
@@ -121,6 +123,7 @@ export interface SaveFoodiesRecipeInput {
   id?: number;
   recipeTitle: string;
   recipeShortSummary: string;
+  submitterLikenessDegree?: number;
   prepTimeMins: number;
   cookTimeMins: number;
   status: string;

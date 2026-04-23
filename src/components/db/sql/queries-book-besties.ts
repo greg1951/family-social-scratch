@@ -22,6 +22,7 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from '../types/poem-term-validation';
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -405,6 +406,16 @@ export async function saveBooksHomeBook(
         })));
     }
 
+    if (!existingBook) {
+      await createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+        featureName: 'Book Besties',
+        postName: normalizedTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
+    }
+
     savedBookId = savedBookFact.id;
   } catch (error) {
     if (createdBookFactId) {
@@ -612,6 +623,14 @@ export async function addBookComment(
       isBookAnalysis: false,
       commentJson,
     });
+
+  await createFamilyActivityRecord({
+    actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+    featureName: 'Book Besties',
+    postName: existingBook.bookTitle,
+    familyId: actor.familyId,
+    memberId: actor.memberId,
+  });
 
   const [updatedBook] = await loadBooksHomeBooks(actor.familyId, [bookId], actor.memberId);
 

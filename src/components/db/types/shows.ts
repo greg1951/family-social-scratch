@@ -21,6 +21,7 @@ export interface TvShow {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterLikenessDegree: number | null;
   commentCount: number;
   noRatingCount: number;
   thumbsUpCount: number;
@@ -88,6 +89,7 @@ export interface SaveShowInput {
   id?: number;
   showTitle: string;
   showCaption: string;
+  submitterLikenessDegree?: number;
   showJson: string;
   status: string;
   showImageUrl?: string | null;

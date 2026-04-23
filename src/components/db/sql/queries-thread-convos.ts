@@ -17,6 +17,7 @@ import {
   getThreadRecipientOptionsReturn,
   updateThreadRecipientStateReturn,
 } from '../types/thread-convos';
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
 
 function isMissingContentJsonColumnError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {
@@ -493,6 +494,26 @@ export async function createThreadConversationWithInitialPost(
     };
   }
 
+  const [senderRecord] = await db
+    .select({
+      firstName: member.firstName,
+      lastName: member.lastName,
+    })
+    .from(member)
+    .where(and(
+      eq(member.id, context.senderMemberId),
+      eq(member.familyId, context.familyId),
+    ));
+
+  if (!senderRecord) {
+    return {
+      success: false,
+      message: 'Thread sender could not be found.',
+    };
+  }
+
+  const senderFullName = `${senderRecord.firstName} ${senderRecord.lastName}`.trim();
+
   const dedupedRecipientIds = Array.from(new Set(
     input.recipientMemberIds.filter((recipientId) => recipientId !== context.senderMemberId),
   ));
@@ -642,6 +663,14 @@ export async function createThreadConversationWithInitialPost(
   if (attachmentRows.length > 0) {
     await db.insert(threadPostAttachment).values(attachmentRows);
   }
+
+  await createFamilyActivityRecord({
+    actionType: FAMILY_ACTIVITY_ACTION_TYPES.THREAD_CREATED,
+    featureName: 'Family Threads',
+    postName: senderFullName,
+    familyId: context.familyId,
+    memberId: context.senderMemberId,
+  });
 
   return {
     success: true,

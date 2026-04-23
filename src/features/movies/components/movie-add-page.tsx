@@ -10,6 +10,7 @@ import {
   ArrowLeft,
   Bold,
   Columns2,
+  Heart,
   Heading2,
   Heading3,
   Italic,
@@ -20,6 +21,7 @@ import {
   Rows2,
   Save,
   Table2,
+  ThumbsUp,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
@@ -57,6 +59,7 @@ const TAG_TYPE_LABELS: Array<{ type: MovieTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
+const REACTION_NONE_VALUE = "none";
 
 type ToolbarButtonProps = {
   label: string;
@@ -129,6 +132,9 @@ export function MovieAddPage({
   const [movieCaption, setMovieCaption] = useState(initialMovie?.movieCaption ?? "");
   const [movieDebutYear, setMovieDebutYear] = useState(String(initialMovie?.movieDebutYear ?? new Date().getFullYear()));
   const [status, setStatus] = useState(initialMovie?.status ?? "draft");
+  const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
+    initialMovie?.likenessDegree ? String(initialMovie.likenessDegree) : REACTION_NONE_VALUE
+  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MovieTagType, string>>>(() => {
     if (!initialMovie) {
       return {};
@@ -315,13 +321,19 @@ export function MovieAddPage({
       toast.error("Select a template before saving the movie.");
       return;
     }
+
+    if (!isEditing && submitterLikenessDegree === REACTION_NONE_VALUE) {
+      toast.error("Select Like or Love for your movie post.");
+      return;
+    }
+
     startSaveTransition(async () => {
       const uploadedImageUrl = await uploadMovieImage();
       if (selectedFile && !uploadedImageUrl) {
         return;
       }
       const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
-      const result = await saveMovieAction({ id: initialMovie?.id, movieTitle: movieTitle.trim(), movieCaption: movieCaption.trim(), movieJson: serializeTipTapDocument(editor.getJSON()), status, movieImageUrl: uploadedImageUrl ?? movieImageUrl ?? null, movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
+      const result = await saveMovieAction({ id: initialMovie?.id, movieTitle: movieTitle.trim(), movieCaption: movieCaption.trim(), submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE ? undefined : Number(submitterLikenessDegree), movieJson: serializeTipTapDocument(editor.getJSON()), status, movieImageUrl: uploadedImageUrl ?? movieImageUrl ?? null, movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
       if (!result.success) {
         toast.error(result.message);
         return;
@@ -371,7 +383,7 @@ export function MovieAddPage({
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-caption">Caption</label>
                 <Input id="movie-caption" value={ movieCaption } onChange={ (event) => setMovieCaption(event.target.value) } placeholder="Short summary" />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
                   <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
@@ -394,6 +406,41 @@ export function MovieAddPage({
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#5c2e1a]">Your Rating</label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={ [
+                        "border-[#e8c4a0] transition-all",
+                        submitterLikenessDegree === "1"
+                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
+                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
+                      ].join(" ") }
+                      onClick={ () => setSubmitterLikenessDegree("1") }
+                      aria-pressed={ submitterLikenessDegree === "1" }
+                    >
+                      <ThumbsUp className="mr-2 size-4" />
+                      Like
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={ [
+                        "border-[#e8c4a0] transition-all",
+                        submitterLikenessDegree === "2"
+                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
+                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
+                      ].join(" ") }
+                      onClick={ () => setSubmitterLikenessDegree("2") }
+                      aria-pressed={ submitterLikenessDegree === "2" }
+                    >
+                      <Heart className="mr-2 size-4" />
+                      Love
+                    </Button>
+                  </div>
                 </div>
               </div>
               <div className="space-y-2">

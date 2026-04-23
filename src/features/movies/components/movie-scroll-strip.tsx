@@ -12,6 +12,7 @@ type LatestMovieItem = {
   kind: "latest";
   name: string;
   date: string;
+  submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -22,6 +23,7 @@ type LatestMovieItem = {
 type TopRatedMovieItem = {
   kind: "top-rated";
   name: string;
+  submitterLikenessDegree: number | null;
   noRating: number;
   thumbsUp: number;
   love: number;
@@ -38,6 +40,30 @@ type MovieScrollStripProps = {
   items: MovieScrollItem[];
   accentClassName: string;
 };
+
+function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
+  if (likenessDegree === 1) {
+    return <ThumbsUp className="size-4 text-[#b8581a]" aria-label="Submitter rated thumbs up" />;
+  }
+
+  if (likenessDegree === 2) {
+    return <Heart className="size-4 text-[#cf3f7f]" aria-label="Submitter rated love" />;
+  }
+
+  return null;
+}
+
+function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | null }) {
+  if (![1, 2].includes(likenessDegree ?? -1)) {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#fff3e8] p-2 shadow-sm">
+      <SubmitterRatingIcon likenessDegree={ likenessDegree } />
+    </span>
+  );
+}
 
 export function MovieScrollStrip({
   title,
@@ -198,10 +224,13 @@ export function MovieScrollStrip({
 
                   <div className="space-y-3 px-4 py-4">
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="min-w-0 text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                        <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                      </div>
                       { item.kind === "latest" ? (
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span>Added { item.date }</span>
+                          <span>{ item.date }</span>
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
                             <ThumbsUp className="size-4 text-[#b8581a]" />
                             { item.thumbsUp.toLocaleString() }
@@ -233,7 +262,7 @@ export function MovieScrollStrip({
                           </div>
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]">
                             <MessageSquareText className="size-4 text-[#b8581a]" />
-                            { item.commentsCount.toLocaleString() } comments
+                            { item.commentsCount.toLocaleString() }
                           </span>
                         </div>
                       ) }

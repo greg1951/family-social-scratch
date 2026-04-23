@@ -187,6 +187,7 @@ export function FoodiesHomePage({
       kind: "latest" as const,
       name: recipe.recipeTitle,
       date: formatDate(recipe.updatedAt),
+      submitterLikenessDegree: recipe.submitterLikenessDegree,
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -213,6 +214,7 @@ export function FoodiesHomePage({
     .map((recipe) => ({
       kind: "top-rated" as const,
       name: recipe.recipeTitle,
+      submitterLikenessDegree: recipe.submitterLikenessDegree,
       noRating: recipe.noRatingCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,

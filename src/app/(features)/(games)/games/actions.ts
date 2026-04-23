@@ -31,6 +31,7 @@ export interface StartGameInput {
   familyId: number;
   gameMetaId: number;
   gameTitle: string;
+  memberId: number;
 }
 
 export interface SaveGameScoreboardInput {

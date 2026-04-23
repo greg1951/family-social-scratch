@@ -11,6 +11,7 @@ import {
   Bold,
   Columns2,
   Combine,
+  Heart,
   Heading2,
   Heading3,
   Italic,
@@ -22,6 +23,7 @@ import {
   Save,
   Sparkles,
   Table2,
+  ThumbsUp,
   Tv,
   Underline as UnderlineIcon,
   Unlink,
@@ -60,6 +62,7 @@ const TAG_TYPE_LABELS: Array<{ type: ShowTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
+const REACTION_NONE_VALUE = "none";
 
 type ToolbarButtonProps = {
   label: string;
@@ -144,6 +147,9 @@ export function TvAddShowPage({
   const [showLastYear, setShowLastYear] = useState(String(initialShow?.showLastYear ?? new Date().getFullYear()));
   const [seasonCount, setSeasonCount] = useState(String(initialShow?.seasonCount ?? 1));
   const [status, setStatus] = useState(initialShow?.status ?? "draft");
+  const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
+    initialShow?.likenessDegree ? String(initialShow.likenessDegree) : REACTION_NONE_VALUE
+  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<ShowTagType, string>>>(() => {
     if (!initialShow) {
       return {};
@@ -427,6 +433,11 @@ export function TvAddShowPage({
       return;
     }
 
+    if (!isEditing && submitterLikenessDegree === REACTION_NONE_VALUE) {
+      toast.error("Select Like or Love for your show post.");
+      return;
+    }
+
     startSaveTransition(async () => {
       const uploadedImageUrl = await uploadShowImage();
 
@@ -443,6 +454,9 @@ export function TvAddShowPage({
         id: initialShow?.id,
         showTitle: showTitle.trim(),
         showCaption: showCaption.trim(),
+        submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE
+          ? undefined
+          : Number(submitterLikenessDegree),
         showJson: serializeTipTapDocument(editor.getJSON()),
         status,
         showImageUrl: uploadedImageUrl ?? showImageUrl ?? null,
@@ -570,7 +584,7 @@ export function TvAddShowPage({
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Template</label>
                   <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
@@ -598,6 +612,42 @@ export function TvAddShowPage({
                       <SelectItem value="archived">Archived</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#15384a]">Your Rating</label>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={ [
+                        "border-[#c6dcec] transition-all",
+                        submitterLikenessDegree === "1"
+                          ? "border-[#245475] bg-[#dff1fb] text-[#0d2a3a] shadow-[0_0_0_2px_rgba(36,84,117,0.18)] scale-[1.03]"
+                          : "bg-white text-[#3f6576] hover:bg-[#f1fafe]",
+                      ].join(" ") }
+                      onClick={ () => setSubmitterLikenessDegree("1") }
+                      aria-pressed={ submitterLikenessDegree === "1" }
+                    >
+                      <ThumbsUp className="mr-2 size-4" />
+                      Like
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className={ [
+                        "border-[#c6dcec] transition-all",
+                        submitterLikenessDegree === "2"
+                          ? "border-[#245475] bg-[#dff1fb] text-[#0d2a3a] shadow-[0_0_0_2px_rgba(36,84,117,0.18)] scale-[1.03]"
+                          : "bg-white text-[#3f6576] hover:bg-[#f1fafe]",
+                      ].join(" ") }
+                      onClick={ () => setSubmitterLikenessDegree("2") }
+                      aria-pressed={ submitterLikenessDegree === "2" }
+                    >
+                      <Heart className="mr-2 size-4" />
+                      Love
+                    </Button>
+                  </div>
                 </div>
               </div>
 

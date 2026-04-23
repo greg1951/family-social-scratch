@@ -33,6 +33,7 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
 
@@ -315,6 +316,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     db
       .select({
         showId: showComment.showId,
+        isShowReviewer: showComment.isShowReviewer,
       })
       .from(showComment)
       .where(inArray(showComment.showId, showIds)),
@@ -358,15 +360,35 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
   const noRatingByShowId = new Map<number, number>();
   const thumbsUpByShowId = new Map<number, number>();
   const loveByShowId = new Map<number, number>();
+  const submitterLikeByShowId = new Map<number, number>();
   const viewerLikeByShowId = new Map<number, number>();
   const tagIdsByShowId = new Map<number, number[]>();
   const tagNamesByTypeByShowId = new Map<number, Partial<Record<ShowTagType, string[]>>>();
 
   for (const commentRow of commentRows) {
+    if (commentRow.isShowReviewer) {
+      continue;
+    }
+
     commentCountByShowId.set(commentRow.showId, (commentCountByShowId.get(commentRow.showId) ?? 0) + 1);
   }
 
   for (const likeRow of likeRows) {
+    const showRow = showRows.find((candidate) => candidate.id === likeRow.showId);
+    const isSubmitterRating = Boolean(showRow && likeRow.memberId === showRow.memberId);
+
+    if (isSubmitterRating) {
+      submitterLikeByShowId.set(likeRow.showId, likeRow.likenessDegree);
+    }
+
+    if (viewerMemberId && likeRow.memberId === viewerMemberId) {
+      viewerLikeByShowId.set(likeRow.showId, likeRow.likenessDegree);
+    }
+
+    if (isSubmitterRating) {
+      continue;
+    }
+
     if (likeRow.likenessDegree === 1) {
       thumbsUpByShowId.set(likeRow.showId, (thumbsUpByShowId.get(likeRow.showId) ?? 0) + 1);
       continue;
@@ -379,10 +401,6 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
 
     if (likeRow.likenessDegree === -1) {
       noRatingByShowId.set(likeRow.showId, (noRatingByShowId.get(likeRow.showId) ?? 0) + 1);
-    }
-
-    if (viewerMemberId && likeRow.memberId === viewerMemberId) {
-      viewerLikeByShowId.set(likeRow.showId, likeRow.likenessDegree);
     }
   }
 
@@ -416,6 +434,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterLikenessDegree: submitterLikeByShowId.get(row.id) ?? null,
     commentCount: commentCountByShowId.get(row.id) ?? 0,
     noRatingCount: noRatingByShowId.get(row.id) ?? 0,
     thumbsUpCount: thumbsUpByShowId.get(row.id) ?? 0,
@@ -485,9 +504,12 @@ async function loadShowDetail(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
-  const noRatingCount = likeRows.filter((row) => row.likenessDegree === -1).length;
-  const thumbsUpCount = likeRows.filter((row) => row.likenessDegree === 1).length;
-  const loveCount = likeRows.filter((row) => row.likenessDegree === 2).length;
+  const submitterLike = likeRows.find((row) => row.memberId === showRow.memberId) ?? null;
+  const audienceLikeRows = likeRows.filter((row) => row.memberId !== showRow.memberId);
+  const noRatingCount = audienceLikeRows.filter((row) => row.likenessDegree === -1).length;
+  const thumbsUpCount = audienceLikeRows.filter((row) => row.likenessDegree === 1).length;
+  const loveCount = audienceLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const regularCommentRows = commentRows.filter((row) => !row.isShowReviewer);
 
   const viewerLike = viewerMemberId
     ? likeRows.find((row) => row.memberId === viewerMemberId)
@@ -512,7 +534,7 @@ async function loadShowDetail(
     tagNamesByTypeByShowId.set(showId, byType);
   }
 
-  const showComments: ShowComment[] = commentRows.map((row) => ({
+  const showComments: ShowComment[] = regularCommentRows.map((row) => ({
     id: row.id,
     createdAt: row.createdAt ?? new Date(),
     commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
@@ -533,7 +555,8 @@ async function loadShowDetail(
     memberId: showRow.memberId,
     familyId: showRow.familyId,
     submitterName: memberNameById.get(showRow.memberId) ?? `Member #${showRow.memberId}`,
-    commentCount: showComments.length,
+    submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
+    commentCount: regularCommentRows.length,
     noRatingCount,
     thumbsUpCount,
     loveCount,
@@ -670,6 +693,15 @@ export async function saveShow(
     };
   }
 
+  const submitterLikenessDegree = Number(input.submitterLikenessDegree);
+  const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
+  if (!existingShow && !hasSubmitterLikenessDegree) {
+    return {
+      success: false,
+      message: "Select Like or Love for your own show post.",
+    };
+  }
+
   const showJsonToStore = input.showJson?.trim() || selectedTemplate.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
 
   try {
@@ -721,6 +753,36 @@ export async function saveShow(
           tagId,
         }))
       );
+    }
+
+    if (!existingShow) {
+      await db.insert(showComment).values({
+        showId: persistedShow.id,
+        memberId: actor.memberId,
+        commentJson: "",
+        isShowReviewer: true,
+      });
+    }
+
+    if (hasSubmitterLikenessDegree) {
+      await db.delete(showLike).where(and(eq(showLike.showId, persistedShow.id), eq(showLike.memberId, actor.memberId)));
+
+      await db.insert(showLike).values({
+        showId: persistedShow.id,
+        memberId: actor.memberId,
+        likenessDegree: submitterLikenessDegree,
+        updatedAt: new Date(),
+      });
+    }
+
+    if (!existingShow) {
+      await createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+        featureName: "TV Junkies",
+        postName: normalizedTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
     }
 
     const shows = await loadShows(actor.familyId, actor.memberId);
@@ -1053,6 +1115,14 @@ export async function addShowComment(
         commentJson: normalizedComment,
         isShowReviewer: false,
       });
+
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+      featureName: "TV Junkies",
+      postName: existingShow.showTitle,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
 
     const updatedShow = await loadShowDetail(actor.familyId, showId, actor.memberId);
 

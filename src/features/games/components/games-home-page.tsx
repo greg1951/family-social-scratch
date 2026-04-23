@@ -342,6 +342,7 @@ export function GamesHomePage({
         familyId,
         gameMetaId: selectedGame.id,
         gameTitle: titledWithDate,
+        memberId,
       });
 
       setIsStartingGame(false);
@@ -897,73 +898,73 @@ export function GamesHomePage({
                       { visiblePlayerColumnIndices.map((idx, visibleIdx) => {
                         const player = selectedPlayers[idx];
                         return (
-                        <th
-                          key={ `player-header-${ idx }` }
-                          className="w-32 bg-slate-700 text-amber-300 p-2 border border-slate-600"
-                        >
-                          <Select
-                            value={ player ? String(player.id) : "" }
-                            onValueChange={ (val) => {
-                              if (val === ADD_GUEST_OPTION_VALUE) {
-                                setGuestDialogColIndex(idx);
-                                setIsGuestDialogOpen(true);
-                                return;
-                              }
-
-                              const selectedMemberId = Number(val);
-                              const selectedInOtherColumn = selectedPlayers.some(
-                                (existingPlayer, existingIdx) =>
-                                  existingIdx !== idx && existingPlayer?.id === selectedMemberId
-                              );
-
-                              if (selectedInOtherColumn) {
-                                return;
-                              }
-
-                              const selectedMember = localSelectablePlayers.find(
-                                (member) => member.id === selectedMemberId
-                              );
-
-                              if (!selectedMember) {
-                                return;
-                              }
-
-                              const newPlayers = [...selectedPlayers];
-                              newPlayers[idx] = {
-                                id: selectedMember.id,
-                                firstName: selectedMember.firstName,
-                                lastName: selectedMember.lastName,
-                                isGuest: selectedMember.isGuest,
-                              };
-                              setSelectedPlayers(newPlayers);
-                            } }
+                          <th
+                            key={ `player-header-${ idx }` }
+                            className="w-32 bg-slate-700 text-amber-300 p-2 border border-slate-600"
                           >
-                            <SelectTrigger className="w-full bg-slate-600 border-amber-400/50 text-white text-xs">
-                              <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
-                                + Add a guest
-                              </SelectItem>
-                              { localSelectablePlayers.map((member) => {
+                            <Select
+                              value={ player ? String(player.id) : "" }
+                              onValueChange={ (val) => {
+                                if (val === ADD_GUEST_OPTION_VALUE) {
+                                  setGuestDialogColIndex(idx);
+                                  setIsGuestDialogOpen(true);
+                                  return;
+                                }
+
+                                const selectedMemberId = Number(val);
                                 const selectedInOtherColumn = selectedPlayers.some(
                                   (existingPlayer, existingIdx) =>
-                                    existingIdx !== idx && existingPlayer?.id === member.id
+                                    existingIdx !== idx && existingPlayer?.id === selectedMemberId
                                 );
 
-                                return (
-                                  <SelectItem
-                                    key={ member.id }
-                                    value={ String(member.id) }
-                                    disabled={ selectedInOtherColumn }
-                                  >
-                                    { getPlayerOptionLabel(member) }
-                                  </SelectItem>
-                                )
-                              }) }
-                            </SelectContent>
-                          </Select>
-                        </th>
+                                if (selectedInOtherColumn) {
+                                  return;
+                                }
+
+                                const selectedMember = localSelectablePlayers.find(
+                                  (member) => member.id === selectedMemberId
+                                );
+
+                                if (!selectedMember) {
+                                  return;
+                                }
+
+                                const newPlayers = [...selectedPlayers];
+                                newPlayers[idx] = {
+                                  id: selectedMember.id,
+                                  firstName: selectedMember.firstName,
+                                  lastName: selectedMember.lastName,
+                                  isGuest: selectedMember.isGuest,
+                                };
+                                setSelectedPlayers(newPlayers);
+                              } }
+                            >
+                              <SelectTrigger className="w-full bg-slate-600 border-amber-400/50 text-white text-xs">
+                                <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
+                                  + Add a guest
+                                </SelectItem>
+                                { localSelectablePlayers.map((member) => {
+                                  const selectedInOtherColumn = selectedPlayers.some(
+                                    (existingPlayer, existingIdx) =>
+                                      existingIdx !== idx && existingPlayer?.id === member.id
+                                  );
+
+                                  return (
+                                    <SelectItem
+                                      key={ member.id }
+                                      value={ String(member.id) }
+                                      disabled={ selectedInOtherColumn }
+                                    >
+                                      { getPlayerOptionLabel(member) }
+                                    </SelectItem>
+                                  )
+                                }) }
+                              </SelectContent>
+                            </Select>
+                          </th>
                         );
                       }) }
                     </tr>

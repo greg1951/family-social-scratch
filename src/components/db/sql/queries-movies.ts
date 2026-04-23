@@ -33,6 +33,7 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
 
@@ -315,6 +316,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     db
       .select({
         movieId: movieComment.movieId,
+        ismovieReviewer: movieComment.ismovieReviewer,
       })
       .from(movieComment)
       .where(inArray(movieComment.movieId, movieIds)),
@@ -353,31 +355,35 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const submitterMemberIdByMovieId = new Map(movieRows.map((row) => [row.id, row.memberId]));
 
   const commentCountByMovieId = new Map<number, number>();
   const noRatingByMovieId = new Map<number, number>();
   const thumbsUpByMovieId = new Map<number, number>();
   const loveByMovieId = new Map<number, number>();
+  const submitterLikeByMovieId = new Map<number, number>();
   const viewerLikeByMovieId = new Map<number, number>();
   const tagIdsByMovieId = new Map<number, number[]>();
   const tagNamesByTypeByMovieId = new Map<number, Partial<Record<MovieTagType, string[]>>>();
 
   for (const commentRow of commentRows) {
+    if (commentRow.ismovieReviewer) {
+      continue;
+    }
+
     commentCountByMovieId.set(commentRow.movieId, (commentCountByMovieId.get(commentRow.movieId) ?? 0) + 1);
   }
 
   for (const likeRow of likeRows) {
-    if (likeRow.likenessDegree === 1) {
+    const submitterMemberId = submitterMemberIdByMovieId.get(likeRow.movieId);
+
+    if (submitterMemberId && likeRow.memberId === submitterMemberId) {
+      submitterLikeByMovieId.set(likeRow.movieId, likeRow.likenessDegree);
+    } else if (likeRow.likenessDegree === 1) {
       thumbsUpByMovieId.set(likeRow.movieId, (thumbsUpByMovieId.get(likeRow.movieId) ?? 0) + 1);
-      continue;
-    }
-
-    if (likeRow.likenessDegree === 2) {
+    } else if (likeRow.likenessDegree === 2) {
       loveByMovieId.set(likeRow.movieId, (loveByMovieId.get(likeRow.movieId) ?? 0) + 1);
-      continue;
-    }
-
-    if (likeRow.likenessDegree === -1) {
+    } else if (likeRow.likenessDegree === -1) {
       noRatingByMovieId.set(likeRow.movieId, (noRatingByMovieId.get(likeRow.movieId) ?? 0) + 1);
     }
 
@@ -414,6 +420,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterLikenessDegree: submitterLikeByMovieId.get(row.id) ?? null,
     commentCount: commentCountByMovieId.get(row.id) ?? 0,
     noRatingCount: noRatingByMovieId.get(row.id) ?? 0,
     thumbsUpCount: thumbsUpByMovieId.get(row.id) ?? 0,
@@ -483,9 +490,12 @@ async function loadMovieDetail(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
-  const noRatingCount = likeRows.filter((row) => row.likenessDegree === -1).length;
-  const thumbsUpCount = likeRows.filter((row) => row.likenessDegree === 1).length;
-  const loveCount = likeRows.filter((row) => row.likenessDegree === 2).length;
+  const submitterLike = likeRows.find((row) => row.memberId === movieRow.memberId) ?? null;
+  const audienceLikeRows = likeRows.filter((row) => row.memberId !== movieRow.memberId);
+  const noRatingCount = audienceLikeRows.filter((row) => row.likenessDegree === -1).length;
+  const thumbsUpCount = audienceLikeRows.filter((row) => row.likenessDegree === 1).length;
+  const loveCount = audienceLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const regularCommentRows = commentRows.filter((row) => !row.ismovieReviewer);
 
   const viewerLike = viewerMemberId
     ? likeRows.find((row) => row.memberId === viewerMemberId)
@@ -510,7 +520,7 @@ async function loadMovieDetail(
     tagNamesByTypeByMovieId.set(movieId, byType);
   }
 
-  const movieComments: MovieComment[] = commentRows.map((row) => ({
+  const movieComments: MovieComment[] = regularCommentRows.map((row) => ({
     id: row.id,
     createdAt: row.createdAt ?? new Date(),
     commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
@@ -529,7 +539,8 @@ async function loadMovieDetail(
     memberId: movieRow.memberId,
     familyId: movieRow.familyId,
     submitterName: memberNameById.get(movieRow.memberId) ?? `Member #${movieRow.memberId}`,
-    commentCount: movieComments.length,
+    submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
+    commentCount: regularCommentRows.length,
     noRatingCount,
     thumbsUpCount,
     loveCount,
@@ -666,6 +677,15 @@ export async function saveMovie(
     };
   }
 
+  const submitterLikenessDegree = Number(input.submitterLikenessDegree);
+  const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
+  if (!existingMovie && !hasSubmitterLikenessDegree) {
+    return {
+      success: false,
+      message: "Select Like or Love for your own movie post.",
+    };
+  }
+
   const normalizedMovieJson = input.movieJson?.trim();
   const parsedMovieJson = normalizedMovieJson ? parseSerializedTipTapDocument(normalizedMovieJson) : null;
   const movieJsonToStore = parsedMovieJson?.success
@@ -717,6 +737,36 @@ export async function saveMovie(
           tagId,
         }))
       );
+    }
+
+    if (!existingMovie) {
+      await db.insert(movieComment).values({
+        movieId: persistedMovie.id,
+        memberId: actor.memberId,
+        commentJson: "",
+        ismovieReviewer: true,
+      });
+    }
+
+    if (hasSubmitterLikenessDegree) {
+      await db.delete(movieLike).where(and(eq(movieLike.movieId, persistedMovie.id), eq(movieLike.memberId, actor.memberId)));
+
+      await db.insert(movieLike).values({
+        movieId: persistedMovie.id,
+        memberId: actor.memberId,
+        likenessDegree: submitterLikenessDegree,
+        updatedAt: new Date(),
+      });
+    }
+
+    if (!existingMovie) {
+      await createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+        featureName: "Movie Maniacs",
+        postName: normalizedTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
     }
 
     const movies = await loadMovies(actor.familyId, actor.memberId);
@@ -979,6 +1029,7 @@ export async function addMovieComment(
       movieId,
       memberId: actor.memberId,
       commentJson: normalizedComment,
+      ismovieReviewer: false,
       createdAt: new Date(),
     });
 

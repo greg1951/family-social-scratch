@@ -48,6 +48,7 @@ export default async function EditRecipePage({
       member={ memberKeyDetails }
       initialRecipe={ recipeResult.recipe }
       initialRecipeProTipsJson={ initialRecipeProTipsJson }
+      initialSubmitterLikenessDegree={ recipeDetailResult.success ? recipeDetailResult.recipe.likenessDegree : null }
       mode="edit"
     />
   );

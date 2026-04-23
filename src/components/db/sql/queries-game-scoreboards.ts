@@ -18,11 +18,13 @@ import {
   PlayerStats,
   SelectableGamePlayer,
 } from '../types/game-scoreboard';
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
 
 type StartGameRecordInput = {
   familyId: number;
   gameMetaId: number;
   gameTitle: string;
+  memberId?: number;
 };
 
 type SaveGamePlayerStateRecordInput = {
@@ -319,6 +321,16 @@ export async function createGameStateRecord(input: StartGameRecordInput): Promis
       success: false,
       message: 'Unable to create game state.',
     };
+  }
+
+  if (input.memberId) {
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.GAME_STARTED,
+      featureName: 'Game Scoreboards',
+      postName: trimmedTitle,
+      familyId: input.familyId,
+      memberId: input.memberId,
+    });
   }
 
   return {

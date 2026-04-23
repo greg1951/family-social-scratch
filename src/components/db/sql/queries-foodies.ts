@@ -41,6 +41,7 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
 
 const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "cuisine",
@@ -76,6 +77,22 @@ function createDefaultRecipeTemplateJson() {
       { type: "paragraph" },
     ],
   });
+}
+
+function isEmptyRecipeProTipComment(commentJson: string) {
+  const normalized = commentJson.trim();
+
+  if (!normalized || normalized === "{}") {
+    return true;
+  }
+
+  const parsed = parseSerializedTipTapDocument(normalized);
+
+  if (!parsed.success) {
+    return false;
+  }
+
+  return isTipTapDocumentEmpty(parsed.content);
 }
 
 async function ensureGlobalRecipeTemplate(
@@ -352,6 +369,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     db
       .select({
         recipeId: recipeLike.recipeId,
+        memberId: recipeLike.memberId,
         likenessDegree: recipeLike.likenessDegree,
       })
       .from(recipeLike)
@@ -388,6 +406,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
   const noRatingByRecipeId = new Map<number, number>();
   const thumbsUpByRecipeId = new Map<number, number>();
   const loveByRecipeId = new Map<number, number>();
+  const submitterLikeByRecipeId = new Map<number, number>();
   const tagIdsByRecipeId = new Map<number, number[]>();
   const tagNamesByTypeByRecipeId = new Map<number, Partial<Record<RecipeTagType, string[]>>>();
 
@@ -400,6 +419,12 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
   }
 
   for (const likeRow of likeRows) {
+    const recipeRow = recipeRows.find((row) => row.id === likeRow.recipeId);
+
+    if (recipeRow && likeRow.memberId === recipeRow.memberId) {
+      submitterLikeByRecipeId.set(likeRow.recipeId, likeRow.likenessDegree);
+    }
+
     if (likeRow.likenessDegree === 1) {
       thumbsUpByRecipeId.set(likeRow.recipeId, (thumbsUpByRecipeId.get(likeRow.recipeId) ?? 0) + 1);
       continue;
@@ -440,6 +465,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterLikenessDegree: submitterLikeByRecipeId.get(row.id) ?? null,
     commentCount: commentCountByRecipeId.get(row.id) ?? 0,
     noRatingCount: noRatingByRecipeId.get(row.id) ?? 0,
     thumbsUpCount: thumbsUpByRecipeId.get(row.id) ?? 0,
@@ -613,6 +639,15 @@ export async function saveFoodiesRecipe(
     };
   }
 
+  const submitterLikenessDegree = Number(input.submitterLikenessDegree);
+  const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
+  if (!existingRecipe && !hasSubmitterLikenessDegree) {
+    return {
+      success: false,
+      message: "Select Like or Love for your own recipe post.",
+    };
+  }
+
   const incomingRecipeJson = input.recipeJson.trim();
   const parsedRecipeJson = incomingRecipeJson
     ? parseSerializedTipTapDocument(incomingRecipeJson)
@@ -709,6 +744,32 @@ export async function saveFoodiesRecipe(
         })));
     }
 
+    if (!existingRecipe) {
+      await db
+        .insert(recipeComment)
+        .values({
+          recipeId: savedRecipe.id,
+          memberId: actor.memberId,
+          isRecipeProTip: true,
+          commentJson: serializeTipTapDocument(createEmptyTipTapDocument()),
+        });
+    }
+
+    if (hasSubmitterLikenessDegree) {
+      await db
+        .delete(recipeLike)
+        .where(and(eq(recipeLike.recipeId, savedRecipe.id), eq(recipeLike.memberId, actor.memberId)));
+
+      await db
+        .insert(recipeLike)
+        .values({
+          recipeId: savedRecipe.id,
+          memberId: actor.memberId,
+          likenessDegree: submitterLikenessDegree,
+          updatedAt: new Date(),
+        });
+    }
+
     const existingActorProTip = await db
       .select({
         id: recipeComment.id,
@@ -742,10 +803,20 @@ export async function saveFoodiesRecipe(
             commentJson: recipeProTipsJsonToSave,
           });
       }
-    } else if (existingActorProTip) {
+    } else if (existingActorProTip && existingRecipe) {
       await db
         .delete(recipeComment)
         .where(eq(recipeComment.id, existingActorProTip.id));
+    }
+
+    if (!existingRecipe) {
+      await createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+        featureName: "Family Foodies",
+        postName: normalizedTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
     }
 
     const [savedFoodiesRecipe] = await loadFoodiesRecipes(actor.familyId).then((rows) => rows.filter((row) => row.id === savedRecipe.id));
@@ -973,10 +1044,11 @@ async function loadFoodiesRecipeDetail(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
+  const submitterLike = likeRows.find((row) => row.memberId === recipeRow.memberId) ?? null;
   const noRatingCount = likeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = likeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = likeRows.filter((row) => row.likenessDegree === 2).length;
-  const recipeProTipRows = commentRows.filter((row) => row.isRecipeProTip);
+  const recipeProTipRows = commentRows.filter((row) => row.isRecipeProTip && !isEmptyRecipeProTipComment(row.commentJson));
   const familyCommentRows = commentRows.filter((row) => !row.isRecipeProTip);
 
   const viewerLike = viewerMemberId
@@ -1021,6 +1093,7 @@ async function loadFoodiesRecipeDetail(
     memberId: recipeRow.memberId,
     familyId: recipeRow.familyId,
     submitterName: memberNameById.get(recipeRow.memberId) ?? `Member #${recipeRow.memberId}`,
+    submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
     commentCount: familyCommentRows.length,
     noRatingCount,
     thumbsUpCount,
@@ -1211,6 +1284,14 @@ export async function addRecipeComment(
         commentJson: normalizedComment,
         isRecipeProTip: false,
       });
+
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+      featureName: "Family Foodies",
+      postName: existingRecipe.recipeTitle,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
 
     const updatedRecipe = await loadFoodiesRecipeDetail(actor.familyId, recipeId, actor.memberId);
 

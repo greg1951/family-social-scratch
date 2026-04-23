@@ -19,6 +19,7 @@ export interface MovieRecord {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterLikenessDegree: number | null;
   commentCount: number;
   noRatingCount: number;
   thumbsUpCount: number;
@@ -86,6 +87,7 @@ export interface SaveMovieInput {
   id?: number;
   movieTitle: string;
   movieCaption: string;
+  submitterLikenessDegree?: number;
   movieJson: string;
   status: string;
   movieImageUrl?: string | null;

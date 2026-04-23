@@ -12,6 +12,7 @@ type LatestShow = {
   kind: "latest";
   name: string;
   date: string;
+  submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -22,6 +23,7 @@ type LatestShow = {
 type TopRatedShow = {
   kind: "top-rated";
   name: string;
+  submitterLikenessDegree: number | null;
   noRating: number;
   thumbsUp: number;
   love: number;
@@ -38,6 +40,30 @@ type TvScrollStripProps = {
   items: TvScrollItem[];
   accentClassName: string;
 };
+
+function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
+  if (likenessDegree === 1) {
+    return <ThumbsUp className="size-4 text-[#2d87a8]" aria-label="Submitter rated thumbs up" />;
+  }
+
+  if (likenessDegree === 2) {
+    return <Heart className="size-4 text-[#cf3f7f]" aria-label="Submitter rated love" />;
+  }
+
+  return null;
+}
+
+function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | null }) {
+  if (![1, 2].includes(likenessDegree ?? -1)) {
+    return null;
+  }
+
+  return (
+    <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#eef8fc] p-2 shadow-sm">
+      <SubmitterRatingIcon likenessDegree={ likenessDegree } />
+    </span>
+  );
+}
 
 function ShowImage({ src, alt }: { src: string; alt: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
@@ -197,10 +223,13 @@ export function TvScrollStrip({
 
                   <div className="space-y-3 px-4 py-4">
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                      <div className="flex items-center justify-between gap-3">
+                        <h3 className="min-w-0 text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                        <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                      </div>
                       { item.kind === "latest" ? (
                         <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span>Added { item.date }</span>
+                          <span>{ item.date }</span>
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
                             <ThumbsUp className="size-4 text-[#2d87a8]" />
                             { item.thumbsUp.toLocaleString() }
@@ -232,7 +261,7 @@ export function TvScrollStrip({
                           </div>
                           <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
                             <MessageSquareText className="size-4 text-[#2d87a8]" />
-                            { item.commentsCount.toLocaleString() } comments
+                            { item.commentsCount.toLocaleString() }
                           </span>
                         </div>
                       ) }

@@ -57,6 +57,21 @@ export const familyInvitation = pgTable("family_invitation", {
   index('invite_token_idx').on(table.inviteToken),
 ]);
 
+export const familyActivity = pgTable("family_activity", {
+  id: serial("id").primaryKey(),
+  actionType: text("action_type").notNull(),
+  featureName: text("feature_name").notNull(),
+  postName: text("post_name").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").references(() => member.id),
+}, (table) => [
+  index('family_activity_family_id_idx').on(table.familyId),
+  index('family_activity_member_id_idx').on(table.memberId),
+
+]);
+
 export const familyS3Credentials = pgTable("family_s3_credentials", {
   id: serial("id").primaryKey(),
   encryptedAccessKey: text("encrypted_access_key").notNull(),
@@ -68,8 +83,8 @@ export const familyS3Credentials = pgTable("family_s3_credentials", {
   createdAt: timestamp("created_at").defaultNow(),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 }, (table) => [
-  index('family_id_idx').on(table.familyId),
-  index('active_credential_idx').on(table.familyId, table.isActive),
+  index('family_s3_credentials_family_id_idx').on(table.familyId),
+  index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
   // uniqueIndex('family_active_credential_uniq').on(table.familyId).where(sql`${table.isActive} = true`),
 ]);
 

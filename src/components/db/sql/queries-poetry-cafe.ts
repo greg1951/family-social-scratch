@@ -22,6 +22,7 @@ import {
   SavePoemTermInput,
   SavePoemTermReturn,
 } from '../types/poem-verses';
+import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -497,6 +498,16 @@ export async function savePoetryHomePoem(
         })));
     }
 
+    if (!existingPoem) {
+      await createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+        featureName: 'Poetry Cafe',
+        postName: normalizedTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
+    }
+
     savedPoemId = savedPoemFact.id;
   } catch (error) {
     if (createdPoemFactId) {
@@ -736,6 +747,14 @@ export async function addPoemComment(
       isPoemAnalysis: false,
       commentJson,
     });
+
+  await createFamilyActivityRecord({
+    actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+    featureName: 'Poetry Cafe',
+    postName: existingPoem.poemTitle,
+    familyId: actor.familyId,
+    memberId: actor.memberId,
+  });
 
   const [updatedPoem] = await loadPoetryHomePoems(actor.familyId, [poemId], actor.memberId);
 
