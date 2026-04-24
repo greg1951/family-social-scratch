@@ -46,3 +46,10 @@ This home page should consists of 3 parts (A, B, C) as depicted below.
   - The value of the round score will be summed in the second header row column of each player. 
   - When a round score is entered for a player in columns 2-9 this should trigger an event to save the data in the game_player_round table. (The code to update the table will be created later.)
 
+-----------------------------
+
+There are a couple of issues with the game scoreboards UI that need to be corrected.
+- When a game is selected from the game_state table, provide a button to allow the game to be archived if the game_state.status === "completed". 
+   - Archived games should not appear in the game_state list in the UI.
+- When a new acquire game (game_metadata) is started, all 8 columns should appear. 
+   There is separate behavior that provides for the empty columns to be removed when a game is continued but this is not applicable to a brand new game.

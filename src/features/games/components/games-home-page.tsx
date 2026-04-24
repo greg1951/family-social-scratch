@@ -2,7 +2,7 @@
 
 import { startTransition, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Play, Save } from "lucide-react";
+import { Archive, Play, Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +25,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   addGuestMemberAction,
+  archiveGameAction,
   loadGameScoreboardAction,
   saveGameScoreboardAction,
   startGameAction,
@@ -52,6 +53,7 @@ interface SelectedPlayer {
 
 const NEW_GAME_OPTION_VALUE = "new_game";
 const ADD_GUEST_OPTION_VALUE = "add_guest";
+const CLEAR_PLAYER_OPTION_VALUE = "clear_player";
 
 export function GamesHomePage({
   gamesData,
@@ -87,6 +89,7 @@ export function GamesHomePage({
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [isSavingGame, setIsSavingGame] = useState(false);
   const [isLoadingSavedGame, setIsLoadingSavedGame] = useState(false);
+  const [isArchivingGame, setIsArchivingGame] = useState(false);
   const [localSelectablePlayers, setLocalSelectablePlayers] = useState(
     gamesData.selectablePlayers
   );
@@ -103,6 +106,7 @@ export function GamesHomePage({
   const [selectedGameTitleOption, setSelectedGameTitleOption] = useState<string>(
     NEW_GAME_OPTION_VALUE
   );
+  const [requestedVisiblePlayerColumns, setRequestedVisiblePlayerColumns] = useState(1);
 
   // Computed values
   const selectedGame = useMemo(
@@ -114,7 +118,10 @@ export function GamesHomePage({
   );
 
   const getPlayerOptionLabel = (player: { firstName: string; lastName: string; isGuest?: boolean }) =>
-    `${ player.firstName } ${ player.lastName }${ player.isGuest ? " (g)" : "" }`;
+    `${ player.firstName }${ player.isGuest ? " (g)" : "" }`;
+
+  const isAcquireGame = selectedGame?.name.trim().toLowerCase() === "acquire";
+  const isMexicanTrainGame = selectedGame?.name.trim().toLowerCase() === "mexican train";
 
   const gameStatesForSelectedMetadata = useMemo(() => {
     if (!selectedGameId) {
@@ -122,6 +129,7 @@ export function GamesHomePage({
     }
 
     return gamesData.activeGameStates
+      .filter((state) => state.status !== "archived")
       .filter((state) => state.gameMetaId === selectedGameId)
       .sort((a, b) => a.gameTitle.localeCompare(b.gameTitle));
   }, [gamesData.activeGameStates, selectedGameId]);
@@ -162,6 +170,10 @@ export function GamesHomePage({
   }, [selectedGame]);
 
   const visiblePlayerColumnIndices = useMemo(() => {
+    if (isMexicanTrainGame) {
+      return Array.from({ length: 8 }, (_, idx) => idx);
+    }
+
     const visible = selectedPlayers
       .map((player, idx) => {
         const hasPlayer = Boolean(player);
@@ -172,9 +184,19 @@ export function GamesHomePage({
       })
       .filter((idx): idx is number => idx !== null);
 
-    // Keep one column available so a brand-new game can still select players.
-    return visible.length > 0 ? visible : [0];
-  }, [roundEntries, roundScores, selectedPlayers]);
+    const highestForcedIndex = Math.min(requestedVisiblePlayerColumns, 8) - 1;
+    for (let idx = 0; idx <= highestForcedIndex; idx += 1) {
+      if (!visible.includes(idx)) {
+        visible.push(idx);
+      }
+    }
+
+    if (visible.length === 0) {
+      visible.push(0);
+    }
+
+    return visible.sort((a, b) => a - b);
+  }, [isMexicanTrainGame, requestedVisiblePlayerColumns, roundEntries, roundScores, selectedPlayers]);
 
   // Filter game history
   const filteredGameHistory = useMemo(() => {
@@ -286,6 +308,11 @@ export function GamesHomePage({
     setRoundScores(new Map());
     setPersistedCumulativeScores(null);
     setHasRoundScoreEdits(false);
+    setRequestedVisiblePlayerColumns(1);
+  };
+
+  const handleAddPlayerColumn = () => {
+    setRequestedVisiblePlayerColumns((prev) => Math.min(prev + 1, 8));
   };
 
   const formatGameTitleWithDate = (title: string): string => {
@@ -359,6 +386,7 @@ export function GamesHomePage({
       setRoundScores(new Map());
       setPersistedCumulativeScores(null);
       setHasRoundScoreEdits(false);
+      setRequestedVisiblePlayerColumns(8);
       setIsStartDialogOpen(false);
       toast.success(`Started game \"${ result.gameState.gameTitle }\".`);
     });
@@ -473,6 +501,25 @@ export function GamesHomePage({
     // TODO: Trigger event to save to game_player_round table
   };
 
+  const handleClearPlayerColumn = (colIndex: number) => {
+    const nextPlayers = [...selectedPlayers];
+    nextPlayers[colIndex] = null;
+    setSelectedPlayers(nextPlayers);
+
+    const updatedRoundScores = new Map<number, Map<number, number>>();
+    roundScores.forEach((roundMap, roundKey) => {
+      const nextRoundMap = new Map(roundMap);
+      nextRoundMap.delete(colIndex);
+      if (nextRoundMap.size > 0) {
+        updatedRoundScores.set(roundKey, nextRoundMap);
+      }
+    });
+
+    setRoundScores(updatedRoundScores);
+    setPersistedCumulativeScores(null);
+    setHasRoundScoreEdits(true);
+  };
+
   const handleLoadPersistedGame = async (gameId: number) => {
     const matchedGameState = gamesData.activeGameStates.find(
       (state) => state.id === gameId
@@ -547,6 +594,8 @@ export function GamesHomePage({
     setSelectedGameState(result.scoreboard.gameState);
     setGameTitleInput(result.scoreboard.gameState.gameTitle);
     setSelectedPlayers(loadedPlayers);
+    const loadedPlayerCount = loadedPlayers.filter((player) => player !== null).length;
+    setRequestedVisiblePlayerColumns(Math.max(1, loadedPlayerCount));
     setLocalSelectablePlayers((prev) => {
       const existingIds = new Set(prev.map((p) => p.id));
       const missing = loadedPlayers
@@ -603,6 +652,33 @@ export function GamesHomePage({
       setGuestEmail("");
       setGuestDialogColIndex(null);
       toast.success(`Guest ${ trimmedFirst } ${ trimmedLast } added.`);
+    });
+  };
+
+  const handleArchiveSelectedGame = () => {
+    if (!selectedGameState || selectedGameState.status !== "completed") {
+      return;
+    }
+
+    setIsArchivingGame(true);
+    startTransition(async () => {
+      const result = await archiveGameAction({
+        familyId,
+        gameId: selectedGameState.id,
+      });
+
+      setIsArchivingGame(false);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      const archivedTitle = result.gameState.gameTitle;
+      handleSetNewGameMode();
+      setIsContinueGameHidden(false);
+      router.refresh();
+      toast.success(`Game "${ archivedTitle }" archived.`);
     });
   };
 
@@ -792,6 +868,7 @@ export function GamesHomePage({
                   setRoundScores(new Map());
                   setPersistedCumulativeScores(null);
                   setHasRoundScoreEdits(false);
+                  setRequestedVisiblePlayerColumns(1);
                   router.refresh();
                 } }
               >
@@ -819,6 +896,7 @@ export function GamesHomePage({
                     setRoundScores(new Map());
                     setPersistedCumulativeScores(null);
                     setHasRoundScoreEdits(false);
+                    setRequestedVisiblePlayerColumns(1);
                     return;
                   }
 
@@ -859,6 +937,33 @@ export function GamesHomePage({
                 >
                   <Play className="w-4 h-4 mr-2" />
                   Continue Game
+                </Button>
+              ) }
+
+              { isAcquireGame
+                && selectedGameState?.status === "in_progress"
+                && !isContinueGameHidden
+                && requestedVisiblePlayerColumns < 8 && (
+                  <Button
+                    onClick={ handleAddPlayerColumn }
+                    disabled={ isLoadingSavedGame }
+                    variant="outline"
+                    className="border-amber-400/60 bg-slate-800 text-amber-200 hover:bg-slate-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Player
+                  </Button>
+                ) }
+
+              { selectedGameState?.status === "completed" && (
+                <Button
+                  onClick={ handleArchiveSelectedGame }
+                  disabled={ isArchivingGame }
+                  variant="outline"
+                  className="border-slate-500 bg-slate-800 text-slate-200 hover:bg-slate-700"
+                >
+                  <Archive className="w-4 h-4 mr-2" />
+                  { isArchivingGame ? "Archiving..." : "Archive Game" }
                 </Button>
               ) }
 
@@ -911,6 +1016,11 @@ export function GamesHomePage({
                                   return;
                                 }
 
+                                if (val === CLEAR_PLAYER_OPTION_VALUE) {
+                                  handleClearPlayerColumn(idx);
+                                  return;
+                                }
+
                                 const selectedMemberId = Number(val);
                                 const selectedInOtherColumn = selectedPlayers.some(
                                   (existingPlayer, existingIdx) =>
@@ -943,6 +1053,12 @@ export function GamesHomePage({
                                 <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem
+                                  value={ CLEAR_PLAYER_OPTION_VALUE }
+                                  disabled={ !player }
+                                >
+                                  Unselect player
+                                </SelectItem>
                                 <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
                                   + Add a guest
                                 </SelectItem>

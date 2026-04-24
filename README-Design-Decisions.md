@@ -271,6 +271,25 @@ Neon let's you export data from the database tables (one at a time) but the impo
 
     **Note**: Use `\q` to exit the psql database prompt.
 
+6. To execute a script from PostgreSql bin directory (`C:\Program Files\PostgreSQL\18\bin`):
+
+    ```bash
+    psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" -f "C:\Users\ghughlett\Projects\my-projects\family-social-scratch\docs\ai-sql\family-activity-action-type-taxonomy.sql"
+    ```
+
+  **Note**: The taxonomy script normalizes `family_activity.action_type` values and should not reference an `activity_name` column (that column does not exist in the current schema).
+
+  **Note**: If the script fails while wrapped in `BEGIN ... COMMIT`, PostgreSQL will issue a `ROLLBACK`; this means no changes were applied and it is safe to rerun the command after fixing the script.
+
+  To confirm the above taxonomy script, run the following SQL on the family social Neon platform:
+
+  ```bash
+    SELECT conname, pg_get_constraintdef(oid) AS consrc
+      FROM pg_constraint
+      WHERE conrelid = 'family_activity'::regclass
+      AND contype = 'c'
+  ```
+
 # TipTap Headless
 The Poetry Cafe and Family Foodies features will implement a rich text editor. It will be used to a greater degree in the Family Foodies rather than the Poetry Cafe. Saving the content will use a JSON output rather than HTML. 
 

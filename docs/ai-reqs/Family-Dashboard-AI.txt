@@ -1,0 +1,32 @@
+Family Dashboard Background
+
+- A route exists in the next.js app for dashboards: "src/(family)/(family-charts)/family-dashboard".
+- There is a "Family Dashboard" button on the main page that takes you to the dashboard page.
+- There are prototypes of various charts that are referenced in the page.tsx file there.
+- The prototypes are implemented in the "src/components/charts/family" directory.
+- The rechart module is used for the charts.
+- The familyActivity table is to be the database table used to build the family dashboard.
+- The database schema has been updated to supported the following action_type taxonomy:
+  - 'POST_CREATED', 'COMMENT_CREATED', 'THREAD_CREATED', 'GAME_STARTED', 'LIKE_ADDED', 'LOVE_ADDED'
+- All of the features have hooks to update the familyActivity table when those events occur.
+
+Family Dashboard Request
+
+- The prototype charts will be replaced by charts defined below, based on real data.
+- There are three charts that need to be created and displayed in the family-dashboard router directory.
+- "Feature Posts" Chart
+  - This chart summarizes counts for features where reviews are posted:
+    - TV Junkies, Movie Maniacs, Family Foodies, Poetry Cafe, Book Besties
+  - Create a stacked bar chart where there is a bar for each of the features
+  - On each bar show counts of POST_CREATED, COMMENT_CREATED, LIKE_ADDED, LOVE_ADDED action_type's for each feature.
+- "Member Posts" Chart
+  - This chart summarizes counts by family member where reviews are posted (same as Feature Posts Chart)
+  - Create a stacked bar chart for the same action_type as in the Feature Posts Chart
+  - If members do not have any activity, do not list them in the chart
+
+- "Thread and Game Activity" Chart
+  - This chart summarizes activity in the Family Threads and Game Scoreboards features.
+  - Provide a summary count of all THREAD_CREATED action_type for all family members  
+  - This chart summarizes counts for the Game Scoreboards feature for the GAME_STARTED action_type for all family members. 
+
+  

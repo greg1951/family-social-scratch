@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  archiveGameStateRecord,
   createGameStateRecord,
   createGuestMemberRecord,
   getGameScoreboardDetailsByGameId,
@@ -49,6 +50,11 @@ export interface LoadGameScoreboardInput {
   gameId: number;
 }
 
+export interface ArchiveGameInput {
+  familyId: number;
+  gameId: number;
+}
+
 export async function startGameAction(input: StartGameInput) {
   const result = await createGameStateRecord(input);
 
@@ -77,6 +83,16 @@ export async function saveGameScoreboardAction(input: SaveGameScoreboardInput) {
 
 export async function loadGameScoreboardAction(input: LoadGameScoreboardInput) {
   return getGameScoreboardDetailsByGameId(input.gameId, input.familyId);
+}
+
+export async function archiveGameAction(input: ArchiveGameInput) {
+  const result = await archiveGameStateRecord(input.gameId, input.familyId);
+
+  if (result.success) {
+    revalidatePath("/games");
+  }
+
+  return result;
 }
 
 export interface AddGuestMemberInput {

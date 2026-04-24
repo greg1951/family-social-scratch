@@ -209,7 +209,7 @@ export function TvScrollStrip({
           { items.map((item) => (
             <article
               key={ item.name }
-              className="min-w-0 snap-start md:w-68 md:min-w-68 lg:w-72 lg:min-w-72"
+              className="min-w-0 snap-start md:w-64 md:min-w-64 lg:w-72 lg:min-w-72"
             >
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">

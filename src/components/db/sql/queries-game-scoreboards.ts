@@ -140,7 +140,7 @@ export async function getGameStatesByFamilyId(familyId: number): Promise<GameSta
       familyId: gameState.familyId,
     })
     .from(gameState)
-    .where(eq(gameState.familyId, familyId))
+    .where(and(eq(gameState.familyId, familyId), ne(gameState.status, 'archived')))
     .orderBy(desc(gameState.createdAt));
 
   return rows.map((row) => ({
@@ -152,6 +152,40 @@ export async function getGameStatesByFamilyId(familyId: number): Promise<GameSta
     gameMetaId: row.gameMetaId,
     familyId: row.familyId,
   }));
+}
+
+/* ------------------ archiveGameStateRecord ------------------ */
+export async function archiveGameStateRecord(
+  gameId: number,
+  familyId: number
+): Promise<SaveGameResult> {
+  const [updatedGame] = await db
+    .update(gameState)
+    .set({
+      status: 'archived',
+    })
+    .where(and(eq(gameState.id, gameId), eq(gameState.familyId, familyId)))
+    .returning();
+
+  if (!updatedGame) {
+    return {
+      success: false,
+      message: 'Unable to archive game state.',
+    };
+  }
+
+  return {
+    success: true,
+    gameState: {
+      id: updatedGame.id,
+      gameTitle: updatedGame.gameTitle,
+      status: updatedGame.status as 'active' | 'in_progress' | 'completed' | 'archived',
+      createdAt: updatedGame.createdAt ?? new Date(0),
+      completedAt: updatedGame.completedAt,
+      gameMetaId: updatedGame.gameMetaId,
+      familyId: updatedGame.familyId,
+    },
+  };
 }
 
 /* ------------------ getSelectableGamePlayersByFamilyId ------------------ */

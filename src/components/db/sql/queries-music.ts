@@ -38,7 +38,11 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
-import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
+import {
+  createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "./queries-family-activity";
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 
@@ -1218,6 +1222,16 @@ export async function toggleMusicLike(
       likenessDegree,
       updatedAt: new Date(),
     });
+
+    if (likenessDegree === 1 || likenessDegree === 2) {
+      await createFamilyReactionActivityRecord({
+        reactionType: likenessDegree === 2 ? "love" : "like",
+        featureName: "Music Lovers",
+        postName: selectedMusic.musicTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
+    }
 
     const updatedMusic = await loadMusicDetail(actor.familyId, musicId, actor.memberId);
 

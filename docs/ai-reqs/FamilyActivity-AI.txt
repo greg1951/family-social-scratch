@@ -15,3 +15,9 @@ For each of those activities, create an entry in the "familyActivity" table cont
 - The featureName: see the "name" attribute in the "familyFeatures" constant defined in "src/features/family/constants/family-steps.ts" 
 - The activityName: either "post", "comment" or "thread"
 - Record the memberId and familyId of the family member in the table
+
+--------------------------
+
+Currently we are tracking POST and COMMENT activities in the "familyActivity" table. 
+- We need to add tracking for THREAD send and GAME START activities as well.
+- REACT (like and love) activities in tv, movies, music, books, poetry, and recipes should be captured in the "familyActivity" table as well.

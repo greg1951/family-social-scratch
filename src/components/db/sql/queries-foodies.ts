@@ -41,7 +41,11 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
-import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
+import {
+  createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "./queries-family-activity";
 
 const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "cuisine",
@@ -1217,6 +1221,16 @@ export async function toggleRecipeLike(
           memberId: actor.memberId,
           likenessDegree,
         });
+    }
+
+    if (!existingLike || existingLike.likenessDegree !== likenessDegree) {
+      await createFamilyReactionActivityRecord({
+        reactionType: likenessDegree === 2 ? "love" : "like",
+        featureName: "Family Foodies",
+        postName: existingRecipe.recipeTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
     }
 
     const updatedRecipe = await loadFoodiesRecipeDetail(actor.familyId, recipeId, actor.memberId);

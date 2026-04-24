@@ -22,7 +22,11 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from '../types/poem-term-validation';
-import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
+import {
+  createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from './queries-family-activity';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -563,6 +567,14 @@ export async function toggleBookLike(
         bookId: bookId,
         memberId: actor.memberId,
       });
+
+    await createFamilyReactionActivityRecord({
+      reactionType: 'like',
+      featureName: 'Book Besties',
+      postName: existingBook.bookTitle,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
   }
 
   const [updatedBook] = await loadBooksHomeBooks(actor.familyId, [bookId], actor.memberId);

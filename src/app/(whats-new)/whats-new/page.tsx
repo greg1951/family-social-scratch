@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Family Dashboard is Up and Running!",
+    summary: "There are some informative charts in the Family Dashboard that show you the activity across your family channels. Check it out and let us know what you think!",
+    category: "Features",
+    date: "April 24, 2026",
+  },
+  {
     title: "Music Lovers will love this!",
     summary: "Music stirs the soul and brings people together 💘. The Music Lovers feature is up and running! You can share your favorite songs and albums, write reviews, and see what music other family members are enjoying. Start sharing your music love today!",
     category: "Features",

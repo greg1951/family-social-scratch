@@ -9,6 +9,7 @@ export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
     "All Family Social features are live! Check them out and start sharing your favorites with your family.",
+    "Visit the Family Dashboard to see charts about your family activity across all channels.",
     "The Family Social Dev Team is working on a new Photo Galleries feature. You'll be able to create albums, upload and share them with the rest of the family!",
     "Personalize your account by uploading a lovely mugshot to your profile.",
   ];
@@ -50,7 +51,7 @@ export default async function MainPage() {
                       My Family Account
                     </Link>
                     <Link
-                      href="/family-member-dashboard"
+                      href="/family-dashboard"
                       className={ ctaCardClasses }
                     >
                       Family Dashboard
@@ -72,7 +73,7 @@ export default async function MainPage() {
                       My Account
                     </Link>
                     <Link
-                      href="/family-member-dashboard"
+                      href="/family-dashboard"
                       className={ ctaCardClasses }
                     >
                       Family Dashboard

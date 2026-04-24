@@ -33,7 +33,11 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
-import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
+import {
+  createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "./queries-family-activity";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
 
@@ -976,6 +980,16 @@ export async function toggleMovieLike(
       updatedAt: new Date(),
     });
 
+    if (likenessDegree === 1 || likenessDegree === 2) {
+      await createFamilyReactionActivityRecord({
+        reactionType: likenessDegree === 2 ? "love" : "like",
+        featureName: "Movie Maniacs",
+        postName: selectedMovie.movieTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
+    }
+
     const updatedMovie = await loadMovieDetail(actor.familyId, movieId, actor.memberId);
 
     if (!updatedMovie) {
@@ -1031,6 +1045,14 @@ export async function addMovieComment(
       commentJson: normalizedComment,
       ismovieReviewer: false,
       createdAt: new Date(),
+    });
+
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+      featureName: "Movie Maniacs",
+      postName: selectedMovie.movieTitle,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
     });
 
     const updatedMovie = await loadMovieDetail(actor.familyId, movieId, actor.memberId);

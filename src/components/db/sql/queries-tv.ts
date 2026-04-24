@@ -33,7 +33,11 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
-import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from "./queries-family-activity";
+import {
+  createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "./queries-family-activity";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
 
@@ -1048,6 +1052,16 @@ export async function toggleShowLike(
           memberId: actor.memberId,
           likenessDegree,
         });
+    }
+
+    if (!existingLike || existingLike.likenessDegree !== likenessDegree) {
+      await createFamilyReactionActivityRecord({
+        reactionType: likenessDegree === 2 ? "love" : "like",
+        featureName: "TV Junkies",
+        postName: existingShow.showTitle,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      });
     }
 
     const updatedShow = await loadShowDetail(actor.familyId, showId, actor.memberId);
