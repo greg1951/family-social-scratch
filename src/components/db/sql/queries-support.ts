@@ -250,14 +250,15 @@ export async function saveSupportFaq(input: SaveSupportFaqInput): Promise<SaveSu
 
 			return {
 				success: true,
-				faqItem: {
-					id: updatedQna.faqId,
-					faqType: normalizedFaqType,
-					questionJson: toSerializedFaqQuestionJson(updatedQna.faqQuestion),
-					answerJson: toSerializedFaqAnswerJson(updatedQna.faqAnswerJson),
-					status: normalizedStatus,
-					updatedAt: updatedQna.updatedAt,
-				},
+				   faqItem: {
+					   id: updatedQna.faqId,
+					   faqType: normalizedFaqType,
+					   questionJson: toSerializedFaqQuestionJson(updatedQna.faqQuestion),
+					   answerJson: toSerializedFaqAnswerJson(updatedQna.faqAnswerJson),
+					   status: normalizedStatus,
+					   seqNo: input.seqNo ?? 1,
+					   updatedAt: updatedQna.updatedAt,
+				   },
 				message: "FAQ updated.",
 			};
 		}
@@ -303,14 +304,15 @@ export async function saveSupportFaq(input: SaveSupportFaqInput): Promise<SaveSu
 
 		return {
 			success: true,
-			faqItem: {
-				id: insertedQna.faqId,
-				faqType: normalizedFaqType,
-				questionJson: toSerializedFaqQuestionJson(insertedQna.faqQuestion),
-				answerJson: toSerializedFaqAnswerJson(insertedQna.faqAnswerJson),
-				status: insertedStatus,
-				updatedAt: insertedQna.updatedAt,
-			},
+			   faqItem: {
+				   id: insertedQna.faqId,
+				   faqType: normalizedFaqType,
+				   questionJson: toSerializedFaqQuestionJson(insertedQna.faqQuestion),
+				   answerJson: toSerializedFaqAnswerJson(insertedQna.faqAnswerJson),
+				   status: insertedStatus,
+				   seqNo: input.seqNo ?? 1,
+				   updatedAt: insertedQna.updatedAt,
+			   },
 			message: "FAQ created.",
 		};
 	} catch (error) {
