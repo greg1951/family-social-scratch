@@ -830,6 +830,9 @@ export const musicLike = pgTable("music_like", {
 export const supportFamily = pgTable("support_family", {
   id: serial("id").primaryKey(),
   familyName: text("family_name").notNull().unique(),
+  databaseUrl: text("database_url"),
+  dbOwner: text("db_owner"),
+  dbCredential: text("db_credential"),
   status: text("status").notNull().default("trial"),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
@@ -845,12 +848,13 @@ export const supportIssue = pgTable("support_issue", {
   status: text("status").notNull().default("open"),
   issueJson: text("issue_json").notNull().default("{}"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  supportFamilyId: integer("fk_family_id").references(() => supportFamily.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id"),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  supportFamilyId: integer("fk_support_family_id").references(() => supportFamily.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('support_issue_id_idx').on(table.id),
     index('support_issue_family_id_idx').on(table.supportFamilyId),
+    index('support_issue_member_id_idx').on(table.memberId),
   ]
 );
 
@@ -864,7 +868,7 @@ export const supportResponse = pgTable("support_response", {
   emailSentAt: timestamp("email_sent_at"),
   threadSentAt: timestamp("thread_sent_at"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  issueId: integer("fk_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
+  supportIssueId: integer("fk_support_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('support_response_id_idx').on(table.id),
@@ -876,35 +880,51 @@ export const supportAttachment = pgTable("support_attachment", {
   attachmentType: text("attachment_type").notNull().default("image"),
   attachmentJson: text("attachment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
-  issueId: integer("fk_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
+  supportIssueId: integer("fk_support_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('support_attachment_id_idx').on(table.id),
   ]
 );
 
-// --- Support FAQ tables (moved from top for organization) ---
-export const supportFaq = pgTable("support_faq", {
+export const supportTeam = pgTable("support_team", {
   id: serial("id").primaryKey(),
-  faqType: text("faq_type").notNull().default("global"),
-  faqJson: text("faq_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  seqNo: integer("seq_no").notNull().default(1),
-  faqImageUrl: text("faq_image_url"),
+  teamName: text("team_name").notNull().unique(),
+  supportLevel: text("support_level").notNull().default("L1"),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  status: text("status").notNull().default("active"),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const supportFaqQna = pgTable("support_faq_qna", {
-  id: serial("id").primaryKey(),
-  faqQuestion: text("faq_question").notNull().default("") ,
-  faqAnswerJson: text("faq_answer_json").notNull().default("{}"),
-  seqNo: integer("seq_no").notNull().default(1),
-  supportPageLink: text("support_page_link"),
-  supportVideoLink: text("support_video_link"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  faqId: integer("fk_faq_id").notNull().references(() => supportFaq.id, { onDelete: "cascade" }),
 },
   (table) => [
-    index("support_faq_qna_faq_id_idx").on(table.faqId),
+    index('support_team_id_idx').on(table.id),
+  ]
+);
+
+export const supportPerson = pgTable("support_person", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull().default(""),
+  lastName: text("last_name").notNull().default(""),
+  email: text("email").notNull().unique(),
+  status: text("status").notNull().default("active"),
+  managesTeam: boolean("manages_team").notNull().default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  supportTeamId: integer("fk_support_team_id").references(() => supportTeam.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('support_person_id_idx').on(table.id),
+    index('support_person_team_id_idx').on(table.supportTeamId),
+  ]
+);
+
+export const supportPersonIssue = pgTable("support_person_issue", {
+  id: serial("id").primaryKey(),
+  createdAt: timestamp("created_at").defaultNow(),
+  supportIssueId: integer("fk_support_issue_id").references(() => supportIssue.id, {onDelete: 'cascade'}),
+  supportPersonId: integer("fk_support_person_id").references(() => supportPerson.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('support_person_issue_id_idx').on(table.id),
+    index('support_person_issue_issue_id_idx').on(table.supportIssueId),
+    index('support_person_issue_person_id_idx').on(table.supportPersonId),
   ]
 );

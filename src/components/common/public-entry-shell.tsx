@@ -113,7 +113,7 @@ export default function PublicEntryShell({ children }: { children: ReactNode }) 
             </div>
 
             <div className="flex items-start justify-end md:pt-1 md:self-start">
-              <PublicHelpMenu />
+              <PublicHelpMenu href="/faq" />
             </div>
           </div>
         </header>

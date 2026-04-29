@@ -15,7 +15,7 @@ export default async function MainPage() {
   ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
-    "px-4 py-2.5 text-center text-[13px] font-bold tracking-[0.01em] text-sky-900",
+    "px-4 py-2.5 text-center text-[16px] font-bold tracking-[0.01em] text-sky-900",
     "shadow-[0_6px_14px_rgba(3,79,112,0.14)] transition-all duration-300",
     "hover:-translate-y-0.5 hover:border-sky-400 hover:from-sky-50 hover:to-white hover:shadow-[0_10px_20px_rgba(3,79,112,0.22)]",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
@@ -37,19 +37,13 @@ export default async function MainPage() {
               <div className="flex items-center gap-3">
                 <div>
                   <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
-                  <p className="text-xs text-slate-600 md:text-sm">Choose a channel below or learn more first.</p>
+                  <p className="text-base text-slate-600 md:text-base">Choose a channel below or learn more first.</p>
                 </div>
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-2 text-sm md:w-auto md:grid-cols-3 pt-2">
+              <div className="grid w-full grid-cols-1 gap-2 text-base md:w-auto md:grid-cols-3 pt-2">
                 { memberKeyDetails.isFounder && (
                   <>
-                    <Link
-                      href="/family-founder-account"
-                      className={ ctaCardClasses }
-                    >
-                      My Family Account
-                    </Link>
                     <Link
                       href="/family-dashboard"
                       className={ ctaCardClasses }
@@ -60,18 +54,12 @@ export default async function MainPage() {
                       href="/help-subscribe"
                       className={ ctaCardClasses }
                     >
-                      Our Reasonable Subscriptions
+                      Review Subscription Plans
                     </Link>
                   </>
                 ) }
                 { memberKeyDetails.isLoggedIn && !memberKeyDetails.isFounder && (
                   <>
-                    <Link
-                      href="/family-member-account"
-                      className={ ctaCardClasses }
-                    >
-                      My Account
-                    </Link>
                     <Link
                       href="/family-dashboard"
                       className={ ctaCardClasses }
@@ -80,26 +68,9 @@ export default async function MainPage() {
                     </Link>
                   </>
                 ) }
-                {/* { !memberKeyDetails.isLoggedIn && (
-                  <>
-                    <Link
-                      href="/help/about-family-social"
-                      className={ ctaCardClasses }
-                    >
-                      What is Family Social?
-                    </Link>
-                    <Link
-                      href="/family-setup-home"
-                      className={ ctaCardClasses }
-                    >
-                      Start a Family!
-                    </Link>
-
-                  </>
-                ) } */}
               </div>
               <div className="flex items-start justify-end md:pt-1 md:self-start">
-                <PublicHelpMenu />
+                <PublicHelpMenu href="/faq" />
               </div>
             </div>
           </Card>

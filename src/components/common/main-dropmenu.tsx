@@ -61,10 +61,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent>
+      <DropdownMenuContent className="font-app text-sm">
         { sessionFound ? (
           <DropdownMenuGroup>
-            <DropdownMenuLabel>{ email }</DropdownMenuLabel>
+            <DropdownMenuLabel className="text-base font-bold">{ email }</DropdownMenuLabel>
+            <DropdownMenuSeparator />
             { !isFounder && (
               <DropdownMenuItem>
                 <Link href="/family-member-account">
@@ -80,13 +81,43 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
               </DropdownMenuItem>
             ) }
             { isAdmin && (
-              <DropdownMenuItem>
-                <Link href="/faq-maintenance">
-                  Support / FAQ Maintenance
-                </Link>
-              </DropdownMenuItem>
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-base font-bold">Support</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <Link href="/issues-list">
+                      Issue List
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/faq">
+                      FAQ
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
             ) }
-            <DropdownMenuItem>
+            { !isFounder && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-base font-bold">Support</DropdownMenuLabel>
+                  <DropdownMenuItem>
+                    <Link href="/faq">
+                      FAQ
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/open-issue">
+                      Open Support Issue
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </>
+            ) }
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-base font-bold">
               <div>
                 <p onClick={ mainLogout } >
                   Logout
@@ -98,14 +129,9 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
           : (
             <DropdownMenuGroup>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem className="text-base font-bold">
                 <Link href="/login">
                   Login
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/family-setup-home">
-                  Start Trial
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
