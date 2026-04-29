@@ -1,0 +1,63 @@
+FAQ Maintenance - AI Requirements
+Background:
+
+This will begin the first phase of the Support implementatioin that will provide a Frequently Asked Questions (FAQ) page and form 
+to enter new FAQs. This will be a simple implementation that will allow us to capture the most common questions and answers in one place,
+to provide a way for users to see the FAQ.
+
+Only a support admin can enter the FAQs. This permission is derived from the member table, isAdmin column.
+
+- The initial FAQ maintenance home page begins with "src/app/(support)/(logged-in)/faq-maintenance/page.tsx".
+  - There is a placeholder for this page which provides an example of how to enforce the isAdmin requirement to access the page.
+- The generated FAQ maintenance page will be saved in "src/features/support/components/support-faq-update-home-page.tsx".
+- The database tables reside in the "src/components/db/schema/support-faq-schema-tables.ts" file with a "support" prefix.
+- The support tables have been pushed to the Neon database and are available for use.
+- The generated database queries will be saved in "src/components/db/sql/queries-support.ts" file.
+
+Request:
+1. Create a new FAQ maintenance page that allows support admins to create, update, and delete FAQs.
+2. The FAQ maintenance page should have a form to enter the question and answer for each FAQ.
+3. The FAQ form should utilize the TipTap rich text editor for the answer field to allow for formatting and styling of the FAQ answers
+   - The FAQ answers are stored in the support_faq_qna table in the faqAnswerJson column.
+4. Update the main-header DropdownMenu to add the Support/FAQ Maintenance link that is only visible to support admins.
+4. The FAQs should be stored in the database and displayed on the FAQ maintenance page for editing and deletion.
+5. Implement the necessary database tables and queries to support the FAQ maintenance functionality.
+6. The page layout should conform to the same design system as the rest of the application, using the existing components and styles.
+
+-----------------------------
+A few more things are needed:
+1. Add a direct non-admin Support/FAQ link in the public help menu so users can discover the read-only FAQ page more easily.
+2. The Create New FAQ form needs to include entries from the support_faq table, column as a selection list.
+3. The Question needs to have Tip/Tap rich editor buttons as well. The Question field needs to be a text area as well. 
+4. On the FAQ Maintenance page add a Return to Main Page button.
+5. The rich text editor toolbar should also include tables and links options. The FAQ answers often include links to other pages and resources.
+
+-----------------------------
+
+Neon's http database driver does not support transactions. Please remove the trasactions feature from the FAQ database inserts and any other DML. 
+(Don't look beyond the support queries as transactions are not in use elesewhere). 
+
+------------------------------
+
+The FAQ Maintenance page needs to be updated so it is like other home pages and Add/View/Edit functionality.
+
+- Use the Poetry Home page as a guide and follow the explanation below.
+- The Page will consists of a header (see A below) and FAQ List (see B below) and FAQ Form (see C below). The FAQ form will be used for both adding and editing FAQs.
++--------------------+
+|         A          |
++-----------+--------|
+|           |        |
+|     B     |        |
+|           |   C    |
+|           |        |
+|           |        |
++-----------+--------+
+
+-------------------------------
+
+I have added seqNo column to both support_faq and support_faq_qna tables. 
+This will allow us to order the FAQs in a specific way on the FAQ page. 
+We can use this column to order the FAQs by their sequence number when displaying them on the FAQ page. 
+Update the FAQ maintenance page to show the FAQs in the order of their support_faq.seqNo. 
+When adding a new FAQ, the seqNo can be set to the next available number (e.g., max(seqNo) + 1) to ensure it is added to the end of the list. 
+When editing an existing FAQ, the seqNo can be updated to change its position in the list.

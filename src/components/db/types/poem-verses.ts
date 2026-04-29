@@ -54,7 +54,9 @@ export interface PoemTagOption {
   id: number;
   tagName: string;
   tagDesc?: string | null;
+  tagType: string;
   status: string;
+  seqNo: number;
 }
 
 export type PoetryHomePageDataReturn =

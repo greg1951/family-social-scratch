@@ -1,6 +1,7 @@
 'use client';
 
 import { BookOpenText, CircleHelp, HeartHandshake, LifeBuoy, Sparkles } from 'lucide-react';
+import Link from 'next/link';
 
 import {
   DropdownMenu,
@@ -44,18 +45,18 @@ export default function PublicHelpMenu() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="end" className="w-72 rounded-2xl border-[#9de4fe] bg-white/95 p-2 text-[#10364a] shadow-xl backdrop-blur">
-        <DropdownMenuLabel className="px-3 pt-2 pb-1 text-sm font-bold text-[#005472]">
+        {/* <DropdownMenuLabel className="px-3 pt-2 pb-1 text-sm font-bold text-[#005472]">
           Help Resources
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
+        <DropdownMenuSeparator /> */}
+        {/* <DropdownMenuGroup>
           { helpResources.map((resource) => {
             const Icon = resource.icon;
             return (
               <DropdownMenuItem
                 key={ resource.title }
                 disabled
-                className="mt-1 cursor-default rounded-xl px-3 py-3 opacity-100 data-[disabled]:pointer-events-none data-[disabled]:opacity-100"
+                className="mt-1 cursor-default rounded-xl px-3 py-3 opacity-100 data-disabled:pointer-events-none data-disabled:opacity-100"
               >
                 <div className="flex items-start gap-3">
                   <div className="rounded-xl bg-[#dff6ff] p-2 text-[#005472]">
@@ -70,11 +71,22 @@ export default function PublicHelpMenu() {
             );
           }) }
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator /> */}
+        <DropdownMenuGroup>
+          <DropdownMenuItem asChild>
+            <Link
+              href="/faq"
+              className="rounded-xl px-3 py-2 text-sm font-semibold text-[#005472] hover:bg-[#dff6ff]"
+            >
+              Frequently Asked Questions
+            </Link>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
+        {/* <DropdownMenuSeparator />
         <div className="flex items-center gap-2 px-3 py-2 text-xs text-[#5a7381]">
           <LifeBuoy className="h-3.5 w-3.5" />
           Resource links will be connected here next.
-        </div>
+        </div>  */}
       </DropdownMenuContent>
     </DropdownMenu>
   );

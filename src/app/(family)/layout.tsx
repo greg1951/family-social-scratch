@@ -73,18 +73,19 @@ export default async function TrialLayout({
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.2))]" />
             </div> */}
 
-            <div className="flex items-start justify-end md:pt-1 md:self-start">
+            {/* <div className="flex items-start justify-end md:pt-1 md:self-start">
               <div className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-white/75 text-[#005472] shadow-[0_10px_40px_-18px_rgba(0,84,114,0.65)] backdrop-blur">
                 <MainDropMenu
                   firstName={ memberAvatarDetails.firstName }
                   email={ memberAvatarDetails.email }
                   sessionFound={ memberAvatarDetails.isLoggedIn }
                   isFounder={ memberAvatarDetails.isFounder }
+                  isAdmin={ memberAvatarDetails.isAdmin }
                   memberImageUrl={ memberAvatarDetails.memberImageUrl }
                   unreadThreadCount={ unreadThreadCount }
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         </header>
 

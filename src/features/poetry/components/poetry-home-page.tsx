@@ -113,6 +113,15 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function getSeqNoRange(seqNo: number) {
+  const rangeStart = Math.floor(seqNo / 10) * 10;
+
+  return {
+    rangeStart,
+    rangeEnd: rangeStart + 9,
+  };
+}
+
 function createSubmitterLabel(poemRecord: PoetryHomePoem, member: MemberKeyDetails) {
   if (poemRecord.submitterName) {
     return poemRecord.submitterName;
@@ -349,9 +358,21 @@ export default function PoetryHomePage({
 
     return createEmptyDraft(member);
   });
+  const activePoemTags = poemTags.filter((tagOption) => tagOption.status !== "archived");
+  const categoryTags = activePoemTags
+    .filter((tagOption) => tagOption.tagType === "category")
+    .sort((leftTag, rightTag) => leftTag.seqNo - rightTag.seqNo || leftTag.tagName.localeCompare(rightTag.tagName));
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(categoryTags[0]?.id ?? null);
 
   const selectedPoem = poemItems.find((poemItem) => poemItem.id === selectedPoemId) ?? null;
   const selectedPoemComments = selectedPoem?.poemComments ?? [];
+  const selectedCategory = categoryTags.find((tagOption) => tagOption.id === selectedCategoryId) ?? null;
+  const selectedCategoryRange = selectedCategory ? getSeqNoRange(selectedCategory.seqNo) : null;
+  const scopedPoemTags = selectedCategoryRange
+    ? activePoemTags
+      .filter((tagOption) => tagOption.seqNo >= selectedCategoryRange.rangeStart && tagOption.seqNo <= selectedCategoryRange.rangeEnd)
+      .sort((leftTag, rightTag) => leftTag.seqNo - rightTag.seqNo || leftTag.tagName.localeCompare(rightTag.tagName))
+    : [];
   const canEditSelected = selectedPoem
     ? Boolean(member.isAdmin) || selectedPoem.memberId === member.memberId
     : false;
@@ -496,6 +517,34 @@ export default function PoetryHomePage({
 
     previousPoemsRef.current = poems;
   }, [composerMode, member, pendingSelectedPoemId, poems, savePhase, selectedPoemId]);
+
+  useEffect(() => {
+    if (categoryTags.length === 0) {
+      if (selectedCategoryId !== null) {
+        setSelectedCategoryId(null);
+      }
+
+      return;
+    }
+
+    if (selectedCategoryId && categoryTags.some((tagOption) => tagOption.id === selectedCategoryId)) {
+      return;
+    }
+
+    const selectedTag = activePoemTags.find((tagOption) => draft.selectedTagIds.includes(tagOption.id));
+
+    if (!selectedTag) {
+      setSelectedCategoryId(categoryTags[0].id);
+      return;
+    }
+
+    const selectedRange = getSeqNoRange(selectedTag.seqNo);
+    const matchingCategory = categoryTags.find((tagOption) => (
+      tagOption.seqNo >= selectedRange.rangeStart && tagOption.seqNo <= selectedRange.rangeEnd
+    ));
+
+    setSelectedCategoryId(matchingCategory?.id ?? categoryTags[0].id);
+  }, [activePoemTags, categoryTags, draft.selectedTagIds, selectedCategoryId]);
 
   function getEditorForTarget(target: LinkEditorTarget | null): Editor | null {
     if (target === "verse") {
@@ -668,6 +717,28 @@ export default function PoetryHomePage({
         selectedTagIds: currentDraft.selectedTagIds.filter((currentTagId) => currentTagId !== tagId),
       };
     });
+  }
+
+  function handleCategorySelect(categoryId: number) {
+    const nextCategory = categoryTags.find((tagOption) => tagOption.id === categoryId);
+
+    if (!nextCategory) {
+      return;
+    }
+
+    setSelectedCategoryId(categoryId);
+
+    const range = getSeqNoRange(nextCategory.seqNo);
+    const allowedTagIds = new Set(
+      activePoemTags
+        .filter((tagOption) => tagOption.seqNo >= range.rangeStart && tagOption.seqNo <= range.rangeEnd)
+        .map((tagOption) => tagOption.id)
+    );
+
+    setDraft((currentDraft) => ({
+      ...currentDraft,
+      selectedTagIds: currentDraft.selectedTagIds.filter((selectedTagId) => allowedTagIds.has(selectedTagId)),
+    }));
   }
 
   function handleSave() {
@@ -1120,13 +1191,13 @@ export default function PoetryHomePage({
                   </div>
                 </div>
 
-                { poemTags.length === 0 ? (
+                { activePoemTags.length === 0 ? (
                   <p className="rounded-3xl border border-dashed border-[#d7d0ea] bg-white px-4 py-3 text-sm text-[#7a5f91]">
                     No poem tag options are loaded on this page yet. Add a poem_tag_reference query and pass those options here to enable database-backed tag assignment.
                   </p>
-                ) : (
+                ) : composerMode === "view" ? (
                   <div className="grid gap-3 md:grid-cols-2">
-                    { (composerMode === "view" ? poemTags.filter((tagOption) => draft.selectedTagIds.includes(tagOption.id)) : poemTags).map((tagOption) => {
+                    { poemTags.filter((tagOption) => draft.selectedTagIds.includes(tagOption.id)).map((tagOption) => {
                       const isChecked = draft.selectedTagIds.includes(tagOption.id);
 
                       return (
@@ -1135,12 +1206,11 @@ export default function PoetryHomePage({
                           className={ `flex items-start gap-3 rounded-3xl border px-4 py-3 ${ isChecked
                             ? "border-[#8c62b5] bg-[#f4ecff]"
                             : "border-[#ded3ea] bg-white"
-                            } ${ composerMode === "view" ? "opacity-80" : "cursor-pointer" }` }
+                            } opacity-80` }
                         >
                           <Checkbox
                             checked={ isChecked }
-                            onCheckedChange={ (checked) => toggleTag(tagOption.id, checked) }
-                            disabled={ composerMode === "view" || (!isChecked && draft.selectedTagIds.length >= 3) }
+                            disabled
                             className="mt-0.5"
                           />
                           <span className="min-w-0">
@@ -1152,6 +1222,62 @@ export default function PoetryHomePage({
                         </label>
                       );
                     }) }
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#7b54a0]">Category</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        { categoryTags.map((categoryTag) => (
+                          <Button
+                            key={ categoryTag.id }
+                            type="button"
+                            variant="outline"
+                            onClick={ () => handleCategorySelect(categoryTag.id) }
+                            className={ selectedCategoryId === categoryTag.id
+                              ? "rounded-full border-[#8c62b5] bg-[#f2e8ff] text-[#4e2374]"
+                              : "rounded-full border-[#d7d0ea] bg-white text-[#6a4f83]" }
+                          >
+                            { categoryTag.tagName }
+                          </Button>
+                        )) }
+                      </div>
+                    </div>
+
+                    { scopedPoemTags.length === 0 ? (
+                      <p className="rounded-3xl border border-dashed border-[#d7d0ea] bg-white px-4 py-3 text-sm text-[#7a5f91]">
+                        Select a category to load tag references.
+                      </p>
+                    ) : (
+                      <div className="grid gap-3 md:grid-cols-2">
+                        { scopedPoemTags.map((tagOption) => {
+                          const isChecked = draft.selectedTagIds.includes(tagOption.id);
+
+                          return (
+                            <label
+                              key={ tagOption.id }
+                              className={ `flex items-start gap-3 rounded-3xl border px-4 py-3 ${ isChecked
+                                ? "border-[#8c62b5] bg-[#f4ecff]"
+                                : "border-[#ded3ea] bg-white"
+                                } cursor-pointer` }
+                            >
+                              <Checkbox
+                                checked={ isChecked }
+                                onCheckedChange={ (checked) => toggleTag(tagOption.id, checked) }
+                                disabled={ !isChecked && draft.selectedTagIds.length >= 3 }
+                                className="mt-0.5"
+                              />
+                              <span className="min-w-0">
+                                <span className="block font-semibold text-[#43245d]">{ tagOption.tagName }</span>
+                                { tagOption.tagDesc ? (
+                                  <span className="mt-1 block text-xs text-[#77578f]">{ tagOption.tagDesc }</span>
+                                ) : null }
+                              </span>
+                            </label>
+                          );
+                        }) }
+                      </div>
+                    ) }
                   </div>
                 ) }
               </div>

@@ -20,6 +20,7 @@
     3. [Persistence](#persistence)
 12. [Amazon S3](#amazon-s3)
 13. [Lint and Build Cleanup](#lint-and-build-cleanup)
+14. [Videos](#videos)
 
 ---
 # Overview
@@ -378,7 +379,17 @@ There is a concept called `lint debt` which arises from unresolved warning and e
   * `npx tsc --noEmit`              <<<noEmit will suppress generation of output files
   * `npx eslint . --quiet`          <<<eslint check
 
+# Videos
+With S3 now nicely supported in Family Social, videos will be added to the repertoire. The first implementation will be on the support side. Rather than having a lot of text, how about short and sweet videos to explain things.
 
+The [next-video](https://next-video.dev/) module will be used for the video access on S3 and it provides a customizable player to boot. 
+
+The support schema tables to support the video appears below. 
+
+![](./docs/pngs/video-support.jpg)
+
+* The `support_category` table provides the organization and the `support_video` contains the name and its location on S3.
+* Also shown in the FAQ the support page will reference. An FAQ may have a video associated with it. 
 
 
 

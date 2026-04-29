@@ -133,7 +133,7 @@
 
 .tiptap {
   p {
-    @apply my-4 first:mt-0 last:mb-0 text-base leading-relaxed;
+    @apply my-0 first:mt-0 last:mb-0 text-base leading-tight;
   }
 
   h2 {

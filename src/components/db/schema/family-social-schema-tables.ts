@@ -1,3 +1,4 @@
+// ...existing code...
 import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
@@ -347,6 +348,7 @@ export const poemTagReference = pgTable("poem_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),
   tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("category"),
   status: text("status").notNull().default("active"),
   seqNo: integer("seq_no").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
@@ -821,10 +823,88 @@ export const musicLike = pgTable("music_like", {
   (table) => [
     index("music_like_music_id_idx").on(table.musicId),
     index("music_like_member_id_idx").on(table.memberId),
-    unique("music_like_member_id_degree_uq")
-      .on(table.musicId,
-          table.memberId, 
-          table.likenessDegree
-      ),
+  ]
+);
+
+/*------------------------------- Support ------------------------------ */
+export const supportFamily = pgTable("support_family", {
+  id: serial("id").primaryKey(),
+  familyName: text("family_name").notNull().unique(),
+  status: text("status").notNull().default("trial"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index('support_family_id_idx').on(table.id),
+  ]
+);
+
+export const supportIssue = pgTable("support_issue", {
+  id: serial("id").primaryKey(),
+  issueType: text("issue_type").notNull().default("question"),
+  priority: text("priority").notNull().default("low"),
+  status: text("status").notNull().default("open"),
+  issueJson: text("issue_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  supportFamilyId: integer("fk_family_id").references(() => supportFamily.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id"),
+},
+  (table) => [
+    index('support_issue_id_idx').on(table.id),
+    index('support_issue_family_id_idx').on(table.supportFamilyId),
+  ]
+);
+
+export const supportResponse = pgTable("support_response", {
+  id: serial("id").primaryKey(),
+  responseType: text("response_type").notNull().default("general"),
+  isProposedSolution: boolean("is_proposed_solution").notNull().default(false),
+  wasAccepted: boolean("was_accepted").notNull().default(false),
+  status: text("status").notNull().default("open"),
+  responseJson: text("response_json").notNull().default("{}"),
+  emailSentAt: timestamp("email_sent_at"),
+  threadSentAt: timestamp("thread_sent_at"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  issueId: integer("fk_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('support_response_id_idx').on(table.id),
+  ]
+);
+
+export const supportAttachment = pgTable("support_attachment", {
+  id: serial("id").primaryKey(),
+  attachmentType: text("attachment_type").notNull().default("image"),
+  attachmentJson: text("attachment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  issueId: integer("fk_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('support_attachment_id_idx').on(table.id),
+  ]
+);
+
+// --- Support FAQ tables (moved from top for organization) ---
+export const supportFaq = pgTable("support_faq", {
+  id: serial("id").primaryKey(),
+  faqType: text("faq_type").notNull().default("global"),
+  faqJson: text("faq_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  seqNo: integer("seq_no").notNull().default(1),
+  faqImageUrl: text("faq_image_url"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const supportFaqQna = pgTable("support_faq_qna", {
+  id: serial("id").primaryKey(),
+  faqQuestion: text("faq_question").notNull().default("") ,
+  faqAnswerJson: text("faq_answer_json").notNull().default("{}"),
+  seqNo: integer("seq_no").notNull().default(1),
+  supportPageLink: text("support_page_link"),
+  supportVideoLink: text("support_video_link"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  faqId: integer("fk_faq_id").notNull().references(() => supportFaq.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("support_faq_qna_faq_id_idx").on(table.faqId),
   ]
 );

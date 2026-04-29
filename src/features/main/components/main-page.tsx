@@ -80,7 +80,7 @@ export default async function MainPage() {
                     </Link>
                   </>
                 ) }
-                { !memberKeyDetails.isLoggedIn && (
+                {/* { !memberKeyDetails.isLoggedIn && (
                   <>
                     <Link
                       href="/help/about-family-social"
@@ -96,7 +96,7 @@ export default async function MainPage() {
                     </Link>
 
                   </>
-                ) }
+                ) } */}
               </div>
               <div className="flex items-start justify-end md:pt-1 md:self-start">
                 <PublicHelpMenu />

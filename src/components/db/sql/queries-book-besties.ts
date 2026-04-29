@@ -1,5 +1,5 @@
 import db from '@/components/db/drizzle';
-import { and, asc, eq, ilike, inArray, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import { member, bookComment, book, bookTag, bookLike, bookTagReference, bookTerm } from "../schema/family-social-schema-tables";
 import {
   AddBookCommentReturn,
@@ -80,7 +80,7 @@ async function loadBooksHomeBooks(
     .select()
     .from(book)
     .where(whereClause)
-    .orderBy(asc(book.bookTitle));
+    .orderBy(desc(book.createdAt), asc(book.bookTitle));
 
   if (!bookRows || bookRows.length === 0) {
     return [];
@@ -665,7 +665,7 @@ export async function getAllFamilyBooks(familyId: number)
 : Promise<BooksReturn> {
   const result = await db
     .select()
-    .from(book).orderBy(asc(book.bookTitle))
+    .from(book).orderBy(desc(book.createdAt), asc(book.bookTitle))
     .where(eq(book.familyId, familyId)
     );
   if (!result) {

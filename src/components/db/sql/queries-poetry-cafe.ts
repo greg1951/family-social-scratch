@@ -1,5 +1,5 @@
 import db from '@/components/db/drizzle';
-import { and, asc, eq, ilike, inArray, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import { member, poemComment, poem, poemTag, poemLike, poemTagReference, poemTerm, poemVerse } from "../schema/family-social-schema-tables";
 import {
   createTextTipTapDocument,
@@ -80,7 +80,7 @@ async function loadPoetryHomePoems(
     .select()
     .from(poem)
     .where(whereClause)
-    .orderBy(asc(poem.poemTitle));
+    .orderBy(desc(poem.createdAt), asc(poem.poemTitle));
 
   if (!poemFactRows || poemFactRows.length === 0) {
     return [];
@@ -205,7 +205,7 @@ export async function getAllFamilyPoems(familyId: number)
 : Promise<PoemsReturn> {
   const result = await db
     .select()
-    .from(poem).orderBy(asc(poem.poemTitle))
+    .from(poem).orderBy(desc(poem.createdAt), asc(poem.poemTitle))
     .where(eq(poem.familyId, familyId)
     );
   if (!result) {
@@ -271,7 +271,9 @@ export async function getPoemTagReferences()
       id: poemTagReference.id,
       tagName: poemTagReference.tagName,
       tagDesc: poemTagReference.tagDesc,
+      tagType: poemTagReference.tagType,
       status: poemTagReference.status,
+      seqNo: poemTagReference.seqNo,
     })
     .from(poemTagReference)
     .orderBy(asc(poemTagReference.seqNo), asc(poemTagReference.tagName));

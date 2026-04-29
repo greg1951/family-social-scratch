@@ -9,6 +9,7 @@ export type CurrentMemberAvatarDetails = {
   firstName: string;
   lastName: string;
   isFounder: boolean;
+  isAdmin: boolean;
   memberId: number;
   memberImageUrl: string | null;
 };
@@ -23,6 +24,7 @@ export async function getCurrentMemberAvatarDetails(): Promise<CurrentMemberAvat
       firstName: "",
       lastName: "",
       isFounder: false,
+      isAdmin: false,
       memberId: 0,
       memberImageUrl: null,
     };
@@ -36,6 +38,7 @@ export async function getCurrentMemberAvatarDetails(): Promise<CurrentMemberAvat
     firstName: memberKeyDetails.firstName,
     lastName: memberKeyDetails.lastName,
     isFounder: memberKeyDetails.isFounder,
+    isAdmin: !!memberKeyDetails.isAdmin,
     memberId: memberKeyDetails.memberId,
     memberImageUrl: imageResult.success ? imageResult.memberImageUrl ?? null : null,
   };

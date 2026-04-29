@@ -5,12 +5,13 @@ import { SettingsIcon } from 'lucide-react';
 import MemberAvatar from "@/components/common/member-avatar";
 
 
-export default function MainDropMenu({ firstName, email, sessionFound, isFounder, memberImageUrl, unreadThreadCount }
+export default function MainDropMenu({ firstName, email, sessionFound, isFounder, isAdmin, memberImageUrl, unreadThreadCount }
   : {
     firstName: string;
     email: string;
     sessionFound: boolean;
     isFounder: boolean;
+    isAdmin: boolean;
     memberImageUrl?: string | null;
     unreadThreadCount?: number;
   }) {
@@ -78,6 +79,13 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                 </Link>
               </DropdownMenuItem>
             ) }
+            { isAdmin && (
+              <DropdownMenuItem>
+                <Link href="/faq-maintenance">
+                  Support / FAQ Maintenance
+                </Link>
+              </DropdownMenuItem>
+            ) }
             <DropdownMenuItem>
               <div>
                 <p onClick={ mainLogout } >
@@ -96,7 +104,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link href="/trial-home">
+                <Link href="/family-setup-home">
                   Start Trial
                 </Link>
               </DropdownMenuItem>

@@ -17,10 +17,10 @@ OBJECTIVE
 |         A          |
 +-----------+--------|
 |           |        |
-|     B     |   C    |
+|     B     |        |
+|           |   C    |
+|           +        |
 |           |        |
-|           +--------|
-|           |   D    |
 +-----------+--------+
 
 - SECTION A is a header that provides buttons to view and edit or add a poem. 
@@ -44,6 +44,16 @@ OBJECTIVE
   - The analysis comment must be extracted from the "commentJson" for the comment.
   - Below the poem analysis textarea are 1-3 tags that can be added by the poem submitter, from tags in the poem_tag_reference table. The assigned tags should be saved in the "poem-fact-tag" table.
 
-
+------------------------------
+The poem_term table is not intended to be for selection of any sort. It is only a dictionary of terms that can be used in the poem analysis section (Section D) of the PoetryHomePage. The poem submitter can select from the poem_term table to insert into the TipTap editor for the poem analysis. The poem_term entries are not associated with any particular poem_fact entry. They are just a dictionary of terms that can be used in the poem analysis.
+The poem_tag_reference table has been updated to provide two new types of tags tagType===category and tagType===qualifier.
+1. Provide a selection list of "category".
+2. Associated with each category are "qualifier" entries.
+3. When a category is selected then show the related qualifier types. 
+- For example, if "Lyric Poetry" category is selected then display the tags associated with it. 
+- The seqNo column contains a value for the category range. For example "Lyric Poetry" is seqNo===20. 
+  - This means that 20-29 should be rendered as tag cards which include the category itself.
+- Another example: If "Epic Poetry" category is selected then only the 10-19 should be available as selectable tag references. 
+  - In this case there is only a category and not a qualifier.
 
 
