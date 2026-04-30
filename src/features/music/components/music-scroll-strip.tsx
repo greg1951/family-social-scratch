@@ -12,6 +12,7 @@ type LatestMusicItem = {
   kind: "latest";
   name: string;
   date: string;
+  reviewType: "Song" | "Album";
   submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
@@ -204,12 +205,12 @@ export function MusicScrollStrip({
       <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
         <div
           ref={ scrollRef }
-          className="flex max-h-124 snap-y snap-mandatory flex-col gap-4 overflow-y-auto pr-1 md:max-h-none md:snap-x md:flex-row md:overflow-x-auto md:overflow-y-hidden md:pb-2 md:pr-0"
+          className="flex max-h-124 snap-y snap-mandatory flex-col gap-3 overflow-y-auto pr-1 md:max-h-none md:snap-x md:flex-row md:overflow-x-auto md:overflow-y-hidden md:pb-2 md:pr-0"
         >
           { items.map((item) => (
             <article
               key={ item.name }
-              className="min-w-0 snap-start md:w-68 md:min-w-68 lg:w-72 lg:min-w-72"
+              className="min-w-0 snap-start shrink-0 md:w-60 md:min-w-60 lg:w-64 lg:min-w-64"
             >
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
@@ -224,7 +225,7 @@ export function MusicScrollStrip({
                   <div className="space-y-3 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <h3 className="text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                        <h3 className="line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
                         { item.kind === "latest" ? (
                           <p className="mt-1 text-sm text-[#607887]">Updated { item.date }</p>
                         ) : null }
@@ -252,6 +253,11 @@ export function MusicScrollStrip({
                         <MessageSquareText className="size-4 text-[#2d87a8]" />
                         { item.commentsCount.toLocaleString() }
                       </span>
+                      { item.kind === "latest" ? (
+                        <span className="ml-auto inline-flex items-center rounded-full bg-[#eef6fb] px-2.5 py-1 text-xs uppercase tracking-[0.16em] text-[#2d6a82]">
+                          { item.reviewType }
+                        </span>
+                      ) : null }
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { startTransition, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, Play, Plus, Save } from "lucide-react";
+import { Archive, ArrowLeft, Play, Plus, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -825,20 +825,25 @@ export function GamesHomePage({
     <div className="font-app min-h-screen bg-linear-to-b from-slate-900 via-amber-900 to-slate-900 p-6">
       {/* Header */ }
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-yellow-300 to-orange-300">
+        {/* <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-yellow-300 to-orange-300">
           Game Scoreboards
-        </h1>
+        </h1> */}
+        <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-yellow-300 to-orange-300">
+          Game Scoreboards
+        </p>
+        <p className="text-yellow-400 mt-4 text-3xl tracking-tight sm:text-2xl font-bold">
+          Welcome back { firstName }! Here you will find your family game history, leaderboards, and where you can start a new game.
+        </p>
+
         <div className="px-6 pt-6 pb-0">
           <Link
             href="/"
             className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#efe8ff] transition hover:bg-white/25"
           >
+            <ArrowLeft className="font-app mr-2 size-4" />
             Back to Main Page
           </Link>
         </div>
-        <p className="text-slate-400 mt-2">
-          Welcome back, { firstName }! Here you will find your family game history, leaderboards, and where you can start a new game.
-        </p>
       </div>
 
 

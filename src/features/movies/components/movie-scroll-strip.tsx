@@ -205,12 +205,12 @@ export function MovieScrollStrip({
       <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
         <div
           ref={ scrollRef }
-          className="flex max-h-124 snap-y snap-mandatory flex-col gap-4 overflow-y-auto pr-1 md:max-h-none md:snap-x md:flex-row md:overflow-x-auto md:overflow-y-hidden md:pb-2 md:pr-0"
+          className="flex max-h-124 snap-y snap-mandatory flex-col gap-3 overflow-y-auto pr-1 md:max-h-none md:snap-x md:flex-row md:overflow-x-auto md:overflow-y-hidden md:pb-2 md:pr-0"
         >
           { items.map((item) => (
             <article
               key={ item.name }
-              className="min-w-0 snap-start md:w-68 md:min-w-68 lg:w-72 lg:min-w-72"
+              className="min-w-0 snap-start shrink-0 md:w-60 md:min-w-60 lg:w-64 lg:min-w-64"
             >
               <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(92,46,26,0.72)]", accentClassName) }>
                 <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
@@ -225,7 +225,7 @@ export function MovieScrollStrip({
                   <div className="space-y-3 px-4 py-4">
                     <div>
                       <div className="flex items-center justify-between gap-3">
-                        <h3 className="min-w-0 text-lg font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                        <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
                         <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                       </div>
                       { item.kind === "latest" ? (

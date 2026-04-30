@@ -742,18 +742,20 @@ export default function BooksHomePage({
                   Back to Main Page
                 </Link>
 
-                <Link
-                  href="/book-terms"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                >
-                  <LibraryBig className="mr-2 size-4" />
-                  Book Terms
-                </Link>
-              </div>
+                <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+                  Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
+                </h1>
 
-              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                Think of Book Besties as your family&apos;s book club.
-              </h1>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <Link
+                    href="/book-terms"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <LibraryBig className="mr-2 size-4" />
+                    Book Terms
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-88">

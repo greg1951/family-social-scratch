@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Customer support is here to help!",
+    summary: "Solid questions deserve solid answers! Check out our FAQ page. If you find something that isn't covered in the FAQ, open a support ticket and we'll get back to you straight away.",
+    category: "Support",
+    date: "April 29, 2026",
+  },
+  {
     title: "Family Dashboard is Up and Running!",
     summary: "There are some informative charts in the Family Dashboard that show you the activity across your family channels. Check it out and let us know what you think!",
     category: "Features",

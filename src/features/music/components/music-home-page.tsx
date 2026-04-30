@@ -109,6 +109,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "latest" as const,
       name: music.musicTitle,
       date: formatDate(music.updatedAt),
+      reviewType: music.isSong ? "Song" as const : "Album" as const,
       submitterLikenessDegree: music.submitterLikenessDegree,
       commentsCount: music.commentCount,
       thumbsUp: music.thumbsUpCount,
@@ -197,6 +198,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
   const canEditSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId === member.memberId);
   const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId === member.memberId && selectedMusicBasic.isSong);
+  const canViewLyricsSelectedMusic = Boolean(
+    selectedMusicBasic?.isSong
+    && selectedMusicDetail?.id === selectedMusic
+    && selectedMusicDetail.lyrics,
+  );
 
   function handleToggleLike(likenessDegree: number) {
     if (!selectedMusicBasic) {
@@ -261,6 +267,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   <Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="rounded-full bg-white text-[#6b2f10] hover:bg-[#ffe8d1]"><Eye className="size-4" />View Music</Button>
                   <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"><Link href="/music/add-music"><Plus className="size-4" />Add Music</Link></Button>
                   <Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Music</Button>
+                  { canViewLyricsSelectedMusic ? (
+                    <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                      <Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-4" />View Lyrics</Link>
+                    </Button>
+                  ) : null }
                   <Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Lyrics</Button>
                 </div>
               </div>

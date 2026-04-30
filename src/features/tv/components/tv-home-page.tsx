@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
+import { ArrowLeft, Edit3, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -302,6 +302,7 @@ export function TvHomePage({
                 href="/"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
+                <ArrowLeft className="font-app mr-2 size-4" />
                 Back to Main Page
               </Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">

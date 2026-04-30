@@ -4,10 +4,12 @@ import Link from "next/link";
 import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
+import { Goal } from "lucide-react";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
+    "Customer support is here to help! Check out our informative Frequently Asked Questions (FAQ) page.",
     "All Family Social features are live! Check them out and start sharing your favorites with your family.",
     "Visit the Family Dashboard to see charts about your family activity across all channels.",
     "The Family Social Dev Team is working on a new Photo Galleries feature. You'll be able to create albums, upload and share them with the rest of the family!",
@@ -51,11 +53,17 @@ export default async function MainPage() {
                       Family Dashboard
                     </Link>
                     <Link
+                      href="/whats-new"
+                      className={ ctaCardClasses }
+                    >
+                      What's New in Family Social?
+                    </Link>
+                    {/* <Link
                       href="/help-subscribe"
                       className={ ctaCardClasses }
                     >
                       Review Subscription Plans
-                    </Link>
+                    </Link> */}
                   </>
                 ) }
                 { memberKeyDetails.isLoggedIn && !memberKeyDetails.isFounder && (
@@ -66,6 +74,12 @@ export default async function MainPage() {
                     >
                       Family Dashboard
                     </Link>
+                    <Link
+                      href="/whats-new"
+                      className={ ctaCardClasses }
+                    >
+                      What's New in Family Social?
+                    </Link>
                   </>
                 ) }
               </div>
@@ -75,7 +89,7 @@ export default async function MainPage() {
             </div>
           </Card>
 
-          { memberKeyDetails.isLoggedIn && (
+          {/* { memberKeyDetails.isLoggedIn && (
             <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#efe9ff] to-[#f7f3ff] p-3 shadow-sm md:p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -90,18 +104,9 @@ export default async function MainPage() {
                     )) }
                   </ul>
                 </div>
-
-                <div className="shrink-0">
-                  <Link
-                    href="/whats-new"
-                    className="inline-flex items-center rounded-full border border-[#bdb0f1] bg-white px-4 py-2 text-sm font-bold text-[#5b4b9a] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#f7f3ff]"
-                  >
-                    View All Updates
-                  </Link>
-                </div>
               </div>
             </Card>
-          ) }
+          ) } */}
 
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />

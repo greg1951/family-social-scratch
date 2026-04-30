@@ -155,7 +155,7 @@ export function MusicLyricsPage({
           <div className="max-w-3xl">
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Music Lovers</p>
             <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Music Home</Link>
-            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Edit Song Lyrics</h1>
+            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Song Lyrics</h1>
             <p className="mt-2 text-sm text-[#ffe8d1]">{ music.musicTitle }</p>
           </div>
         </div>

@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Clock3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
+import { ArrowLeft, Clock3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -656,6 +656,7 @@ export function FoodiesHomePage({
               <Link
                 href="/"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <ArrowLeft className="font-app mr-2 size-4" />
                 Back to Main Page
               </Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">

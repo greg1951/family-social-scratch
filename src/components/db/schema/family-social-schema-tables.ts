@@ -50,6 +50,7 @@ export const familyInvitation = pgTable("family_invitation", {
   expirationDate: timestamp("expiration_date").notNull().default(sql`CURRENT_DATE + INTERVAL '7 days'`),
   secret: text("secret"),
   inviteToken: text("invite_token"),
+  inviteFounderMessage: text("invite_founder_message"),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
   createdAt: timestamp("created_at").defaultNow(),
   statusUpdate: timestamp("status_update"),
@@ -670,7 +671,7 @@ export const movieComment = pgTable("movie_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   movieId: integer("fk_movie_id").notNull().references(() => movie.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('movie_comment_movie_id_idx').on(table.movieId),

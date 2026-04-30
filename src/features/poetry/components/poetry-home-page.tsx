@@ -876,6 +876,12 @@ export default function PoetryHomePage({
                   Back to Main Page
                 </Link>
 
+              </div>
+
+              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+                Welcome to your family Poetry Cafe. Share your favorite poems and comment on each other's favorites.
+              </h1>
+              <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/poem-terms"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -883,11 +889,8 @@ export default function PoetryHomePage({
                   <LibraryBig className="mr-2 size-4" />
                   Poetry Terms
                 </Link>
-              </div>
 
-              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                The family&apos;s poems in one place.
-              </h1>
+              </div>
             </div>
 
             <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-88">
