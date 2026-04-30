@@ -113,9 +113,9 @@ export default function LoginForm() {
             <CardTitle className="mt-3 text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
               Family Social Login
             </CardTitle>
-            <CardDescription className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#315363]">
+            {/* <CardDescription className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#315363]">
               Step back into your family circles with your email, password, and family name.
-            </CardDescription>
+            </CardDescription> */}
           </CardHeader>
           <CardContent className="px-5 pb-2 pt-1 md:px-6">
             <Form { ...form }>
