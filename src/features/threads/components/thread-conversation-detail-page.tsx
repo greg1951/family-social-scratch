@@ -1,6 +1,7 @@
 "use client";
 
 import type { JSONContent } from "@tiptap/core";
+import LinkExtension from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -14,7 +15,12 @@ import {
   updateThreadArchiveStateAction,
   updateThreadReadStateAction,
 } from "@/app/(features)/(threads)/threads/actions";
-import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
+import {
+  createEmptyTipTapDocument,
+  createTextTipTapDocument,
+  parseSerializedTipTapDocument,
+  serializeTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import { ThreadConversationDetail } from "@/components/db/types/thread-convos";
 import { Button } from "@/components/ui/button";
 
@@ -36,9 +42,59 @@ function formatDate(value: Date | null): string {
   }).format(new Date(value));
 }
 
+function getPostDocument(contentJson: string, fallbackContent: string): JSONContent {
+  const parsed = parseSerializedTipTapDocument(contentJson);
+
+  if (parsed.success) {
+    return parsed.content;
+  }
+
+  return createTextTipTapDocument(fallbackContent);
+}
+
+function ThreadPostBody({ content, contentJson }: { content: string; contentJson: string }) {
+  const viewer = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+    ],
+    content: getPostDocument(contentJson, content),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap text-sm leading-6 text-[#4d2a66] focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!viewer) {
+      return;
+    }
+
+    viewer.commands.setContent(getPostDocument(contentJson, content));
+  }, [viewer, content, contentJson]);
+
+  return (
+    <div className="mt-3 rounded-2xl border border-[#eedff8] bg-[#fcf8ff] p-4 [&_.tiptap_a]:font-semibold [&_.tiptap_a]:text-[#6d2f93] [&_.tiptap_a]:underline [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_li]:my-1">
+      <EditorContent editor={ viewer } />
+    </div>
+  );
+}
+
 export function ThreadConversationDetailPage({ conversation }: ThreadConversationDetailPageProps) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const normalizedTitle = conversation.title.trim().toLowerCase();
+  const normalizedSubject = (conversation.subject ?? "").trim().toLowerCase();
+  const isSupportResponseThread = conversation.visibility === "private"
+    && (normalizedTitle === "support response" || normalizedSubject === "your support ticket has a new response");
 
   const replyEditor = useEditor({
     extensions: [StarterKit, Underline],
@@ -218,7 +274,7 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
               <p className="text-xs font-medium text-[#8c62aa]">{ formatDate(post.createdAt) }</p>
             </div>
 
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#4d2a66]">{ post.content }</p>
+            <ThreadPostBody content={ post.content } contentJson={ post.contentJson } />
 
             { post.attachments.length > 0 && (
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -239,49 +295,51 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
         )) }
       </div>
 
-      <div className="rounded-[1.2rem] border border-[#e9d6f5] bg-white/92 p-5 shadow-[0_16px_45px_-35px_rgba(90,20,120,0.55)]">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#7a4a9a]">Reply</p>
+      { !isSupportResponseThread && (
+        <div className="rounded-[1.2rem] border border-[#e9d6f5] bg-white/92 p-5 shadow-[0_16px_45px_-35px_rgba(90,20,120,0.55)]">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#7a4a9a]">Reply</p>
 
-        <div className="mt-3 overflow-hidden rounded-[1.1rem] border border-[#ddc5ee]">
-          <div className="flex flex-wrap gap-2 border-b border-[#ead8f7] bg-[#f9f1ff] px-3 py-2">
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleBold().run() }>
-              <Bold className="size-4" />
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleItalic().run() }>
-              <Italic className="size-4" />
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleUnderline().run() }>
-              <UnderlineIcon className="size-4" />
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleBulletList().run() }>
-              <List className="size-4" />
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().undo().run() }>
-              <Undo2 className="size-4" />
-            </Button>
-            <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().redo().run() }>
-              <Redo2 className="size-4" />
-            </Button>
+          <div className="mt-3 overflow-hidden rounded-[1.1rem] border border-[#ddc5ee]">
+            <div className="flex flex-wrap gap-2 border-b border-[#ead8f7] bg-[#f9f1ff] px-3 py-2">
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleBold().run() }>
+                <Bold className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleItalic().run() }>
+                <Italic className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleUnderline().run() }>
+                <UnderlineIcon className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleBulletList().run() }>
+                <List className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().undo().run() }>
+                <Undo2 className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().redo().run() }>
+                <Redo2 className="size-4" />
+              </Button>
+            </div>
+
+            <EditorContent
+              editor={ replyEditor }
+              className="[&_.tiptap]:min-h-40 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-sm [&_.tiptap]:text-[#4d2a66] [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5"
+            />
           </div>
 
-          <EditorContent
-            editor={ replyEditor }
-            className="[&_.tiptap]:min-h-40 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-sm [&_.tiptap]:text-[#4d2a66] [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5"
-          />
+          <div className="mt-3 flex justify-end">
+            <Button
+              type="button"
+              onClick={ handleReplySubmit }
+              disabled={ isSaving }
+              className="rounded-full bg-[#7b3ca2] text-white hover:bg-[#633183]"
+            >
+              <MessageCircleReply className="mr-1 size-4" />
+              { isSaving ? "Posting..." : "Post Reply" }
+            </Button>
+          </div>
         </div>
-
-        <div className="mt-3 flex justify-end">
-          <Button
-            type="button"
-            onClick={ handleReplySubmit }
-            disabled={ isSaving }
-            className="rounded-full bg-[#7b3ca2] text-white hover:bg-[#633183]"
-          >
-            <MessageCircleReply className="mr-1 size-4" />
-            { isSaving ? "Posting..." : "Post Reply" }
-          </Button>
-        </div>
-      </div>
+      ) }
     </>
   );
 }

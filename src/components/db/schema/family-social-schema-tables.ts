@@ -845,9 +845,10 @@ export const supportFamily = pgTable("support_family", {
 export const supportIssue = pgTable("support_issue", {
   id: serial("id").primaryKey(),
   issueType: text("issue_type").notNull().default("question"),
+  issueTitle: text("issue_title"),
+  issueJson: text("issue_json").notNull().default("{}"),
   priority: text("priority").notNull().default("low"),
   status: text("status").notNull().default("open"),
-  issueJson: text("issue_json").notNull().default("{}"),
   updatedAt: timestamp("updated_at").defaultNow(),
   memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
   supportFamilyId: integer("fk_support_family_id").references(() => supportFamily.id, {onDelete: 'cascade'}),

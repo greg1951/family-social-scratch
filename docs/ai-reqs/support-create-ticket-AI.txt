@@ -1,0 +1,50 @@
+Background
+
+The app router folders for Support, and the schema to to support it have been created.
+- The schema can be found in the "src/components/db/schema/family-social-schema-tables.ts" file and the tables have a "support" prefix in their names.
+- The app router folders reside at "src/app/(support)/(logged-in)" and "src/app/(support)/(logged-out)". 
+  - The "(logged-in)" folder is for pages that require the user to be authenticated, while the "(logged-out)" folder is for pages that can be accessed without authentication. 
+
+The support page that is relevant to this request is the "open-issue" page
+- It is located at "src/app/(support)/(logged-in)/open-issue/page.tsx". 
+- This page will be used to create a new support ticket. 
+
+Requirements
+
+The "open-issue" form consists of the following fields:
+- Title: A brief summary of the issue (required)
+- Description: A detailed description of the issue (required)
+- Category: A dropdown to select the category of the issue (e.g., "Technical Issue", "General Inquiry", "Feedback") (required)
+- Priority: A dropdown to select the priority of the issue (e.g., "Low", "Medium", "High") (required)
+- Attachment: An optional file upload field to attach screenshots or other relevant files.  
+
+The form will have a submit button that, when clicked, will create a new support ticket in the supportIssue table in the schema defined in the "family-social-schema-tables.ts" file. 
+- The ticket will be associated with the authenticated member who created it.
+- The ticket must also be associated with a family and this requires some special logic.
+  - The member's family name must be retrieved from the member's family and a search performed on the supportFamily table to find the family with exactly the same name.
+  - If a family is found, the support ticket will be associated with the supportFamily.id to be referenced in the supportFamilyId foreign key in the supportIssue table for the new issue.
+
+The form should use TipTap rich text editing for the description field to allow users to format their issue descriptions.
+- The TipTab toolbar buttons should be B, I, U, Bulleted List, Numbered List, Link.
+- The form should also include client-side validation to ensure that all required fields are filled out before submission.
+- If the form is submitted with missing required fields, an error message should be displayed to the user indicating which fields are missing.
+- Upon successful submission, the user should receive a confirmation message that their issue has been created and will be reviewed by the support team.
+
+The supportAttachment table is where attachments will be stored.
+- When a user uploads a file, it should be stored in the supportAttachment table with a reference to the supportIssue it is associated with via the supportIssueId foreign key.
+- At the present time, the file cannot be storedin AWS S3 because the support AWS S3 bucket has not yet been set up. Therefore, the file will be not be stored anywhere but the file name and other relevant information will be stored in the supportAttachment table for now.
+- In the future, once the AWS S3 bucket is set up, the file will be uploaded to S3 and the S3 URL will be stored in the supportAttachment table instead of the file name.
+
+The new supportIssue must be assigned to a supportPerson that is associated with the L1 support tier (see supportTeam.supportLevel).
+- The supportPerson assigned to the supportIssue is done via the supportPersonIssue junction table.
+- Data have been loaded in the supportTeam and supportPerson tables to support this functionality.
+
+
+--------------------
+
+The open-issue form needs to be brought up to the prevalent design standards of the app. 
+- As an example of what constitutes the prevailing look and feel standard, look at the top heading of the SupportFaqHomePage.  
+- The support pages should follow the same color scheme, typography, and general design aesthetic as the rest of the app to ensure a cohesive user experience.
+
+Below the heading, the form should be organized in a clear and user-friendly manner, with appropriate spacing and alignment of form fields.
+- The form should be visually appealing and easy to navigate, with a clean and modern design that

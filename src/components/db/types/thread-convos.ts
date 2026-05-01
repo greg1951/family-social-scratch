@@ -83,6 +83,7 @@ export type ConvoSummary = {
   deliveryType: string | null;
   readAt: Date | null;
   archivedAt: Date | null;
+  conversationArchivedAt: Date | null;
   postContent: string | null;
   postType: string | null;
 };

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import {
   addThreadReply,
   archiveAllReadConversationsForRecipient,
+  archiveSenderConversation,
   createThreadConversationWithInitialPost,
   updateRecipientThreadArchiveState,
   updateRecipientThreadReadState,
@@ -116,6 +117,30 @@ export async function updateThreadReadStateAction(input: { conversationId: numbe
     input.conversationId,
     memberDetails.memberId,
     input.shouldMarkUnread,
+  );
+
+  if (result.success) {
+    revalidatePath('/threads');
+    revalidatePath(`/threads/${ input.conversationId }`);
+  }
+
+  return result;
+}
+
+export async function archiveSenderThreadAction(input: { conversationId: number; shouldArchive: boolean }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to archive a thread.',
+    };
+  }
+
+  const result = await archiveSenderConversation(
+    input.conversationId,
+    memberDetails.memberId,
+    input.shouldArchive,
   );
 
   if (result.success) {

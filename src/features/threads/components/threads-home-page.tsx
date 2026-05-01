@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { MessageSquareText, Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore } from "lucide-react";
+import { MessageSquareText, Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -15,8 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ConvoSummary } from "@/components/db/types/thread-convos";
-import { archiveReadThreadsAction, updateThreadArchiveStateAction, updateThreadReadStateAction } from "@/app/(features)/(threads)/threads/actions";
+import { archiveReadThreadsAction, archiveSenderThreadAction, updateThreadArchiveStateAction, updateThreadReadStateAction } from "@/app/(features)/(threads)/threads/actions";
 
 type ThreadsHomePageProps = {
   summaries: ConvoSummary[];
@@ -41,7 +49,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   const [isUpdatingRowState, startRowUpdateTransition] = useTransition();
   const [searchValue, setSearchValue] = useState("");
   const [roleFilter, setRoleFilter] = useState<"all" | "sent" | "received">("all");
-  const [readFilter, setReadFilter] = useState<"all" | "read" | "unread">("all");
+  const [readFilter, setReadFilter] = useState<"all" | "read" | "unread" | "archived">("all");
   const [timeFilter, setTimeFilter] = useState<"all" | "newest" | "oldest">("newest");
 
   const deferredSearch = useDeferredValue(searchValue);
@@ -49,13 +57,23 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   const filtered = summaries
     .filter((s) => {
       const isRecipientRow = s.recipientMemberId === memberId;
+      const isSenderOnly = s.senderMemberId === memberId && !isRecipientRow;
+      // derive archived: recipient rows use recipient archivedAt; sender-only rows use conversation archivedAt
+      const isArchived = isRecipientRow ? !!s.archivedAt : !!s.conversationArchivedAt;
+      // archive filter
+      if (readFilter === "archived") {
+        if (!isArchived) return false;
+      } else {
+        // exclude archived from all non-archived views
+        if (isArchived) return false;
+        // read filter (only applies to recipient rows)
+        if (readFilter !== "all" && !isRecipientRow) return false;
+        if (readFilter === "read" && !s.readAt) return false;
+        if (readFilter === "unread" && !!s.readAt) return false;
+      }
       // role filter
       if (roleFilter === "sent" && s.senderMemberId !== memberId) return false;
       if (roleFilter === "received" && s.recipientMemberId !== memberId) return false;
-      // read filter
-      if (readFilter !== "all" && !isRecipientRow) return false;
-      if (readFilter === "read" && !s.readAt) return false;
-      if (readFilter === "unread" && !!s.readAt) return false;
       // text search
       const q = deferredSearch.trim().toLowerCase();
       if (q) {
@@ -105,6 +123,20 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   function handleToggleRowArchive(conversationId: number, shouldArchive: boolean) {
     startRowUpdateTransition(async () => {
       const result = await updateThreadArchiveStateAction({ conversationId, shouldArchive });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function handleToggleSenderArchive(conversationId: number, shouldArchive: boolean) {
+    startRowUpdateTransition(async () => {
+      const result = await archiveSenderThreadAction({ conversationId, shouldArchive });
 
       if (!result.success) {
         toast.error(result.message);
@@ -256,6 +288,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                   <SelectItem value="all">All — Read &amp; Unread</SelectItem>
                   <SelectItem value="unread">Unread only</SelectItem>
                   <SelectItem value="read">Read only</SelectItem>
+                  <SelectItem value="archived">Archived only</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -293,9 +326,9 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                   <tbody>
                     { filtered.map((s) => {
                       const isRecipientRow = s.recipientMemberId === memberId;
-                      const isUnread = s.recipientMemberId === memberId && !s.readAt;
-                      const isArchived = !!s.archivedAt;
-                      const canManageRecipientState = isRecipientRow;
+                      const isSenderOnly = s.senderMemberId === memberId && !isRecipientRow;
+                      const isUnread = isRecipientRow && !s.readAt;
+                      const isArchived = isRecipientRow ? !!s.archivedAt : !!s.conversationArchivedAt;
 
                       return (
                         <tr
@@ -376,65 +409,89 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                             ) }
                           </td>
 
-                          {/* Status badges */ }
+                          {/* Status — dropdown trigger */ }
                           <td className="px-4 py-3">
-                            <div className="flex flex-col gap-1">
-                              <span className={ [
-                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
-                                !isRecipientRow
-                                  ? "bg-[#f5f0ff] text-[#8060a0]"
-                                  : s.readAt
-                                    ? "bg-[#e8f8e8] text-[#208040]"
-                                    : "bg-[#fff0e0] text-[#a06020]",
-                              ].join(" ") }>
-                                { !isRecipientRow
-                                  ? <>N/A</>
-                                  : s.readAt
-                                    ? <><Eye className="size-3" /> Read</>
-                                    : <><EyeOff className="size-3" /> Unread</> }
-                              </span>
-                              { isArchived && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-[#f0e8ff] px-2 py-0.5 text-[0.65rem] font-semibold text-[#7050a0]">
-                                  <Archive className="size-3" /> Archived
-                                </span>
-                              ) }
-                              <span className={ [
-                                "inline-flex rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
-                                s.status === "active"
-                                  ? "bg-[#e8f0ff] text-[#2060c0]"
-                                  : s.status === "closed"
-                                    ? "bg-[#f0f0f0] text-[#606060]"
-                                    : "bg-[#f8f0e8] text-[#906030]",
-                              ].join(" ") }>
-                                { s.status }
-                              </span>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button
+                                  className="flex flex-col items-start gap-1 rounded-lg p-1 transition hover:bg-[#f5eeff] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8840b0]"
+                                  aria-label="Thread status actions"
+                                >
+                                  {/* Read / Unread badge */ }
+                                  <span className={ [
+                                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
+                                    !isRecipientRow
+                                      ? "bg-[#f5f0ff] text-[#8060a0]"
+                                      : s.readAt
+                                        ? "bg-[#e8f8e8] text-[#208040]"
+                                        : "bg-[#fff0e0] text-[#a06020]",
+                                  ].join(" ") }>
+                                    { !isRecipientRow
+                                      ? <><Send className="size-3" /> Sent</>
+                                      : s.readAt
+                                        ? <><Eye className="size-3" /> Read</>
+                                        : <><EyeOff className="size-3" /> Unread</> }
+                                  </span>
+                                  {/* Archived / Active / Closed badge */ }
+                                  <span className={ [
+                                    "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold",
+                                    isArchived
+                                      ? "bg-[#f0e8ff] text-[#7050a0]"
+                                      : s.status === "active"
+                                        ? "bg-[#e8f0ff] text-[#2060c0]"
+                                        : "bg-[#f0f0f0] text-[#606060]",
+                                  ].join(" ") }>
+                                    { isArchived
+                                      ? <><Archive className="size-3" /> Archived</>
+                                      : s.status === "active"
+                                        ? <><CheckCircle2 className="size-3" /> Active</>
+                                        : <><CircleOff className="size-3" /> Closed</> }
+                                  </span>
+                                </button>
+                              </DropdownMenuTrigger>
 
-                              { canManageRecipientState && (
-                                <div className="mt-1 flex flex-wrap gap-1">
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    disabled={ isUpdatingRowState }
-                                    onClick={ () => handleToggleRowRead(s.id, !isUnread) }
-                                    className="h-6 rounded-full bg-[#efe3fa] px-2 text-[0.62rem] font-semibold text-[#5a2a78] hover:bg-[#e1cff2]"
-                                  >
-                                    { isUnread ? <Eye className="mr-1 size-3" /> : <EyeOff className="mr-1 size-3" /> }
-                                    { isUnread ? "Mark Read" : "Mark Unread" }
-                                  </Button>
-
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    disabled={ isUpdatingRowState }
-                                    onClick={ () => handleToggleRowArchive(s.id, !isArchived) }
-                                    className="h-6 rounded-full bg-[#efe3fa] px-2 text-[0.62rem] font-semibold text-[#5a2a78] hover:bg-[#e1cff2]"
-                                  >
-                                    { isArchived ? <ArchiveRestore className="mr-1 size-3" /> : <Archive className="mr-1 size-3" /> }
-                                    { isArchived ? "Unarchive" : "Archive" }
-                                  </Button>
-                                </div>
+                              { (isRecipientRow || isSenderOnly) && (
+                                <DropdownMenuContent align="start" className="w-44">
+                                  <DropdownMenuLabel className="text-[0.68rem] uppercase tracking-wide text-[#8840b0]">
+                                    Actions
+                                  </DropdownMenuLabel>
+                                  <DropdownMenuSeparator />
+                                  { isRecipientRow && (
+                                    <DropdownMenuItem
+                                      disabled={ isUpdatingRowState }
+                                      onClick={ () => handleToggleRowRead(s.id, !isUnread) }
+                                      className="gap-2 text-sm"
+                                    >
+                                      { isUnread
+                                        ? <><Eye className="size-4" /> Mark Read</>
+                                        : <><EyeOff className="size-4" /> Mark Unread</> }
+                                    </DropdownMenuItem>
+                                  ) }
+                                  { isRecipientRow && (
+                                    <DropdownMenuItem
+                                      disabled={ isUpdatingRowState }
+                                      onClick={ () => handleToggleRowArchive(s.id, !isArchived) }
+                                      className="gap-2 text-sm"
+                                    >
+                                      { isArchived
+                                        ? <><ArchiveRestore className="size-4" /> Unarchive</>
+                                        : <><Archive className="size-4" /> Archive</> }
+                                    </DropdownMenuItem>
+                                  ) }
+                                  { isSenderOnly && (
+                                    <DropdownMenuItem
+                                      disabled={ isUpdatingRowState }
+                                      onClick={ () => handleToggleSenderArchive(s.id, !isArchived) }
+                                      className="gap-2 text-sm"
+                                    >
+                                      { isArchived
+                                        ? <><ArchiveRestore className="size-4" /> Unarchive</>
+                                        : <><Archive className="size-4" /> Archive</> }
+                                    </DropdownMenuItem>
+                                  ) }
+                                </DropdownMenuContent>
                               ) }
-                            </div>
+                            </DropdownMenu>
                           </td>
 
                           {/* Sent timestamp */ }

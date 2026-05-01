@@ -45,7 +45,9 @@ export function SupportFaqHomePage() {
             <div className="inline-flex rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold">
               { filteredFaqItems.length } Published FAQ{ filteredFaqItems.length === 1 ? "" : "s" }
             </div>
-            <a href="/" className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#edfcff] transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Return to Main Page</a>
+            <a href="/" className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#edfcff] transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              Return to Main Page
+            </a>
           </div>
         </div>
 

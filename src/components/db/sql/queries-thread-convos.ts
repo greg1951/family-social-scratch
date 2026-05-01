@@ -343,6 +343,7 @@ export async function getConvoSummaries(familyId: number, memberId: number)
       deliveryType: threadRecipientState.deliveryType,
       readAt: threadRecipientState.readAt,
       archivedAt: threadRecipientState.archivedAt,
+      conversationArchivedAt: threadConversation.archivedAt,
       postContent: threadPostReply.content,
       postType: threadPostReply.type,
     })
@@ -391,9 +392,42 @@ export async function getConvoSummaries(familyId: number, memberId: number)
       deliveryType: row.deliveryType,
       readAt: row.readAt,
       archivedAt: row.archivedAt,
+      conversationArchivedAt: row.conversationArchivedAt,
       postContent: row.postContent,
       postType: row.postType,
     })),
+  };
+}
+
+/*------------------ archiveSenderConversation ------------------ */
+export async function archiveSenderConversation(
+  conversationId: number,
+  memberId: number,
+  shouldArchive: boolean,
+): Promise<updateThreadRecipientStateReturn> {
+  const [convoRow] = await db
+    .select({ id: threadConversation.id })
+    .from(threadConversation)
+    .where(and(
+      eq(threadConversation.id, conversationId),
+      eq(threadConversation.senderMemberId, memberId),
+    ));
+
+  if (!convoRow) {
+    return {
+      success: false,
+      message: 'Only the sender can archive this conversation.',
+    };
+  }
+
+  await db
+    .update(threadConversation)
+    .set({ archivedAt: shouldArchive ? new Date() : null })
+    .where(eq(threadConversation.id, convoRow.id));
+
+  return {
+    success: true,
+    message: shouldArchive ? 'Thread archived.' : 'Thread restored to inbox.',
   };
 }
 
