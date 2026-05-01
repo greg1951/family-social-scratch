@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
@@ -175,6 +176,7 @@ export function FoodiesHomePage({
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
+  const [recipeStripMode, setRecipeStripMode] = useState<"latest" | "top-rated">("latest");
   const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
 
   const selectedRecipeRecord = recipes[0] ?? null;
@@ -197,15 +199,11 @@ export function FoodiesHomePage({
 
   const topRatedRecipes = [...recipes]
     .sort((leftRecipe, rightRecipe) => {
-      const leftScore = (leftRecipe.thumbsUpCount + (leftRecipe.loveCount * 2));
-      const rightScore = (rightRecipe.thumbsUpCount + (rightRecipe.loveCount * 2));
+      const leftScore = leftRecipe.thumbsUpCount + leftRecipe.loveCount;
+      const rightScore = rightRecipe.thumbsUpCount + rightRecipe.loveCount;
 
       if (leftScore !== rightScore) {
         return rightScore - leftScore;
-      }
-
-      if (leftRecipe.commentCount !== rightRecipe.commentCount) {
-        return rightRecipe.commentCount - leftRecipe.commentCount;
       }
 
       return +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt);
@@ -222,6 +220,15 @@ export function FoodiesHomePage({
       imageSrc: recipe.recipeImageUrl ?? "/images/foodies/vegetable-soup-tablet.png",
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
+
+  const stripItems = recipeStripMode === "latest" ? latestRecipes : topRatedRecipes;
+  const stripTitle = recipeStripMode === "latest" ? "Latest Recipes" : "Top Rated Recipes";
+  const stripDescription = recipeStripMode === "latest"
+    ? "Latest recipes first, based on added date."
+    : "Top rated recipes based on total likes and loves.";
+  const stripAccentClassName = recipeStripMode === "latest"
+    ? "bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
+    : "bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]";
 
   const recipeFinderRows = recipes.map((recipe) => ({
     id: recipe.id,
@@ -748,18 +755,42 @@ export function FoodiesHomePage({
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
           <div className="min-w-0 space-y-6">
-            <FoodiesScrollStrip
-              title="Latest Recipes"
-              description="New dishes added by family members."
-              items={ latestRecipes }
-              accentClassName="bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
-            />
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(38,54,26,0.8)] backdrop-blur sm:px-6">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
+                Recipe Type
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold text-[#2f4820] transition hover:bg-[#f7fce8]">
+                  <input
+                    type="radio"
+                    name="recipe-strip-mode"
+                    value="latest"
+                    checked={ recipeStripMode === "latest" }
+                    onChange={ () => setRecipeStripMode("latest") }
+                    className="size-4 border-[#9fc487] text-[#578c24]"
+                  />
+                  Latest Recipes
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold text-[#2f4820] transition hover:bg-[#f7fce8]">
+                  <input
+                    type="radio"
+                    name="recipe-strip-mode"
+                    value="top-rated"
+                    checked={ recipeStripMode === "top-rated" }
+                    onChange={ () => setRecipeStripMode("top-rated") }
+                    className="size-4 border-[#9fc487] text-[#578c24]"
+                  />
+                  Top Rated Recipes
+                </label>
+              </div>
+            </div>
 
             <FoodiesScrollStrip
-              title="Top Rated Recipes"
-              description="Family reaction totals based on no-rating, thumbs-up, and love reactions, plus comment counts."
-              items={ topRatedRecipes }
-              accentClassName="bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]"
+              title={ stripTitle }
+              description={ stripDescription }
+              items={ stripItems }
+              accentClassName={ stripAccentClassName }
             />
           </div>
 
@@ -1021,6 +1052,15 @@ export function FoodiesHomePage({
                 <RecipeViewer recipeJson={ selectedRecipeBasic.recipeJson } />
 
                 <div className="space-y-4">
+                  <div className="overflow-hidden rounded-2xl border border-[#cadfbb] bg-white">
+                    <div className="aspect-16/10 overflow-hidden">
+                      <ModalRecipeImage
+                        src={ selectedRecipeBasic.recipeImageUrl ?? "/images/foodies/banana-bread-tablet.png" }
+                        alt={ `${ selectedRecipeBasic.recipeTitle } recipe photo` }
+                      />
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Summary</p>
                     <p className="mt-2 text-sm leading-6 text-[#4e6640]">
@@ -1084,4 +1124,62 @@ export function FoodiesHomePage({
       </Dialog>
     </section>
   );
+}
+
+function ModalRecipeImage({ src, alt }: { src: string; alt: string }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(src);
+
+      if (!key || !key.startsWith("foodies/")) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
 }

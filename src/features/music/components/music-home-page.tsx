@@ -30,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -98,6 +99,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const [selectedMusicDetail, setSelectedMusicDetail] = useState<MusicDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
+  const [musicStripMode, setMusicStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
   const [selectedMusic, setSelectedMusic] = useState(musics[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
@@ -119,17 +121,12 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     }));
 
   const topRatedMusics = [...musics]
-    .filter((music) => (music.thumbsUpCount + music.loveCount) > 0)
     .sort((leftMusic, rightMusic) => {
-      const leftScore = leftMusic.thumbsUpCount + (leftMusic.loveCount * 2);
-      const rightScore = rightMusic.thumbsUpCount + (rightMusic.loveCount * 2);
+      const leftScore = leftMusic.thumbsUpCount + leftMusic.loveCount;
+      const rightScore = rightMusic.thumbsUpCount + rightMusic.loveCount;
 
       if (leftScore !== rightScore) {
         return rightScore - leftScore;
-      }
-
-      if (leftMusic.commentCount !== rightMusic.commentCount) {
-        return rightMusic.commentCount - leftMusic.commentCount;
       }
 
       return +new Date(rightMusic.updatedAt) - +new Date(leftMusic.updatedAt);
@@ -146,6 +143,15 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       imageSrc: music.musicImageUrl ?? "/images/music/robin-hood.png",
       imageAlt: `${ music.musicTitle } music image`,
     }));
+
+  const stripItems = musicStripMode === "latest" ? latestMusics : topRatedMusics;
+  const stripTitle = musicStripMode === "latest" ? "Latest Music" : "Top Rated Music";
+  const stripDescription = musicStripMode === "latest"
+    ? "Latest music first, based on added date."
+    : "Top rated music based on total likes and loves.";
+  const stripAccentClassName = musicStripMode === "latest"
+    ? "bg-[linear-gradient(135deg,#ffb366,#ff8866)]"
+    : "bg-[linear-gradient(135deg,#ffa84d,#ff9933)]";
 
   const finderRows = musics.map((music) => ({
     id: music.id,
@@ -281,8 +287,43 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
           <div className="min-w-0 space-y-6">
-            <MusicScrollStrip title="Latest Music Reviews" description="Fresh music reviews shared by the family." items={ latestMusics } accentClassName="bg-[linear-gradient(135deg,#ffb366,#ff8866)]" />
-            <MusicScrollStrip title="Top Rated Music" description="Top music reviews based on family thumbs down, thumbs up, and love reactions." items={ topRatedMusics } accentClassName="bg-[linear-gradient(135deg,#ffa84d,#ff9933)]" />
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(96,32,0,0.8)] backdrop-blur sm:px-6">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
+                Music Type
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                  <input
+                    type="radio"
+                    name="music-strip-mode"
+                    value="latest"
+                    checked={ musicStripMode === "latest" }
+                    onChange={ () => setMusicStripMode("latest") }
+                    className="size-4 border-[#d4a574] text-[#b8581a]"
+                  />
+                  Latest Music
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                  <input
+                    type="radio"
+                    name="music-strip-mode"
+                    value="top-rated"
+                    checked={ musicStripMode === "top-rated" }
+                    onChange={ () => setMusicStripMode("top-rated") }
+                    className="size-4 border-[#d4a574] text-[#b8581a]"
+                  />
+                  Top Rated Music
+                </label>
+              </div>
+            </div>
+
+            <MusicScrollStrip
+              title={ stripTitle }
+              description={ stripDescription }
+              items={ stripItems }
+              accentClassName={ stripAccentClassName }
+            />
           </div>
 
           <div className="min-w-0 space-y-6">
@@ -298,7 +339,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
 
               <div className="px-4 py-4 sm:px-6 sm:py-5">
                 <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#fff6ef,#fffaf5)] px-4 py-3 text-sm text-[#8b5a3c]"><Music className="size-4 text-[#a85a3a]" /><span className="font-semibold text-[#5c2e1a]">Selected music:</span><span>{ selectedMusicName || "Choose a music post from the list" }</span><span className="rounded-full bg-[#fdf0e4] px-3 py-1 text-xs text-[#8b5a3c]"></span></div>
-                <div className="min-w-0 overflow-hidden rounded-[1.4rem] border border-[#f0d9c4]"><div className="max-h-232 overflow-auto"><table className="min-w-[62rem] border-collapse text-left"><thead className="sticky top-0 z-10 bg-[#fff6ef] text-xs uppercase tracking-[0.18em] text-[#a85a3a]"><tr><th className="px-4 py-3 font-bold">Music Name</th><th className="px-4 py-3 font-bold">Thumbs Down</th><th className="px-4 py-3 font-bold">Thumbs Up</th><th className="px-4 py-3 font-bold">Love</th><th className="px-4 py-3 font-bold">Year</th><th className="px-4 py-3 font-bold">Genre</th><th className="px-4 py-3 font-bold">Sub Genre</th><th className="px-4 py-3 font-bold">Song/Album</th><th className="px-4 py-3 font-bold">Added By</th><th className="px-4 py-3 font-bold">Comments</th></tr></thead><tbody>{ filteredMusics.map((music) => { const isSelected = selectedMusic === music.id; return <tr key={ music.id } className="border-t border-[#f5e8e0] bg-white transition hover:bg-[#fffaf5]"><td className="px-2 py-2 sm:px-3"><button type="button" onClick={ () => setSelectedMusic(music.id) } className={ ["flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a574]", isSelected ? "bg-[#fdf6ef] shadow-sm" : "hover:bg-[#fffbf7]"].join(" ") }><span className="font-semibold text-[#5c2e1a]">{ music.name }</span>{ isSelected ? <span className="rounded-full bg-[#b8581a] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">Selected</span> : null }</button></td><td className="px-4 py-3 text-sm font-semibold text-[#6d5c52]"><span className="inline-flex items-center gap-2"><ThumbsDown className="size-4 text-[#6d5c52]" />{ music.thumbsDown }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8a5a22]"><span className="inline-flex items-center gap-2"><ThumbsUp className="size-4 text-[#b8581a]" />{ music.thumbsUp }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8f2f58]"><span className="inline-flex items-center gap-2"><Heart className="size-4 text-[#cf3f7f]" />{ music.love }</span></td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.year }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.genre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.subGenre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.reviewType }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.addedBy }</td><td className="px-4 py-3 text-sm font-semibold text-[#8b5a3c]"><span className="inline-flex items-center gap-2"><MessageSquareText className="size-4 text-[#a85a3a]" />{ music.comments }</span></td></tr>; }) }</tbody></table></div>{ filteredMusics.length === 0 ? <div className="border-t border-[#f5e8e0] px-4 py-8 text-center text-sm text-[#8b5a3c]">No music posts match that search yet.</div> : null }</div>
+                <div className="min-w-0 overflow-hidden rounded-[1.4rem] border border-[#f0d9c4]"><div className="max-h-232 overflow-auto"><table className="min-w-248 border-collapse text-left"><thead className="sticky top-0 z-10 bg-[#fff6ef] text-xs uppercase tracking-[0.18em] text-[#a85a3a]"><tr><th className="px-4 py-3 font-bold">Music Name</th><th className="px-4 py-3 font-bold">Thumbs Down</th><th className="px-4 py-3 font-bold">Thumbs Up</th><th className="px-4 py-3 font-bold">Love</th><th className="px-4 py-3 font-bold">Year</th><th className="px-4 py-3 font-bold">Genre</th><th className="px-4 py-3 font-bold">Sub Genre</th><th className="px-4 py-3 font-bold">Song/Album</th><th className="px-4 py-3 font-bold">Added By</th><th className="px-4 py-3 font-bold">Comments</th></tr></thead><tbody>{ filteredMusics.map((music) => { const isSelected = selectedMusic === music.id; return <tr key={ music.id } className="border-t border-[#f5e8e0] bg-white transition hover:bg-[#fffaf5]"><td className="px-2 py-2 sm:px-3"><button type="button" onClick={ () => setSelectedMusic(music.id) } className={ ["flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a574]", isSelected ? "bg-[#fdf6ef] shadow-sm" : "hover:bg-[#fffbf7]"].join(" ") }><span className="font-semibold text-[#5c2e1a]">{ music.name }</span>{ isSelected ? <span className="rounded-full bg-[#b8581a] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">Selected</span> : null }</button></td><td className="px-4 py-3 text-sm font-semibold text-[#6d5c52]"><span className="inline-flex items-center gap-2"><ThumbsDown className="size-4 text-[#6d5c52]" />{ music.thumbsDown }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8a5a22]"><span className="inline-flex items-center gap-2"><ThumbsUp className="size-4 text-[#b8581a]" />{ music.thumbsUp }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8f2f58]"><span className="inline-flex items-center gap-2"><Heart className="size-4 text-[#cf3f7f]" />{ music.love }</span></td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.year }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.genre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.subGenre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.reviewType }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.addedBy }</td><td className="px-4 py-3 text-sm font-semibold text-[#8b5a3c]"><span className="inline-flex items-center gap-2"><MessageSquareText className="size-4 text-[#a85a3a]" />{ music.comments }</span></td></tr>; }) }</tbody></table></div>{ filteredMusics.length === 0 ? <div className="border-t border-[#f5e8e0] px-4 py-8 text-center text-sm text-[#8b5a3c]">No music posts match that search yet.</div> : null }</div>
               </div>
             </div>
 
@@ -327,6 +368,15 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
               <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
                 <MusicViewer musicJson={ selectedMusicBasic.musicJson } />
                 <div className="space-y-4">
+                  <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white">
+                    <div className="aspect-16/10 overflow-hidden">
+                      <ModalMusicImage
+                        src={ selectedMusicBasic.musicImageUrl ?? "/images/music/princess-bride.png" }
+                        alt={ `${ selectedMusicBasic.musicTitle } music image` }
+                      />
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Artist</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-3 space-y-3 text-sm text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMusicBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMusicBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMusicBasic.musicDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Type:</span> { selectedMusicBasic.isSong ? "Song" : "Album" }</p><p><span className="font-semibold text-[#5c2e1a]">Genre:</span> { selectedMusicBasic.tagNamesByType.genre?.[0] ?? "Unknown" }</p><p><span className="font-semibold text-[#5c2e1a]">Sub Genre:</span> { selectedMusicBasic.tagNamesByType.subGenre?.[0] ?? "Unknown" }</p></div></div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-1"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMusicDetail?.noRatingCount ?? selectedMusicBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMusicDetail?.thumbsUpCount ?? selectedMusicBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMusicDetail?.loveCount ?? selectedMusicBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMusicDetail?.commentCount ?? selectedMusicBasic.commentCount ?? 0 }</span></div></div>
@@ -338,4 +388,62 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       </Dialog>
     </section>
   );
+}
+
+function ModalMusicImage({ src, alt }: { src: string; alt: string }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(src);
+
+      if (!key) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
 }

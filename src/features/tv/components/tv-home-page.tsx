@@ -29,6 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -95,6 +96,64 @@ function ShowViewer({ showJson }: { showJson?: string }) {
   );
 }
 
+function ModalShowImage({ src, alt }: { src: string; alt: string }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(src);
+
+      if (!key || !key.startsWith("tv/")) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
+}
+
 export function TvHomePage({
   shows,
   member,
@@ -106,6 +165,7 @@ export function TvHomePage({
   const [selectedShowDetail, setSelectedShowDetail] = useState<TvShowDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewShowOpen, setIsViewShowOpen] = useState(false);
+  const [showStripMode, setShowStripMode] = useState<"latest" | "top-rated">("latest");
 
   const latestShowRecords = [...shows]
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
@@ -124,17 +184,12 @@ export function TvHomePage({
   }));
 
   const topRatedShows = [...shows]
-    .filter((show) => (show.thumbsUpCount + show.loveCount) > 0)
     .sort((leftShow, rightShow) => {
-      const leftScore = leftShow.thumbsUpCount + (leftShow.loveCount * 2);
-      const rightScore = rightShow.thumbsUpCount + (rightShow.loveCount * 2);
+      const leftScore = leftShow.thumbsUpCount + leftShow.loveCount;
+      const rightScore = rightShow.thumbsUpCount + rightShow.loveCount;
 
       if (leftScore !== rightScore) {
         return rightScore - leftScore;
-      }
-
-      if (leftShow.commentCount !== rightShow.commentCount) {
-        return rightShow.commentCount - leftShow.commentCount;
       }
 
       return +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt);
@@ -151,6 +206,15 @@ export function TvHomePage({
       imageSrc: show.showImageUrl ?? "/images/tv-shows/always-sunny-tablet.png",
       imageAlt: `${ show.showTitle } show image`,
     }));
+
+  const stripItems = showStripMode === "latest" ? latestShows : topRatedShows;
+  const stripTitle = showStripMode === "latest" ? "Latest TV Shows" : "Top Rated TV Shows";
+  const stripDescription = showStripMode === "latest"
+    ? "Latest shows first, based on added date."
+    : "Top rated shows based on total likes and loves.";
+  const stripAccentClassName = showStripMode === "latest"
+    ? "bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
+    : "bg-[linear-gradient(135deg,#ffdbae,#ffc4c8)]";
 
   const showFinderRows = shows.map((show) => ({
     id: show.id,
@@ -384,18 +448,42 @@ export function TvHomePage({
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
           <div className="min-w-0 space-y-6">
-            <TvScrollStrip
-              title="Latest TV Shows"
-              description="Fresh picks added for the family."
-              items={ latestShows }
-              accentClassName="bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
-            />
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(9,44,62,0.8)] backdrop-blur sm:px-6">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
+                Show Type
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-strip-mode"
+                    value="latest"
+                    checked={ showStripMode === "latest" }
+                    onChange={ () => setShowStripMode("latest") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Latest TV Shows
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-strip-mode"
+                    value="top-rated"
+                    checked={ showStripMode === "top-rated" }
+                    onChange={ () => setShowStripMode("top-rated") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Top Rated TV Shows
+                </label>
+              </div>
+            </div>
 
             <TvScrollStrip
-              title="Top Rated TV Shows"
-              description="Top rated TV shows based on family ratings (Likes and Loves)."
-              items={ topRatedShows }
-              accentClassName="bg-[linear-gradient(135deg,#ffdbae,#ffc4c8)]"
+              title={ stripTitle }
+              description={ stripDescription }
+              items={ stripItems }
+              accentClassName={ stripAccentClassName }
             />
           </div>
 
@@ -655,6 +743,15 @@ export function TvHomePage({
                 <ShowViewer showJson={ selectedShowBasic.showJson } />
 
                 <div className="space-y-4">
+                  <div className="overflow-hidden rounded-2xl border border-[#c6dcec] bg-white">
+                    <div className="aspect-16/10 overflow-hidden">
+                      <ModalShowImage
+                        src={ selectedShowBasic.showImageUrl ?? "/images/tv-shows/landman-tablet.png" }
+                        alt={ `${ selectedShowBasic.showTitle } show image` }
+                      />
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Caption</p>
                     <p className="mt-2 text-sm leading-6 text-[#3f6576]">

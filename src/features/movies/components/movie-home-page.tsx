@@ -30,6 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { MovieScrollStrip } from "@/features/movies/components/movie-scroll-strip";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -98,6 +99,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [selectedMovieDetail, setSelectedMovieDetail] = useState<MovieDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewMovieOpen, setIsViewMovieOpen] = useState(false);
+  const [movieStripMode, setMovieStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
   const [selectedMovie, setSelectedMovie] = useState(movies[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
@@ -118,17 +120,12 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     }));
 
   const topRatedMovies = [...movies]
-    .filter((movie) => (movie.thumbsUpCount + movie.loveCount) > 0)
     .sort((leftMovie, rightMovie) => {
-      const leftScore = leftMovie.thumbsUpCount + (leftMovie.loveCount * 2);
-      const rightScore = rightMovie.thumbsUpCount + (rightMovie.loveCount * 2);
+      const leftScore = leftMovie.thumbsUpCount + leftMovie.loveCount;
+      const rightScore = rightMovie.thumbsUpCount + rightMovie.loveCount;
 
       if (leftScore !== rightScore) {
         return rightScore - leftScore;
-      }
-
-      if (leftMovie.commentCount !== rightMovie.commentCount) {
-        return rightMovie.commentCount - leftMovie.commentCount;
       }
 
       return +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt);
@@ -145,6 +142,15 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       imageSrc: movie.movieImageUrl ?? "/images/movies/robin-hood.png",
       imageAlt: `${ movie.movieTitle } movie image`,
     }));
+
+  const stripItems = movieStripMode === "latest" ? latestMovies : topRatedMovies;
+  const stripTitle = movieStripMode === "latest" ? "Latest Movies" : "Top Rated Movies";
+  const stripDescription = movieStripMode === "latest"
+    ? "Latest movies first, based on added date."
+    : "Top rated movies based on total likes and loves.";
+  const stripAccentClassName = movieStripMode === "latest"
+    ? "bg-[linear-gradient(135deg,#ffb366,#ff8866)]"
+    : "bg-[linear-gradient(135deg,#ffa84d,#ff9933)]";
 
   const finderRows = movies.map((movie) => ({
     id: movie.id,
@@ -268,8 +274,43 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
 
         <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
           <div className="min-w-0 space-y-6">
-            <MovieScrollStrip title="Latest Movie Reviews" description="Fresh movie reviews shared by the family." items={ latestMovies } accentClassName="bg-[linear-gradient(135deg,#ffb366,#ff8866)]" />
-            <MovieScrollStrip title="Top Rated Movies" description="Top rated movies based on family thumbs down, thumbs up, and love reactions." items={ topRatedMovies } accentClassName="bg-[linear-gradient(135deg,#ffa84d,#ff9933)]" />
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(96,32,0,0.8)] backdrop-blur sm:px-6">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
+                Movie Type
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                  <input
+                    type="radio"
+                    name="movie-strip-mode"
+                    value="latest"
+                    checked={ movieStripMode === "latest" }
+                    onChange={ () => setMovieStripMode("latest") }
+                    className="size-4 border-[#d4a574] text-[#b8581a]"
+                  />
+                  Latest Movies
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                  <input
+                    type="radio"
+                    name="movie-strip-mode"
+                    value="top-rated"
+                    checked={ movieStripMode === "top-rated" }
+                    onChange={ () => setMovieStripMode("top-rated") }
+                    className="size-4 border-[#d4a574] text-[#b8581a]"
+                  />
+                  Top Rated Movies
+                </label>
+              </div>
+            </div>
+
+            <MovieScrollStrip
+              title={ stripTitle }
+              description={ stripDescription }
+              items={ stripItems }
+              accentClassName={ stripAccentClassName }
+            />
           </div>
 
           <div className="min-w-0 space-y-6">
@@ -306,6 +347,15 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
               <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
                 <MovieViewer movieJson={ selectedMovieBasic.movieJson } />
                 <div className="space-y-4">
+                  <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white">
+                    <div className="aspect-16/10 overflow-hidden">
+                      <ModalMovieImage
+                        src={ selectedMovieBasic.movieImageUrl ?? "/images/movies/princess-bride.png" }
+                        alt={ `${ selectedMovieBasic.movieTitle } movie image` }
+                      />
+                    </div>
+                  </div>
+
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Caption</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMovieBasic.movieCaption || "No caption provided." }</p></div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-3 space-y-3 text-sm text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-1"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
@@ -317,4 +367,62 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       </Dialog>
     </section>
   );
+}
+
+function ModalMovieImage({ src, alt }: { src: string; alt: string }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(src);
+
+      if (!key) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
 }

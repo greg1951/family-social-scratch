@@ -51,3 +51,50 @@ In the second section of the page, create a another scrollable list of four imag
 The third section of the page will be a section entitled "Movie Finder" with a search bar. Below the Music Finder form will be a list of selectable recipes. The columns in the Recipes list are: Movie Name, Contributed By (member first name), Channel (Streaming service or theater), Category, Kid Friendly (use an icon for this), and the number of comments on the movie. The first and second sections will occupy half the page and the third section the remainder.
 
 The layout.tsx for this page should follow the same pattern as implemented in the tv group.
+
+---------------------------
+Background:
+
+The current TV Shows home page 
+- is implemented in the "src/features/tv/components/tv-home-page.tsx" file
+- It's layout consists of three sections: Header, Finder and two show scroll strips (latest) and (top rated) 
+  - The two scroll strips are positioned below the header and to the left of the Finder.
+  - The are scrolled from left to right on desktop and top to bottom on mobile.
+
+Request:
+The revised layout is depicted below.
+- There are still three sections: Header, Finder and they will not change.
+- What is to be changed is the layout of the scroll strips section.
+
+In the scroll strip section
+- There will be now be one consolidated scroll strip that contains 1-8 shows.
+- the scrolling will be vertical, regardless of screen size. 
+- As depicted below, at the top of the scroll strip will be two radio buttons.
+  - The default button will be "Latest TV Shows" and the other button will be "Top Rated TV Shows"
+  - When the user clicks on the "Top Rated TV Shows" radio button, the shows in the scroll strip will change to the top rated shows based on the # of likes and loves. 
+  - When the user clicks on the "Latest TV Shows" radio button, the shows in the scroll strip will change to the latest shows, based on the date added, latest first.
+
++-----------------------------------+
+|              Header               |
++----------------+------------------+
+| +----+ +----+  |                  | 
+| + c1 + + c2 +  |                  | 
+| +----+ +----+  |                  | 
+|                |                  | 
+| +----+ +----+  |                  | 
+| + c3 + + c4 +  |                  | 
+| +----+ +----+  |     Finder       | 
+|                |                  | 
+| +----+ +----+  |                  | 
+| + c5 + + c6 +  |                  | 
+| +----+ +----+  |                  | 
+|                |                  |   
+| +----+ +----+  |                  | 
+| + c7 + + c8 +  |                  | 
+| +----+ +----+  |                  | 
++----------------+------------------+
+
+The View Show button currently opens a modal with show details. 
+- This currently contains the show details.
+- The change to this modal dialog is to now also include the show image, which is currently not included. 
+

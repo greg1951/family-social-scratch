@@ -94,3 +94,50 @@ A new section is to be added to the Add Recipe UI in the foodies-add-recipe-page
 - The Pro Tips will use TipTap and will follow the same pattern as implemented in the Book Commentary section of the Book hope page.
 
 - In the View Recipe dialog, implement a Tiptop Print Preview button
+
+------------------------------------
+Background:
+
+The current Family Foodies home page 
+- is implemented in the "src/features/foodies/components/foodies-home-page.tsx" file
+- It's layout consists of three sections: Header, Finder and two show scroll strips (latest) and (top rated) 
+  - The two scroll strips are positioned below the header and to the left of the Finder.
+  - The are scrolled from left to right on desktop and top to bottom on mobile.
+
+Request:
+The changes requested here mirror what was just done for the TV, Movies, and Music home pages.
+The revised layout is depicted below.
+- There are still three sections: Header, Finder and they will not change.
+- What is to be changed is the layout of the scroll strips section.
+
+In the scroll strip section
+- There will be now be one consolidated scroll strip that contains 1-8 songs or albums.
+- the scrolling will be vertical, regardless of screen size. 
+- As depicted below, at the top of the scroll strip will be two radio buttons.
+  - The default button will be "Latest Recipes" and the other button will be "Top Rated Recipes"
+  - When the user clicks on the "Top Rated Recipes" radio button, the recipes in the scroll strip will change to the top rated recipes based on the # of likes and loves. 
+  - When the user clicks on the "Latest Recipes" radio button, the recipes in the scroll strip will change to the latest recipes, based on the date added, latest first.
+
++-----------------------------------+
+|              Header               |
++----------------+------------------+
+| +----+ +----+  |                  | 
+| + c1 + + c2 +  |                  | 
+| +----+ +----+  |                  | 
+|                |                  | 
+| +----+ +----+  |                  | 
+| + c3 + + c4 +  |                  | 
+| +----+ +----+  |     Finder       | 
+|                |                  | 
+| +----+ +----+  |                  | 
+| + c5 + + c6 +  |                  | 
+| +----+ +----+  |                  | 
+|                |                  |   
+| +----+ +----+  |                  | 
+| + c7 + + c8 +  |                  | 
+| +----+ +----+  |                  | 
++----------------+------------------+
+
+The View Recipe button currently opens a modal with recipe details. 
+- This currently contains the recipe details.
+- The change to this modal dialog is to now also include the recipe image, which is currently not included.
