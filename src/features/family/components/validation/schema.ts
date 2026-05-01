@@ -26,6 +26,7 @@ const NewMemberSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
   email: z.email(),
+  inviteFounderMessage: z.string().optional(),
 });
 
 const NewMembersSchema = z.array(NewMemberSchema);

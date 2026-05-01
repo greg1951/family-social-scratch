@@ -1,0 +1,13 @@
+Background
+- When the family founder invites someone to join the family, the founder can choose to send a personalized invite note in the invitaiton.
+- The familyInvitation table has been updated to include a new column called "inviteFounderMessage" which can store this personalized message.
+- The familyInvitation table can be found in the "src/components/db/schema/family-social-schema-tables.ts" file.
+- The app router client component responsible for sending the invitation is located in the "src/app/(family)/(family-members)/family-new-members/index-new.tsx" file. This component will need to be updated to include a text input for the founder to enter their personalized invite note, and to save this note to the "inviteFounderMessage" column in the familyInvitation table when the invitation is sent.
+- The NewInvitesDialog component, which is used to send the invitation, will need to be updated to include the new text input for the invite note.
+  - This dialog can be found in the "src/features/family/components/dialogs/new-members-dialog.tsx" file.
+- The database queries can be found in the "src/components/db/sql/queries-family-invite.ts" and "src/components/db/sql/queries-family-members.ts" files.
+
+Requirements
+- Change the dialog to include this new text input for the invite note.
+- Update the app router client component to save the invite note to the familyInvitation table when the invitation is sent.
+- Ensure that the invite note is properly saved to the database and can be retrieved when needed.

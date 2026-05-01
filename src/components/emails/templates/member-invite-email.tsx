@@ -30,8 +30,8 @@ const emailTailwindConfig = {
   },
 };
 
-export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
-  : { memberName: string, founderName: string, familyName: string, link: string }) => (
+export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessage, familyName, link }
+  : { memberName: string, founderName: string, inviteFounderMessage: string, familyName: string, link: string }) => (
   <Html>
     <Head />
     <Tailwind config={ emailTailwindConfig }>
@@ -40,9 +40,14 @@ export const MemberInviteEmail = ({ memberName, founderName, familyName, link }
           <Section className='mb-4'>
             <Row>
               <Column align='left' valign='middle' style={ { width: '800px' } }>
-                <Text className='m-0 font-app text-base leading-6'>
+                <Text className='pt-2 m-0 font-app text-base leading-6'>
                   Good News, { memberName }! You have been invited by 👉{ founderName }👈 to join the &quot;{ familyName }&quot; on the Family Social website.
                 </Text>
+                { inviteFounderMessage && (
+                  <Text className='pt-2 m-0 mt-2 font-app text-base leading-6 italic'>
+                    { founderName } says: <i>{ inviteFounderMessage }</i>
+                  </Text>
+                ) }
               </Column>
             </Row>
           </Section>

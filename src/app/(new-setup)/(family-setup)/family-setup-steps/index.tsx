@@ -13,7 +13,7 @@ import Link from 'next/link';
 import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
-import { NewInvitesDialog } from '@/app/(family)/(family-members)/family-new-members/new-members-dialog';
+import { NewInvitesDialog } from '@/features/family/components/dialogs/new-members-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
@@ -135,6 +135,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
           firstName: member.firstName,
           lastName: member.lastName,
           email: member.email,
+          inviteFounderMessage: member.inviteFounderMessage,
           familyId: insertFamilyResult.id as number
         }));
 
@@ -200,7 +201,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
   // Handlers to add/remove members to the invited members list. 
   const [members, setMembers] = useState<NewFamilyMember[]>([])
-  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email'>) => {
+  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
     setMembers((prev) => [
       ...prev,
       {
@@ -208,6 +209,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
+        inviteFounderMessage: values.inviteFounderMessage,
       },
     ])
   }
@@ -620,6 +622,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
                                   <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
                                   <p className="text-xs text-neutral-600">{ member.email }</p>
+                                  { member.inviteFounderMessage && (
+                                    <p className="mt-1 text-xs italic text-neutral-500">{ member.inviteFounderMessage }</p>
+                                  ) }
                                 </li>
                               )) }
                             </ul>
@@ -709,6 +714,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
                                   <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
                                   <p className="text-xs text-neutral-600">{ member.email }</p>
+                                  { member.inviteFounderMessage && (
+                                    <p className="mt-1 text-xs italic text-neutral-500">{ member.inviteFounderMessage }</p>
+                                  ) }
                                 </li>
                               )) }
                             </ul>

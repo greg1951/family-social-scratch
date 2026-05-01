@@ -44,6 +44,7 @@ export const sendFamilyInviteEmails = async (
         react: React.createElement(MemberInviteEmail, 
           { memberName: invite.firstName, 
             founderName: `${founderDetails.firstName} ${founderDetails.lastName}`, 
+            inviteFounderMessage: invite.inviteFounderMessage!,
             familyName: familyName,
             link: registerLink, 
           }),

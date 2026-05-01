@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { NewInvitesDialog } from "../(family-members)/family-new-members/new-members-dialog";
+import { NewInvitesDialog } from "../../../features/family/components/dialogs/new-members-dialog";
 import { useState } from "react";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";

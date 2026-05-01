@@ -3,6 +3,7 @@ export type NewFamilyMember = {
   firstName: string
   lastName: string
   email: string
+  inviteFounderMessage?: string
 }
 
 export type GetMemberDetailsByEmailReturn = {
@@ -17,6 +18,7 @@ export interface NewFamilyInvite {
   firstName: string
   lastName: string
   email: string
+  inviteFounderMessage?: string
 }
 
 export interface NewFamilyInvites {

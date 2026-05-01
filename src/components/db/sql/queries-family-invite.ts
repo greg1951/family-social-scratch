@@ -36,6 +36,7 @@ export async function insertInvites(invitesArg: InsertInvitesInput)
       email: invite.email,
       firstName: invite.firstName,
       lastName: invite.lastName,
+      inviteFounderMessage: invite.inviteFounderMessage ?? undefined,
       familyId: invite.familyId,
       createdAt: invite.createdAt as Date,
     }));
@@ -184,6 +185,7 @@ export async function getInvitebyInviteId(inviteId: number) : Promise<GetInviteR
         email: inviteMemberResult.email,
         firstName: inviteMemberResult.firstName,
         lastName: inviteMemberResult.lastName,
+        inviteFounderMessage: inviteMemberResult.inviteFounderMessage ?? undefined,
       };
     }
 };
@@ -209,6 +211,7 @@ export async function getInvitebyInviteEmail(email: string) : Promise<GetInviteR
         email: inviteMemberResult.email,
         firstName: inviteMemberResult.firstName,
         lastName: inviteMemberResult.lastName,
+        inviteFounderMessage: inviteMemberResult.inviteFounderMessage ?? undefined,
       };
     }
 };
@@ -261,6 +264,7 @@ export async function addNewInvites({newInvites, familyId}
     email: invite.email,
     status: 'invited',
     familyId: familyId,
+    inviteFounderMessage: invite.inviteFounderMessage ?? null,
   }));
 
   const insertResult = await db.insert(familyInvitation).values(invites).returning();
@@ -278,6 +282,7 @@ export async function addNewInvites({newInvites, familyId}
       email: invite.email,
       firstName: invite.firstName,
       lastName: invite.lastName,
+      inviteFounderMessage: invite.inviteFounderMessage ?? undefined,
       familyId: invite.familyId,
       createdAt: invite.createdAt as Date,
     }));

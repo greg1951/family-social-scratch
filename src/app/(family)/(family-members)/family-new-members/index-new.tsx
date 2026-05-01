@@ -5,7 +5,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 
 import { CardContent, CardFooter } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { NewInvitesDialog } from "./new-members-dialog";
+import { NewInvitesDialog } from "../../../../features/family/components/dialogs/new-members-dialog";
 import { useEffect, useState } from "react";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -47,7 +47,7 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
   }, [form, invites]);
 
 
-  const handleAddInvite = (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email'>) => {
+  const handleAddInvite = (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
     const normalizedEmail = values.email.trim().toLowerCase();
     const emailExists = currentFamilyMembers.some(
       (member) => member.email.trim().toLowerCase() === normalizedEmail,
@@ -80,6 +80,7 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
         firstName: values.firstName,
         lastName: values.lastName,
         email: normalizedEmail,
+        inviteFounderMessage: values.inviteFounderMessage,
       },
     ])
   }

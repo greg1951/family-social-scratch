@@ -1,3 +1,4 @@
+import { inviteStatus } from "../schema/family-social-schema-tables";
 
 export type GenericDatabaseReturn = {
   success: boolean;
@@ -129,6 +130,7 @@ export type InsertInviteInput = {
     inviteToken?: string;
     status?: string;
     familyId: number;
+    inviteFounderMessage?: string;
   };
 
 export type InsertInvitesInput = InsertInviteInput[];
@@ -143,6 +145,7 @@ export type InsertInvitesReturn =
         firstName: string;
         lastName: string;
         status?: string;
+        inviteFounderMessage?: string;
         inviteToken?: string;
         expirationDate?: Date;
         // familyId: number;
@@ -226,6 +229,7 @@ export type GetInviteReturn =
       firstName: string;
       lastName: string;
       familyId: number;
+      inviteFounderMessage?: string;
     };
 
 

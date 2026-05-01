@@ -17,12 +17,14 @@ import {
 } from '@/components/ui/dialog'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { NewFamilyInvite } from '@/features/family/types/family-members'
 
 const inviteMemberSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.email('Please enter a valid email address'),
+  inviteFounderMessage: z.string().max(500, 'Message must be 500 characters or less').optional(),
 })
 
 type InviteMemberValues = z.infer<typeof inviteMemberSchema>
@@ -40,6 +42,7 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
       firstName: '',
       lastName: '',
       email: '',
+      inviteFounderMessage: '',
     },
   })
 
@@ -117,6 +120,24 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
               />
             </div>
 
+            <FormField
+              control={ form.control }
+              name="inviteFounderMessage"
+              render={ ({ field }) => (
+                <FormItem>
+                  <FormLabel>Personalized Invite Note <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add a personal note to this invitation..."
+                      rows={ 3 }
+                      { ...field }
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              ) }
+            />
+
             <DialogFooter>
               <Button type="submit" className="bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
                 Add to List
@@ -145,6 +166,9 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
                         { invite.firstName } { invite.lastName }
                       </p>
                       <p className="break-all text-xs text-slate-600">{ invite.email }</p>
+                      { invite.inviteFounderMessage && (
+                        <p className="mt-1 text-xs text-slate-500 italic">{ invite.inviteFounderMessage }</p>
+                      ) }
                     </div>
 
                     <Button

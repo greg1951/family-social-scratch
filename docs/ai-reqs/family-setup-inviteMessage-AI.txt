@@ -1,0 +1,6 @@
+Let's now add the inviteFounderMessage on the form that create a new family, by a family founder.
+- The form reside in file "src/app/(new-setup)/family-setup-steps/index.tsx"
+- It is a multi-step form. The message should be implemented at step 3 (beginning line number 593) and carried forward to the last step where the family is submitted.
+- The last step begins on line 649 of the same file.
+- When the form is submitted, it is the lines 162-163 of the same file that sends the emails. 
+- The inviteFounderMessage should be added to the payload sent to the backend, for all of the invited members of the new family.
