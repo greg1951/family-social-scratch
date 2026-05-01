@@ -18,7 +18,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { RegistrationMemberDetails, SubmissionStep } from '@/features/family/types/family-steps';
-import { sendEmails } from './actions';
+import { isMemberEmailInUse, sendEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
 import { addMemberNotifications } from '@/app/(new-setup)/(member-setup)/family-member-registration/actions';
 import { FounderDetails, NewFamilyMember } from '@/features/family/types/family-members';
@@ -36,6 +36,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [memberEmailValidationError, setMemberEmailValidationError] = useState('');
 
   // Status dialog state
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -180,11 +181,62 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
   }
 
   const next = async () => {
+    setMemberEmailValidationError('');
     reset(form.getValues());
     const fields = steps[currentStep].fields;
     const output = await trigger(fields as FieldName[], { shouldFocus: true })
 
     if (!output) return
+
+    if (currentStep === STEP_1_FOUNDER) {
+      const founderEmail = form.getValues('email');
+      const founderEmailCheck = await isMemberEmailInUse(founderEmail);
+
+      if (founderEmailCheck.exists) {
+        form.setError('email', {
+          type: 'manual',
+          message: 'This email address is already in use in Family Social.',
+        });
+        return;
+      }
+
+      form.clearErrors('email');
+    }
+
+    if (currentStep === STEP_3_INVITE_MEMBERS) {
+      const inviteEmailCounts = members.reduce<Record<string, number>>((acc, member) => {
+        const normalizedEmail = member.email.trim().toLowerCase();
+        acc[normalizedEmail] = (acc[normalizedEmail] ?? 0) + 1;
+        return acc;
+      }, {});
+
+      const duplicateInviteEmails = Object.entries(inviteEmailCounts)
+        .filter(([, count]) => count > 1)
+        .map(([email]) => email);
+
+      if (duplicateInviteEmails.length > 0) {
+        setMemberEmailValidationError(
+          `Duplicate invite email address(es) found: ${ duplicateInviteEmails.join(', ') }`
+        );
+        return;
+      }
+
+      const duplicateEmailMembers = await Promise.all(
+        members.map(async (member) => {
+          const result = await isMemberEmailInUse(member.email);
+          return result.exists ? member.email : null;
+        })
+      );
+
+      const inUseEmails = duplicateEmailMembers.filter((email): email is string => Boolean(email));
+
+      if (inUseEmails.length > 0) {
+        setMemberEmailValidationError(
+          `One or more invited email addresses are already in use in Family Social: ${ inUseEmails.join(', ') }`
+        );
+        return;
+      }
+    }
 
     if (currentStep < steps.length - 1) {
       setPreviousStep(currentStep)
@@ -448,12 +500,13 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                     <CardFooter className="flex justify-center">
                       <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
                         <Link href="/family-setup-home">
-                          <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                          <Button type="button" variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
                         </Link>
                         <Button
+                          type="button"
                           onClick={ next }
                           className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
                           disabled={ currentStep === steps.length - 1 || isLoading }
@@ -477,7 +530,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           </h3>
                           <HoverCard openDelay={ 10 } closeDelay={ 100 }>
                             <HoverCardTrigger asChild>
-                              <Button className='w-auto text-xs md:text-sm' variant="link">Assign a unique Family Name. </Button>
+                              <Button type="button" className='w-auto text-xs md:text-sm' variant="link">Assign a unique Family Name. </Button>
                             </HoverCardTrigger>
                             <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
                               <div className="flex items-center gap-1" >
@@ -576,11 +629,12 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                     </div>
                     <CardFooter className="flex justify-center">
                       <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
-                        <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                        <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                           <CircleArrowLeft className="mr-1 h-4 w-4" />
                           Back
                         </Button>
                         <Button
+                          type="button"
                           onClick={ next }
                           className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
                           disabled={ currentStep === steps.length - 1 || isLoading || !familyNameGood }
@@ -631,14 +685,19 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           ) }
                         </div>
 
+                        { memberEmailValidationError && (
+                          <p className="text-sm text-red-500">{ memberEmailValidationError }</p>
+                        ) }
+
                       </CardContent>
                       <CardFooter className="flex justify-center">
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
-                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                          <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>
                           <Button
+                            type="button"
                             onClick={ next }
                             className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
                             disabled={ members.length === 0 }
@@ -738,7 +797,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                       </CardContent>
                       <CardFooter className="flex justify-center">
                         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
-                          <Button onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
+                          <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
                           </Button>

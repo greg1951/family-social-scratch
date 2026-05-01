@@ -59,7 +59,7 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
+        <Button type="button" className="bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
           <UserPlus className="mr-2 h-4 w-4" />
           Open Invitation Dialog
         </Button>

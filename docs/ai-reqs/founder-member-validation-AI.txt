@@ -1,0 +1,18 @@
+Background
+The new family setup form can be found in "src/app/(new-setup)/(family-setup)/family-setup-steps/index.tsx". 
+The form is a multi-step form that collects information about the family and its members. 
+Each of the steps can be found at these starting lines in the file:
+- Step 1: 271
+- Step 2: 469
+- Step 3: 595
+- Step 4: 654 
+
+Requirement
+At the present time the login to Family Social is email based, and each email address can only be associated with one member account.
+The goal of this requirement is to validate the email addresses that are entered in the family setup form. 
+- Step 1 collect information about the family founder, including their email address.
+- Step 3 collect information about the family members the founder is inviting, which includes their email addresses.
+
+In both of these steps, query the member table using the "getMemberDetailsByEmail" query to check if the email address entered is already associated with an existing member.
+- If the email address is already associated with an existing member, display an error message to the user indicating that the email address is already in use in Family Social.
+- If the email address is not associated with an existing member, allow the user to proceed with the family setup process.

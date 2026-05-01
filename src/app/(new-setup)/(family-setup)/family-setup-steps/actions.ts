@@ -1,6 +1,7 @@
 'use server';
 
 import { InsertInvitesReturn } from "@/components/db/types/family-member";
+import { getMemberDetailsByEmail } from "@/components/db/sql/queries-family-member";
 
 import { RegistrationMemberDetails } from "@/features/family/types/family-steps";
 import { Resend } from 'resend';
@@ -25,4 +26,15 @@ export const sendEmails = async (
       message: "No family invites to send."
     }
   }
+};
+
+export const isMemberEmailInUse = async (email: string): Promise<{ exists: boolean }> => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  if (!normalizedEmail) {
+    return { exists: false };
+  }
+
+  const memberResult = await getMemberDetailsByEmail(normalizedEmail);
+  return { exists: memberResult.success };
 };
