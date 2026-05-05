@@ -51,9 +51,6 @@ export default function PublicEntryShell({ children }: { children: ReactNode }) 
         <header className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-[0_20px_80px_-38px_rgba(16,54,74,0.45)] backdrop-blur">
           <div className="grid gap-3 px-4 py-3 md:grid-cols-[minmax(15rem,21rem)_minmax(0,1fr)_auto] md:items-start md:px-6 lg:px-8">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#276c8c]">
-                Sign In to Family Social
-              </p>
               <Link
                 href="/"
                 className="mt-3 inline-flex items-center rounded-full border border-[#2f7a95]/45 bg-white/65 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#276c8c] transition hover:bg-white/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#59cdf7]"
@@ -61,16 +58,6 @@ export default function PublicEntryShell({ children }: { children: ReactNode }) 
                 <ArrowLeft className="mr-2 size-4" />
                 Back to Main Page
               </Link>
-
-              <div className="max-w-sm rounded-[1.5rem] border border-white/65 bg-white/58 px-4 py-3 shadow-[0_18px_45px_-35px_rgba(16,54,74,0.65)] backdrop-blur">
-                {/* <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-[#2f7a95] md:text-xs">Find Your People</p> */ }
-                {/* <h1 className="mt-2 text-sm font-extrabold leading-tight text-[#10364a] md:text-[1rem]">
-                  Bring family stories and shared interests into one welcoming place.
-                </h1> */}
-                {/* <p className="mt-2 text-sm leading-5 text-[#5a7381]">
-                  From movie nights to recipes and poetry, the space stays warm, visual, and easy to return to.
-                </p> */}
-              </div>
             </div>
 
             <div className="relative min-h-36 overflow-hidden rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.58))] px-3 py-3 shadow-inner md:min-h-40 md:px-4 lg:min-h-44">

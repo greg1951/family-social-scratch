@@ -11,6 +11,7 @@ import {
   Bold,
   Columns2,
   Heart,
+  HelpCircle,
   Heading2,
   Heading3,
   Italic,
@@ -49,6 +50,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import { SHOW_SITE_BACKGROUND_COLOR_SCHEMES, normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 const TAG_TYPE_LABELS: Array<{ type: MovieTagType; label: string }> = [
@@ -60,6 +62,10 @@ const TAG_TYPE_LABELS: Array<{ type: MovieTagType; label: string }> = [
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
 const REACTION_NONE_VALUE = "none";
+
+type MovieSiteBackground = (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"];
+
+const ALLOWED_MOVIE_SITE_DOMAINS = ["imdb.com", "youtube.com", "youtu.be"];
 
 type ToolbarButtonProps = {
   label: string;
@@ -106,6 +112,31 @@ function revokeBlobUrl(url: string | null) {
   }
 }
 
+function validateMovieSiteUrl(url: string): string | null {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${ trimmed }`;
+
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol !== "https:") {
+      return null;
+    }
+
+    const host = parsed.hostname.toLowerCase();
+    const allowed = ALLOWED_MOVIE_SITE_DOMAINS.some(
+      (domain) => host === domain || host.endsWith(`.${ domain }`)
+    );
+
+    return allowed ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function getTemplateDocument(template?: MovieTemplateOption): JSONContent {
   if (!template?.templateJson) {
     return createEmptyTipTapDocument();
@@ -135,7 +166,22 @@ export function MovieAddPage({
     return globalTemplate ? String(globalTemplate.id) : TEMPLATE_NONE_VALUE;
   }, [movieTemplates]);
   const [movieTitle, setMovieTitle] = useState(initialMovie?.movieTitle ?? "");
-  const [movieCaption, setMovieCaption] = useState(initialMovie?.movieCaption ?? "");
+  const [movieImageCredit, setMovieImageCredit] = useState(initialMovie?.movieImageCredit ?? "");
+  const [movieSiteUrl, setMovieSiteUrl] = useState(initialMovie?.movieSiteUrl ?? "");
+  const [movieSiteBackground, setMovieSiteBackground] = useState<MovieSiteBackground>(
+    normalizeShowSiteBackgroundHex(initialMovie?.movieSiteBackground)
+  );
+  const [imageMode, setImageMode] = useState<"upload" | "url">(() => {
+    if (initialMovie?.movieSiteUrl) {
+      return "url";
+    }
+
+    if (initialMovie?.movieImageUrl) {
+      return "upload";
+    }
+
+    return "url";
+  });
   const [movieDebutYear, setMovieDebutYear] = useState(String(initialMovie?.movieDebutYear ?? new Date().getFullYear()));
   const [status, setStatus] = useState(initialMovie?.status ?? "draft");
   const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
@@ -333,12 +379,57 @@ export function MovieAddPage({
     }
 
     startSaveTransition(async () => {
+      const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
+
+      const baseInput = {
+        id: initialMovie?.id,
+        movieTitle: movieTitle.trim(),
+        submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE ? undefined : Number(submitterLikenessDegree),
+        movieJson: serializeTipTapDocument(editor.getJSON()),
+        status,
+        movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(),
+        templateId,
+        selectedTagIds,
+      };
+
+      if (imageMode === "url") {
+        const validUrl = validateMovieSiteUrl(movieSiteUrl);
+        if (!validUrl) {
+          toast.error("Movie Site URL must be a valid https URL from imdb.com or youtube.com.");
+          return;
+        }
+
+        const result = await saveMovieAction({
+          ...baseInput,
+          movieImageCredit: "",
+          movieSiteUrl: validUrl,
+          movieSiteBackground,
+          movieImageUrl: null,
+        });
+
+        if (!result.success) {
+          toast.error(result.message);
+          return;
+        }
+
+        toast.success(isEditing ? "Movie updated." : "Movie saved.");
+        router.push("/movies");
+        router.refresh();
+        return;
+      }
+
       const uploadedImageUrl = await uploadMovieImage();
       if (selectedFile && !uploadedImageUrl) {
         return;
       }
-      const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
-      const result = await saveMovieAction({ id: initialMovie?.id, movieTitle: movieTitle.trim(), movieCaption: movieCaption.trim(), submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE ? undefined : Number(submitterLikenessDegree), movieJson: serializeTipTapDocument(editor.getJSON()), status, movieImageUrl: uploadedImageUrl ?? movieImageUrl ?? null, movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
+
+      const result = await saveMovieAction({
+        ...baseInput,
+        movieImageCredit: movieImageCredit.trim(),
+        movieSiteUrl: null,
+        movieSiteBackground: "#000000",
+        movieImageUrl: uploadedImageUrl ?? movieImageUrl ?? null,
+      });
       if (!result.success) {
         toast.error(result.message);
         return;
@@ -384,9 +475,122 @@ export function MovieAddPage({
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-title">Movie Title</label>
                 <Input id="movie-title" value={ movieTitle } onChange={ (event) => setMovieTitle(event.target.value) } placeholder="Enter movie title" />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-caption">Caption</label>
-                <Input id="movie-caption" value={ movieCaption } onChange={ (event) => setMovieCaption(event.target.value) } placeholder="Short summary" />
+              <div className="space-y-3 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c2e1a]">
+                  Movie Image Option
+                  <span title="Help coming soon" aria-label="Movie image option help" className="inline-flex text-[#9b7359]">
+                    <HelpCircle className="size-4" />
+                  </span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={ [
+                      "border-[#e8c4a0] transition-all",
+                      imageMode === "upload"
+                        ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)]"
+                        : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
+                    ].join(" ") }
+                    onClick={ () => setImageMode("upload") }
+                    aria-pressed={ imageMode === "upload" }
+                  >
+                    <Upload className="mr-2 size-4" />
+                    Option 1: Upload Image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={ [
+                      "border-[#e8c4a0] transition-all",
+                      imageMode === "url"
+                        ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)]"
+                        : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
+                    ].join(" ") }
+                    onClick={ () => setImageMode("url") }
+                    aria-pressed={ imageMode === "url" }
+                  >
+                    <Link2 className="mr-2 size-4" />
+                    Option 2: Movie Site URL
+                  </Button>
+                </div>
+
+                { imageMode === "upload" ? (
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-image-credit">Image Credit</label>
+                      <Input
+                        id="movie-image-credit"
+                        value={ movieImageCredit }
+                        onChange={ (event) => setMovieImageCredit(event.target.value) }
+                        placeholder="Licensed under Creative Commons Attribution-ShareAlike 2.0 Generic license."
+                      />
+                    </div>
+                    <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage } />
+                    { imagePreviewUrl ? (
+                      <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
+                        {/* eslint-disable-next-line @next/next/no-img-element */ }
+                        <img src={ imagePreviewUrl } alt="Selected movie preview" className="h-48 w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={ () => {
+                            revokeBlobUrl(imagePreviewUrl);
+                            setSelectedFile(null);
+                            setMovieImageUrl(null);
+                            setImagePreviewUrl(null);
+                          } }
+                          className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white"
+                          aria-label="Remove image"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ) : null }
+                    <div className="flex items-center gap-2 text-xs text-[#8b5a3c]"><Upload className="size-3.5" />Upload a movie image to the S3 movies folder. Use an image around 800x450 pixels for best results.</div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-site-url">Movie Site URL</label>
+                      <p className="text-xs text-[#8b5a3c]">Only IMDb and YouTube URLs are accepted (must be https).</p>
+                      <Input
+                        id="movie-site-url"
+                        value={ movieSiteUrl }
+                        onChange={ (event) => setMovieSiteUrl(event.target.value) }
+                        placeholder="https://www.imdb.com/title/..."
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm font-semibold text-[#5c2e1a]">Background</label>
+                      <div className="flex items-center gap-2">
+                        { SHOW_SITE_BACKGROUND_COLOR_SCHEMES.map((scheme) => (
+                          <label
+                            key={ scheme.value }
+                            className="cursor-pointer shrink-0"
+                            htmlFor={ `movie-site-background-${ scheme.value }` }
+                          >
+                            <input
+                              id={ `movie-site-background-${ scheme.value }` }
+                              type="radio"
+                              name="movie-site-background"
+                              value={ scheme.value }
+                              checked={ movieSiteBackground === scheme.value }
+                              onChange={ () => setMovieSiteBackground(scheme.value) }
+                              className="peer sr-only"
+                            />
+                            <span className="inline-flex size-8 items-center justify-center rounded-lg border border-[#f0d9c4] bg-white transition-all peer-checked:border-[#b8581a] peer-checked:shadow-[0_0_0_2px_rgba(184,88,26,0.18)]">
+                              <span className="inline-flex size-5 rounded-full border border-white/60" style={ { backgroundColor: scheme.value } } />
+                              <span className="sr-only">{ scheme.label }</span>
+                            </span>
+                          </label>
+                        )) }
+                      </div>
+                    </div>
+                    <p className="text-xs text-[#8b5a3c]">
+                      The movie title will display in place of an image on the scroll strips. Clicking it will open the movie site URL.
+                    </p>
+                  </div>
+                ) }
               </div>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
@@ -451,30 +655,6 @@ export function MovieAddPage({
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
                 <Input id="movie-year" type="number" value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } />
-              </div>
-              <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
-                <label className="text-sm font-semibold text-[#5c2e1a]">Movie Image</label>
-                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage } />
-                { imagePreviewUrl ? (
-                  <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
-                    {/* eslint-disable-next-line @next/next/no-img-element */ }
-                    <img src={ imagePreviewUrl } alt="Selected movie preview" className="h-48 w-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={ () => {
-                        revokeBlobUrl(imagePreviewUrl);
-                        setSelectedFile(null);
-                        setMovieImageUrl(null);
-                        setImagePreviewUrl(null);
-                      } }
-                      className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white"
-                      aria-label="Remove image"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ) : null }
-                <div className="flex items-center gap-2 text-xs text-[#8b5a3c]"><Upload className="size-3.5" />Upload a movie image to the S3 movies folder. Use an image around 800x450 pixels for best results.</div>
               </div>
               <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
                 <p className="text-sm font-semibold text-[#5c2e1a]">Movie Tags</p>

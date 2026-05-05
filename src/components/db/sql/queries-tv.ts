@@ -427,7 +427,9 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
   return showRows.map((row) => ({
     id: row.id,
     showTitle: row.showTitle,
-    showCaption: row.showCaption,
+    showImageCredit: row.showImageCredit,
+    showSiteUrl: row.showSiteUrl,
+    showSiteBackground: row.showSiteBackground,
     showJson: row.showJson,
     status: row.status,
     showImageUrl: row.showImageUrl,
@@ -548,7 +550,9 @@ async function loadShowDetail(
   return {
     id: showRow.id,
     showTitle: showRow.showTitle,
-    showCaption: showRow.showCaption,
+    showImageCredit: showRow.showImageCredit,
+    showSiteUrl: showRow.showSiteUrl,
+    showSiteBackground: showRow.showSiteBackground,
     showJson: showRow.showJson,
     status: showRow.status,
     showImageUrl: showRow.showImageUrl,
@@ -714,7 +718,9 @@ export async function saveShow(
         .update(show)
         .set({
           showTitle: normalizedTitle,
-          showCaption: input.showCaption,
+          showImageCredit: input.showImageCredit,
+          showSiteUrl: input.showSiteUrl ?? null,
+          showSiteBackground: input.showSiteBackground ?? "#000000",
           showJson: showJsonToStore,
           status: input.status,
           showImageUrl: input.showImageUrl ?? null,
@@ -729,7 +735,9 @@ export async function saveShow(
         .insert(show)
         .values({
           showTitle: normalizedTitle,
-          showCaption: input.showCaption,
+          showImageCredit: input.showImageCredit,
+          showSiteUrl: input.showSiteUrl ?? null,
+          showSiteBackground: input.showSiteBackground ?? "#000000",
           showJson: showJsonToStore,
           status: input.status,
           showImageUrl: input.showImageUrl ?? null,

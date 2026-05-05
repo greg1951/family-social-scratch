@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 type BookDraft = {
   id: number;
@@ -843,9 +844,16 @@ export default function BooksHomePage({
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
                     Book Directory
                   </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
-                    Select a Book Submission
-                  </h2>
+                  <span className="inline-flex items-center gap-2 text-sm text-[#51707e]">
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
+                      Select a Book Submission
+                    </h2>
+                    <FeatureFaqHelp
+                      buttonClassName="border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
+                      iconClassName="text-[#1d6d8f]"
+                      tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
+                    />
+                  </span>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
                     Select a book in the Book Directory to see its details. Family members can also like a book and add comments.
                   </p>

@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import { getFounderDetails } from "@/features/family/services/get-founder-details";
 import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
 import MemberAvatar from "@/components/common/member-avatar";
+import PublicHelpMenu from "@/components/common/public-help-menu";
+import FounderFaqHelp from "@/components/common/founder-faq-help";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -96,7 +98,18 @@ export default async function FamilyMyAccountPage() {
               My Family Account
             </CardTitle>
             <CardDescription className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[#315363]">
-              Manage the <b>{ memberKeyDetails.familyName }</b> family settings here
+              <div className="flex items-start justify-end md:pt-1 md:self-start">
+                <span className="inline-flex items-center gap-2 text-sm text-[#5f7987]">
+                  <p>Manage the <b>{ memberKeyDetails.familyName }</b> family settings here</p>
+                  <FounderFaqHelp
+                    href="/founder-faq"
+                    buttonClassName="border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                    iconClassName="text-[#5f7987]"
+                    tooltipClassName="bg-[#315363] text-[#ecf9ff]"
+                  />
+                </span>
+              </div>
+
             </CardDescription>
           </CardHeader>
 

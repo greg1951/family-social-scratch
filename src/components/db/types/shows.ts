@@ -10,7 +10,9 @@ export interface ShowComment {
 export interface TvShow {
   id: number;
   showTitle: string;
-  showCaption: string;
+  showImageCredit: string;
+  showSiteUrl: string | null;
+  showSiteBackground: string;
   showJson: string;
   status: string;
   showImageUrl: string | null;
@@ -88,7 +90,9 @@ export type TvTemplateManagementDataReturn =
 export interface SaveShowInput {
   id?: number;
   showTitle: string;
-  showCaption: string;
+  showImageCredit: string;
+  showSiteUrl?: string | null;
+  showSiteBackground?: string | null;
   submitterLikenessDegree?: number;
   showJson: string;
   status: string;

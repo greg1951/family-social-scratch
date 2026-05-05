@@ -57,6 +57,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 type PoemDraft = {
   id: number;
@@ -978,9 +979,16 @@ export default function PoetryHomePage({
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                     Poem Directory
                   </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#43245d]">
-                    Select a Poem Submission
-                  </h2>
+                  <span className="inline-flex items-center gap-2 text-sm text-[#77578f]">
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#43245d]">
+                      Select a Poem Submission
+                    </h2>
+                    <FeatureFaqHelp
+                      buttonClassName="border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
+                      iconClassName="text-[#6e3f98]"
+                      tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
+                    />
+                  </span>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                     Select a poem in the Poem Directory to see its details. Or, if you like a poem then you can like it and comment on it as well.
                   </p>

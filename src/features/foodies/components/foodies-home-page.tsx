@@ -33,6 +33,7 @@ import {
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -187,6 +188,7 @@ export function FoodiesHomePage({
   const latestRecipes = latestRecipeRecords
     .map((recipe) => ({
       kind: "latest" as const,
+      id: recipe.id,
       name: recipe.recipeTitle,
       date: formatDate(recipe.updatedAt),
       submitterLikenessDegree: recipe.submitterLikenessDegree,
@@ -198,6 +200,7 @@ export function FoodiesHomePage({
     }));
 
   const topRatedRecipes = [...recipes]
+    .filter((recipe) => (recipe.thumbsUpCount + recipe.loveCount) > 0)
     .sort((leftRecipe, rightRecipe) => {
       const leftScore = leftRecipe.thumbsUpCount + leftRecipe.loveCount;
       const rightScore = rightRecipe.thumbsUpCount + rightRecipe.loveCount;
@@ -211,6 +214,7 @@ export function FoodiesHomePage({
     .slice(0, 8)
     .map((recipe) => ({
       kind: "top-rated" as const,
+      id: recipe.id,
       name: recipe.recipeTitle,
       submitterLikenessDegree: recipe.submitterLikenessDegree,
       noRating: recipe.noRatingCount,
@@ -791,6 +795,8 @@ export function FoodiesHomePage({
               description={ stripDescription }
               items={ stripItems }
               accentClassName={ stripAccentClassName }
+              selectedItemId={ selectedRecipe }
+              onSelectItem={ handleSelectRecipe }
             />
           </div>
 
@@ -801,7 +807,14 @@ export function FoodiesHomePage({
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
                     Recipe Directory
                   </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
+                  <span className="inline-flex items-center gap-2 text-sm text-[#647a50]">
+                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
+                    <FeatureFaqHelp
+                      buttonClassName="border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
+                      iconClassName="text-[#4f7a2a]"
+                      tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
+                    />
+                  </span>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
                     Search the recipe list, then select a row to keep one dish highlighted while you browse details.
                   </p>

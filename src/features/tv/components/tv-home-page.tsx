@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Edit3, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
+import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -28,8 +28,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -93,6 +95,53 @@ function ShowViewer({ showJson }: { showJson?: string }) {
     <div className="rounded-2xl border border-[#c6dcec] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c6dcec] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c6dcec] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c6dcec] [&_.tiptap_th]:bg-[#eaf5fb] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c6dcec] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
       <EditorContent editor={ viewer } />
     </div>
+  );
+}
+
+function ShowSitePreviewCard({
+  name,
+  showSiteUrl,
+  background,
+}: {
+  name: string;
+  showSiteUrl: string;
+  background: string;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={ () => setOpen(true) }
+        className="flex h-full w-full cursor-pointer items-center justify-center px-4 py-6"
+        style={ { backgroundColor: normalizeShowSiteBackgroundHex(background) } }
+        aria-label={ `Open site link for ${ name }` }
+      >
+        <span className="text-center text-lg font-black tracking-tight text-white">{ name }</span>
+      </button>
+
+      <Dialog open={ open } onOpenChange={ setOpen }>
+        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl p-0">
+          <div className="border-b border-[#c6dcec] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,249,255,0.9))] px-6 py-5">
+            <h2 className="text-lg font-black tracking-tight text-[#15384a]">{ name }</h2>
+          </div>
+          <div className="flex flex-col items-center gap-4 px-6 py-6">
+            <p className="text-center text-sm text-[#5f7987]">Visit the show site for more information.</p>
+            <a
+              href={ showSiteUrl }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full bg-[#15384a] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1f4d65] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d87a8]"
+            >
+              <ExternalLink className="size-4" />
+              { showSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
+            </a>
+            <p className="break-all text-center text-xs text-[#8fa8b4]">{ showSiteUrl }</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -173,17 +222,21 @@ export function TvHomePage({
 
   const latestShows = latestShowRecords.map((show) => ({
     kind: "latest" as const,
+    id: show.id,
     name: show.showTitle,
     date: formatDate(show.updatedAt),
     submitterLikenessDegree: show.submitterLikenessDegree,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
     love: show.loveCount,
-    imageSrc: show.showImageUrl ?? "/images/tv-shows/landman-tablet.png",
+    imageSrc: show.showImageUrl ?? null,
     imageAlt: `${ show.showTitle } show image`,
+    showSiteUrl: show.showSiteUrl ?? null,
+    showSiteBackground: show.showSiteBackground,
   }));
 
   const topRatedShows = [...shows]
+    .filter((show) => (show.thumbsUpCount + show.loveCount) > 0)
     .sort((leftShow, rightShow) => {
       const leftScore = leftShow.thumbsUpCount + leftShow.loveCount;
       const rightScore = rightShow.thumbsUpCount + rightShow.loveCount;
@@ -197,14 +250,17 @@ export function TvHomePage({
     .slice(0, 8)
     .map((show) => ({
       kind: "top-rated" as const,
+      id: show.id,
       name: show.showTitle,
       submitterLikenessDegree: show.submitterLikenessDegree,
       noRating: show.noRatingCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
       commentsCount: show.commentCount,
-      imageSrc: show.showImageUrl ?? "/images/tv-shows/always-sunny-tablet.png",
+      imageSrc: show.showImageUrl ?? null,
       imageAlt: `${ show.showTitle } show image`,
+      showSiteUrl: show.showSiteUrl ?? null,
+      showSiteBackground: show.showSiteBackground,
     }));
 
   const stripItems = showStripMode === "latest" ? latestShows : topRatedShows;
@@ -354,7 +410,7 @@ export function TvHomePage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+    <section className="font-app w-full h-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -446,7 +502,7 @@ export function TvHomePage({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[780px_1fr] md:gap-2">
           <div className="min-w-0 space-y-6">
             <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(9,44,62,0.8)] backdrop-blur sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
@@ -484,6 +540,8 @@ export function TvHomePage({
               description={ stripDescription }
               items={ stripItems }
               accentClassName={ stripAccentClassName }
+              selectedShowId={ selectedShow }
+              onSelectShow={ handleSelectShow }
             />
           </div>
 
@@ -495,7 +553,15 @@ export function TvHomePage({
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
                       TV Directory
                     </p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
+                    <span className="inline-flex items-center gap-2 text-sm text-[#5f7987]">
+                      <h2 className="mt-2 text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=TV%20and%20Movie%20Reviews"
+                        buttonClassName="border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                        iconClassName="text-[#2a819d]"
+                        tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
+                      />
+                    </span>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
                       Search by show title, tags, channel, or family member and pick what to watch next.
                     </p>
@@ -745,19 +811,33 @@ export function TvHomePage({
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-2xl border border-[#c6dcec] bg-white">
                     <div className="aspect-16/10 overflow-hidden">
-                      <ModalShowImage
-                        src={ selectedShowBasic.showImageUrl ?? "/images/tv-shows/landman-tablet.png" }
-                        alt={ `${ selectedShowBasic.showTitle } show image` }
-                      />
+                      { selectedShowBasic.showImageUrl ? (
+                        <ModalShowImage
+                          src={ selectedShowBasic.showImageUrl }
+                          alt={ `${ selectedShowBasic.showTitle } show image` }
+                        />
+                      ) : selectedShowBasic.showSiteUrl ? (
+                        <ShowSitePreviewCard
+                          name={ selectedShowBasic.showTitle }
+                          showSiteUrl={ selectedShowBasic.showSiteUrl }
+                          background={ selectedShowBasic.showSiteBackground }
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[#173444] px-4">
+                          <span className="text-center text-sm font-semibold text-white/80">No show image available.</span>
+                        </div>
+                      ) }
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Caption</p>
-                    <p className="mt-2 text-sm leading-6 text-[#3f6576]">
-                      { selectedShowBasic.showCaption || "No caption provided." }
-                    </p>
-                  </div>
+                  { !selectedShowBasic.showSiteUrl ? (
+                    <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Image Credit</p>
+                      <p className="mt-2 text-sm leading-6 text-[#3f6576]">
+                        { selectedShowBasic.showImageCredit || "No image credit provided." }
+                      </p>
+                    </div>
+                  ) : null }
 
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Details</p>

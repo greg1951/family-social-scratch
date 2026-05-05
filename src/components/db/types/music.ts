@@ -15,6 +15,7 @@ export interface MusicRecord {
   status: string;
   isSong: boolean;
   musicImageUrl: string | null;
+  hasLyrics?: boolean;
   musicDebutYear: number;
   updatedAt: Date;
   memberId: number;

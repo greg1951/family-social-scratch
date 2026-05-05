@@ -43,7 +43,7 @@ The new supportIssue must be assigned to a supportPerson that is associated with
 --------------------
 
 The open-issue form needs to be brought up to the prevalent design standards of the app. 
-- As an example of what constitutes the prevailing look and feel standard, look at the top heading of the SupportFaqHomePage.  
+- As an example of what constitutes the prevailing look and feel standard, look at the top heading of the GeneralFaqHomePage.  
 - The support pages should follow the same color scheme, typography, and general design aesthetic as the rest of the app to ensure a cohesive user experience.
 
 Below the heading, the form should be organized in a clear and user-friendly manner, with appropriate spacing and alignment of form fields.

@@ -415,7 +415,9 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
   return movieRows.map((row) => ({
     id: row.id,
     movieTitle: row.movieTitle,
-    movieCaption: row.movieCaption,
+    movieImageCredit: row.movieImageCredit,
+    movieSiteUrl: row.movieSiteUrl,
+    movieSiteBackground: row.movieSiteBackground,
     movieJson: row.movieJson,
     status: row.status,
     movieImageUrl: row.movieImageUrl,
@@ -534,7 +536,9 @@ async function loadMovieDetail(
   return {
     id: movieRow.id,
     movieTitle: movieRow.movieTitle,
-    movieCaption: movieRow.movieCaption,
+    movieImageCredit: movieRow.movieImageCredit,
+    movieSiteUrl: movieRow.movieSiteUrl,
+    movieSiteBackground: movieRow.movieSiteBackground,
     movieJson: movieRow.movieJson,
     status: movieRow.status,
     movieImageUrl: movieRow.movieImageUrl,
@@ -702,7 +706,9 @@ export async function saveMovie(
         .update(movie)
         .set({
           movieTitle: normalizedTitle,
-          movieCaption: input.movieCaption,
+          movieImageCredit: input.movieImageCredit,
+          movieSiteUrl: input.movieSiteUrl ?? null,
+          movieSiteBackground: input.movieSiteBackground ?? "#000000",
           movieJson: movieJsonToStore,
           status: input.status,
           movieImageUrl: input.movieImageUrl ?? null,
@@ -715,7 +721,9 @@ export async function saveMovie(
         .insert(movie)
         .values({
           movieTitle: normalizedTitle,
-          movieCaption: input.movieCaption,
+          movieImageCredit: input.movieImageCredit,
+          movieSiteUrl: input.movieSiteUrl ?? null,
+          movieSiteBackground: input.movieSiteBackground ?? "#000000",
           movieJson: movieJsonToStore,
           status: input.status,
           movieImageUrl: input.movieImageUrl ?? null,

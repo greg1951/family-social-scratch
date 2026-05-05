@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 
 type LatestRecipe = {
   kind: "latest";
+  id: number;
   name: string;
   date: string;
   submitterLikenessDegree: number | null;
@@ -21,6 +22,7 @@ type LatestRecipe = {
 
 type TopRatedRecipe = {
   kind: "top-rated";
+  id: number;
   name: string;
   submitterLikenessDegree: number | null;
   noRating: number;
@@ -38,6 +40,8 @@ type FoodiesScrollStripProps = {
   description: string;
   items: RecipeScrollItem[];
   accentClassName: string;
+  selectedItemId?: number;
+  onSelectItem?: (id: number) => void;
 };
 
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
@@ -127,6 +131,8 @@ export function FoodiesScrollStrip({
   description,
   items,
   accentClassName,
+  selectedItemId,
+  onSelectItem,
 }: FoodiesScrollStripProps) {
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
@@ -144,58 +150,59 @@ export function FoodiesScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
         <div
-          className="grid max-h-132 grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2"
+          className="grid max-h-132 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
         >
-          { items.map((item) => (
-            <article
-              key={ item.name }
-              className="min-w-0"
-            >
-              <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
-                <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
-                  <div className="relative aspect-16/10 overflow-hidden">
-                    <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                    { item.kind === "latest" ? (
-                      <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                        Fresh recipe
-                      </div>
-                    ) : item.thumbsUp + item.love > 0 ? (
-                      <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                        Fan favorite
-                      </div>
-                    ) : null }
-                  </div>
+          { items.map((item) => {
+            const isSelected = selectedItemId === item.id;
 
-                  <div className="space-y-3 px-4 py-4">
-                    <div>
-                      <div className="flex items-center justify-between gap-3">
-                        <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
-                        <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
-                      </div>
+            return (
+              <article
+                key={ item.name }
+                className="min-w-0"
+              >
+                <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", isSelected ? "ring-2 ring-[#2d87a8] ring-offset-1" : accentClassName) }>
+                  <div
+                    role={ onSelectItem ? "button" : undefined }
+                    tabIndex={ onSelectItem ? 0 : undefined }
+                    onClick={ onSelectItem ? () => onSelectItem(item.id) : undefined }
+                    onKeyDown={ onSelectItem ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectItem(item.id); } } : undefined }
+                    aria-label={ onSelectItem ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
+                    aria-pressed={ onSelectItem ? isSelected : undefined }
+                    className={ cn(
+                      "overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]",
+                      onSelectItem && "cursor-pointer",
+                      onSelectItem && !isSelected && "hover:bg-[#f0faff]",
+                      isSelected && "bg-[#eaf7ff]",
+                    ) }
+                  >
+                    <div className="relative aspect-16/10 overflow-hidden">
+                      <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                       { item.kind === "latest" ? (
-                        <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
-                          <span>{ item.date }</span>
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                            <ThumbsUp className="size-4 text-[#2d87a8]" />
-                            { item.thumbsUp.toLocaleString() }
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
-                            <Heart className="size-4 text-[#cf3f7f]" />
-                            { item.love.toLocaleString() }
-                          </span>
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                            <MessageSquareText className="size-4 text-[#2d87a8]" />
-                            { item.commentsCount.toLocaleString() }
-                          </span>
+                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                          Fresh recipe
                         </div>
-                      ) : (
-                        <div className="mt-2 grid gap-2 text-sm text-[#607887]">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#425e6d]">
-                              <ThumbsDown className="size-4 text-[#7e99a7]" />
-                              { item.noRating.toLocaleString() }
-                            </span>
+                      ) : item.thumbsUp + item.love > 0 ? (
+                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                          Fan favorite
+                        </div>
+                      ) : null }
+                      { isSelected ? (
+                        <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#15384a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
+                          Selected
+                        </div>
+                      ) : null }
+                    </div>
+
+                    <div className="space-y-3 px-4 py-4">
+                      <div>
+                        <div className="flex items-center justify-between gap-3">
+                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                        </div>
+                        { item.kind === "latest" ? (
+                          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
+                            <span>{ item.date }</span>
                             <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
                               <ThumbsUp className="size-4 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }
@@ -204,19 +211,40 @@ export function FoodiesScrollStrip({
                               <Heart className="size-4 text-[#cf3f7f]" />
                               { item.love.toLocaleString() }
                             </span>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                              <MessageSquareText className="size-4 text-[#2d87a8]" />
+                              { item.commentsCount.toLocaleString() }
+                            </span>
                           </div>
-                          <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                            <MessageSquareText className="size-4 text-[#2d87a8]" />
-                            { item.commentsCount.toLocaleString() }
-                          </span>
-                        </div>
-                      ) }
+                        ) : (
+                          <div className="mt-2 grid gap-2 text-sm text-[#607887]">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#425e6d]">
+                                <ThumbsDown className="size-4 text-[#7e99a7]" />
+                                { item.noRating.toLocaleString() }
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                                <ThumbsUp className="size-4 text-[#2d87a8]" />
+                                { item.thumbsUp.toLocaleString() }
+                              </span>
+                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                                <Heart className="size-4 text-[#cf3f7f]" />
+                                { item.love.toLocaleString() }
+                              </span>
+                            </div>
+                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
+                              <MessageSquareText className="size-4 text-[#2d87a8]" />
+                              { item.commentsCount.toLocaleString() }
+                            </span>
+                          </div>
+                        ) }
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </article>
-          )) }
+              </article>
+            );
+          }) }
         </div>
       </CardContent>
     </Card>

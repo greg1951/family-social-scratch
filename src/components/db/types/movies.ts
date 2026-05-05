@@ -10,7 +10,9 @@ export interface MovieComment {
 export interface MovieRecord {
   id: number;
   movieTitle: string;
-  movieCaption: string;
+  movieImageCredit: string;
+  movieSiteUrl: string | null;
+  movieSiteBackground: string;
   movieJson: string;
   status: string;
   movieImageUrl: string | null;
@@ -86,7 +88,9 @@ export type MovieTemplateManagementDataReturn =
 export interface SaveMovieInput {
   id?: number;
   movieTitle: string;
-  movieCaption: string;
+  movieImageCredit: string;
+  movieSiteUrl?: string | null;
+  movieSiteBackground?: string | null;
   submitterLikenessDegree?: number;
   movieJson: string;
   status: string;

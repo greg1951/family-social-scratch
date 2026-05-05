@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -109,9 +110,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     .slice(0, 8)
     .map((music) => ({
       kind: "latest" as const,
+      id: music.id,
       name: music.musicTitle,
       date: formatDate(music.updatedAt),
       reviewType: music.isSong ? "Song" as const : "Album" as const,
+      hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.submitterLikenessDegree,
       commentsCount: music.commentCount,
       thumbsUp: music.thumbsUpCount,
@@ -121,6 +124,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     }));
 
   const topRatedMusics = [...musics]
+    .filter((music) => (music.thumbsUpCount + music.loveCount) > 0)
     .sort((leftMusic, rightMusic) => {
       const leftScore = leftMusic.thumbsUpCount + leftMusic.loveCount;
       const rightScore = rightMusic.thumbsUpCount + rightMusic.loveCount;
@@ -134,6 +138,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     .slice(0, 8)
     .map((music) => ({
       kind: "top-rated" as const,
+      id: music.id,
       name: music.musicTitle,
       submitterLikenessDegree: music.submitterLikenessDegree,
       noRating: music.noRatingCount,
@@ -270,14 +275,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="rounded-full bg-white text-[#6b2f10] hover:bg-[#ffe8d1]"><Eye className="size-4" />View Music</Button>
                   <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"><Link href="/music/add-music"><Plus className="size-4" />Add Music</Link></Button>
                   <Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Music</Button>
-                  { canViewLyricsSelectedMusic ? (
-                    <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-                      <Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-4" />View Lyrics</Link>
-                    </Button>
-                  ) : null }
                   <Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Lyrics</Button>
                 </div>
               </div>
@@ -323,6 +322,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
               description={ stripDescription }
               items={ stripItems }
               accentClassName={ stripAccentClassName }
+              selectedItemId={ selectedMusic }
+              onSelectItem={ setSelectedMusic }
             />
           </div>
 
@@ -330,8 +331,17 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
               <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.85))] px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Music Directory</p><h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">Music Finder</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by title, genre, song or album, and family member.</p></div>
-                  <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMusics.length } music posts found</div>
+                  <div>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
+                      Music Directory</p>
+                    <span className="mt-2 inline-flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c] sm:flex-nowrap">
+                      <h2 className="text-2xl font-black tracking-tight text-[#5c2e1a]">
+                        Music Finder</h2>
+                      <FeatureFaqHelp href="/feature-faq?category=Music%20Lovers" buttonClassName="border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]" iconClassName="text-[#b8581a]" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]" /><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Music</Button>{ canViewLyricsSelectedMusic ? <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link></Button> : null }
+                    </span>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">
+                      Search by title, genre, song or album, and family member.</p></div>
+                  {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMusics.length } music posts found</div> */ }
                 </div>
 
                 <div className="relative mt-5"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search music" /></div>

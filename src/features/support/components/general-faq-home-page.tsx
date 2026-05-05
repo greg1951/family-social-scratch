@@ -7,13 +7,15 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
-import { faqItems } from "../types/constants";
+import { generalFaqItems } from "../types/constants";
 import { useState, useMemo } from "react";
 import { HelpCircle } from "lucide-react";
 
 
 // --- State for category selection ---
-export function SupportFaqHomePage() {
+export function GeneralFaqHomePage() {
+  const faqItems = generalFaqItems;
+
   const [selectedCategory, setSelectedCategory] = useState("");
 
   // Get unique categories from faqItems

@@ -9,9 +9,11 @@ import { cn } from "@/lib/utils";
 
 type LatestMusicItem = {
   kind: "latest";
+  id: number;
   name: string;
   date: string;
   reviewType: "Song" | "Album";
+  hasLyrics: boolean;
   submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
@@ -22,6 +24,7 @@ type LatestMusicItem = {
 
 type TopRatedMusicItem = {
   kind: "top-rated";
+  id: number;
   name: string;
   submitterLikenessDegree: number | null;
   noRating: number;
@@ -39,6 +42,8 @@ type MusicScrollStripProps = {
   description: string;
   items: MusicScrollItem[];
   accentClassName: string;
+  selectedItemId?: number;
+  onSelectItem?: (id: number) => void;
 };
 
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
@@ -70,6 +75,8 @@ export function MusicScrollStrip({
   description,
   items,
   accentClassName,
+  selectedItemId,
+  onSelectItem,
 }: MusicScrollStripProps) {
   function MusicImage({ src, alt }: { src: string; alt: string }) {
     const [resolvedSrc, setResolvedSrc] = useState(src);
@@ -145,65 +152,93 @@ export function MusicScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
         <div
-          className="grid max-h-132 grid-cols-1 gap-3 overflow-y-auto pr-1 sm:grid-cols-2"
+          className="grid max-h-800 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
         >
-          { items.map((item) => (
-            <article
-              key={ item.name }
-              className="min-w-0"
-            >
-              <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", accentClassName) }>
-                <div className="overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]">
-                  <div className="relative aspect-16/10 overflow-hidden">
-                    <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
-                    <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                    <div className="absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                      { item.kind === "latest" ? "Latest review" : "Top rated" }
-                    </div>
-                  </div>
+          { items.map((item) => {
+            const isSelected = selectedItemId === item.id;
 
-                  <div className="space-y-3 px-4 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
-                        { item.kind === "latest" ? (
-                          <p className="mt-1 text-sm text-[#607887]">Updated { item.date }</p>
-                        ) : null }
+            return (
+              <article
+                key={ item.name }
+                className="min-w-0"
+              >
+                <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", isSelected ? "ring-2 ring-[#245475] ring-offset-1" : accentClassName) }>
+                  <div
+                    role={ onSelectItem ? "button" : undefined }
+                    tabIndex={ onSelectItem ? 0 : undefined }
+                    onClick={ onSelectItem ? () => onSelectItem(item.id) : undefined }
+                    onKeyDown={ onSelectItem ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectItem(item.id); } } : undefined }
+                    aria-label={ onSelectItem ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
+                    aria-pressed={ onSelectItem ? isSelected : undefined }
+                    className={ cn(
+                      "overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]",
+                      onSelectItem && "cursor-pointer",
+                      onSelectItem && !isSelected && "hover:bg-[#f8f5ff]",
+                      isSelected && "bg-[#f0f5ff]",
+                    ) }
+                  >
+                    <div className="relative aspect-16/10 overflow-hidden">
+                      <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
+                      { item.kind === "top-rated" ? (
+                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                          Top rated
+                        </div>
+                      ) : item.reviewType === "Song" && item.hasLyrics ? (
+                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
+                          Lyrics
+                        </div>
+                      ) : null }
+                      { isSelected ? (
+                        <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#15384a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
+                          Selected
+                        </div>
+                      ) : null }
+                    </div>
+
+                    <div className="space-y-3 px-4 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <h3 className="line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                          { item.kind === "latest" ? (
+                            <p className="mt-1 text-sm text-[#607887]">Updated { item.date }</p>
+                          ) : null }
+                        </div>
+
+                        <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                       </div>
 
-                      <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#21536a]">
-                      { item.kind === "top-rated" ? (
-                        <span className="inline-flex items-center gap-1.5 text-[#5f6a70]">
-                          <ThumbsDown className="size-4 text-[#66757d]" />
-                          { item.noRating.toLocaleString() }
+                      <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#21536a]">
+                        { item.kind === "top-rated" ? (
+                          <span className="inline-flex items-center gap-1.5 text-[#5f6a70]">
+                            <ThumbsDown className="size-4 text-[#66757d]" />
+                            { item.noRating.toLocaleString() }
+                          </span>
+                        ) : null }
+                        <span className="inline-flex items-center gap-1.5 text-[#245475]">
+                          <ThumbsUp className="size-4 text-[#2d87a8]" />
+                          { item.thumbsUp.toLocaleString() }
                         </span>
-                      ) : null }
-                      <span className="inline-flex items-center gap-1.5 text-[#245475]">
-                        <ThumbsUp className="size-4 text-[#2d87a8]" />
-                        { item.thumbsUp.toLocaleString() }
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 text-[#8d2f59]">
-                        <Heart className="size-4 fill-[#bf3f73] text-[#bf3f73]" />
-                        { item.love.toLocaleString() }
-                      </span>
-                      <span className="inline-flex items-center gap-1.5 text-[#245475]">
-                        <MessageSquareText className="size-4 text-[#2d87a8]" />
-                        { item.commentsCount.toLocaleString() }
-                      </span>
-                      { item.kind === "latest" ? (
-                        <span className="ml-auto inline-flex items-center rounded-full bg-[#eef6fb] px-2.5 py-1 text-xs uppercase tracking-[0.16em] text-[#2d6a82]">
-                          { item.reviewType }
+                        <span className="inline-flex items-center gap-1.5 text-[#8d2f59]">
+                          <Heart className="size-4 fill-[#bf3f73] text-[#bf3f73]" />
+                          { item.love.toLocaleString() }
                         </span>
-                      ) : null }
+                        <span className="inline-flex items-center gap-1.5 text-[#245475]">
+                          <MessageSquareText className="size-4 text-[#2d87a8]" />
+                          { item.commentsCount.toLocaleString() }
+                        </span>
+                        { item.kind === "latest" ? (
+                          <span className="ml-auto inline-flex items-center rounded-full bg-[#eef6fb] px-2.5 py-1 text-xs uppercase tracking-[0.16em] text-[#2d6a82]">
+                            { item.reviewType }
+                          </span>
+                        ) : null }
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </article>
-          )) }
+              </article>
+            );
+          }) }
         </div>
       </CardContent>
     </Card>

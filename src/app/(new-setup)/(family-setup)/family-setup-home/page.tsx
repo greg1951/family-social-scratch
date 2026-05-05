@@ -10,7 +10,7 @@ export default function FamilyHome() {
   const steps = familySteps;
 
   return (
-    <Card className="w-90 border-slate-200 bg-linear-to-b from-white to-slate-50 shadow-lg md:w-230">
+    <Card className="w-90 border-slate-200 bg-linear-to-b from-white to-slate-50 shadow-lg md:w-230 pt-0">
       <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -92,12 +92,12 @@ export default function FamilyHome() {
           </p>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-between">
-            <Link href="/" className="w-full sm:w-auto">
+            {/* <Link href="/" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] sm:w-auto">
                 <Home className="mr-2 h-4 w-4" />
                 Back to Home
               </Button>
-            </Link>
+            </Link> */}
 
             <Link href="/family-setup-steps" className="w-full sm:w-auto">
               <Button size="lg" className="w-full bg-[#59cdf7] text-slate-900 hover:bg-[#9de4fe] sm:w-auto">

@@ -404,7 +404,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
 
   const musicIds = musicRows.map((row) => row.id);
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, lyricsRows] = await Promise.all([
     db
       .select({
         musicId: musicComment.musicId,
@@ -430,6 +430,12 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
       .from(musicTag)
       .innerJoin(musicTagReference, eq(musicTagReference.id, musicTag.tagId))
       .where(inArray(musicTag.musicId, musicIds)),
+    db
+      .select({
+        musicId: musicLyrics.musicId,
+      })
+      .from(musicLyrics)
+      .where(inArray(musicLyrics.musicId, musicIds)),
   ]);
 
   const memberIds = [...new Set(musicRows.map((row) => row.memberId))];
@@ -457,6 +463,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
   const viewerLikeByMusicId = new Map<number, number>();
   const tagIdsByMusicId = new Map<number, number[]>();
   const tagNamesByTypeByMusicId = new Map<number, Partial<Record<MusicTagType, string[]>>>();
+  const hasLyricsByMusicId = new Set<number>();
 
   for (const commentRow of commentRows) {
     if (commentRow.isMusicReviewer) {
@@ -500,6 +507,10 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     tagNamesByTypeByMusicId.set(tagRow.musicId, byType);
   }
 
+  for (const lyricsRow of lyricsRows) {
+    hasLyricsByMusicId.add(lyricsRow.musicId);
+  }
+
   return musicRows.map((row) => ({
     id: row.id,
     musicTitle: row.musicTitle,
@@ -508,6 +519,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     status: row.status,
     isSong: row.isSong,
     musicImageUrl: row.musicImageUrl,
+    hasLyrics: hasLyricsByMusicId.has(row.id),
     musicDebutYear: row.musicDebutYear,
     updatedAt: row.updatedAt ?? new Date(),
     memberId: row.memberId,
@@ -629,6 +641,7 @@ async function loadMusicDetail(
     status: musicRow.status,
     isSong: musicRow.isSong,
     musicImageUrl: musicRow.musicImageUrl,
+    hasLyrics: Boolean(lyrics),
     musicDebutYear: musicRow.musicDebutYear,
     updatedAt: musicRow.updatedAt ?? new Date(),
     memberId: musicRow.memberId,
