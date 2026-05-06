@@ -1,10 +1,9 @@
 "use client";
 
-import { ExternalLink, Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
@@ -71,58 +70,6 @@ function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | nul
     <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#fff3e8] p-2 shadow-sm">
       <SubmitterRatingIcon likenessDegree={ likenessDegree } />
     </span>
-  );
-}
-
-function MovieTitleCard({
-  name,
-  movieSiteUrl,
-  background,
-}: {
-  name: string;
-  movieSiteUrl: string;
-  background: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const resolvedBackground = normalizeShowSiteBackgroundHex(background);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={ () => setOpen(true) }
-        className="flex h-full w-full cursor-pointer items-center justify-center px-4 py-6"
-        style={ { backgroundColor: resolvedBackground } }
-        aria-label={ `View details for ${ name }` }
-      >
-        <span className="text-center text-lg font-black leading-tight tracking-tight text-white">
-          { name }
-        </span>
-      </button>
-
-      <Dialog open={ open } onOpenChange={ setOpen }>
-        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl p-0">
-          <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,248,240,0.9))] px-6 py-5">
-            <h2 className="text-lg font-black tracking-tight text-[#5c2e1a]">{ name }</h2>
-          </div>
-          <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <p className="text-center text-sm text-[#8b5a3c]">
-              Visit the movie site for more information.
-            </p>
-            <a
-              href={ movieSiteUrl }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[#5c2e1a] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#743b22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8581a]"
-            >
-              <ExternalLink className="size-4" />
-              { movieSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
-            </a>
-            <p className="break-all text-center text-xs text-[#a87a5a]">{ movieSiteUrl }</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
 
@@ -238,7 +185,9 @@ export function MovieScrollStrip({
                       { item.imageSrc ? (
                         <MovieImage src={ item.imageSrc } alt={ item.imageAlt } />
                       ) : item.movieSiteUrl ? (
-                        <MovieTitleCard name={ item.name } movieSiteUrl={ item.movieSiteUrl } background={ item.movieSiteBackground } />
+                        <div className="flex h-full w-full items-center justify-center px-4 py-6" style={ { backgroundColor: normalizeShowSiteBackgroundHex(item.movieSiteBackground) } }>
+                          <span className="text-center text-lg font-black leading-tight tracking-tight text-white/80">{ item.name }</span>
+                        </div>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[#3b2315]">
                           <span className="text-center text-sm font-semibold text-white/75">{ item.name }</span>
@@ -260,7 +209,22 @@ export function MovieScrollStrip({
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">
+                            { item.movieSiteUrl ? (
+                              <a
+                                href={ item.movieSiteUrl }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline-offset-2 hover:underline"
+                                onClick={ (event) => event.stopPropagation() }
+                                onKeyDown={ (event) => event.stopPropagation() }
+                              >
+                                { item.name }
+                              </a>
+                            ) : (
+                              item.name
+                            ) }
+                          </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
                         { item.kind === "latest" ? (

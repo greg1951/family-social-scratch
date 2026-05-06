@@ -13,7 +13,8 @@ import { HelpCircle } from "lucide-react";
 import BackButton from "@/components/common/back-button";
 
 const FEATURE_FAQ_CATEGORY_ALIASES: Record<string, string> = {
-  "tv and movie reviews": "Feature-General",
+  "tv and move reviews": "TV and Movie Reviews",
+  "tv and movie reviews": "TV and Movie Reviews",
 };
 
 function normalizeFeatureFaqCategory(category: string) {

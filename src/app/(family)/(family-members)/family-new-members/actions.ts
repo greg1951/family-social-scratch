@@ -8,9 +8,21 @@ import { RegistrationMemberDetails } from "@/features/family/types/family-steps"
 import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { revalidatePath } from "next/cache";
+import {
+  createFamilyActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "@/components/db/sql/queries-family-activity";
 
 
-export async function addNewAccountInvites({newInvites, familyId}: { newInvites: NewFamilyInvites, familyId: number }): Promise<InsertInvitesReturn> {
+export async function addNewAccountInvites({
+  newInvites,
+  familyId,
+  founderMemberId,
+}: {
+  newInvites: NewFamilyInvites;
+  familyId: number;
+  founderMemberId: number;
+}): Promise<InsertInvitesReturn> {
   
   // console.log('addNewAccountInvites->newInvites: ', newInvites); 
   const addInvitesResult = await addNewInvitesQuery({ newInvites, familyId });
@@ -21,6 +33,18 @@ export async function addNewAccountInvites({newInvites, familyId}: { newInvites:
       message: addInvitesResult.message,
     }
   }
+
+  await Promise.all(
+    addInvitesResult.invites.map((invite) =>
+      createFamilyActivityRecord({
+        actionType: FAMILY_ACTIVITY_ACTION_TYPES.INVITE_SENT,
+        featureName: 'Family Members',
+        postName: `${ invite.firstName } ${ invite.lastName }`,
+        familyId,
+        memberId: founderMemberId,
+      }),
+    ),
+  );
 
   revalidatePath("/family-founder-account");
   

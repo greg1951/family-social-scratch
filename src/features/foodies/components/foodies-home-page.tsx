@@ -711,16 +711,6 @@ export function FoodiesHomePage({
               <div className="flex flex-wrap gap-3">
                 <Button
                   type="button"
-                  onClick={ () => setIsViewRecipeOpen(true) }
-                  disabled={ !selectedRecipeBasic }
-                  className="rounded-full bg-white text-[#2f4820] hover:bg-[#f1ffe4]"
-                >
-                  <Eye className="size-4" />
-                  View Recipe
-                </Button>
-
-                <Button
-                  type="button"
                   variant="outline"
                   asChild
                   className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
@@ -810,19 +800,21 @@ export function FoodiesHomePage({
                   <span className="inline-flex items-center gap-2 text-sm text-[#647a50]">
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
                     <FeatureFaqHelp
+                      href="/feature-faq?category=Family+Foodies"
                       buttonClassName="border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
                       iconClassName="text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
+                    <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View Recipe</Button>
                   </span>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
                     Search the recipe list, then select a row to keep one dish highlighted while you browse details.
                   </p>
                 </div>
 
-                <div className="rounded-full border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm font-semibold text-[#415d2c]">
+                {/* <div className="rounded-full border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm font-semibold text-[#415d2c]">
                   { filteredRecipes.length } recipes found
-                </div>
+                </div> */}
               </div>
 
               <div className="relative mt-5">
@@ -1093,9 +1085,6 @@ export function FoodiesHomePage({
 
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Pro Tips</p>
-                    <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
-                      Submitter notes and extra guidance saved with this recipe.
-                    </p>
                     <div className="mt-3 space-y-3">
                       { selectedRecipeDetail?.recipeProTips.length === 0 ? (
                         <p className="text-sm text-[#647a50]">No pro tips were added for this recipe yet.</p>

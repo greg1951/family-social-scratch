@@ -291,9 +291,7 @@ async function loadFoodiesTemplateManagementRecords(
     await ensureGlobalRecipeTemplate(familyId, actorMemberId);
   }
 
-  const whereCondition = actorIsAdmin
-    ? eq(recipeTemplate.familyId, familyId)
-    : and(eq(recipeTemplate.familyId, familyId), eq(recipeTemplate.isGlobalTemplate, false));
+  const whereCondition = eq(recipeTemplate.familyId, familyId);
 
   const templateRows = await db
     .select({
@@ -427,6 +425,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
 
     if (recipeRow && likeRow.memberId === recipeRow.memberId) {
       submitterLikeByRecipeId.set(likeRow.recipeId, likeRow.likenessDegree);
+      continue;
     }
 
     if (likeRow.likenessDegree === 1) {
@@ -1049,9 +1048,10 @@ async function loadFoodiesRecipeDetail(
   );
 
   const submitterLike = likeRows.find((row) => row.memberId === recipeRow.memberId) ?? null;
-  const noRatingCount = likeRows.filter((row) => row.likenessDegree === -1).length;
-  const thumbsUpCount = likeRows.filter((row) => row.likenessDegree === 1).length;
-  const loveCount = likeRows.filter((row) => row.likenessDegree === 2).length;
+  const nonSubmitterLikeRows = likeRows.filter((row) => row.memberId !== recipeRow.memberId);
+  const noRatingCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === -1).length;
+  const thumbsUpCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === 1).length;
+  const loveCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === 2).length;
   const recipeProTipRows = commentRows.filter((row) => row.isRecipeProTip && !isEmptyRecipeProTipComment(row.commentJson));
   const familyCommentRows = commentRows.filter((row) => !row.isRecipeProTip);
 

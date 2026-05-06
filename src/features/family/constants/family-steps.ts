@@ -41,6 +41,7 @@
         { id: 3, label: 'Add member notifications', status: 'pending' },
         { id: 4, label: 'Update member invitation status', status: 'pending' },
         { id: 5, label: 'Send login instructions email', status: 'pending' },
+      { id: 6, label: 'Notify family founder in Threads', status: 'pending' },
   ];
 
   export const initialNewInviteSteps: SubmissionStep[] = [

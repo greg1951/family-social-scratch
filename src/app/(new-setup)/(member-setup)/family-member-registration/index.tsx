@@ -12,7 +12,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { CircleCheck, Eye, EyeOff, CircleX, CircleHelp } from "lucide-react";
 import { MemberRegistrationSchema } from '@/features/family/components/validation/schema';
-import { addMemberCreds, addMemberNotifications, addRegisteredMember, updateInviteStatus } from './actions';
+import {
+  addMemberCreds,
+  addMemberNotifications,
+  addRegisteredMember,
+  notifyFounderOfNewMemberRegistration,
+  updateInviteStatus,
+} from './actions';
 import { SubmissionStep } from '@/features/family/types/family-steps';
 import { initialRegistrationSteps, inviteStatusJoined } from '@/features/family/constants/family-steps';
 import { StatusUpdateDialog } from '@/features/family/components/dialogs/status-update-dialog';
@@ -138,6 +144,21 @@ export default function FamilyMemberRegistrationForm({ memberToRegister, founder
         throw new Error(message);
       }
       updateStepStatus(5, 'completed');
+
+      // Step 6: Notify founder in threads
+      updateStepStatus(6, 'inProgress');
+      const notifyFounderResult = await notifyFounderOfNewMemberRegistration({
+        founderDetails,
+        newMemberId: addMemberResult.id,
+        newMemberFirstName: registeredMember.firstName,
+        newMemberLastName: registeredMember.lastName,
+        newMemberEmail: memberToRegister.email,
+      });
+      if (notifyFounderResult.error) {
+        updateStepStatus(6, 'error', notifyFounderResult.message);
+        throw new Error(notifyFounderResult.message);
+      }
+      updateStepStatus(6, 'completed');
 
       form.reset(data);
 

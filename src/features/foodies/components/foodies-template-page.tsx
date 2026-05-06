@@ -254,7 +254,7 @@ export function FoodiesTemplatePage({
                 Recipe Templates
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
-                A global recipe template is defined (but not listed). Here you may create family templates for your own use.
+                The global recipe template is listed for reference. Here you may create and edit your own family templates.
               </p>
             </div>
 
@@ -352,7 +352,7 @@ export function FoodiesTemplatePage({
       </div>
 
       <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#cadfbb] bg-[#fbfff3]">
+        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none sm:max-w-none max-h-[90vh] overflow-hidden border-[#cadfbb] bg-[#fbfff3]">
           <DialogHeader>
             <DialogTitle className="text-[#2f4820]">
               { dialogMode === "create" ? "Create Recipe Template" : "Update Recipe Template" }
@@ -391,9 +391,9 @@ export function FoodiesTemplatePage({
 
             <div className="space-y-3">
               <p className="text-sm font-bold text-[#2f4820]">Template content (TipTap)</p>
-              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
+              <div className="space-y-2">
                 <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-1.5 py-2">
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+                  <div className="flex flex-wrap gap-2">
                     <ToolbarButton
                       label="Heading 2"
                       onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }

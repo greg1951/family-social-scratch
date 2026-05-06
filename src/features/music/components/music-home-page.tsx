@@ -262,7 +262,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Music Lovers</p>
               <Link href="/" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Main Page</Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Keep your family&apos;s favorite songs, albums, and reviews in one place.</h1>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your family&apos;s favorite song and album reviews and lyrics in one place.</h1>
               <Link href="/music/templates" className="ml-3 mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Music Templates</Link>
             </div>
             {/* <Link href="/music/templates"><Edit3 className="size-4" />Music Templates</Link> */ }

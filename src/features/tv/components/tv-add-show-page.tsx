@@ -53,7 +53,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
-import { SHOW_SITE_BACKGROUND_COLOR_SCHEMES, normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
+import { SHOW_SITE_BACKGROUND_COLOR_SCHEMES, normalizeShowSiteBackgroundHex, validateImageCredit } from "@/features/support/types/constants";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 const TAG_TYPE_LABELS: Array<{ type: ShowTagType; label: string }> = [
@@ -173,21 +173,11 @@ export function TvAddShowPage({
   }, [initialShow, showTemplates]);
   const [showTitle, setShowTitle] = useState(initialShow?.showTitle ?? "");
   const [showImageCredit, setShowImageCredit] = useState(initialShow?.showImageCredit ?? "");
+  const [showImageCreditError, setShowImageCreditError] = useState<string | null>(null);
   const [showSiteUrl, setShowSiteUrl] = useState(initialShow?.showSiteUrl ?? "");
   const [showSiteBackground, setShowSiteBackground] = useState<ShowSiteBackground>(
     normalizeShowSiteBackgroundHex(initialShow?.showSiteBackground)
   );
-  const [imageMode, setImageMode] = useState<"upload" | "url">(() => {
-    if (initialShow?.showSiteUrl) {
-      return "url";
-    }
-
-    if (initialShow?.showImageUrl) {
-      return "upload";
-    }
-
-    return "url";
-  });
   const [showFirstYear, setShowFirstYear] = useState(String(initialShow?.showFirstYear ?? new Date().getFullYear()));
   const [showLastYear, setShowLastYear] = useState(String(initialShow?.showLastYear ?? new Date().getFullYear()));
   const [seasonCount, setSeasonCount] = useState(String(initialShow?.seasonCount ?? 1));
@@ -327,6 +317,16 @@ export function TvAddShowPage({
   useEffect(() => () => {
     revokeBlobUrl(imagePreviewUrl);
   }, [imagePreviewUrl]);
+
+  useEffect(() => {
+    if (!selectedFile && !showImageUrl) {
+      setShowImageCreditError(null);
+      return;
+    }
+
+    const validation = validateImageCredit(showImageCredit);
+    setShowImageCreditError(validation.isValid ? null : validation.errorMessage ?? null);
+  }, [selectedFile, showImageCredit, showImageUrl]);
 
   function setSelectedTagForType(tagType: ShowTagType, tagId: string) {
     setSelectedTagsByType((currentState) => ({
@@ -499,33 +499,22 @@ export function TvAddShowPage({
         selectedTagIds,
       };
 
-      if (imageMode === "url") {
-        const validUrl = validateShowSiteUrl(showSiteUrl);
-        if (!validUrl) {
-          toast.error("Show Site URL must be a valid https URL from imdb.com or youtube.com.");
-          return;
-        }
-
-        const result = await saveShowAction({
-          ...baseInput,
-          showImageCredit: "",
-          showSiteUrl: validUrl,
-          showSiteBackground,
-          showImageUrl: null,
-        });
-
-        if (!result.success) {
-          toast.error(result.message);
-          return;
-        }
-
-        toast.success(isEditing ? "Show updated." : "Show saved.");
-        router.push("/tv");
-        router.refresh();
+      const normalizedShowSiteUrl = showSiteUrl.trim();
+      const validUrl = normalizedShowSiteUrl ? validateShowSiteUrl(normalizedShowSiteUrl) : null;
+      if (normalizedShowSiteUrl && !validUrl) {
+        toast.error("Show Site URL must be a valid https URL from imdb.com or youtube.com.");
         return;
       }
 
-      // imageMode === "upload"
+      const hasShowImage = Boolean(selectedFile || showImageUrl);
+      if (hasShowImage) {
+        const imageCreditValidation = validateImageCredit(showImageCredit);
+        if (!imageCreditValidation.isValid) {
+          setShowImageCreditError(imageCreditValidation.errorMessage ?? null);
+          return;
+        }
+      }
+
       const uploadedImageUrl = await uploadShowImage();
 
       if (selectedFile && !uploadedImageUrl) {
@@ -534,9 +523,9 @@ export function TvAddShowPage({
 
       const result = await saveShowAction({
         ...baseInput,
-        showImageCredit: showImageCredit.trim(),
-        showSiteUrl: null,
-        showSiteBackground: "#000000",
+        showImageCredit: hasShowImage ? showImageCredit.trim() : "",
+        showSiteUrl: validUrl,
+        showSiteBackground: validUrl ? showSiteBackground : "#000000",
         showImageUrl: uploadedImageUrl ?? showImageUrl ?? null,
       });
 
@@ -619,129 +608,95 @@ export function TvAddShowPage({
 
               <div className="space-y-3 rounded-2xl border border-[#d7ebf3] bg-[#f5fbff] p-4">
                 <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#15384a]">
-                  Show Image Option
+                  Show Media
                   <span title="Help coming soon" aria-label="Show image option help" className="inline-flex text-[#5b7f91]">
                     <HelpCircle className="size-4" />
                   </span>
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={ [
-                      "border-[#c6dcec] transition-all",
-                      imageMode === "upload"
-                        ? "border-[#245475] bg-[#dff1fb] text-[#0d2a3a] shadow-[0_0_0_2px_rgba(36,84,117,0.18)]"
-                        : "bg-white text-[#3f6576] hover:bg-[#f1fafe]",
-                    ].join(" ") }
-                    onClick={ () => setImageMode("upload") }
-                    aria-pressed={ imageMode === "upload" }
-                  >
-                    <Upload className="mr-2 size-4" />
-                    Option 1: Upload Image
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={ [
-                      "border-[#c6dcec] transition-all",
-                      imageMode === "url"
-                        ? "border-[#245475] bg-[#dff1fb] text-[#0d2a3a] shadow-[0_0_0_2px_rgba(36,84,117,0.18)]"
-                        : "bg-white text-[#3f6576] hover:bg-[#f1fafe]",
-                    ].join(" ") }
-                    onClick={ () => setImageMode("url") }
-                    aria-pressed={ imageMode === "url" }
-                  >
-                    <Link2 className="mr-2 size-4" />
-                    Option 2: Show Site URL
-                  </Button>
-                </div>
-
-                { imageMode === "upload" ? (
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-image-credit">Image Credit</label>
-                      <Input
-                        id="show-image-credit"
-                        value={ showImageCredit }
-                        onChange={ (event) => setShowImageCredit(event.target.value) }
-                        placeholder="Licensed under Creative Commons Attribution-ShareAlike 2.0 Generic license."
-                      />
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/png, image/jpeg"
-                      onChange={ handleFileSelection }
-                      className="block w-full rounded-md border border-[#d8eef7] bg-white p-2 text-sm"
-                      disabled={ uploadingImage }
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-image-credit">Image Credit</label>
+                    <textarea
+                      id="show-image-credit"
+                      value={ showImageCredit }
+                      onChange={ (event) => setShowImageCredit(event.target.value) }
+                      placeholder="Title: [Source Name] | Source: [image URL]"
+                      className={ `block w-full rounded-md border bg-white p-2 text-sm font-app ${ showImageCreditError ? "border-red-500" : "border-[#d8eef7]" }` }
+                      rows={ 3 }
                     />
-                    { imagePreviewUrl ? (
-                      <div className="relative mt-3 overflow-hidden rounded-xl border border-[#d7ebf3] bg-white">
-                        {/* eslint-disable-next-line @next/next/no-img-element */ }
-                        <img src={ imagePreviewUrl } alt="Selected show preview" className="h-48 w-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={ () => {
-                            revokeBlobUrl(imagePreviewUrl);
-                            setSelectedFile(null);
-                            setShowImageUrl(null);
-                            setImagePreviewUrl(null);
-                          } }
-                          className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white"
-                          aria-label="Remove image"
-                        >
-                          <X className="size-4" />
-                        </button>
-                      </div>
+                    { showImageCreditError ? (
+                      <p className="text-xs text-red-600">{ showImageCreditError }</p>
                     ) : null }
-                    <p className="flex items-center gap-2 text-xs text-[#4a7388]">
-                      <Upload className="size-3.5 shrink-0" />
-                      Upload a PNG or JPEG image. For best results, use an image around 800x450 pixels.
-                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="space-y-1">
-                      <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-site-url">Show Site URL</label>
-                      <p className="text-xs text-[#4a7388]">Only IMDb and YouTube URLs are accepted (must be https).</p>
-                      <Input
-                        id="show-site-url"
-                        value={ showSiteUrl }
-                        onChange={ (event) => setShowSiteUrl(event.target.value) }
-                        placeholder="https://www.imdb.com/title/..."
-                      />
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    onChange={ handleFileSelection }
+                    className="block w-full rounded-md border border-[#d8eef7] bg-white p-2 text-sm"
+                    disabled={ uploadingImage }
+                  />
+                  { imagePreviewUrl ? (
+                    <div className="relative mt-3 overflow-hidden rounded-xl border border-[#d7ebf3] bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */ }
+                      <img src={ imagePreviewUrl } alt="Selected show preview" className="h-48 w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={ () => {
+                          revokeBlobUrl(imagePreviewUrl);
+                          setSelectedFile(null);
+                          setShowImageUrl(null);
+                          setImagePreviewUrl(null);
+                        } }
+                        className="absolute right-2 top-2 inline-flex rounded-full border border-white/70 bg-black/40 p-1 text-white"
+                        aria-label="Remove image"
+                      >
+                        <X className="size-4" />
+                      </button>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-sm font-semibold text-[#15384a]">Background</label>
-                      <div className="flex items-center gap-2">
-                        { SHOW_SITE_BACKGROUND_COLOR_SCHEMES.map((scheme) => (
-                          <label
-                            key={ scheme.value }
-                            className="cursor-pointer shrink-0"
-                            htmlFor={ `show-site-background-${ scheme.value }` }
-                          >
-                            <input
-                              id={ `show-site-background-${ scheme.value }` }
-                              type="radio"
-                              name="show-site-background"
-                              value={ scheme.value }
-                              checked={ showSiteBackground === scheme.value }
-                              onChange={ () => setShowSiteBackground(scheme.value) }
-                              className="peer sr-only"
-                            />
-                            <span className="inline-flex size-8 items-center justify-center rounded-lg border border-[#d8eef7] bg-white transition-all peer-checked:border-[#245475] peer-checked:shadow-[0_0_0_2px_rgba(36,84,117,0.18)]">
-                              <span className="inline-flex size-5 rounded-full border border-white/60" style={ { backgroundColor: scheme.value } } />
-                              <span className="sr-only">{ scheme.label }</span>
-                            </span>
-                          </label>
-                        )) }
-                      </div>
-                    </div>
-                    <p className="text-xs text-[#4a7388]">
-                      The show title will display in place of an image on the scroll strips. Clicking it will open the show site URL.
-                    </p>
+                  ) : null }
+                  <p className="flex items-center gap-2 text-xs text-[#4a7388]">
+                    <Upload className="size-3.5 shrink-0" />
+                    Upload a PNG or JPEG image. For best results, use an image around 800x450 pixels.
+                  </p>
+                </div>
+                <div className="space-y-3 rounded-xl border border-[#d8eef7] bg-white p-3">
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-site-url">Show Site URL</label>
+                    <p className="text-xs text-[#4a7388]">Optional. Only IMDb and YouTube URLs are accepted (must be https).</p>
+                    <Input
+                      id="show-site-url"
+                      value={ showSiteUrl }
+                      onChange={ (event) => setShowSiteUrl(event.target.value) }
+                      placeholder="https://www.imdb.com/title/..."
+                    />
                   </div>
-                ) }
+                  <div className="space-y-1">
+                    <label className="text-sm font-semibold text-[#15384a]">Background (used when no image is available)</label>
+                    <div className="flex items-center gap-2">
+                      { SHOW_SITE_BACKGROUND_COLOR_SCHEMES.map((scheme) => (
+                        <label
+                          key={ scheme.value }
+                          className="cursor-pointer shrink-0"
+                          htmlFor={ `show-site-background-${ scheme.value }` }
+                        >
+                          <input
+                            id={ `show-site-background-${ scheme.value }` }
+                            type="radio"
+                            name="show-site-background"
+                            value={ scheme.value }
+                            checked={ showSiteBackground === scheme.value }
+                            onChange={ () => setShowSiteBackground(scheme.value) }
+                            className="peer sr-only"
+                          />
+                          <span className="inline-flex size-8 items-center justify-center rounded-lg border border-[#d8eef7] bg-white transition-all peer-checked:border-[#245475] peer-checked:shadow-[0_0_0_2px_rgba(36,84,117,0.18)]">
+                            <span className="inline-flex size-5 rounded-full border border-white/60" style={ { backgroundColor: scheme.value } } />
+                            <span className="sr-only">{ scheme.label }</span>
+                          </span>
+                        </label>
+                      )) }
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-3">

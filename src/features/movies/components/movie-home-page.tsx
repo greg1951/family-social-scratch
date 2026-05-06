@@ -341,7 +341,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
 
                     </span>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p></div>
-                  <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div>
+                  {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div> */ }
                 </div>
 
                 <div className="relative mt-5"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by movie, genre, adjective, channel, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search movies" /></div>
@@ -366,7 +366,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
           </DialogHeader>
 
           { selectedMovieBasic ? (
-            <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
+            <div className="max-h-[90vh] space-y-4 overflow-auto pr-1">
               <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
                 <MovieViewer movieJson={ selectedMovieBasic.movieJson } />
                 <div className="space-y-4">
@@ -377,12 +377,6 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                           src={ selectedMovieBasic.movieImageUrl }
                           alt={ `${ selectedMovieBasic.movieTitle } movie image` }
                         />
-                      ) : selectedMovieBasic.movieSiteUrl ? (
-                        <MovieSitePreviewCard
-                          name={ selectedMovieBasic.movieTitle }
-                          movieSiteUrl={ selectedMovieBasic.movieSiteUrl }
-                          background={ selectedMovieBasic.movieSiteBackground }
-                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[#3b2315] px-4">
                           <span className="text-center text-sm font-semibold text-white/80">No movie image available.</span>
@@ -391,9 +385,29 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                     </div>
                   </div>
 
-                  { !selectedMovieBasic.movieSiteUrl ? <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Caption</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMovieBasic.movieImageCredit || "No movie image credit provided." }</p></div> : null }
-                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-3 space-y-3 text-sm text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
-                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-1"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
+                  { (!selectedMovieBasic.movieSiteUrl || selectedMovieBasic.movieImageUrl) ?
+                    <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">
+                        Image Credit
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMovieBasic.movieImageCredit || "No movie image credit provided." }</p>
+                    </div> : null }
+                  { selectedMovieBasic.movieSiteUrl ? (
+                    <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Official Site</p>
+                      <a
+                        href={ selectedMovieBasic.movieSiteUrl }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#7b3306] underline-offset-2 hover:underline"
+                      >
+                        <ExternalLink className="size-4" />
+                        { selectedMovieBasic.movieSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
+                      </a>
+                    </div>
+                  ) : null }
+                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-2 space-y-1.5 text-sm leading-5 text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
+                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-0.5"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-0.5 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
                 </div>
               </div>
             </div>
@@ -401,53 +415,6 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
         </DialogContent>
       </Dialog>
     </section>
-  );
-}
-
-function MovieSitePreviewCard({
-  name,
-  movieSiteUrl,
-  background,
-}: {
-  name: string;
-  movieSiteUrl: string;
-  background: string;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={ () => setOpen(true) }
-        className="flex h-full w-full cursor-pointer items-center justify-center px-4 py-6"
-        style={ { backgroundColor: normalizeShowSiteBackgroundHex(background) } }
-        aria-label={ `Open site link for ${ name }` }
-      >
-        <span className="text-center text-lg font-black tracking-tight text-white">{ name }</span>
-      </button>
-
-      <Dialog open={ open } onOpenChange={ setOpen }>
-        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl p-0">
-          <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(255,248,240,0.9))] px-6 py-5">
-            <h2 className="text-lg font-black tracking-tight text-[#5c2e1a]">{ name }</h2>
-          </div>
-          <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <p className="text-center text-sm text-[#8b5a3c]">Visit the movie site for more information.</p>
-            <a
-              href={ movieSiteUrl }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[#5c2e1a] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#743b22] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8581a]"
-            >
-              <ExternalLink className="size-4" />
-              { movieSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
-            </a>
-            <p className="break-all text-center text-xs text-[#a87a5a]">{ movieSiteUrl }</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
 

@@ -21,3 +21,22 @@ For each of those activities, create an entry in the "familyActivity" table cont
 Currently we are tracking POST and COMMENT activities in the "familyActivity" table. 
 - We need to add tracking for THREAD send and GAME START activities as well.
 - REACT (like and love) activities in tv, movies, music, books, poetry, and recipes should be captured in the "familyActivity" table as well.
+
+---------------------------
+
+Background
+See the "familyActivity" table in "src/components/db/schema/family-social-schema-tables.ts"
+The queries related to the familyActivity table are in "src/components/db/sql/queries-family-activity.ts"
+
+Request
+Additional tracking in the familyActivity table is needed for the following activities:
+- An invitation being sent to a new member (activityName: "invite")
+- A new member joining the family (activityName: "join")
+- A member leaving the family (activityName: "leave") 
+
+- In the preceding new activities, there is presently no functionality in the project for a registered member to leave a family; do not implement that activity as more details are needed to understand the use case and how to implement it. However, the "invite" and "join" activities should be implemented as part of the family invitation and joining flow.
+- For the "invite" activity, only implement it as a part of the founder's Invite dashboard flow ("src/app/(family)/family-founder-account"). 
+  - Do NOT implement any "invite" activity tracking in the new family setup ("src/app/(new-setup)/(family-setup)" route group).
+
+
+

@@ -37,6 +37,16 @@ SET action_type = 'LOVE_ADDED'
 WHERE lower(action_type) IN ('love', 'loved', 'love_added')
   AND action_type <> 'LOVE_ADDED';
 
+UPDATE family_activity
+SET action_type = 'INVITE_SENT'
+WHERE lower(action_type) IN ('invite', 'invited', 'invite_sent')
+  AND action_type <> 'INVITE_SENT';
+
+UPDATE family_activity
+SET action_type = 'MEMBER_JOINED'
+WHERE lower(action_type) IN ('join', 'joined', 'member_joined')
+  AND action_type <> 'MEMBER_JOINED';
+
 DO $$
 BEGIN
   ALTER TABLE family_activity
@@ -48,7 +58,9 @@ BEGIN
         'THREAD_CREATED',
         'GAME_STARTED',
         'LIKE_ADDED',
-        'LOVE_ADDED'
+        'LOVE_ADDED',
+        'INVITE_SENT',
+        'MEMBER_JOINED'
       )
     );
 END $$;

@@ -382,6 +382,7 @@ export const poemLike = pgTable("poem_like", {
 export const poemTerm = pgTable("poem_term", {
   id: serial("id").primaryKey(),
   term: text("term").notNull().default(""),
+  termCategory: text("term_category").notNull().default("definition"),
   termJson: text("term_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -458,6 +459,7 @@ export const bookLike = pgTable("book_like", {
 export const bookTerm = pgTable("book_term", {
   id: serial("id").primaryKey(),
   term: text("term").notNull().default(""),
+  termCategory: text("term_category").notNull().default("definition"),
   termJson: text("term_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),

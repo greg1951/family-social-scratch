@@ -7,6 +7,11 @@ import { RegisterMemberInput } from "@/components/db/types/family-member";
 import { sendLoginInstructionsEmail } from "@/components/emails/send-signin-email";
 import { FounderDetails } from "@/features/family/types/family-members";
 import { RegistrationMemberDetails } from "@/features/family/types/family-steps";
+import {
+  createFamilyActivityRecord,
+  FAMILY_ACTIVITY_ACTION_TYPES,
+} from "@/components/db/sql/queries-family-activity";
+import { createThreadConversationWithInitialPost } from "@/components/db/sql/queries-thread-convos";
 
 
 export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
@@ -18,6 +23,14 @@ export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
     // console.log('Error occurred inserting the new family member');
     return insertMemberResult;
   }
+
+  await createFamilyActivityRecord({
+    actionType: FAMILY_ACTIVITY_ACTION_TYPES.MEMBER_JOINED,
+    featureName: 'Family Members',
+    postName: `${ memberDetails.firstName } ${ memberDetails.lastName }`,
+    familyId: memberDetails.familyId,
+    memberId: insertMemberResult.id,
+  });
 
   return insertMemberResult;
 }
@@ -77,3 +90,59 @@ export const sendLoginInstructions = async(email: string, founderDetails: Founde
   }
   return { error: false };
 }
+
+export const notifyFounderOfNewMemberRegistration = async({
+  founderDetails,
+  newMemberId,
+  newMemberFirstName,
+  newMemberLastName,
+  newMemberEmail,
+}: {
+  founderDetails: FounderDetails;
+  newMemberId: number;
+  newMemberFirstName: string;
+  newMemberLastName: string;
+  newMemberEmail: string;
+}) => {
+  const threadContent = [
+    "A new family member has completed registration.",
+    "",
+    `Member Name: ${ newMemberFirstName } ${ newMemberLastName }`,
+    `Member Email: ${ newMemberEmail }`,
+  ].join("\n");
+
+  const threadResult = await createThreadConversationWithInitialPost(
+    {
+      title: "New Family Member Registered",
+      subject: "Member registration completed",
+      visibility: "private",
+      recipientMemberIds: [founderDetails.memberId],
+      content: threadContent,
+      contentJson: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: threadContent }],
+          },
+        ],
+      }),
+    },
+    {
+      familyId: founderDetails.familyId,
+      senderMemberId: newMemberId,
+      isFounder: false,
+    },
+  );
+
+  if (!threadResult.success) {
+    return {
+      error: true,
+      message: threadResult.message,
+    };
+  }
+
+  return {
+    error: false,
+  };
+};

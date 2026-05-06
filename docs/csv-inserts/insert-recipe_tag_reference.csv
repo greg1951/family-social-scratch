@@ -9,7 +9,7 @@
 "8","Dinner","Or supper if you prefer","meal_time","active","4","2026-04-19 14:19:12.945018"
 "9","Soups","Everyone's favorite","course_type","active","1","2026-04-19 14:20:10.974563"
 "10","Salads","From the produce aisle","course_type","active","2","2026-04-19 14:21:43.192939"
-"11","Main Dishes","Main entrees","sourse_type","active","3","2026-04-19 14:22:42.270577"
+"11","Main Dishes","Main entrees","course_type","active","3","2026-04-19 14:22:42.270577"
 "12","Side Dish","You know, on the side","course_type","active","4","2026-04-19 14:23:31.849822"
 "13","Desserts","Start a meal with one of these","course_type","active","5","2026-04-19 14:24:26.475489"
 "14","Slow Cooker","AKA crockpot, InstantPot","cooking_method","active","1","2026-04-19 14:25:15.187251"

@@ -62,6 +62,8 @@ function buildThreadGameData(rows: { actionType: string; count: number }[]): Thr
       member: "Family Activity",
       THREAD_CREATED: rows.find((r) => r.actionType === "THREAD_CREATED")?.count ?? 0,
       GAME_STARTED: rows.find((r) => r.actionType === "GAME_STARTED")?.count ?? 0,
+      INVITES_SENT: rows.find((r) => r.actionType === "INVITE_SENT")?.count ?? 0,
+      NEW_MEMBERS_JOINED: rows.find((r) => r.actionType === "MEMBER_JOINED")?.count ?? 0,
     },
   ];
 }

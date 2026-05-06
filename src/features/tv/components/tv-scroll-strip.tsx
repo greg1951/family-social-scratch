@@ -1,10 +1,9 @@
 "use client";
 
-import { ExternalLink, Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
@@ -71,58 +70,6 @@ function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | nul
     <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#eef8fc] p-2 shadow-sm">
       <SubmitterRatingIcon likenessDegree={ likenessDegree } />
     </span>
-  );
-}
-
-function ShowTitleCard({
-  name,
-  showSiteUrl,
-  background,
-}: {
-  name: string;
-  showSiteUrl: string;
-  background: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const resolvedBackground = normalizeShowSiteBackgroundHex(background);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={ () => setOpen(true) }
-        className="flex h-full w-full cursor-pointer items-center justify-center px-4 py-6"
-        style={ { backgroundColor: resolvedBackground } }
-        aria-label={ `View details for ${ name }` }
-      >
-        <span className="text-center text-lg font-black leading-tight tracking-tight text-white">
-          { name }
-        </span>
-      </button>
-
-      <Dialog open={ open } onOpenChange={ setOpen }>
-        <DialogContent className="max-w-md gap-0 p-0 overflow-hidden rounded-2xl">
-          <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,249,255,0.9))] px-6 py-5">
-            <h2 className="text-lg font-black tracking-tight text-[#15384a]">{ name }</h2>
-          </div>
-          <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <p className="text-sm text-center text-[#5f7987]">
-              Visit the show&apos;s official page for more information.
-            </p>
-            <a
-              href={ showSiteUrl }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[#15384a] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1f4d65] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d87a8]"
-            >
-              <ExternalLink className="size-4" />
-              { showSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
-            </a>
-            <p className="text-xs text-[#8fa8b4] break-all text-center">{ showSiteUrl }</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
   );
 }
 
@@ -237,7 +184,9 @@ export function TvScrollStrip({
                       { item.imageSrc ? (
                         <ShowImage src={ item.imageSrc } alt={ item.imageAlt } />
                       ) : item.showSiteUrl ? (
-                        <ShowTitleCard name={ item.name } showSiteUrl={ item.showSiteUrl } background={ item.showSiteBackground } />
+                        <div className="flex h-full w-full items-center justify-center px-4 py-6" style={ { backgroundColor: normalizeShowSiteBackgroundHex(item.showSiteBackground) } }>
+                          <span className="text-center text-lg font-black leading-tight tracking-tight text-white/80">{ item.name }</span>
+                        </div>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[#1b3a4b]">
                           <span className="text-center text-sm font-semibold text-white/70">{ item.name }</span>
@@ -257,7 +206,22 @@ export function TvScrollStrip({
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">
+                            { item.showSiteUrl ? (
+                              <a
+                                href={ item.showSiteUrl }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline-offset-2 hover:underline"
+                                onClick={ (event) => event.stopPropagation() }
+                                onKeyDown={ (event) => event.stopPropagation() }
+                              >
+                                { item.name }
+                              </a>
+                            ) : (
+                              item.name
+                            ) }
+                          </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
                         { item.kind === "latest" ? (

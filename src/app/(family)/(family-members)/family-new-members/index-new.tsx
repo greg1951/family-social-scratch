@@ -110,6 +110,7 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
     const addInvitesResult = await addNewAccountInvites({
       newInvites: { newInvites: values.newfamilyMembers },
       familyId: founderDetails.familyId as number,
+      founderMemberId: founderDetails.memberId,
     });
     if (!addInvitesResult.success) {
       updateStepStatus(1, 'error', 'Error occurred adding new invites');

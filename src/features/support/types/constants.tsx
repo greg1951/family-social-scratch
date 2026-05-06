@@ -1,40 +1,5 @@
 import { FileText, Folder, Settings, Users, HelpCircle, Info, Heart, CircleAlert } from "lucide-react";
 
-export const SHOW_SITE_BACKGROUND_COLOR_SCHEMES = [
-  { label: "Red", value: "#FF292D" },
-  { label: "Black", value: "#000000" },
-  { label: "Navy", value: "#007BA9" },
-  { label: "Orange", value: "#FF9500" },
-  { label: "Green", value: "#02C00C" },
-] as const;
-
-const LEGACY_SHOW_SITE_BACKGROUND_MAP: Record<string, (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"]> = {
-  red: "#FF292D",
-  black: "#000000",
-  navy: "#007BA9",
-  orange: "#FF9500",
-  green: "#02C00C",
-};
-
-const SHOW_SITE_BACKGROUND_VALUE_SET = new Set(
-  SHOW_SITE_BACKGROUND_COLOR_SCHEMES.map((scheme) => scheme.value)
-);
-
-export function normalizeShowSiteBackgroundHex(value?: string | null) {
-  if (!value) {
-    return "#000000" as const;
-  }
-
-  const trimmed = value.trim();
-  const upper = trimmed.toUpperCase();
-
-  if (SHOW_SITE_BACKGROUND_VALUE_SET.has(upper as (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"])) {
-    return upper as (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"];
-  }
-
-  return LEGACY_SHOW_SITE_BACKGROUND_MAP[trimmed.toLowerCase()] ?? "#000000";
-}
-
 export const generalFaqItems = [
   {
     value: "item-10",
@@ -252,7 +217,7 @@ export const generalFaqItems = [
 ]
 export const founderFaqItems = [
   {
-    value: "item-30",
+    value: "item-10",
     category: "Start a Family",
     trigger: (
       <div>
@@ -276,7 +241,7 @@ export const founderFaqItems = [
     icon: FileText,
   },
   {
-    value: "item-50",
+    value: "item-20",
     category: "Leave a Family",
     trigger: (
       <div>
@@ -292,15 +257,49 @@ export const founderFaqItems = [
             <ol className="list-decimal ml-6 mt-2">
               <li>Family member who wants to retire sends a high-priority thread to the family founder.</li>
               <li>The family founder acknowledges the request and initiates the removal process.</li>
-              <li>There's a "soft" removal which temporarily deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact.</li>
-              <li>There's a "hard" removal which permanently removes the member from the family. This action removes the member and their content from the family.</li>
+              <li>There are two ways to remove a member: <u>soft</u> and <u>hard</u>, as described below.</li>
             </ol>
-            <p className="pt-2">There are two ways the founder can remove the member.</p>
+            <p className="pt-2">The two ways the founder can remove the member are:</p>
             <ol className="list-decimal ml-6 mt-2">
-              <li>"soft" removal: effectively deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact.</li>
-              <li>"hard" removal: permanently removes the member from the family by deleting the member and all of their content from the family.</li>
+              <li>"soft" removal: effectively deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact, known as "Retired Member". The retired member could be reactivated at a later time.</li>
+              <li>"hard" removal: permanently removes the member from the family by deleting the member and all of their content from the family. The member could be reinvited at a later time.</li>
             </ol>
           </span>
+        </div>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-30",
+    category: "TV and Movie Reviews",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">As the family founder, what should I know about TV and Movie image content being uploaded?</p>
+        <p className="text-xs text-slate-600">TV and Movie content must adhere to Fair Use guidelines.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <div className="flex items-center justify-center mt-0">
+          <span>
+            <p>Family Social allows the family members to post TV and Movie reviews. The following guidelines must be followed:</p>
+            <ol className="list-decimal ml-6 mt-2">
+              <li>Content in the review must not use profanity or offensive language.</li>
+              <li>Content that is uploaded must adhere to Fair Use guidelines.</li>
+              <li>Image Credit must be provided for any images used which consists of <i>Title</i> and <i>Source URL</i>.</li>
+            </ol>
+          </span>
+        </div>
+        <div className="flex justify-center pt-2 pb-2">
+          <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-170"
+            src="/images/support/faq-founder-image-example.jpg"
+            alt="Founder Image Example"
+          />
+        </div>
+        <div className="flex justify-center align-middle pt-4">
+          <Info size={ 30 } className="inline-block mr-1" />
+          <p className="text-sm pt-2 font-semibold">Most members will not follow the rigor required for image attribution. They should instead use a website URL from IMDB or YouTube.</p>
         </div>
       </div>
     ),
@@ -389,7 +388,7 @@ export const featureFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">Why TV show image uploads require special handling?</p>
-        <p className="text-xs text-slate-600">The same applies to <i>Movie Maniacs</i> as well.</p>
+        <p className="text-xs text-slate-600">Images must be properly credited to comply with Fair Use guidelines in copyright laws.</p>
       </div>
     ),
     content: (
@@ -398,58 +397,21 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">You found some great TV show image but wait, don't upload it just yet! There are licensing considerations!</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Google is just a search engine and it will return wonderful images but they are <u>licensed</u>.</li>
-            <li>You need to find images that are either in the public domain (good luck with that) or that have a Creative Commons license which allows for reuse.</li>
-            <li>So, if you want to use an image, you <u>must</u> provide proper attribution for the image.</li>
-            <li>If you don't know what any of this means, consider an alternative which is to reference the show via IMDB or YouTube.</li>
+            <li>In Family Social they are used not for commercial purposes but for reviews and discussion. This means they must be credited to comply with <u>Fair Use guidelines</u>.</li>
+            <li>Fair Use image attribution requires a <b>Title</b> and a <b>Source</b>.</li>
+            <pre className="pt-2 pb-2">
+              <code>
+                Title: [Source Name] | Source: [image URL]
+              </code>
+            </pre>
+            <li>The <i>Title</i> is simply where the image was found, e.g. Flikr, Netflix, MovieWeb, Hulu, IMDB, YouTube, etc.</li>
+            <li>The <i>Source</i> is the URL to the original image or website where it was found.</li>
+            <li>The format shown here is required, otherwise the <u>upload will not be permitted</u>.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-65 md:w-205 md:h-100"
+            <img className="aspect-auto object-cover w-100 h-65 md:w-220 md:h-120"
               src="/images/support/faq-tv-image-credit.jpg"
-              alt="Add TV Show"
-            />
-          </div>
-          <div className="flex justify-center align-middle pb-4">
-            <CircleAlert size={ 30 } className="inline-block mr-1 text-red-500" />
-            <p className="text-base pt-2 font-semibold">The important message here is to always provide proper attribution for any image you use.</p>
-          </div>
-        </span>
-      </div>
-    ),
-    icon: FileText,
-  },
-  {
-    value: "item-40",
-    category: "TV and Movie Reviews",
-    trigger: (
-      <div>
-        <p className="text-base font-semibold">I want to try to use an image. How do I find Creative Commons images?</p>
-        <p className="text-xs text-slate-600">This answer also applies to <i>Movie Maniacs</i>, <i>Music Lovers</i>, and <i>Family Foodies</i>.</p>
-      </div>
-    ),
-    content: (
-      <div className="grid md:grid-cols-1 text-base">
-        <span>
-          <p className="text-base font-semibold">The instructions for finding Creative Commons images are as follows:</p>
-          <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>In Google/Images, select <i>Tools ➡️ Usage Rights ➡️ Creative Common Licenses</i> and perform the image search.</li>
-            <li>If you aren't seeing much in the way of results, try different search terms or check other image repositories.</li>
-            <li>Generally only actor or press release images are common licensed. Wikimedia is a good source for such images.</li>
-            <li>Select the image you want to use (see <i>Example 1</i> below) and scroll down to see the <b>Image Credit</b> information.</li>
-            <li>Copy the Image Credit information (see <i>Example 2</i>) to your clipboard and paste it into the Credit Information field in the Add Show dialog.</li>
-          </ol>
-          <p className="pt-2 text-base font-semibold">Google Search Examples</p>
-          <p className="pt-2 text-sm">1. The image below shows an example of where to find the link to Image Credit information in a Google/Image search.</p>
-          <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-170 md:h-110"
-              src="/images/support/faq-google-commons-link.jpg"
-              alt="Google Common License Link"
-            />
-          </div>
-          <p className="pt-2 text-sm">2. Scroll down the page and copy the <b>Licensing information</b> to your clipboard which is to be pasted into the <b>Credit Information </b> field in the Add Show dialog.</p>
-          <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-180 md:h-80"
-              src="/images/support/faq-google-commons-text.jpg"
-              alt="Common License Text"
+              alt="TV Show Image Credit"
             />
           </div>
         </span>
@@ -462,8 +424,8 @@ export const featureFaqItems = [
     category: "TV and Movie Reviews",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How do I use an IMDB or YouTube link rather than an image of the show?</p>
-        <p className="text-xs text-slate-600">This answer also applies <i>anywhere</i> you upload an image.</p>
+        <p className="text-base font-semibold">How do I use an IMDB or YouTube link?</p>
+        <p className="text-xs text-slate-600">IMDB or YouTube links can be used and can be combined with an image as well!.</p>
       </div>
     ),
     content: (
@@ -476,7 +438,7 @@ export const featureFaqItems = [
             <li>In Family Social TV Junkies home page, select the Add Show option and complete the form as instructed below.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-110"
+            <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-130"
               src="/images/support/faq-tv-imdb-url.jpg"
               alt="IMDB Link"
             />
@@ -484,11 +446,21 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">In Family Social TV Junkies <b>Add Show</b>:</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Enter the <b>Show Name</b> as you want it to appear in the home page.</li>
-            <li>By default, the <b>Show Image Option</b> is set to <u>Option 2</u> to enter a Show Site URL</li>
             <li>Paste the URL you copied from IMDB or YouTube into the <b>Show Site URL</b> field.</li>
             <li>Select one of five <b>background colors</b> to be used when your show is displayed.</li>
             <li>Complete the rest of the form and add or update your show review.</li>
           </ol>
+          <p className="text-base font-semibold pt-2">On the home page, this show will display the title and background in place of an image which was not provided.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Where an image would be shown, now the title and background are shown instead.</li>
+            <li>The Show Title below the image is a link that will take you to the show's page.</li>
+          </ol>
+          <div className="flex justify-center pt-4">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-160"
+              src="/images/support/faq-tv-no-image-only-url.jpg"
+              alt="IMDB Link"
+            />
+          </div>
         </span>
       </div>
     ),
@@ -530,4 +502,218 @@ export const featureFaqItems = [
     ),
     icon: FileText,
   },
+  {
+    value: "item-70",
+    category: "Family Foodies",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">What are recipe templates and how do I use them?</p>
+        <p className="text-xs text-slate-600">Here we will address how to create a recipe template.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Writing a recipe can be time consuming, but we think we've made it easier with our recipe templates.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Select the <b>Manage Templates</b> button in the Family Foodies heading.</li>
+            <li>By default the General Template will be shown. Selecting it will allow you to preview its content. However, you cannot edit this template.</li>
+            <li>To create a new template, select the <b>Create Template</b> button.</li>
+            <li>In all likelihood, you have your recipe written up nicely in a document or text editor. You can copy and paste it into the template.</li>
+          </ol>
+          <span className="flex justify-left pt-2 pb-2">
+            <CircleAlert size={ 30 } className="inline-block mr-1" />
+            <p className="text-base font-semibold pt-2 pb-2">Remember this is a template you want to use when adding recipes, not your actual recipe.</p>
+          </span>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-110"
+              src="/images/support/faq-foodies-edit-template.jpg"
+              alt="Recipe Template"
+            />
+          </div>
+          <p className="text-base font-semibold pt-2 pb-2">As shown above, when adding the Recipe Template:</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Provide a name for the recipe template that bespeaks its content value.</li>
+            <li>In the main template text area, paste in an example of one your recipes, or type away!</li>
+            <p className="pt-2 pb-2">Now <u>genericize</u> the template details. Leave in a few minor details just to provide some intent in the template.</p>
+            <li>Change the status from <b>Draft</b> to <b>Published</b>, if your ready to use the template.</li>
+            <li>Be sure to <b>Create the Template</b>.</li>
+          </ol>
+          <p className="text-base font-semibold pt-2 pb-2">Notice in the list of templates that your template is editable, <u>by you, no one else!</u></p>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-90"
+              src="/images/support/faq-foodies-editable-new-template.jpg"
+              alt="Recipe Template"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-80",
+    category: "Family Foodies",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">How best to add a recipe in the Family Foodies feature?</p>
+        <p className="text-xs text-slate-600">Adding a recipe is easier with a template and following some of the suggestions here.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Ahead of creating your recipe, review the available templates and decide which one best fits your needs.</p>
+          <p className="text-sm text-slate-600">If you have a recipe already written, you can paste it right in to the new recipe dialog.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Select the <b>Add Recipe</b> button in the Family Foodies heading.</li>
+            <p className="pt-2 pb-2"><u>Note:</u> Using a template is optional. If you don't use a template you have to jam the recipe content in manually.</p>
+            <li>When you select a template, it will prefill the Recipe edit area below. Pick different template and see which template fits your needs.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-add-recipe-templates-list.jpg"
+              alt="Recipe Templates list"
+            />
+          </div>
+          <p className="text-base font-semibold pt-2 pb-2">Do you have a good picture of your delicious dish? Upload it to make your recipe more appealing!</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Click your mouse inside the <b>Choose File</b> field and a file dialog will appear.</li>
+            <li>If you are happy with the image preview, select the <b>Upload Image</b> button.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-add-recipe-file-upload.jpg"
+              alt="Recipe File Upload"
+            />
+          </div>
+          <p className="text-base font-semibold pt-2 pb-2">Don't forget the Pro Tips section at the bottom of the recipe dialog!</p>
+          <ul className="list-decimal ml-6 mt-2 text-sm">
+            <li>If you have any time- or cost-saving tips, be sure to include them in the Pro Tips section.</li>
+            <li>If you originally got the recipe from another source and then changed it, be sure to credit the original source in the Pro Tips section.</li>
+          </ul>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-pro-tips.jpg"
+              alt="Pro Tips"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-90",
+    category: "Poetry Cafe",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Poetry is a very technical art form. What is provided to help define the poetry terms?</p>
+        <p className="text-xs text-slate-600">Visit the Poetry Terms page for poetry definitions and explanations.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Ahead of creating your recipe, review the available templates and decide which one best fits your needs.</p>
+          <p className="text-sm text-slate-600">If you have a recipe already written, you can paste it right in to the new recipe dialog.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Select the <b>Add Recipe</b> button in the Family Foodies heading.</li>
+            <p className="pt-2 pb-2"><u>Note:</u> Using a template is optional. If you don't use a template you have to jam the recipe content in manually.</p>
+            <li>When you select a template, it will prefill the Recipe edit area below. Pick different template and see which template fits your needs.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-add-recipe-templates-list.jpg"
+              alt="Recipe Templates list"
+            />
+          </div>
+          <p className="text-base font-semibold pt-2 pb-2">Do you have a good picture of your delicious dish? Upload it to make your recipe more appealing!</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Click your mouse inside the <b>Choose File</b> field and a file dialog will appear.</li>
+            <li>If you are happy with the image preview, select the <b>Upload Image</b> button.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-add-recipe-file-upload.jpg"
+              alt="Recipe File Upload"
+            />
+          </div>
+          <p className="text-base font-semibold pt-2 pb-2">Don't forget the Pro Tips section at the bottom of the recipe dialog!</p>
+          <ul className="list-decimal ml-6 mt-2 text-sm">
+            <li>If you have any time- or cost-saving tips, be sure to include them in the Pro Tips section.</li>
+            <li>If you originally got the recipe from another source and then changed it, be sure to credit the original source in the Pro Tips section.</li>
+          </ul>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+              src="/images/support/faq-foodies-pro-tips.jpg"
+              alt="Pro Tips"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
 ]
+
+
+export const REQUIRED_IMAGE_CREDIT_ATTRIBUTES = ["Title", "Source"] as const;
+
+export function validateImageCredit(credit: string | null | undefined): { isValid: boolean; errorMessage?: string } {
+  if (!credit || !credit.trim()) {
+    return {
+      isValid: false,
+      errorMessage: "Image Credit is required. Format: Title: [Source Name] | Source: [image URL]",
+    };
+  }
+
+  const trimmed = credit.trim();
+
+  const requiredAttributes = REQUIRED_IMAGE_CREDIT_ATTRIBUTES;
+  const missingAttributes = requiredAttributes.filter((attr) => !trimmed.includes(`${ attr }:`));
+
+  if (missingAttributes.length > 0) {
+    return {
+      isValid: false,
+      errorMessage: `Image Credit is missing required attributes: ${ missingAttributes.join(", ") }. Format: Title: [Source Name] | Source: [image URL]`,
+    };
+  }
+
+  return { isValid: true };
+}
+
+export const SHOW_SITE_BACKGROUND_COLOR_SCHEMES = [
+  { label: "Red", value: "#FF292D" },
+  { label: "Black", value: "#000000" },
+  { label: "Navy", value: "#007BA9" },
+  { label: "Orange", value: "#FF9500" },
+  { label: "Green", value: "#02C00C" },
+] as const;
+
+const LEGACY_SHOW_SITE_BACKGROUND_MAP: Record<string, (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"]> = {
+  red: "#FF292D",
+  black: "#000000",
+  navy: "#007BA9",
+  orange: "#FF9500",
+  green: "#02C00C",
+};
+
+const SHOW_SITE_BACKGROUND_VALUE_SET = new Set(
+  SHOW_SITE_BACKGROUND_COLOR_SCHEMES.map((scheme) => scheme.value)
+);
+
+export function normalizeShowSiteBackgroundHex(value?: string | null) {
+  if (!value) {
+    return "#000000" as const;
+  }
+
+  const trimmed = value.trim();
+  const upper = trimmed.toUpperCase();
+
+  if (SHOW_SITE_BACKGROUND_VALUE_SET.has(upper as (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"])) {
+    return upper as (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"];
+  }
+
+  return LEGACY_SHOW_SITE_BACKGROUND_MAP[trimmed.toLowerCase()] ?? "#000000";
+}

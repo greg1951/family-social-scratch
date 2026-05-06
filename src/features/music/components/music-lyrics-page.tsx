@@ -106,6 +106,7 @@ export function MusicLyricsPage({
       TableCell,
     ],
     content: getLyricsDocument(initialLyrics?.lyricsJson),
+    editable: canSaveLyrics,
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
     editorProps: {
@@ -123,6 +124,14 @@ export function MusicLyricsPage({
 
     editor.commands.setContent(getLyricsDocument(initialLyrics?.lyricsJson));
   }, [editor, initialLyrics?.lyricsJson]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    editor.setEditable(canSaveLyrics);
+  }, [editor, canSaveLyrics]);
 
   function handleSave() {
     if (!editor) {
@@ -187,8 +196,8 @@ export function MusicLyricsPage({
           </div>
 
           <div className="p-5 sm:p-6">
-            <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
-              <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
+            <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
+              { canSaveLyrics ? <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
                 <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor }><Heading2 /></ToolbarButton>
                 <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor }><Heading3 /></ToolbarButton>
                 <ToolbarButton label="Bold" onClick={ () => editor?.chain().focus().toggleBold().run() } active={ editor?.isActive("bold") } disabled={ !editor }><Bold /></ToolbarButton>
@@ -202,8 +211,10 @@ export function MusicLyricsPage({
                 <ToolbarButton label="Insert table" onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() } active={ editor?.isActive("table") } disabled={ !editor }><Table2 /></ToolbarButton>
                 <ToolbarButton label="Delete table" onClick={ () => editor?.chain().focus().deleteTable().run() } disabled={ !editor || !editor.isActive("table") }><Table2 /><X className="size-3" /></ToolbarButton>
                 <ToolbarButton label="Add column after" onClick={ () => editor?.chain().focus().addColumnAfter().run() } disabled={ !editor || !editor.isActive("table") }><Columns2 /></ToolbarButton>
+                <ToolbarButton label="Delete column" onClick={ () => editor?.chain().focus().deleteColumn().run() } disabled={ !editor || !editor.isActive("table") }><Columns2 /><X className="size-3" /></ToolbarButton>
                 <ToolbarButton label="Add row after" onClick={ () => editor?.chain().focus().addRowAfter().run() } disabled={ !editor || !editor.isActive("table") }><Rows2 /></ToolbarButton>
-              </div>
+                <ToolbarButton label="Delete row" onClick={ () => editor?.chain().focus().deleteRow().run() } disabled={ !editor || !editor.isActive("table") }><Rows2 /><X className="size-3" /></ToolbarButton>
+              </div> : null }
               <EditorContent editor={ editor } />
             </div>
           </div>

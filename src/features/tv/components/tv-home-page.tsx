@@ -98,53 +98,6 @@ function ShowViewer({ showJson }: { showJson?: string }) {
   );
 }
 
-function ShowSitePreviewCard({
-  name,
-  showSiteUrl,
-  background,
-}: {
-  name: string;
-  showSiteUrl: string;
-  background: string;
-}) {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={ () => setOpen(true) }
-        className="flex h-full w-full cursor-pointer items-center justify-center px-4 py-6"
-        style={ { backgroundColor: normalizeShowSiteBackgroundHex(background) } }
-        aria-label={ `Open site link for ${ name }` }
-      >
-        <span className="text-center text-lg font-black tracking-tight text-white">{ name }</span>
-      </button>
-
-      <Dialog open={ open } onOpenChange={ setOpen }>
-        <DialogContent className="max-w-md gap-0 overflow-hidden rounded-2xl p-0">
-          <div className="border-b border-[#c6dcec] bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(236,249,255,0.9))] px-6 py-5">
-            <h2 className="text-lg font-black tracking-tight text-[#15384a]">{ name }</h2>
-          </div>
-          <div className="flex flex-col items-center gap-4 px-6 py-6">
-            <p className="text-center text-sm text-[#5f7987]">Visit the show site for more information.</p>
-            <a
-              href={ showSiteUrl }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-[#15384a] px-5 py-2.5 text-sm font-semibold text-white shadow hover:bg-[#1f4d65] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d87a8]"
-            >
-              <ExternalLink className="size-4" />
-              { showSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
-            </a>
-            <p className="break-all text-center text-xs text-[#8fa8b4]">{ showSiteUrl }</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
-}
-
 function ModalShowImage({ src, alt }: { src: string; alt: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
 
@@ -456,16 +409,6 @@ export function TvHomePage({
               <div className="flex flex-wrap gap-3">
                 <Button
                   type="button"
-                  onClick={ () => setIsViewShowOpen(true) }
-                  disabled={ !selectedShowBasic }
-                  className="rounded-full bg-white text-[#15384a] hover:bg-[#d9f5ff]"
-                >
-                  <Eye className="size-4" />
-                  View Show
-                </Button>
-
-                <Button
-                  type="button"
                   variant="outline"
                   asChild
                   className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
@@ -561,15 +504,16 @@ export function TvHomePage({
                         iconClassName="text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
+                      <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View Show</Button>
                     </span>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
                       Search by show title, tags, channel, or family member and pick what to watch next.
                     </p>
                   </div>
 
-                  <div className="rounded-full border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm font-semibold text-[#24536a]">
+                  {/* <div className="rounded-full border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm font-semibold text-[#24536a]">
                     { filteredShows.length } shows found
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="relative mt-5">
@@ -804,7 +748,7 @@ export function TvHomePage({
           </DialogHeader>
 
           { selectedShowBasic ? (
-            <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
+            <div className="max-h-[90vh] space-y-4 overflow-auto pr-1">
               <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
                 <ShowViewer showJson={ selectedShowBasic.showJson } />
 
@@ -816,12 +760,6 @@ export function TvHomePage({
                           src={ selectedShowBasic.showImageUrl }
                           alt={ `${ selectedShowBasic.showTitle } show image` }
                         />
-                      ) : selectedShowBasic.showSiteUrl ? (
-                        <ShowSitePreviewCard
-                          name={ selectedShowBasic.showTitle }
-                          showSiteUrl={ selectedShowBasic.showSiteUrl }
-                          background={ selectedShowBasic.showSiteBackground }
-                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-[#173444] px-4">
                           <span className="text-center text-sm font-semibold text-white/80">No show image available.</span>
@@ -830,18 +768,33 @@ export function TvHomePage({
                     </div>
                   </div>
 
-                  { !selectedShowBasic.showSiteUrl ? (
+                  { (!selectedShowBasic.showSiteUrl || selectedShowBasic.showImageUrl) ? (
                     <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Image Credit</p>
-                      <p className="mt-2 text-sm leading-6 text-[#3f6576]">
+                      <p className="mt-2 text-sm leading-6 text-[#3f6576] wrap-break-word">
                         { selectedShowBasic.showImageCredit || "No image credit provided." }
                       </p>
                     </div>
                   ) : null }
 
+                  { selectedShowBasic.showSiteUrl ? (
+                    <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Official Site</p>
+                      <a
+                        href={ selectedShowBasic.showSiteUrl }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 inline-flex items-center gap-2 text-sm font-semibold text-[#1a6a8a] underline-offset-2 hover:underline"
+                      >
+                        <ExternalLink className="size-4" />
+                        { selectedShowBasic.showSiteUrl.includes("imdb.com") ? "View on IMDb" : "View on YouTube" }
+                      </a>
+                    </div>
+                  ) : null }
+
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Details</p>
-                    <div className="mt-3 space-y-3 text-sm text-[#3f6576]">
+                    <div className="mt-2 space-y-1 text-sm leading-5 text-[#3f6576]">
                       <p><span className="font-semibold text-[#15384a]">Submitter:</span> { selectedShowBasic.submitterName }</p>
                       <p><span className="font-semibold text-[#15384a]">Updated:</span> { formatDate(selectedShowBasic.updatedAt) }</p>
                       <p><span className="font-semibold text-[#15384a]">Years:</span> { selectedShowBasic.showFirstYear } - { selectedShowBasic.showLastYear }</p>
@@ -851,16 +804,16 @@ export function TvHomePage({
 
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Reactions</p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#285b73]">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-1">
+                    <div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#285b73]">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-0.5">
                         <ThumbsUp className="size-4 text-[#2d87a8]" />
                         { selectedShowThumbsUpCount.toLocaleString() }
                       </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-0.5 text-[#8f2f58]">
                         <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
                         { selectedShowLoveCount.toLocaleString() }
                       </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-1">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-0.5">
                         <MessageSquareText className="size-4 text-[#2d87a8]" />
                         { selectedShowDetail?.commentCount ?? selectedShowBasic.commentCount ?? 0 }
                       </span>

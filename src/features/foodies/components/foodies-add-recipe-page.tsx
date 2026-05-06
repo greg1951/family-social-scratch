@@ -588,15 +588,15 @@ export function FoodiesAddRecipePage({
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
                 { isEditing
                   ? "Update your recipe, change the image if needed, and save the revised TipTap content."
-                  : "Start with a recipe template, upload your image to S3, and save your instructions as TipTap JSON." }
+                  : "Start with a recipe template, use the editor to create the recipe, and upload a lovely image of your dish. Fill in the Pro-Tips section to share your culinary wisdom." }
               </p>
             </div>
 
-            <div className="rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[18rem]">
+            {/* <div className="rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[18rem]">
               <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Signed In</p>
               <p className="mt-2 text-2xl font-black">{ member.firstName } { member.lastName }</p>
               <p className="mt-1 text-sm text-[#f1ffe4]">Member #{ member.memberId }</p>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -839,9 +839,9 @@ export function FoodiesAddRecipePage({
                 </div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-1.5 py-2">
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+              <div className="space-y-2">
+                <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
+                  <div className="flex flex-wrap gap-2">
                     <ToolbarButton
                       label="Heading 2"
                       onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }

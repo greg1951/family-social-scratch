@@ -11,3 +11,11 @@ Requirements
 - Change the dialog to include this new text input for the invite note.
 - Update the app router client component to save the invite note to the familyInvitation table when the invitation is sent.
 - Ensure that the invite note is properly saved to the database and can be retrieved when needed.
+
+--------------------------------
+
+Notify the founder when a new member registers.
+
+- At the end of the member registration process, send the founder a thread with the name, email address of the member who registered.
+- This should be coordinated with task to create a family_activity record for the MEMBER_JOINED action type, which should be created when a new member registers to join the family. 
+  - The family_activity record should include the memberId of the new member and the familyId of the family they joined.

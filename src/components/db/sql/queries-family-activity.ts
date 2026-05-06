@@ -107,7 +107,7 @@ export async function getThreadAndGameActivity(familyId: number): Promise<Thread
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED"]),
+        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED", "INVITE_SENT", "MEMBER_JOINED"]),
       ),
     )
     .groupBy(member.id, member.firstName, member.lastName, familyActivity.actionType);
@@ -128,7 +128,7 @@ export async function getThreadAndGameActivityFamilySummary(
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED"]),
+        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED", "INVITE_SENT", "MEMBER_JOINED"]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),
       ),
@@ -145,6 +145,8 @@ export const FAMILY_ACTIVITY_ACTION_TYPES = {
   GAME_STARTED: "GAME_STARTED",
   LIKE_ADDED: "LIKE_ADDED",
   LOVE_ADDED: "LOVE_ADDED",
+  INVITE_SENT: "INVITE_SENT",
+  MEMBER_JOINED: "MEMBER_JOINED",
 } as const;
 
 export type FamilyActivityActionType =
