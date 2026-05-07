@@ -8,6 +8,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -163,6 +164,7 @@ export function TvHomePage({
   shows: TvShow[];
   member: MemberKeyDetails;
 }) {
+  const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedShowDetail, setSelectedShowDetail] = useState<TvShowDetail | null>(null);
   const [commentText, setCommentText] = useState("");
@@ -366,86 +368,35 @@ export function TvHomePage({
     <section className="font-app w-full h-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
                 Family TV Junkies
               </p>
-              <Link
-                href="/"
-                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <ArrowLeft className="font-app mr-2 size-4" />
-                Back to Main Page
-              </Link>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  href="/"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ArrowLeft className="font-app mr-2 size-4" />
+                  Back to Main Page
+                </Link>
+                <Link
+                  href="/tv/templates"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <Edit3 className="mr-1 size-3.5" />
+                  Show Templates
+                </Link>
+              </div>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 See what TV shows your family&apos;s watching.
               </h1>
-              <Link
-                href="/tv/templates"
-                className="ml-3 mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <Edit3 className="mr-1 size-3.5" />
-                Show Templates
-              </Link>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[24rem]">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#b9f1ff]">Shows</p>
-                  <p className="mt-2 text-2xl font-black">{ shows.length }</p>
-                  <p className="text-sm text-[#d9f5ff]">records in view</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#b9f1ff]">Selected</p>
-                  <p className="mt-2 text-lg font-black leading-tight">
-                    { selectedShowBasic?.showTitle ?? "None" }
-                  </p>
-                  <p className="text-sm text-[#d9f5ff]">active show</p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  asChild
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Link href="/tv/add-show">
-                    <Plus className="size-4" />
-                    Add Show
-                  </Link>
-                </Button>
-
-                { canEditSelectedShow && selectedShowBasic ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    asChild
-                    className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  >
-                    <Link href={ `/tv/edit-show/${ selectedShowBasic.id }` }>
-                      Edit Show
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled
-                    className="rounded-full border-white/20 bg-white/5 text-white/55"
-                  >
-                    Edit Show
-                  </Button>
-                ) }
-              </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[780px_1fr] md:gap-2">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
           <div className="min-w-0 space-y-6">
             <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(9,44,62,0.8)] backdrop-blur sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
@@ -496,8 +447,8 @@ export function TvHomePage({
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
                       TV Directory
                     </p>
-                    <span className="inline-flex items-center gap-2 text-sm text-[#5f7987]">
-                      <h2 className="mt-2 text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
+                      <h2 className="text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
                       <FeatureFaqHelp
                         href="/feature-faq?category=TV%20and%20Movie%20Reviews"
                         buttonClassName="border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
@@ -505,7 +456,9 @@ export function TvHomePage({
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
                       <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View Show</Button>
-                    </span>
+                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a]"><Link href="/tv/add-show"><Plus className="size-3.5" />Add Show</Link></Button>
+                      <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Show</Button>
+                    </div>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
                       Search by show title, tags, channel, or family member and pick what to watch next.
                     </p>

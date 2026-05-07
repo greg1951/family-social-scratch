@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
+import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -659,29 +659,23 @@ export function FoodiesHomePage({
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 md:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 md:px-10">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 Family Foodies
               </p>
-              <Link
-                href="/"
-                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                <ArrowLeft className="font-app mr-2 size-4" />
-                Back to Main Page
-              </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Keep your family&apos;s recipes together in one place
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
-                Browse the latest uploads and top family favorites. , then add your own.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  href="/"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ArrowLeft className="font-app mr-2 size-4" />
+                  Back to Main Page
+                </Link>
                 <Link
                   href="/foodies/templates"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
-                  Manage Templates
+                  Recipe Templates
                 </Link>
                 <Link
                   href="/recipe-terms"
@@ -690,59 +684,12 @@ export function FoodiesHomePage({
                   Recipe Terms
                 </Link>
               </div>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[24rem]">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Recipes</p>
-                  <p className="mt-2 text-2xl font-black">{ recipes.length }</p>
-                  <p className="text-sm text-[#f1ffe4]">records in view</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#e9ffd0]">Selected</p>
-                  <p className="mt-2 text-lg font-black leading-tight">
-                    { selectedRecipeBasic?.recipeTitle ?? "None" }
-                  </p>
-                  <p className="text-sm text-[#f1ffe4]">active recipe</p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  asChild
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Link href="/foodies/add-recipe">
-                    <Sparkles className="size-4" />
-                    Add Recipe
-                  </Link>
-                </Button>
-
-                { canEditSelectedRecipe && selectedRecipeBasic ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    asChild
-                    className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                  >
-                    <Link href={ `/foodies/edit-recipe/${ selectedRecipeBasic.id }` }>
-                      Edit Recipe
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled
-                    className="rounded-full border-white/20 bg-white/5 text-white/55"
-                  >
-                    Edit Recipe
-                  </Button>
-                ) }
-              </div>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+                Keep your family&apos;s recipes together in one place
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
+                Browse the latest uploads and top family favorites. , then add your own.
+              </p>
             </div>
           </div>
         </div>
@@ -797,8 +744,8 @@ export function FoodiesHomePage({
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
                     Recipe Directory
                   </p>
-                  <span className="inline-flex items-center gap-2 text-sm text-[#647a50]">
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#647a50]">
+                    <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
                     <FeatureFaqHelp
                       href="/feature-faq?category=Family+Foodies"
                       buttonClassName="border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
@@ -806,7 +753,9 @@ export function FoodiesHomePage({
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
                     <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View Recipe</Button>
-                  </span>
+                    <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]"><Link href="/foodies/add-recipe"><Sparkles className="size-3.5" />Add Recipe</Link></Button>
+                    <Button type="button" variant="outline" asChild disabled={ !canEditSelectedRecipe } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50"><Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit Recipe</Link></Button>
+                  </div>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
                     Search the recipe list, then select a row to keep one dish highlighted while you browse details.
                   </p>

@@ -255,27 +255,17 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Maniacs</p>
-              <Link href="/" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                <ArrowLeft className="font-app mr-2 size-4" />
-                Back to Main Page
-              </Link>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ArrowLeft className="font-app mr-2 size-4" />
+                  Back to Main Page
+                </Link>
+                <Link href="/movies/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Movie Templates</Link>
+              </div>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Keep your family&apos;s favorite movies and reviews in one place.</h1>
-              <Link href="/movies/templates" className="ml-3 mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Movie Templates</Link>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[24rem]">
-              <div className="grid grid-cols-2 gap-3">
-                <div><p className="text-xs uppercase tracking-[0.24em] text-[#ffd9b5]">Movies</p><p className="mt-2 text-2xl font-black">{ movies.length }</p><p className="text-sm text-[#ffe8d1]">records in view</p></div>
-                <div><p className="text-xs uppercase tracking-[0.24em] text-[#ffd9b5]">Selected</p><p className="mt-2 text-lg font-black leading-tight">{ selectedMovieBasic?.movieTitle ?? "None" }</p><p className="text-sm text-[#ffe8d1]">active movie</p></div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"><Link href="/movies/add-movie"><Plus className="size-4" />Add Movie</Link></Button>
-                <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Movie</Button>
-              </div>
             </div>
           </div>
         </div>
@@ -338,6 +328,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                         tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
                       />
                       <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Movie</Button>
+                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/movies/add-movie"><Plus className="size-3.5" />Add Movie</Link></Button>
+                      <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Movie</Button>
 
                     </span>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p></div>

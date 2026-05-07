@@ -9,7 +9,6 @@ import {
   ArrowLeft,
   Bold,
   Eye,
-  Heading2,
   Heading3,
   Heart,
   Italic,
@@ -19,18 +18,17 @@ import {
   MessageSquare,
   PenSquare,
   Plus,
-  Quote,
+  Redo2,
   Save,
+  Search,
   Tags,
-  Type,
   Underline as UnderlineIcon,
   Unlink,
   Undo2,
-  Redo2,
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -51,7 +49,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -83,7 +80,8 @@ type BookDraft = {
   }>;
 };
 
-type ComposerMode = "view" | "edit" | "add";
+type BookDialogMode = "view" | "edit" | "add";
+type DirectoryMode = "latest" | "top-rated";
 type SavePhase = "idle" | "saving" | "saved" | "error";
 
 type ToolbarButtonProps = {
@@ -125,6 +123,8 @@ function createSubmitterLabel(bookRecord: BooksHomeBook, member: MemberKeyDetail
 }
 
 function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKeyDetails): BookDraft {
+  const summaryComments = bookRecord.bookComments ?? [];
+
   return {
     id: bookRecord.id,
     bookTitle: bookRecord.bookTitle,
@@ -133,7 +133,7 @@ function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKeyDetails
     bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
     submitterName: createSubmitterLabel(bookRecord, member),
     likesCount: bookRecord.likesCount ?? 0,
-    commentCount: bookRecord.commentCount ?? 0,
+    commentCount: summaryComments.length,
     likedByMember: bookRecord.likedByMember ?? false,
     memberId: bookRecord.memberId,
     familyId: bookRecord.familyId,
@@ -141,7 +141,7 @@ function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKeyDetails
     createdAt: new Date(bookRecord.createdAt),
     analysisJson: bookRecord.analysisJson ?? JSON.stringify(createEmptyTipTapDocument()),
     selectedTagIds: bookRecord.selectedTagIds ?? [],
-    bookComments: bookRecord.bookComments ?? [],
+    bookComments: summaryComments,
   };
 }
 
@@ -198,22 +198,6 @@ function RichTextToolbar({
   return (
     <div className="flex flex-wrap gap-2 rounded-t-[1.4rem] border border-b-0 border-[#c8d7df] bg-[#f4fbff] p-3">
       <ToolbarButton
-        label="Paragraph"
-        onClick={ () => editor.chain().focus().setParagraph().run() }
-        active={ editor.isActive("paragraph") }
-        disabled={ !editor.isEditable }
-      >
-        <Type className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Heading 2"
-        onClick={ () => editor.chain().focus().toggleHeading({ level: 2 }).run() }
-        active={ editor.isActive("heading", { level: 2 }) }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleHeading({ level: 2 }).run() }
-      >
-        <Heading2 className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
         label="Heading 3"
         onClick={ () => editor.chain().focus().toggleHeading({ level: 3 }).run() }
         active={ editor.isActive("heading", { level: 3 }) }
@@ -269,14 +253,6 @@ function RichTextToolbar({
         <List className="size-4" />
       </ToolbarButton>
       <ToolbarButton
-        label="Quote"
-        onClick={ () => editor.chain().focus().toggleBlockquote().run() }
-        active={ editor.isActive("blockquote") }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleBlockquote().run() }
-      >
-        <Quote className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
         label="Undo"
         onClick={ () => editor.chain().focus().undo().run() }
         disabled={ !editor.can().chain().focus().undo().run() }
@@ -329,15 +305,18 @@ export default function BooksHomePage({
   const [isEngaging, startEngageTransition] = useTransition();
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
   const [selectedBookId, setSelectedBookId] = useState<number | null>(books[0]?.id ?? null);
-  const [composerMode, setComposerMode] = useState<ComposerMode>(books.length > 0 ? "view" : "add");
+  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
+  const [bookDialogMode, setBookDialogMode] = useState<BookDialogMode>("view");
   const [savePhase, setSavePhase] = useState<SavePhase>("idle");
-  const [saveMessage, setSaveMessage] = useState("");
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
   const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
   const [commentText, setCommentText] = useState("");
+  const [searchValue, setSearchValue] = useState("");
+  const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
+  const deferredSearchValue = useDeferredValue(searchValue);
   const [draft, setDraft] = useState<BookDraft>(() => {
     if (books[0]) {
       return createDraftFromBook(books[0], member);
@@ -347,7 +326,6 @@ export default function BooksHomePage({
   });
 
   const selectedBook = bookItems.find((bookItem) => bookItem.id === selectedBookId) ?? null;
-  const selectedBookComments = selectedBook?.bookComments ?? [];
   const canEditSelected = selectedBook
     ? Boolean(member.isAdmin) || selectedBook.memberId === member.memberId
     : false;
@@ -363,7 +341,7 @@ export default function BooksHomePage({
       }),
     ],
     content: getEditorDocument(draft.analysisJson),
-    editable: composerMode !== "view",
+    editable: bookDialogMode !== "view",
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -383,8 +361,8 @@ export default function BooksHomePage({
       return;
     }
 
-    analysisEditor.setEditable(composerMode !== "view");
-  }, [analysisEditor, composerMode]);
+    analysisEditor.setEditable(bookDialogMode !== "view");
+  }, [analysisEditor, bookDialogMode]);
 
   useEffect(() => {
     if (!analysisEditor) {
@@ -418,34 +396,71 @@ export default function BooksHomePage({
       return nextBookItems[0]?.id ?? null;
     });
 
-    if (composerMode === "view") {
-      const nextSelectedBook = nextBookItems.find((bookItem) => bookItem.id === resolvedSelectedBookId) ?? nextBookItems[0] ?? null;
-
-      if (nextSelectedBook) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setDraft(nextSelectedBook);
-      } else {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setDraft(createEmptyDraft(member));
-      }
-    }
-
     const receivedRefreshedBooks = previousBooksRef.current !== books;
 
     if (receivedRefreshedBooks && pendingSelectedBookId && nextBookItems.some((bookItem) => bookItem.id === pendingSelectedBookId)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingSelectedBookId(null);
-
-      if (savePhase === "saving") {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSavePhase("saved");
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setSaveMessage("Book synced with the server order.");
-      }
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSavePhase("saved");
     }
 
     previousBooksRef.current = books;
-  }, [books, composerMode, member, pendingSelectedBookId, savePhase, selectedBookId]);
+  }, [books, member, pendingSelectedBookId, selectedBookId]);
+
+  const directoryBooks = useMemo(() => {
+    if (directoryMode === "latest") {
+      return [...bookItems].sort((leftBook, rightBook) => (
+        new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
+      ));
+    }
+
+    return bookItems
+      .filter((bookItem) => bookItem.likesCount > 0)
+      .sort((leftBook, rightBook) => {
+        if (rightBook.likesCount !== leftBook.likesCount) {
+          return rightBook.likesCount - leftBook.likesCount;
+        }
+
+        return new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime();
+      });
+  }, [directoryMode, bookItems]);
+
+  const filteredBooks = useMemo(() => {
+    const normalizedQuery = deferredSearchValue.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return directoryBooks;
+    }
+
+    return directoryBooks.filter((bookItem) => (
+      bookItem.bookTitle.toLowerCase().includes(normalizedQuery)
+      || bookItem.authorName.toLowerCase().includes(normalizedQuery)
+      || bookItem.bookYear.toLowerCase().includes(normalizedQuery)
+      || bookItem.bookLanguage.toLowerCase().includes(normalizedQuery)
+      || bookItem.submitterName.toLowerCase().includes(normalizedQuery)
+    ));
+  }, [deferredSearchValue, directoryBooks]);
+
+  useEffect(() => {
+    if (filteredBooks.length === 0) {
+      return;
+    }
+
+    if (selectedBookId && filteredBooks.some((bookItem) => bookItem.id === selectedBookId)) {
+      return;
+    }
+
+    setSelectedBookId(filteredBooks[0].id);
+  }, [filteredBooks, selectedBookId]);
+
+  const selectedBookTags = useMemo(() => {
+    if (!selectedBook) {
+      return [] as BookTagOption[];
+    }
+
+    return bookTags.filter((tagOption) => selectedBook.selectedTagIds.includes(tagOption.id));
+  }, [bookTags, selectedBook]);
 
   function normalizeLinkUrl(value: string): string | null {
     const trimmedUrl = value.trim();
@@ -522,59 +537,6 @@ export default function BooksHomePage({
 
   const normalizedLinkPreview = linkValue.trim() ? normalizeLinkUrl(linkValue) : null;
 
-  function loadBookIntoComposer(bookItem: BookDraft, mode: ComposerMode) {
-    setSelectedBookId(bookItem.id);
-    setDraft({ ...bookItem });
-    setComposerMode(mode);
-  }
-
-  function handleSelectBook(bookId: number) {
-    setSavePhase("idle");
-    setSaveMessage("");
-    setCommentText("");
-    const bookItem = bookItems.find((candidate) => candidate.id === bookId);
-
-    if (!bookItem) {
-      return;
-    }
-
-    loadBookIntoComposer(bookItem, "view");
-  }
-
-  function handleAddBook() {
-    setSavePhase("idle");
-    setSaveMessage("");
-    setCommentText("");
-    setDraft(createEmptyDraft(member));
-    setComposerMode("add");
-  }
-
-  function handleEditBook() {
-    if (!selectedBook) {
-      return;
-    }
-
-    if (!canEditSelected) {
-      toast.error("Only the book submitter or an admin can edit this book.");
-      return;
-    }
-
-    loadBookIntoComposer(selectedBook, "edit");
-  }
-
-  function handleCancel() {
-    setSavePhase("idle");
-    setSaveMessage("");
-    setCommentText("");
-    if (selectedBook) {
-      loadBookIntoComposer(selectedBook, "view");
-      return;
-    }
-
-    setDraft(createEmptyDraft(member));
-    setComposerMode("add");
-  }
-
   function toggleTag(tagId: number, checked: boolean | "indeterminate") {
     if (checked === "indeterminate") {
       return;
@@ -601,6 +563,36 @@ export default function BooksHomePage({
         selectedTagIds: currentDraft.selectedTagIds.filter((currentTagId) => currentTagId !== tagId),
       };
     });
+  }
+
+  function handleSelectBook(bookId: number) {
+    setCommentText("");
+    setSelectedBookId(bookId);
+  }
+
+  function openBookDialog(mode: BookDialogMode) {
+    if (mode !== "add" && !selectedBook) {
+      return;
+    }
+
+    if (mode === "edit" && !canEditSelected) {
+      toast.error("Only the book submitter or an admin can edit this book.");
+      return;
+    }
+
+    if (mode === "add") {
+      setDraft(createEmptyDraft(member));
+    } else {
+      setDraft({ ...selectedBook! });
+    }
+
+    setSavePhase("idle");
+    setBookDialogMode(mode);
+    setIsBookDialogOpen(true);
+  }
+
+  function handleCancelDialog() {
+    setIsBookDialogOpen(false);
   }
 
   function handleSave() {
@@ -630,7 +622,6 @@ export default function BooksHomePage({
     }
 
     setSavePhase("saving");
-    setSaveMessage("Saving book and waiting for the refreshed server order...");
 
     startSaveTransition(async () => {
       const result = await saveBooksHomeBookAction({
@@ -646,7 +637,6 @@ export default function BooksHomePage({
 
       if (!result.success) {
         setSavePhase("error");
-        setSaveMessage(result.message);
         toast.error(result.message);
         return;
       }
@@ -656,8 +646,7 @@ export default function BooksHomePage({
       setPendingSelectedBookId(savedBook.id);
       setSelectedBookId(savedBook.id);
       setDraft(savedBook);
-      setComposerMode("view");
-      setSaveMessage("Saved. Refreshing the book list from the server...");
+      setBookDialogMode("view");
       toast.success(result.message);
       router.refresh();
     });
@@ -671,13 +660,13 @@ export default function BooksHomePage({
     )));
     setSelectedBookId(updatedDraft.id);
 
-    if (composerMode === "view" && draft.id === updatedDraft.id) {
+    if (draft.id === updatedDraft.id) {
       setDraft(updatedDraft);
     }
   }
 
   function handleToggleLike() {
-    if (!selectedBook || composerMode !== "view") {
+    if (!selectedBook) {
       return;
     }
 
@@ -697,7 +686,7 @@ export default function BooksHomePage({
   }
 
   function handleAddComment() {
-    if (!selectedBook || composerMode !== "view") {
+    if (!selectedBook) {
       return;
     }
 
@@ -729,7 +718,7 @@ export default function BooksHomePage({
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
                 Book Besties
@@ -742,139 +731,132 @@ export default function BooksHomePage({
                   <ArrowLeft className="mr-2 size-4" />
                   Back to Main Page
                 </Link>
-
-                <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                  Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
-                </h1>
-
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="/book-terms"
-                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                  >
-                    <LibraryBig className="mr-2 size-4" />
-                    Book Terms
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-88">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#d7f4ff]">Books</p>
-                  <p className="mt-2 text-2xl font-black">{ bookItems.length }</p>
-                  <p className="text-sm text-[#e9fbff]">records in view</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#d7f4ff]">Selected</p>
-                  <p className="mt-2 text-lg font-black leading-tight">
-                    { selectedBook?.bookTitle ?? "New book" }
-                  </p>
-                  { savePhase !== "idle" ? (
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-[#e9fbff]">
-                      { savePhase === "saving" ? "Saving" : savePhase === "saved" ? "Synced" : "Save Error" }
-                    </p>
-                  ) : null }
-                </div>
               </div>
 
-              { saveMessage ? (
-                <div className={ `rounded-3xl px-4 py-2 text-sm ${ savePhase === "error"
-                  ? "border border-[#ffd0cf] bg-[#fff2f0] text-[#7c2e25]"
-                  : "border border-white/20 bg-white/10 text-[#ecfaff]"
-                  }` }>
-                  { saveMessage }
-                </div>
-              ) : null }
+              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+                Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
+              </h1>
 
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  onClick={ () => selectedBook && loadBookIntoComposer(selectedBook, "view") }
-                  disabled={ !selectedBook || isSaving }
-                  className="rounded-full bg-white text-[#0f435c] hover:bg-[#ecfaff]"
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  href="/book-terms"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
-                  <Eye className="size-4" />
-                  View Book
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={ handleToggleLike }
-                  disabled={ !selectedBook || composerMode !== "view" || isEngaging }
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Heart className={ `size-4 ${ selectedBook?.likedByMember ? "fill-white" : "" }` } />
-                  { selectedBook?.likedByMember ? "Unlike" : "Like" }
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={ handleEditBook }
-                  disabled={ !selectedBook || !canEditSelected || isSaving }
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <PenSquare className="size-4" />
-                  Edit Book
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={ handleAddBook }
-                  disabled={ isSaving }
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Plus className="size-4" />
-                  Add Book
-                </Button>
+                  <LibraryBig className="mr-2 size-4" />
+                  Book Terms
+                </Link>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)] backdrop-blur xl:row-span-2">
-            <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
-                    Book Directory
-                  </p>
-                  <span className="inline-flex items-center gap-2 text-sm text-[#51707e]">
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
-                      Select a Book Submission
-                    </h2>
-                    <FeatureFaqHelp
-                      buttonClassName="border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
-                      iconClassName="text-[#1d6d8f]"
-                      tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
-                    />
-                  </span>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
-                    Select a book in the Book Directory to see its details. Family members can also like a book and add comments.
-                  </p>
+        <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)] backdrop-blur">
+          <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">Book Directory</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
+                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
+                  <FeatureFaqHelp
+                    buttonClassName="border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
+                    iconClassName="text-[#1d6d8f]"
+                    tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
+                  />
+                  <Button
+                    type="button"
+                    onClick={ () => openBookDialog("view") }
+                    disabled={ !selectedBook }
+                    className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                  >
+                    <Eye className="size-4" />
+                    View Book
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ () => openBookDialog("edit") }
+                    disabled={ !selectedBook || !canEditSelected }
+                    className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
+                  >
+                    <PenSquare className="size-4" />
+                    Edit Book
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ () => openBookDialog("add") }
+                    className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
+                  >
+                    <Plus className="size-4" />
+                    Add Book
+                  </Button>
                 </div>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
+                  Select a book card from the directory, or use search to narrow the list, then open View Book or Edit Book details in a separate dialog.
+                </p>
+              </div>
 
-                <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
-                  { bookItems.length } book{ bookItems.length !== 1 ? "s" : "" }
-                </div>
+              <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
+                { filteredBooks.length } visible book{ filteredBooks.length !== 1 ? "s" : "" }
               </div>
             </div>
 
-            <div className="px-5 py-5 sm:px-6">
-              { bookItems.length === 0 ? (
-                <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
-                  <LibraryBig className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
-                  <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
-                  <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
+            <div className="relative mt-5">
+              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
+              <Input
+                type="search"
+                value={ searchValue }
+                onChange={ (event) => setSearchValue(event.target.value) }
+                placeholder="Search by title, author, year, language, or family member"
+                className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
+                aria-label="Search books"
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[#355161]">
+              <label className="inline-flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="book-directory-mode"
+                  value="latest"
+                  checked={ directoryMode === "latest" }
+                  onChange={ () => setDirectoryMode("latest") }
+                  className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                />
+                <span className="font-semibold">Latest Books</span>
+              </label>
+              <label className="inline-flex cursor-pointer items-center gap-2">
+                <input
+                  type="radio"
+                  name="book-directory-mode"
+                  value="top-rated"
+                  checked={ directoryMode === "top-rated" }
+                  onChange={ () => setDirectoryMode("top-rated") }
+                  className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                />
+                <span className="font-semibold">Top Rated Books</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="px-5 py-5 sm:px-6">
+            { bookItems.length === 0 ? (
+              <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
+                <LibraryBig className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
+                <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
+                <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#edf7fb,#f8fdff)] px-4 py-3 text-sm text-[#355161]">
+                  <LibraryBig className="size-4 text-[#3d819b]" />
+                  <span className="font-semibold text-[#183746]">Selected book:</span>
+                  <span>{ selectedBook?.bookTitle || "Choose a book from the list" }</span>
+                  <span className="rounded-full bg-[#ddf0f8] px-3 py-1 text-xs text-[#2a5a6f]">Viewing as { member.firstName }</span>
                 </div>
-              ) : (
-                <div className="grid gap-3 md:grid-cols-2">
-                  { bookItems.map((bookItem) => {
+
+                <div className="grid gap-3 md:grid-cols-3">
+                  { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;
                     const isAwaitingServerSync = pendingSelectedBookId === bookItem.id && savePhase === "saving";
 
@@ -930,167 +912,202 @@ export default function BooksHomePage({
                     );
                   }) }
                 </div>
+
+                { filteredBooks.length === 0 ? (
+                  <div className="mt-4 rounded-[1.3rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-4 py-6 text-center text-sm text-[#51707e]">
+                    { directoryMode === "top-rated"
+                      ? "No top-rated books match this view yet."
+                      : "No books match that search yet." }
+                  </div>
+                ) : null }
+              </>
+            ) }
+          </div>
+        </div>
+      </div>
+
+      <Dialog open={ isBookDialogOpen } onOpenChange={ setIsBookDialogOpen }>
+        <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="text-[#183746]">
+              { bookDialogMode === "add" ? "Add a New Book" : draft.bookTitle || "Book Details" }
+            </DialogTitle>
+            <DialogDescription className="text-[#51707e]">
+              { bookDialogMode === "add"
+                ? "Fill in the book details and analysis, then save."
+                : bookDialogMode === "edit"
+                  ? "Update the book details and analysis, then save."
+                  : "Read book details, analysis, tags, and family reactions." }
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="max-h-[85vh] space-y-4 overflow-auto pr-1">
+            { bookDialogMode !== "view" ? (
+              <div className="rounded-2xl border border-[#bdd9e8] bg-[#edf7fb] px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-[#2d5a6f]">
+                    { bookDialogMode === "add" ? "Enter details for the new book submission." : "You are editing this book submission." }
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={ handleCancelDialog }
+                      disabled={ isSaving }
+                      className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
+                    >
+                      <X className="size-4" />
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={ handleSave }
+                      disabled={ isSaving }
+                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                    >
+                      <Save className="size-4" />
+                      { isSaving ? "Saving..." : "Save Book" }
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : null }
+
+            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#42748a]">Book Details</p>
+                  { bookDialogMode === "view" ? (
+                    <p className="mt-1 text-sm text-[#355161]">
+                      { draft.bookTitle } by { draft.authorName } ({ draft.bookYear || "Unknown year" }) &middot; { draft.bookLanguage }
+                    </p>
+                  ) : null }
+                </div>
+                { bookDialogMode === "view" ? (
+                  <p className="text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
+                    Added { formatCreatedAt(draft.createdAt) }
+                  </p>
+                ) : null }
+              </div>
+
+              { bookDialogMode !== "view" ? (
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#355161]">Book Name</label>
+                    <Input
+                      value={ draft.bookTitle }
+                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookTitle: event.target.value })) }
+                      placeholder="Enter the book title"
+                      className="border-[#c8d7df] text-[#183746]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#355161]">Author Name</label>
+                    <Input
+                      value={ draft.authorName }
+                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, authorName: event.target.value })) }
+                      placeholder="Enter the author name"
+                      className="border-[#c8d7df] text-[#183746]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#355161]">Book Year</label>
+                    <Input
+                      value={ draft.bookYear }
+                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookYear: event.target.value })) }
+                      placeholder="e.g. 1965"
+                      inputMode="numeric"
+                      className="border-[#c8d7df] text-[#183746]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#355161]">Book Language</label>
+                    <Input
+                      value={ draft.bookLanguage }
+                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookLanguage: event.target.value })) }
+                      placeholder="e.g. English"
+                      className="border-[#c8d7df] text-[#183746]"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-sm font-semibold text-[#355161]">Submitting Member</label>
+                    <Input
+                      value={ draft.submitterName }
+                      disabled
+                      className="border-[#c8d7df] bg-[#f2f8fb] text-[#3d5c6d]"
+                    />
+                  </div>
+                </div>
+              ) : null }
+            </div>
+
+            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#42748a]">Book Analysis</p>
+              { bookDialogMode === "view" ? (
+                <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-[#c8d7df] bg-white px-4 py-4 [&_.tiptap]:text-[#183746] [&_.tiptap]:outline-none [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#7eb2c7] [&_.tiptap_blockquote]:pl-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5">
+                  <EditorContent editor={ analysisEditor } />
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <RichTextField
+                    editor={ analysisEditor }
+                    minHeightClass="min-h-[14rem]"
+                    onSetLink={ openLinkDialog }
+                  />
+                </div>
               ) }
             </div>
-          </div>
 
-          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
-            <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
-                    Book Details
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
-                    { composerMode === "add" ? "Add a New Book" : composerMode === "edit" ? "Edit the Selected Book" : "View the Selected Book" }
-                  </h2>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
-                    The submitter must provide the book title, author, language, year, and commentary. The rich-text area captures the family-facing notes for the selected book.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ handleCancel }
-                    disabled={ isSaving }
-                    className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
-                  >
-                    <X className="size-4" />
-                    Cancel
-                  </Button>
-
-                  <Button
-                    type="button"
-                    onClick={ handleSave }
-                    disabled={ composerMode === "view" || isSaving }
-                    className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                  >
-                    <Save className="size-4" />
-                    { isSaving ? "Saving..." : "Save" }
-                  </Button>
+            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-sm font-semibold text-[#355161]">Book Tags</p>
+                <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
+                  <Tags className="mr-2 size-3.5" />
+                  { bookDialogMode === "view"
+                    ? `${ selectedBookTags.length } tag${ selectedBookTags.length !== 1 ? "s" : "" }`
+                    : `${ draft.selectedTagIds.length } / 3 selected` }
                 </div>
               </div>
-            </div>
 
-            <div className="space-y-5 px-5 py-5 sm:px-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#355161]">Book Name</label>
-                  <Input
-                    value={ draft.bookTitle }
-                    onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookTitle: event.target.value })) }
-                    placeholder="Enter the book title"
-                    disabled={ composerMode === "view" }
-                    className="border-[#c8d7df] text-[#183746]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#355161]">Author Name</label>
-                  <Input
-                    value={ draft.authorName }
-                    onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, authorName: event.target.value })) }
-                    placeholder="Enter the author name"
-                    disabled={ composerMode === "view" }
-                    className="border-[#c8d7df] text-[#183746]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#355161]">Book Year</label>
-                  <Input
-                    value={ draft.bookYear }
-                    onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookYear: event.target.value })) }
-                    placeholder="e.g. 1965"
-                    disabled={ composerMode === "view" }
-                    inputMode="numeric"
-                    className="border-[#c8d7df] text-[#183746]"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#355161]">Book Language</label>
-                  <Input
-                    value={ draft.bookLanguage }
-                    onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookLanguage: event.target.value })) }
-                    placeholder="e.g. English"
-                    disabled={ composerMode === "view" }
-                    className="border-[#c8d7df] text-[#183746]"
-                  />
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-sm font-semibold text-[#355161]">Submitting Member</label>
-                  <Input
-                    value={ draft.submitterName }
-                    disabled
-                    className="border-[#c8d7df] bg-[#f2f8fb] text-[#3d5c6d]"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)]">
-            <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">
-                Book Analysis, Tags and Family Comments
-              </p>
-              {/* <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">
-                Notes, Tags, and Family Comments
-              </h2> */}
-              {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
-                Use the commentary editor for your description, analysis, or why the book matters to the family.
-              </p> */}
-            </div>
-
-            <div className="space-y-5 px-5 py-5 sm:px-6">
-              <div className="space-y-3">
-                <div className="flex flex-col gap-1">
-                  <p className="text-base font-semibold text-[#355161]">Book Analysis</p>
-                </div>
-                <RichTextField
-                  editor={ analysisEditor }
-                  minHeightClass="min-h-[14rem]"
-                  onSetLink={ openLinkDialog }
-                />
-              </div>
-
-              <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-base font-semibold text-[#355161]">Book Tags</p>
-                    <p className="text-sm text-[#51707e]">Choose up to three tags for this book submission.</p>
-                  </div>
-                  <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
-                    <Tags className="mr-2 size-3.5" />
-                    { draft.selectedTagIds.length } / 3 selected
-                  </div>
-                </div>
-
-                { bookTags.length === 0 ? (
-                  <p className="rounded-3xl border border-dashed border-[#c8d7df] bg-white px-4 py-3 text-sm text-[#51707e]">
-                    No book tag options are loaded on this page yet. Add rows to book_tag_reference to enable database-backed tag assignment.
+              { bookDialogMode === "view" ? (
+                selectedBookTags.length === 0 ? (
+                  <p className="mt-3 rounded-2xl border border-dashed border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#51707e]">
+                    This book has no tags selected yet.
                   </p>
                 ) : (
-                  <div className="grid gap-3 md:grid-cols-2">
-                    { (composerMode === "view" ? bookTags.filter((tagOption) => draft.selectedTagIds.includes(tagOption.id)) : bookTags).map((tagOption) => {
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    { selectedBookTags.map((tagOption) => (
+                      <span
+                        key={ tagOption.id }
+                        className="inline-flex items-center rounded-full border border-[#b8d4df] bg-white px-3 py-1 text-xs font-semibold text-[#355161]"
+                      >
+                        { tagOption.tagName }
+                      </span>
+                    )) }
+                  </div>
+                )
+              ) : (
+                bookTags.length === 0 ? (
+                  <p className="mt-3 rounded-3xl border border-dashed border-[#c8d7df] bg-white px-4 py-3 text-sm text-[#51707e]">
+                    No book tag options are loaded yet.
+                  </p>
+                ) : (
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    { bookTags.map((tagOption) => {
                       const isChecked = draft.selectedTagIds.includes(tagOption.id);
 
                       return (
                         <label
                           key={ tagOption.id }
-                          className={ `flex items-start gap-3 rounded-3xl border px-4 py-3 ${ isChecked
+                          className={ `flex cursor-pointer items-start gap-3 rounded-3xl border px-4 py-3 ${ isChecked
                             ? "border-[#3d819b] bg-[#eaf7fd]"
                             : "border-[#d7e4ea] bg-white"
-                            } ${ composerMode === "view" ? "opacity-80" : "cursor-pointer" }` }
+                            }` }
                         >
                           <Checkbox
                             checked={ isChecked }
                             onCheckedChange={ (checked) => toggleTag(tagOption.id, checked) }
-                            disabled={ composerMode === "view" || (!isChecked && draft.selectedTagIds.length >= 3) }
+                            disabled={ !isChecked && draft.selectedTagIds.length >= 3 }
                             className="mt-0.5"
                           />
                           <span className="min-w-0">
@@ -1103,20 +1120,38 @@ export default function BooksHomePage({
                       );
                     }) }
                   </div>
-                ) }
-              </div>
+                )
+              ) }
+            </div>
 
-              { composerMode !== "add" ? (
-                <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-base font-semibold text-[#355161]">Family Comments</p>
-                      <p className="text-sm text-[#51707e]">Share your thoughts on this book with your family.</p>
-                    </div>
-                    <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
-                      <MessageSquare className="mr-2 size-3.5" />
-                      { selectedBook?.commentCount ?? 0 } comments
-                    </div>
+            { bookDialogMode === "view" ? (
+              <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#355161]">Family Comments</p>
+                    <p className="text-sm text-[#51707e]">Share your thoughts on this book with your family.</p>
+                  </div>
+                  <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
+                    <MessageSquare className="mr-2 size-3.5" />
+                    { draft.commentCount } comments
+                  </div>
+                </div>
+
+                <div className="rounded-[1.15rem] border border-[#d9e5ea] bg-white px-3 py-3">
+                  <div className="mb-3 flex flex-wrap items-center gap-4">
+                    <Button
+                      type="button"
+                      onClick={ handleToggleLike }
+                      disabled={ isEngaging }
+                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                    >
+                      <Heart className={ `size-4 ${ draft.likedByMember ? "fill-white" : "" }` } />
+                      { draft.likedByMember ? "Unlike" : "Like" }
+                    </Button>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
+                      <Heart className="size-4 text-[#c06c4a]" />
+                      { draft.likesCount.toLocaleString() }
+                    </span>
                   </div>
 
                   <div className="space-y-2">
@@ -1126,43 +1161,43 @@ export default function BooksHomePage({
                       value={ commentText }
                       onChange={ (event) => setCommentText(event.target.value) }
                       placeholder="What stood out to you about this book?"
-                      disabled={ !selectedBook || composerMode !== "view" || isEngaging }
+                      disabled={ isEngaging }
                       className="min-h-24 w-full rounded-xl border border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#183746] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3d819b]"
                     />
                     <div className="flex justify-end">
                       <Button
                         type="button"
                         onClick={ handleAddComment }
-                        disabled={ !selectedBook || composerMode !== "view" || isEngaging || commentText.trim().length < 2 }
+                        disabled={ isEngaging || commentText.trim().length < 2 }
                         className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
                       >
                         Post Comment
                       </Button>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    { selectedBookComments.length === 0 ? (
-                      <p className="rounded-2xl border border-dashed border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#51707e]">
-                        No comments yet. Be the first family member to add one.
-                      </p>
-                    ) : (
-                      selectedBookComments.map((bookComment) => (
-                        <article key={ bookComment.id } className="rounded-2xl border border-[#d9e5ea] bg-white px-3 py-3 text-sm text-[#355161]">
-                          <p className="whitespace-pre-wrap leading-6">{ bookComment.text || "(No text in comment)" }</p>
-                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
-                            { bookComment.commenterName } · { formatCreatedAt(bookComment.createdAt) }
-                          </p>
-                        </article>
-                      ))
-                    ) }
-                  </div>
                 </div>
-              ) : null }
-            </div>
+
+                <div className="space-y-2">
+                  { draft.bookComments.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#51707e]">
+                      No comments yet. Be the first family member to add one.
+                    </p>
+                  ) : (
+                    draft.bookComments.map((bookComment) => (
+                      <article key={ bookComment.id } className="rounded-2xl border border-[#d9e5ea] bg-white px-3 py-3 text-sm text-[#355161]">
+                        <p className="whitespace-pre-wrap leading-6">{ bookComment.text || "(No text in comment)" }</p>
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
+                          { bookComment.commenterName } · { formatCreatedAt(bookComment.createdAt) }
+                        </p>
+                      </article>
+                    ))
+                  ) }
+                </div>
+              </div>
+            ) : null }
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={ isLinkDialogOpen } onOpenChange={ setIsLinkDialogOpen }>
         <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-md">
@@ -1214,7 +1249,7 @@ export default function BooksHomePage({
             </div>
           </div>
 
-          <DialogFooter className="pt-2">
+          <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
               variant="outline"
@@ -1231,7 +1266,7 @@ export default function BooksHomePage({
             <Button type="button" onClick={ applyLink }>
               Apply Link
             </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
     </section>

@@ -258,28 +258,14 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 md:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 md:px-10">
-          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Music Lovers</p>
-              <Link href="/" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Main Page</Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your family&apos;s favorite song and album reviews and lyrics in one place.</h1>
-              <Link href="/music/templates" className="ml-3 mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Music Templates</Link>
-            </div>
-            {/* <Link href="/music/templates"><Edit3 className="size-4" />Music Templates</Link> */ }
-
-            <div className="mt-8 flex flex-col items-start gap-6 md:flex-row md:items-center">
-              <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[24rem]">
-                <div className="grid grid-cols-2 gap-3">
-                  <div><p className="text-xs uppercase tracking-[0.24em] text-[#ffd9b5]">Music Posts</p><p className="mt-2 text-2xl font-black">{ musics.length }</p><p className="text-sm text-[#ffe8d1]">records in view</p></div>
-                  <div><p className="text-xs uppercase tracking-[0.24em] text-[#ffd9b5]">Selected</p><p className="mt-2 text-lg font-black leading-tight">{ selectedMusicBasic?.musicTitle ?? "None" }</p><p className="text-sm text-[#ffe8d1]">active music</p></div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button type="button" variant="outline" asChild className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"><Link href="/music/add-music"><Plus className="size-4" />Add Music</Link></Button>
-                  <Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Music</Button>
-                  <Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white disabled:opacity-50"><Edit3 className="size-4" />Edit Lyrics</Button>
-                </div>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Main Page</Link>
+                <Link href="/music/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Music Templates</Link>
               </div>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your family&apos;s favorite song and album reviews and lyrics in one place.</h1>
             </div>
           </div>
         </div>
@@ -334,11 +320,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
                       Music Directory</p>
-                    <span className="mt-2 inline-flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c] sm:flex-nowrap">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
                       <h2 className="text-2xl font-black tracking-tight text-[#5c2e1a]">
                         Music Finder</h2>
-                      <FeatureFaqHelp href="/feature-faq?category=Music%20Lovers" buttonClassName="border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]" iconClassName="text-[#b8581a]" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]" /><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Music</Button>{ canViewLyricsSelectedMusic ? <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link></Button> : null }
-                    </span>
+                      <FeatureFaqHelp href="/feature-faq?category=Music%20Lovers" buttonClassName="border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]" iconClassName="text-[#b8581a]" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]" /><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Music</Button>{ canViewLyricsSelectedMusic ? <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link></Button> : null }<Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/music/add-music"><Plus className="size-3.5" />Add Music</Link></Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Music</Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Lyrics</Button>
+                    </div>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">
                       Search by title, genre, song or album, and family member.</p></div>
                   {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMusics.length } music posts found</div> */ }

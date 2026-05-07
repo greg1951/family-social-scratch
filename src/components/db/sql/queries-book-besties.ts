@@ -143,6 +143,7 @@ async function loadBooksHomeBooks(
   const tagIdsByBookId = new Map<number, number[]>();
   const likesByBookId = new Map<number, number>();
   const likedBookIdsByViewer = new Set<number>();
+  const submitterMemberIdByBookId = new Map(bookRows.map((row) => [row.id, row.memberId]));
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByBookId.get(factTagRow.bookId) ?? [];
@@ -151,7 +152,11 @@ async function loadBooksHomeBooks(
   }
 
   for (const likeRow of likeRows) {
-    likesByBookId.set(likeRow.bookId, (likesByBookId.get(likeRow.bookId) ?? 0) + 1);
+    const submitterMemberId = submitterMemberIdByBookId.get(likeRow.bookId);
+
+    if (submitterMemberId !== likeRow.memberId) {
+      likesByBookId.set(likeRow.bookId, (likesByBookId.get(likeRow.bookId) ?? 0) + 1);
+    }
 
     if (viewerMemberId && likeRow.memberId === viewerMemberId) {
       likedBookIdsByViewer.add(likeRow.bookId);
@@ -187,7 +192,7 @@ async function loadBooksHomeBooks(
       familyId: row.familyId,
       submitterName: memberNameById.get(row.memberId) ?? `Member #${ row.memberId }`,
       likesCount: likesByBookId.get(row.id) ?? 0,
-      commentCount: submissionComments.length,
+      commentCount: bookComments.length,
       likedByMember: likedBookIdsByViewer.has(row.id),
       analysisJson: analysisComment?.commentJson,
       selectedTagIds: tagIdsByBookId.get(row.id) ?? [],

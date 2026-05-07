@@ -374,7 +374,7 @@ export default function PoetryHomePage({
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,27,88,0.96),rgba(104,53,148,0.88)_56%,rgba(195,150,110,0.84))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(46,18,70,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#f1deff]">
                 Family Poetry Cafe
@@ -402,43 +402,6 @@ export default function PoetryHomePage({
                 </Link>
               </div>
             </div>
-
-            <div className="flex flex-col gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-88">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#ead3ff]">Poems</p>
-                  <p className="mt-2 text-2xl font-black">{ poemItems.length }</p>
-                  <p className="text-sm text-[#f3e8ff]">records in view</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-[0.24em] text-[#ead3ff]">Selected</p>
-                  <p className="mt-2 text-lg font-black leading-tight">{ selectedPoem?.poemTitle ?? "None" }</p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={ handleEditPoem }
-                  disabled={ !selectedPoem || !canEditSelected }
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <PenSquare className="size-4" />
-                  Edit Poem
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={ handleAddPoem }
-                  className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-                >
-                  <Plus className="size-4" />
-                  Add Poem
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -447,8 +410,8 @@ export default function PoetryHomePage({
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Poetry Directory</p>
-                <span className="inline-flex items-center gap-2 text-sm text-[#77578f]">
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#43245d]">Select a Poem Submission</h2>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
+                  <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Select a Poem Submission</h2>
                   <FeatureFaqHelp
                     buttonClassName="border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
                     iconClassName="text-[#6e3f98]"
@@ -463,7 +426,26 @@ export default function PoetryHomePage({
                     <Eye className="size-3.5" />
                     View Poem
                   </Button>
-                </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ handleEditPoem }
+                    disabled={ !selectedPoem || !canEditSelected }
+                    className="h-8 rounded-full border border-[#d8b5ff] bg-white px-3 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff] disabled:opacity-50"
+                  >
+                    <PenSquare className="size-3.5" />
+                    Edit Poem
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ handleAddPoem }
+                    className="h-8 rounded-full border border-[#d8b5ff] bg-white px-3 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff]"
+                  >
+                    <Plus className="size-3.5" />
+                    Add Poem
+                  </Button>
+                </div>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                   Select a poem card from the directory, or use search to narrow the list, then open View Poem or Edit Poem details in a separate dialog.
                 </p>
