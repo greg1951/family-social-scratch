@@ -10,6 +10,7 @@ import {
 import {
   AddPoemCommentReturn,
   GetPoemTermReturn,
+  GetPoetryHomePoemReturn,
   Poem,
   PoemsReturn,
   PoetryHomePageDataReturn,
@@ -260,6 +261,27 @@ export async function getPoetryHomePageData(familyId: number, memberId?: number)
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Error loading poetry home page data',
+    };
+  }
+}
+
+export async function getPoemById(
+  familyId: number,
+  poemId: number,
+  memberId?: number
+): Promise<GetPoetryHomePoemReturn> {
+  try {
+    const [foundPoem] = await loadPoetryHomePoems(familyId, [poemId], memberId);
+
+    if (!foundPoem) {
+      return { success: false, message: `Poem with id ${ poemId } was not found.` };
+    }
+
+    return { success: true, poem: foundPoem };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : `Error loading poem with id ${ poemId }`,
     };
   }
 }

@@ -119,6 +119,13 @@ export type PoemTagOptionsReturn =
       poemTags: PoemTagOption[];
     };
 
+export type GetPoetryHomePoemReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      poem: PoetryHomePoem;
+    };
+
 export interface PoemTerm {
   id: number;
   term: string;

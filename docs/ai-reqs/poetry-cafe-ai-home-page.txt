@@ -56,4 +56,50 @@ The poem_tag_reference table has been updated to provide two new types of tags t
 - Another example: If "Epic Poetry" category is selected then only the 10-19 should be available as selectable tag references. 
   - In this case there is only a category and not a qualifier.
 
+---------------------------------
+
+Background
+The poetry home page is structured similarly to TV, Movie, Music home pages. 
+However, under the covers the Poetry home page does not implement the Add Poem and View Poem dialogs the same way as TV, Movie, and Music. 
+The TV, Movie, and Music home pages have separate dialogs for Add and View. 
+The Poetry home page has a single form area on the home page that is used for both adding or editing a poem.
+The poetry home page can be found in the "src/features/poetry/components/poetry-home-page.tsx" file.
+
+Request
+The purpose of this request is to generate a separate page to implement the Add Poem and Edit Poem functionality for the Poetry home page.
+This will bring it into line with the TV, Movie, and Music home pages which have separate pages for Add and Edit.
+This change is necessary because there are additional changes to be made to the way poems are added and edited that will require more space than is currently available in the form area on the Poetry home page.
+
+-----------------------------------
+
+The last set of changes resulted in a Poetry home page layout that does not conform to what I wanted, so let me try again.
+The last changes removed the card layout that I wanted for the poem list and the poem details.
+The Book Directory section in the book home page is a good example of the layout I want for the Poetry home page.
+On the Poetry home page, the current current Poetry Directory section should be retained but it should now replace the Poem Details section to the right of it. 
+When a Poetry card or an entry searched in the Poetry Directory is selected, then the View Poem or Edit Poem buttons would then open the details in the new separate dialog.
+
+-------------------------------
+
+When adding or editing a poem, the submitter should be able to pick 1-3 tags from different poetry categories. 
+- Currently in the poem_tag_reference table there is a "tag_type" column that contains one of two values: "category" and "qualifier".
+- Currently there are four rows in the table containing "category" in the "tag_type" column. 
+- Associated with each category are rows with "qualifier" tag_types. 
+- How they are related is via the seq_no on each row. The "category" entries have an seq_no of 10, 20, 30, 40.
+- I need a dropdown selection for each category and in the selection list their associated qualifiers. 
+- How are the qualifiers associated with the category?
+  - The category seq_no 10 currently has no qualifiers.
+  - The category seq_no 20 has qualifier entries in the 21-29 range.
+  - The category seq_no 30 has qualifier entries in the 31-39 range.
+  - The category seq_no 40 has a qualifier entries in 41-49 range.
+
+------------------------------
+
+- In the Poem Text of the Add or Edit Poem page, I would like to add a column that runs alongside of the text entered into Poem Text area.
+- The column will contain a number for each line of text entered into the Poem Text area and will scroll along with the text.
+  - The numbers on each line will be centered in the column and will be in a smaller font size than the text in the Poem Text area.
+- This will allow the poem submitter to easily reference line numbers when writing the poem analysis in the Poem Analysis section.
+
+
+
+
 
