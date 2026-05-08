@@ -229,7 +229,9 @@ export async function getBookTagReferences()
       id: bookTagReference.id,
       tagName: bookTagReference.tagName,
       tagDesc: bookTagReference.tagDesc,
+      tagType: bookTagReference.tagType,
       status: bookTagReference.status,
+      seqNo: bookTagReference.seqNo,
     })
     .from(bookTagReference)
     .orderBy(asc(bookTagReference.seqNo), asc(bookTagReference.tagName));
@@ -286,6 +288,13 @@ export async function saveBooksHomeBook(
     return {
       success: false,
       message: parsedAnalysisJson.message,
+    };
+  }
+
+  if (uniqueTagIds.length < 1) {
+    return {
+      success: false,
+      message: 'Select at least one book tag before saving.',
     };
   }
 

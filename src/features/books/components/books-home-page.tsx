@@ -53,6 +53,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
@@ -84,6 +93,12 @@ type BookDialogMode = "view" | "edit" | "add";
 type DirectoryMode = "latest" | "top-rated";
 type SavePhase = "idle" | "saving" | "saved" | "error";
 
+const BOOK_TAG_CATEGORY_SLOTS = [
+  { seqNo: 10, fallbackName: "Fiction" },
+  { seqNo: 30, fallbackName: "Non-Fiction" },
+  { seqNo: 90, fallbackName: "Other" },
+] as const;
+
 type ToolbarButtonProps = {
   label: string;
   active?: boolean;
@@ -108,6 +123,15 @@ function formatCreatedAt(createdAt: Date) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(createdAt));
+}
+
+function getSeqNoRange(seqNo: number) {
+  const rangeStart = Math.floor(seqNo / 10) * 10;
+
+  return {
+    rangeStart,
+    rangeEnd: rangeStart + 9,
+  };
 }
 
 function createSubmitterLabel(bookRecord: BooksHomeBook, member: MemberKeyDetails) {
@@ -442,6 +466,33 @@ export default function BooksHomePage({
     ));
   }, [deferredSearchValue, directoryBooks]);
 
+  const activeBookTags = useMemo(() => (
+    bookTags.filter((tagOption) => tagOption.status !== "archived")
+  ), [bookTags]);
+
+  const categoryTagOptions = useMemo(() => (
+    BOOK_TAG_CATEGORY_SLOTS.map((slot) => {
+      const categoryRange = getSeqNoRange(slot.seqNo);
+      const categoryTag = activeBookTags.find((tagOption) => (
+        tagOption.tagType === "category" && tagOption.seqNo === slot.seqNo
+      ));
+
+      const qualifierOptions = activeBookTags
+        .filter((tagOption) => (
+          tagOption.tagType === "qualifier"
+          && tagOption.seqNo >= categoryRange.rangeStart + 1
+          && tagOption.seqNo <= categoryRange.rangeEnd
+        ))
+        .sort((a, b) => a.seqNo - b.seqNo || a.tagName.localeCompare(b.tagName));
+
+      return {
+        seqNo: slot.seqNo,
+        categoryName: categoryTag?.tagName ?? slot.fallbackName,
+        qualifierOptions,
+      };
+    })
+  ), [activeBookTags]);
+
   useEffect(() => {
     if (filteredBooks.length === 0) {
       return;
@@ -537,30 +588,50 @@ export default function BooksHomePage({
 
   const normalizedLinkPreview = linkValue.trim() ? normalizeLinkUrl(linkValue) : null;
 
-  function toggleTag(tagId: number, checked: boolean | "indeterminate") {
-    if (checked === "indeterminate") {
-      return;
-    }
+  function getSelectedTagForCategory(categorySeqNo: number) {
+    const categoryRange = getSeqNoRange(categorySeqNo);
+
+    return draft.selectedTagIds.find((selectedTagId) => {
+      const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
+
+      if (!tagOption) {
+        return false;
+      }
+
+      return tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd;
+    });
+  }
+
+  function handleCategoryTagSelect(categorySeqNo: number, selectedValue: string) {
+    const categoryRange = getSeqNoRange(categorySeqNo);
+    const nextTagId = selectedValue === "none" ? null : Number(selectedValue);
 
     setDraft((currentDraft) => {
-      if (checked) {
-        if (currentDraft.selectedTagIds.includes(tagId) || currentDraft.selectedTagIds.length >= 3) {
-          if (currentDraft.selectedTagIds.length >= 3 && !currentDraft.selectedTagIds.includes(tagId)) {
-            toast.error("Select no more than three book tags.");
-          }
+      const nextSelectedTagIds = currentDraft.selectedTagIds.filter((selectedTagId) => {
+        const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
 
-          return currentDraft;
+        if (!tagOption) {
+          return false;
         }
 
+        return !(tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd);
+      });
+
+      if (nextTagId === null) {
         return {
           ...currentDraft,
-          selectedTagIds: [...currentDraft.selectedTagIds, tagId],
+          selectedTagIds: nextSelectedTagIds,
         };
+      }
+
+      if (nextSelectedTagIds.length >= 3) {
+        toast.error("Select no more than three book tags.");
+        return currentDraft;
       }
 
       return {
         ...currentDraft,
-        selectedTagIds: currentDraft.selectedTagIds.filter((currentTagId) => currentTagId !== tagId),
+        selectedTagIds: [...nextSelectedTagIds, nextTagId],
       };
     });
   }
@@ -618,6 +689,11 @@ export default function BooksHomePage({
 
     if (!/^\d{1,4}$/.test(normalizedYear)) {
       toast.error("Enter a valid numeric book year.");
+      return;
+    }
+
+    if (draft.selectedTagIds.length < 1) {
+      toast.error("Select at least one book tag before saving.");
       return;
     }
 
@@ -714,6 +790,7 @@ export default function BooksHomePage({
     });
   }
 
+  /*---------------------------------------- Main Return ----------------------------------------------- */
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -731,13 +808,6 @@ export default function BooksHomePage({
                   <ArrowLeft className="mr-2 size-4" />
                   Back to Main Page
                 </Link>
-              </div>
-
-              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
-              </h1>
-
-              <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/book-terms"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -746,6 +816,10 @@ export default function BooksHomePage({
                   Book Terms
                 </Link>
               </div>
+
+              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+                Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
+              </h1>
             </div>
           </div>
         </div>
@@ -758,6 +832,7 @@ export default function BooksHomePage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
                   <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
                   <FeatureFaqHelp
+                    href=" /feature-faq?category=Book%20Besties"
                     buttonClassName="border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
                     iconClassName="text-[#1d6d8f]"
                     tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
@@ -943,7 +1018,7 @@ export default function BooksHomePage({
 
           <div className="max-h-[85vh] space-y-4 overflow-auto pr-1">
             { bookDialogMode !== "view" ? (
-              <div className="rounded-2xl border border-[#bdd9e8] bg-[#edf7fb] px-4 py-3">
+              <div className="rounded-2xl border border-[#bdd9e8] bg-[#edf7fb] px-4 py-1">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-[#2d5a6f]">
                     { bookDialogMode === "add" ? "Enter details for the new book submission." : "You are editing this book submission." }
@@ -1011,7 +1086,7 @@ export default function BooksHomePage({
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]">Book Year</label>
+                    <label className="text-sm font-semibold text-[#355161]">Publication Year</label>
                     <Input
                       value={ draft.bookYear }
                       onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookYear: event.target.value })) }
@@ -1029,14 +1104,14 @@ export default function BooksHomePage({
                       className="border-[#c8d7df] text-[#183746]"
                     />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  {/* <div className="space-y-2 md:col-span-2">
                     <label className="text-sm font-semibold text-[#355161]">Submitting Member</label>
                     <Input
                       value={ draft.submitterName }
                       disabled
                       className="border-[#c8d7df] bg-[#f2f8fb] text-[#3d5c6d]"
                     />
-                  </div>
+                  </div> */}
                 </div>
               ) : null }
             </div>
@@ -1087,38 +1162,53 @@ export default function BooksHomePage({
                   </div>
                 )
               ) : (
-                bookTags.length === 0 ? (
+                activeBookTags.length === 0 ? (
                   <p className="mt-3 rounded-3xl border border-dashed border-[#c8d7df] bg-white px-4 py-3 text-sm text-[#51707e]">
                     No book tag options are loaded yet.
                   </p>
                 ) : (
-                  <div className="mt-3 grid gap-3 md:grid-cols-2">
-                    { bookTags.map((tagOption) => {
-                      const isChecked = draft.selectedTagIds.includes(tagOption.id);
+                  <div className="mt-3 space-y-3">
+                    <p className="text-sm text-[#51707e]">Choose 1-3 tags across Fiction, Non-Fiction, and Other.</p>
+                    <div className="grid gap-3 md:grid-cols-3">
+                      { categoryTagOptions.map((categoryTagOption) => {
+                        const selectedTagId = getSelectedTagForCategory(categoryTagOption.seqNo);
 
-                      return (
-                        <label
-                          key={ tagOption.id }
-                          className={ `flex cursor-pointer items-start gap-3 rounded-3xl border px-4 py-3 ${ isChecked
-                            ? "border-[#3d819b] bg-[#eaf7fd]"
-                            : "border-[#d7e4ea] bg-white"
-                            }` }
-                        >
-                          <Checkbox
-                            checked={ isChecked }
-                            onCheckedChange={ (checked) => toggleTag(tagOption.id, checked) }
-                            disabled={ !isChecked && draft.selectedTagIds.length >= 3 }
-                            className="mt-0.5"
-                          />
-                          <span className="min-w-0">
-                            <span className="block font-semibold text-[#183746]">{ tagOption.tagName }</span>
-                            { tagOption.tagDesc ? (
-                              <span className="mt-1 block text-xs text-[#51707e]">{ tagOption.tagDesc }</span>
-                            ) : null }
-                          </span>
-                        </label>
-                      );
-                    }) }
+                        return (
+                          <div key={ categoryTagOption.seqNo } className="space-y-2 rounded-2xl border border-[#d7e4ea] bg-white p-3">
+                            <label className="text-sm font-semibold text-[#355161]">
+                              { categoryTagOption.categoryName }
+                            </label>
+                            <Select
+                              value={ selectedTagId ? String(selectedTagId) : "none" }
+                              onValueChange={ (value) => handleCategoryTagSelect(categoryTagOption.seqNo, value) }
+                            >
+                              <SelectTrigger className="border-[#c8d7df] text-[#183746]">
+                                <SelectValue placeholder={ `Select ${ categoryTagOption.categoryName } tag` } />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">No selection</SelectItem>
+                                <SelectGroup>
+                                  <SelectLabel>Category</SelectLabel>
+                                  <SelectItem value={ `category-${ categoryTagOption.seqNo }` } disabled>
+                                    { categoryTagOption.categoryName }
+                                  </SelectItem>
+                                </SelectGroup>
+                                { categoryTagOption.qualifierOptions.length > 0 ? (
+                                  <SelectGroup>
+                                    <SelectLabel>Qualifiers</SelectLabel>
+                                    { categoryTagOption.qualifierOptions.map((tagOption) => (
+                                      <SelectItem key={ tagOption.id } value={ String(tagOption.id) }>
+                                        { tagOption.tagName }
+                                      </SelectItem>
+                                    )) }
+                                  </SelectGroup>
+                                ) : null }
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        );
+                      }) }
+                    </div>
                   </div>
                 )
               ) }
@@ -1229,7 +1319,7 @@ export default function BooksHomePage({
               <Checkbox
                 id="books-home-link-target"
                 checked={ openLinkInNewTab }
-                onCheckedChange={ (checked) => setOpenLinkInNewTab(checked === true) }
+                onCheckedChange={ (checked: boolean | "indeterminate") => setOpenLinkInNewTab(checked === true) }
               />
               <label className="text-sm text-[#355161]" htmlFor="books-home-link-target">
                 Open in new tab

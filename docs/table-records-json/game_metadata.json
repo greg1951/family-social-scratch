@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "Mexican Train",
+    "high_or_lo": "low",
+    "is_round_based": true,
+    "max_rounds": 12,
+    "score_uom": "points"
+  },
+  {
+    "id": 2,
+    "name": "Acquire",
+    "high_or_lo": "high",
+    "is_round_based": false,
+    "max_rounds": 12,
+    "score_uom": "dollars"
+  }
+]

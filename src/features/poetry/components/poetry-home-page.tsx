@@ -387,12 +387,6 @@ export default function PoetryHomePage({
                   <ArrowLeft className="mr-2 size-4" />
                   Back to Main Page
                 </Link>
-              </div>
-
-              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                Welcome to your family Poetry Cafe. Share your favorite poems and comment on each other&apos;s favorites.
-              </h1>
-              <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/poem-terms"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
@@ -401,6 +395,10 @@ export default function PoetryHomePage({
                   Poetry Terms
                 </Link>
               </div>
+
+              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+                Welcome to your family Poetry Cafe. Share your favorite poems and comment on each other&apos;s favorites.
+              </h1>
             </div>
           </div>
         </div>
@@ -413,6 +411,7 @@ export default function PoetryHomePage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
                   <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Select a Poem Submission</h2>
                   <FeatureFaqHelp
+                    href=" /feature-faq?category=Poetry%20Cafe"
                     buttonClassName="border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
                     iconClassName="text-[#6e3f98]"
                     tooltipClassName="bg-[#4e2374] text-[#f6ebff]"

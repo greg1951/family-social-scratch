@@ -447,9 +447,9 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
                         </div>
                         <EditorContent editor={ editor } />
                       </div>
-                      <p className="text-sm text-[#51707e]">
+                      {/* <p className="text-sm text-[#51707e]">
                         Rich text formatting is available if you need headings, lists, links, or code examples.
-                      </p>
+                      </p> */}
                       <FormMessage />
                     </FormItem>
                   ) }

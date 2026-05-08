@@ -1,0 +1,162 @@
+[
+  {
+    "id": 1,
+    "term": "Alliteration",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition: \"},{\"type\":\"text\",\"text\":\"The repetition of consonant sounds, particularly at the beginnings of words.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example:\"},{\"type\":\"text\",\"text\":\" \"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"\\\"Pensive poets\\\" or \\\"nattering nabobs of negativism\\\".\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:05:38.414542",
+    "term_category": "definition"
+  },
+  {
+    "id": 2,
+    "term": "Assonance",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Repetition of similar vowel sounds.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example:\"},{\"type\":\"text\",\"text\":\" \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"free as a breeze\"},{\"type\":\"text\",\"text\":\"\\\" or \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"slowly the boat goes\"},{\"type\":\"text\",\"text\":\"\\\"\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:23:34.59899",
+    "term_category": "definition"
+  },
+  {
+    "id": 3,
+    "term": "Consonance",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Repetition of consonant sounds within or at the end of words.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example: \"},{\"type\":\"text\",\"text\":\"\\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"pitter patter\"},{\"type\":\"text\",\"text\":\"\\\" or \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"Mike likes his new bike\"},{\"type\":\"text\",\"text\":\"\\\"\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:27:19.80603",
+    "term_category": "definition"
+  },
+  {
+    "id": 4,
+    "term": "Couplet",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Two consecutive, rhyming lines.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example: \"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"\\\"For thy sweet love remember'd such wealth brings / That then I scorn than change my state with kings\\\" (The Bard)\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:28:38.141385",
+    "term_category": "definition"
+  },
+  {
+    "id": 5,
+    "term": "Enjabment",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" The continuation of a sentence without a pause beyond the end of a line or stanza.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples:\"},{\"type\":\"text\",\"text\":\" Look for verse lines without any ending punctuation to indicate a pause is needed. \"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:30:26.875331",
+    "term_category": "definition"
+  },
+  {
+    "id": 6,
+    "term": "Free Verse",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Poetry without a regular meter or rhyme scheme.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:31:20.516863",
+    "term_category": "definition"
+  },
+  {
+    "id": 7,
+    "term": "Free Verse",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Poetry without a regular meter or rhyme scheme.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:35:07.942518",
+    "term_category": "definition"
+  },
+  {
+    "id": 8,
+    "term": "Free Verse",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Poetry without a regular meter or rhyme scheme.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:35:22.561904",
+    "term_category": "definition"
+  },
+  {
+    "id": 9,
+    "term": "Hyperbole",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Exaggerated statements not meant to be taken literally.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples: \"},{\"type\":\"text\",\"text\":\"\\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"I've told you a million times,\\\"\"},{\"type\":\"text\",\"text\":\" or \"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"\\\"That bag weighs a ton\\\".\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:37:21.732927",
+    "term_category": "definition"
+  },
+  {
+    "id": 10,
+    "term": "Imagery",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Vivid descriptive language that appeals to the senses.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples: \"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"\\\"The golden sun, a blazing ball of fire, sank below the horizon\\\"\"},{\"type\":\"text\",\"text\":\" or \"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"\\\"The tops of trees that are all aquiver with new spring life\\\"\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 22:39:28.001397",
+    "term_category": "definition"
+  },
+  {
+    "id": 11,
+    "term": "Metaphor",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" A direct comparison between two unlike things.\"}]},{\"type\":\"paragraph\"},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples:\"},{\"type\":\"text\",\"text\":\" \"}]},{\"type\":\"bulletList\",\"content\":[{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"The fog comes / on little cat feet.\"},{\"type\":\"text\",\"text\":\"\\\" (\"},{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Sandburg\"},{\"type\":\"text\",\"text\":\") \"}]}]},{\"type\":\"listItem\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"All the world's a stage, / And all the men and women merely players.\"},{\"type\":\"text\",\"text\":\"\\\" (\"},{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Shakespeare\"},{\"type\":\"text\",\"text\":\")\"}]}]}]},{\"type\":\"paragraph\"}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:17:54.745083",
+    "term_category": "definition"
+  },
+  {
+    "id": 12,
+    "term": "Meter",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" The structured, rhythmic pattern of stressed and unstressed syllables.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:18:50.891359",
+    "term_category": "definition"
+  },
+  {
+    "id": 13,
+    "term": "Onomatopoeia",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Words that imitate the sound they describe. \"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example:\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\" \\\"Buzz, slurp, bang, boom\\\"\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:19:59.265765",
+    "term_category": "definition"
+  },
+  {
+    "id": 14,
+    "term": "Refrain",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" A line or set of lines repeated at intervals.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples:\"},{\"type\":\"text\",\"text\":\" Villanelles like Thomas's \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"Do not go gentle into that good night\"},{\"type\":\"text\",\"text\":\"\\\" or Poe's \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"Nevermore\"},{\"type\":\"text\",\"text\":\"\\\" in the Raven\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:23:03.515731",
+    "term_category": "definition"
+  },
+  {
+    "id": 15,
+    "term": "Simile",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" A comparison using \\\"like\\\" or \\\"as\\\".\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples: \"},{\"type\":\"text\",\"text\":\"\\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"Does it dry up / like a raisin in the sun?\"},{\"type\":\"text\",\"text\":\"\\\" (Langston Hughes)\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:25:19.948914",
+    "term_category": "definition"
+  },
+  {
+    "id": 17,
+    "term": "Stanza",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" A grouped set of lines, often separated by spaces.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:26:15.713808",
+    "term_category": "definition"
+  },
+  {
+    "id": 18,
+    "term": "Sonnet",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Definition: A 14-line poem, often in iambic pentameter with a specific rhyme scheme \"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Examples: \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"Shall I compare thee to a summer's day?\"},{\"type\":\"text\",\"text\":\"\\\" (\"},{\"type\":\"text\",\"marks\":[{\"type\":\"link\",\"attrs\":{\"href\":\"https://www.poetryfoundation.org/poems/45087/sonnet-18-shall-i-compare-thee-to-a-summers-day\",\"target\":null,\"rel\":null,\"class\":null,\"title\":null}},{\"type\":\"italic\"}],\"text\":\"see Shakespeare\"},{\"type\":\"text\",\"text\":\")\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:30:08.555457",
+    "term_category": "definition"
+  },
+  {
+    "id": 19,
+    "term": "Quatrain",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition: \"},{\"type\":\"text\",\"text\":\"Four-line stanza, or unit of four lines of verse, rhymed or unrhymed.\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Example: \"},{\"type\":\"text\",\"text\":\"(Robert Frost)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"The woods are lovely, dark and deep,\"},{\"type\":\"hardBreak\",\"marks\":[{\"type\":\"italic\"}]},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"But I have promises to keep,\"},{\"type\":\"hardBreak\",\"marks\":[{\"type\":\"italic\"}]},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"And miles to go before I sleep,\"},{\"type\":\"hardBreak\",\"marks\":[{\"type\":\"italic\"}]},{\"type\":\"text\",\"marks\":[{\"type\":\"italic\"}],\"text\":\"And miles to go before I sleep.\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:51:38.411411",
+    "term_category": "definition"
+  },
+  {
+    "id": 20,
+    "term": "Tercet",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition:\"},{\"type\":\"text\",\"text\":\" Three-line stanza, or unit of three lines of verse, rhymed or unrhymed. \"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples:\"},{\"type\":\"text\",\"text\":\" See the \"},{\"type\":\"text\",\"marks\":[{\"type\":\"link\",\"attrs\":{\"href\":\"https://www.poetryfoundation.org/education/glossary/tercet\",\"target\":null,\"rel\":null,\"class\":null,\"title\":null}},{\"type\":\"italic\"}],\"text\":\"Poetry Foundation\"},{\"type\":\"text\",\"text\":\" for a complete explanation using different rhyme schemes\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:55:19.884835",
+    "term_category": "definition"
+  },
+  {
+    "id": 21,
+    "term": "Villanelle",
+    "term_json": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Definition\"},{\"type\":\"text\",\"text\":\": The villanelle is a highly structured poem made up of five tercets followed by a quatrain, with two repeating rhymes and two refrains. (\"},{\"type\":\"text\",\"marks\":[{\"type\":\"link\",\"attrs\":{\"href\":\"https://poets.org/glossary/villanelle\",\"target\":\"_blank\",\"rel\":\"noopener noreferrer nofollow\",\"class\":null,\"title\":null}},{\"type\":\"bold\"}],\"text\":\"See more on poets.org\"},{\"type\":\"text\",\"text\":\")\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"marks\":[{\"type\":\"bold\"}],\"text\":\"Examples\"},{\"type\":\"text\",\"text\":\": Dylan Thomas: \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"link\",\"attrs\":{\"href\":\"https://www.poetryfoundation.org/poems/46569/do-not-go-gentle-into-that-good-night\",\"target\":\"_blank\",\"rel\":\"noopener noreferrer nofollow\",\"class\":null,\"title\":null}},{\"type\":\"italic\"}],\"text\":\"Do Not Go Gentle Into That Night\"},{\"type\":\"text\",\"text\":\"\\\" or Elizabeth Bishop: \\\"\"},{\"type\":\"text\",\"marks\":[{\"type\":\"link\",\"attrs\":{\"href\":\"https://www.poetryfoundation.org/poems/47536/one-art\",\"target\":\"_blank\",\"rel\":\"noopener noreferrer nofollow\",\"class\":null,\"title\":null}}],\"text\":\"One Art\"},{\"type\":\"text\",\"text\":\"\\\"\"}]}]}",
+    "status": "published",
+    "created_at": "2026-04-15 23:58:24.038068",
+    "term_category": "definition"
+  }
+]

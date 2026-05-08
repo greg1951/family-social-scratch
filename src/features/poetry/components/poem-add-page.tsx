@@ -574,9 +574,9 @@ export function PoemAddPage({
           {/* Poem Verse */ }
           <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
             <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
+              {/* <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                 Poem Verse
-              </p>
+              </p> */}
               <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
                 Poem Text
               </h2>
@@ -597,11 +597,11 @@ export function PoemAddPage({
           {/* Poem Analysis */ }
           <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
             <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
+              {/* <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                 Poem Analysis
-              </p>
+              </p> */}
               <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
-                Submitter Analysis
+                Poem Analysis
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                 Provide your analysis of the poem.
@@ -621,9 +621,9 @@ export function PoemAddPage({
         {/* Tag Selection */ }
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
           <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
+            {/* <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
               Poem Tags
-            </p>
+            </p> */}
             <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
               Tag Selection
             </h2>
@@ -635,10 +635,10 @@ export function PoemAddPage({
           <div className="px-5 py-5 sm:px-6">
             <div className="space-y-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
               <div className="flex items-center justify-between gap-3">
-                <div>
+                {/* <div>
                   <p className="text-sm font-semibold text-[#5d426f]">Poem Tags</p>
                   <p className="text-sm text-[#77578f]">Choose 1-3 tags from different poetry categories.</p>
-                </div>
+                </div> */}
                 <div className="inline-flex items-center rounded-full border border-[#d7d0ea] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#7b54a0]">
                   <Tags className="mr-2 size-3.5" />
                   { draft.selectedTagIds.length } / 3 selected

@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "tag_name": "TV",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 1,
+    "created_at": "2026-04-07 12:58:57.922534"
+  },
+  {
+    "id": 2,
+    "tag_name": "Movies",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 2,
+    "created_at": "2026-04-07 12:59:34.767014"
+  },
+  {
+    "id": 3,
+    "tag_name": "Music",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 3,
+    "created_at": "2026-04-07 13:00:07.901256"
+  },
+  {
+    "id": 4,
+    "tag_name": "Books",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 4,
+    "created_at": "2026-04-07 13:01:27.01469"
+  },
+  {
+    "id": 5,
+    "tag_name": "Recipes",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 5,
+    "created_at": "2026-04-07 13:02:23.037139"
+  },
+  {
+    "id": 6,
+    "tag_name": "Games",
+    "tag_description": "feature",
+    "status": "active",
+    "seq_no": 6,
+    "created_at": "2026-04-07 13:05:39.018523"
+  },
+  {
+    "id": 7,
+    "tag_name": "Founder",
+    "tag_description": "role",
+    "status": "active",
+    "seq_no": 20,
+    "created_at": "2026-04-07 13:07:20.243659"
+  },
+  {
+    "id": 8,
+    "tag_name": "Admin",
+    "tag_description": "role",
+    "status": "active",
+    "seq_no": 21,
+    "created_at": "2026-04-07 13:07:54.455013"
+  },
+  {
+    "id": 9,
+    "tag_name": "Member",
+    "tag_description": "role",
+    "status": "active",
+    "seq_no": 22,
+    "created_at": "2026-04-07 13:08:58.757802"
+  },
+  {
+    "id": 10,
+    "tag_name": "Bug",
+    "tag_description": "support",
+    "status": "active",
+    "seq_no": 90,
+    "created_at": "2026-04-07 13:10:42.314473"
+  },
+  {
+    "id": 11,
+    "tag_name": "Question",
+    "tag_description": "support",
+    "status": "active",
+    "seq_no": 91,
+    "created_at": "2026-04-07 13:11:16.487003"
+  },
+  {
+    "id": 12,
+    "tag_name": "Improvement",
+    "tag_description": "support",
+    "status": "active",
+    "seq_no": 92,
+    "created_at": "2026-04-07 13:12:04.073237"
+  }
+]

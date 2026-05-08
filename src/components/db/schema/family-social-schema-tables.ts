@@ -427,6 +427,7 @@ export const bookTagReference = pgTable("book_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),
   tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("category"),
   status: text("status").notNull().default("active"),
   seqNo: integer("seq_no").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),

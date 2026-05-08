@@ -608,46 +608,119 @@ export const featureFaqItems = [
     category: "Poetry Cafe",
     trigger: (
       <div>
-        <p className="text-base font-semibold">Poetry is a very technical art form. What is provided to help define the poetry terms?</p>
-        <p className="text-xs text-slate-600">Visit the Poetry Terms page for poetry definitions and explanations.</p>
+        <p className="text-base font-semibold">Poetry is a very technical art form. What resources are available to help with the terminology?</p>
+        <p className="text-xs text-slate-600">Poetry has been around for thousands of years and has a rich vocabulary of terms and techniques.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">Ahead of creating your recipe, review the available templates and decide which one best fits your needs.</p>
-          <p className="text-sm text-slate-600">If you have a recipe already written, you can paste it right in to the new recipe dialog.</p>
+          <p className="text-base font-semibold">Visit the Poetry Terms page for poetry definitions and explanations.</p>
+          <p className="text-sm text-slate-600">Family Social provides a dictionary of poetry terms to help define terms you may see in the poetry submissions.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select the <b>Add Recipe</b> button in the Family Foodies heading.</li>
-            <p className="pt-2 pb-2"><u>Note:</u> Using a template is optional. If you don't use a template you have to jam the recipe content in manually.</p>
-            <li>When you select a template, it will prefill the Recipe edit area below. Pick different template and see which template fits your needs.</li>
+            <li>Select the <b>Poetry Terms</b> button in the <b>Poetry Cafe</b> heading.</li>
+            <li>A term search field is provided or scroll the list to find a term.</li>
+            <li>Selecting the term will display its definition and explanation.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
-              src="/images/support/faq-foodies-add-recipe-templates-list.jpg"
-              alt="Recipe Templates list"
+            <img className="aspect-auto object-cover w-100 h-75 md:w-270 md:h-60"
+              src="/images/support/faq-poetry-term-search.jpg"
+              alt="Poetry Term Search"
             />
           </div>
-          <p className="text-base font-semibold pt-2 pb-2">Do you have a good picture of your delicious dish? Upload it to make your recipe more appealing!</p>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-91",
+    category: "Poetry Cafe",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">I have a long poem I'd like to submit. How difficult will it be to post it?</p>
+        <p className="text-xs text-slate-600">Can you cut and paste?</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Here we'll focus on the Poetry Verse and the Poem Analysis sections of that form.</p>
+          <p className="text-sm text-slate-600"></p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Click your mouse inside the <b>Choose File</b> field and a file dialog will appear.</li>
-            <li>If you are happy with the image preview, select the <b>Upload Image</b> button.</li>
+            <li>Select <b>Add Poem</b> from the Poetry Cafe home page.</li>
+            <li>If you were able to copy the poem verse, paste it into the <b>Poem Text</b>. See the example below.</li>
+            <p className="pt-2 pb-2 text-xs"><u>Note:</u> Sometimes when you paste into the Poem Text area you lose the blank lines between verses. Add those back in the editor.</p>
+            <li>In the <b>Poem Text</b> a numbered column appears next to each line of the poem.</li>
+            <li>In the <b>Poem Analysis</b> section, you can provide your interpretation and insights about the poem, referencing <u>line numbers</u>.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
-              src="/images/support/faq-foodies-add-recipe-file-upload.jpg"
-              alt="Recipe File Upload"
+            <img className="aspect-auto object-cover w-100 h-75 md:w-250 md:h-120"
+              src="/images/support/faq-poetry-verse-analysis.jpg"
+              alt="Poetry Verse Analysis"
             />
           </div>
-          <p className="text-base font-semibold pt-2 pb-2">Don't forget the Pro Tips section at the bottom of the recipe dialog!</p>
-          <ul className="list-decimal ml-6 mt-2 text-sm">
-            <li>If you have any time- or cost-saving tips, be sure to include them in the Pro Tips section.</li>
-            <li>If you originally got the recipe from another source and then changed it, be sure to credit the original source in the Pro Tips section.</li>
-          </ul>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-100",
+    category: "Book Besties",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">I like to read but I'm not sure how to get started with Book Besties. What do you recommend?</p>
+        <p className="text-sm text-slate-600">First of all, you've already met the first criteria which is you like to read!</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Book Besties provides a number of resources to get you going.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Book Besties provides a number of <b>sample book reviews</b>. Read those to get a sense of what a good review looks like.</li>
+            <li>Visit the <b>Book Terms</b> page. There you'll find definitions and explanations for various book-related terms.</li>
+            <p className="pt-2 pb-2 text-xs"><u>Tip</u>: Personalizing the review to your experience is the kind of review people enjoy reading.</p>
+            <li>Write your own book review, incorporating what you've learned from the sample reviews and book terms.</li>
+            <li>Keep your book review in Draft status until you're ready to submit it. Then, let it rip!</li>
+          </ol>
+          <p className="text-base font-semibold">Explore the Terms Page, there's a lot of good information to help you write better reviews.</p>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
-              src="/images/support/faq-foodies-pro-tips.jpg"
-              alt="Pro Tips"
+            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-125"
+              src="/images/support/faq-book-terms.jpg"
+              alt="Book Terms Page"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-101",
+    category: "Book Besties",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">I've read a wonderful book and want to share it with others. What's the best way to write it up?</p>
+        <p className="text-sm text-slate-600">Book Besties provides a complete book club for the family!</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Writing a book review is easy. Writing a good one takes a little more time and thought.</p>
+          <p className="text-sm text-slate-600">Begin by selecting <b>Add Book</b> from the Book Besties home page.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Provide general <b>Book Details</b>.</li>
+            <li>In the <b>Book Analysis</b> section, write your review.</li>
+            <p className="pt-2 pb-2 text-xs"><u>Tip</u>: Personalizing the review to your experience is the kind of review people enjoy reading.</p>
+            <li>There are three lists of <b>Book Tags</b> to choose from, pick at least one.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-75 md:w-170 md:h-170"
+              src="/images/support/faq-book-add-sections.jpg"
+              alt="Book Review Sections"
             />
           </div>
         </span>

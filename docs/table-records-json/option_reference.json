@@ -1,0 +1,79 @@
+[
+  {
+    "id": 1,
+    "option_name": "TV Junkies",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 1
+  },
+  {
+    "id": 2,
+    "option_name": "Movie Maniacs",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 2
+  },
+  {
+    "id": 3,
+    "option_name": "Music Lovers",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 3
+  },
+  {
+    "id": 4,
+    "option_name": "Family Foodies",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 4
+  },
+  {
+    "id": 5,
+    "option_name": "Poetry Cafe",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 5
+  },
+  {
+    "id": 6,
+    "option_name": "Book Besties",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 6
+  },
+  {
+    "id": 7,
+    "option_name": "MX Train",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 7
+  },
+  {
+    "id": 8,
+    "option_name": "Family Threads",
+    "category": "feature",
+    "is_selected": false,
+    "seq_no": 8
+  },
+  {
+    "id": 21,
+    "option_name": "Email Notify",
+    "category": "notification",
+    "is_selected": false,
+    "seq_no": 1
+  },
+  {
+    "id": 22,
+    "option_name": "Text Notify",
+    "category": "notification",
+    "is_selected": false,
+    "seq_no": 2
+  },
+  {
+    "id": 23,
+    "option_name": "Threads Only",
+    "category": "notification",
+    "is_selected": false,
+    "seq_no": 3
+  }
+]

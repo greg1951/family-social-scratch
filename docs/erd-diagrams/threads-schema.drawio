@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="dIR63-4ekWE_VDctrdEv" name="Page-1">
-        <mxGraphModel dx="731" dy="713" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+        <mxGraphModel dx="666" dy="609" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -50,7 +50,7 @@
                         <mxRectangle x="320" y="460" width="160" height="50" as="alternateBounds"/>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="19" value="+id (&lt;b&gt;PK&lt;/b&gt;)&lt;br&gt;+sequenceNo&lt;br&gt;+body&lt;div&gt;+visibility&lt;/div&gt;&lt;div&gt;+status&lt;/div&gt;&lt;div&gt;+type&lt;/div&gt;&lt;div&gt;+&lt;i&gt;softDeleteAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+conversationId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+authorMember (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;parentPostId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;postId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="18" vertex="1">
+                <mxCell id="19" value="+id (&lt;b&gt;PK&lt;/b&gt;)&lt;br&gt;+sequenceNo&lt;br&gt;+body&lt;div&gt;+visibility&lt;/div&gt;&lt;div&gt;+status&lt;/div&gt;&lt;div&gt;+type&lt;/div&gt;&lt;div&gt;+&lt;i&gt;softDeleteAt&lt;/i&gt;&lt;/div&gt;&lt;div&gt;+createdAt&lt;/div&gt;&lt;div&gt;+conversationId (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+authorMember (&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;parentPostId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;&lt;div&gt;+&lt;i&gt;postId &lt;/i&gt;(&lt;b&gt;FK&lt;/b&gt;)&lt;/div&gt;" style="align=left;strokeColor=none;fillColor=none;spacingLeft=4;fontSize=12;verticalAlign=top;resizable=0;rotatable=0;part=1;html=1;" parent="18" vertex="1">
                     <mxGeometry y="50" width="160" height="190" as="geometry"/>
                 </mxCell>
                 <mxCell id="21" value="" style="fontSize=12;html=1;endArrow=ERzeroToMany;startArrow=ERmandOne;exitX=0.597;exitY=1;exitDx=0;exitDy=0;edgeStyle=orthogonalEdgeStyle;entryX=1;entryY=0.25;entryDx=0;entryDy=0;exitPerimeter=0;" parent="1" source="13" target="19" edge="1">

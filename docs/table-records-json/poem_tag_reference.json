@@ -1,0 +1,155 @@
+[
+  {
+    "id": 1,
+    "tag_name": "Epic Poetry",
+    "tag_description": "Narrative poetry detailing legendary or historic events, often involving a hero (think Homer and Achiles)",
+    "status": "published",
+    "seq_no": 10,
+    "created_at": "2026-04-16 14:34:26.067372",
+    "tag_type": "category"
+  },
+  {
+    "id": 2,
+    "tag_name": "Lyric Poetry",
+    "tag_description": "Short poems that express personal feeling, emotions, states of mind",
+    "status": "published",
+    "seq_no": 20,
+    "created_at": "2026-04-16 14:35:52.619489",
+    "tag_type": "category"
+  },
+  {
+    "id": 3,
+    "tag_name": "Ode",
+    "tag_description": "A lyric poem addressed to a particular subject.",
+    "status": "published",
+    "seq_no": 21,
+    "created_at": "2026-04-16 14:37:04.989437",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 4,
+    "tag_name": "Sonnet",
+    "tag_description": "A 14-line lyric poem exploring themes of love (e.g. Shakespeare)",
+    "status": "published",
+    "seq_no": 22,
+    "created_at": "2026-04-16 14:38:27.907779",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 5,
+    "tag_name": "Elegy",
+    "tag_description": "A lyric poem written to mourn the dead",
+    "status": "published",
+    "seq_no": 23,
+    "created_at": "2026-04-16 14:39:21.091635",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 6,
+    "tag_name": "Limerick",
+    "tag_description": "A humorous five-line poem with a strict rhyme\t",
+    "status": "published",
+    "seq_no": 24,
+    "created_at": "2026-04-16 14:43:20.846494",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 7,
+    "tag_name": "Dramatic Poetry",
+    "tag_description": "Poetry written specifically to be spoken or acted, often in a theater setting.",
+    "status": "published",
+    "seq_no": 25,
+    "created_at": "2026-04-16 14:40:39.750708",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 8,
+    "tag_name": "Soliloguy",
+    "tag_description": "Dramatic poetry where the character speaks their thoughts aloud",
+    "status": "published",
+    "seq_no": 26,
+    "created_at": "2026-04-16 14:41:48.577592",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 9,
+    "tag_name": "Poetic Theme",
+    "tag_description": "Category of poetic subject matter following a certain them",
+    "status": "published",
+    "seq_no": 30,
+    "created_at": "2026-04-26 22:51:39.979357",
+    "tag_type": "category"
+  },
+  {
+    "id": 10,
+    "tag_name": "Patoral",
+    "tag_description": "Subject matter poems that idealize rural life, often in contract with city life\t",
+    "status": "published",
+    "seq_no": 31,
+    "created_at": "2026-04-16 14:48:42.300347",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 11,
+    "tag_name": "Satirical",
+    "tag_description": " Poems that use humor, irony, or exaggeration to critique individuals or society. ",
+    "status": "published",
+    "seq_no": 32,
+    "created_at": "2026-04-16 14:49:33.714764",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 12,
+    "tag_name": "Confessional",
+    "tag_description": "Poetry that speaks openly and personally about the poet's own life experiences.",
+    "status": "published",
+    "seq_no": 33,
+    "created_at": "2026-04-16 14:50:14.535466",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 13,
+    "tag_name": "Verse Structure",
+    "tag_description": "How the verses are constructed in a poem",
+    "status": "published",
+    "seq_no": 40,
+    "created_at": "2026-04-26 22:53:07.990491",
+    "tag_type": "category"
+  },
+  {
+    "id": 14,
+    "tag_name": "Concrete Poetry",
+    "tag_description": "Poems arranged on the page to form a visual shape that reflects the subject matter.",
+    "status": "published",
+    "seq_no": 41,
+    "created_at": "2026-04-16 14:44:33.036804",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 15,
+    "tag_name": "Free Verse",
+    "tag_description": "Poetry that does not adhere to consistent meter patterns or rhyme schemes",
+    "status": "published",
+    "seq_no": 42,
+    "created_at": "2026-04-16 14:46:12.522089",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 16,
+    "tag_name": "Blank Verse",
+    "tag_description": "Poetry written with precise meter, usually iambic pentameter but no end rhyme",
+    "status": "published",
+    "seq_no": 43,
+    "created_at": "2026-04-16 14:47:22.317818",
+    "tag_type": "qualifier"
+  },
+  {
+    "id": 17,
+    "tag_name": "Villanelle",
+    "tag_description": "Poem structured with five tercets and a quatrain, with a repeated and alternating refrain",
+    "status": "published",
+    "seq_no": 44,
+    "created_at": "2026-04-26 23:09:48.494863",
+    "tag_type": "qualifier"
+  }
+]

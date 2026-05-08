@@ -21,6 +21,9 @@
 12. [Amazon S3](#amazon-s3)
 13. [Lint and Build Cleanup](#lint-and-build-cleanup)
 14. [Videos](#videos)
+15. [Component Code Size](#component-code-size)
+    1. [Hook Extraction](#hook-extraction)
+    2. [Hook Extraction versus Separate Routes](#hook-extraction-versus-separate-routes)
 
 ---
 # Overview
@@ -391,5 +394,98 @@ The support schema tables to support the video appears below.
 * The `support_category` table provides the organization and the `support_video` contains the name and its location on S3.
 * Also shown in the FAQ the support page will reference. An FAQ may have a video associated with it. 
 
+# Component Code Size
+I noticed the Book home page had > 1000 lines of code while the Movie was much less. There are two main reasons:
 
+**1. Architecture difference — where editing lives**
 
+The biggest driver. The Books page handles add and edit directly in dialogs on the home page, which requires:
+
+A full draft state object + setDraft throughout
+handleSave, setSavePhase, setPendingSelectedBookId, startSaveTransition
+An editable TipTap editor with useEditor, two useEffects to sync it, and link dialog state (isLinkDialogOpen, linkValue, linkError, openLinkInNewTab, applyLink, openLinkDialog, normalizeLinkUrl)
+ToolbarButton, RichTextToolbar, and RichTextField components defined inline in the same file
+The Movies page delegates editing entirely to a separate route (/movies/add-movie?id=...). The home page only needs a read-only viewer dialog. The MovieViewer is just a static TipTap instance — no save logic, no link dialog, no toolbar.
+
+**2. Code density
+
+The Movies file is heavily compressed — the entire finder table, all table rows, the reactions panel, and the comments section are each written as single long lines. If the Books page were formatted the same way, it would appear much shorter. The Books page consistently formats each JSX element across multiple lines.
+
+**Summary:**
+
+Books	Movies
+Add/Edit	In-page dialog	Separate route
+Rich editor	Editable + toolbar + link dialog	Read-only viewer
+Inline components	ToolbarButton, RichTextToolbar, RichTextField	None
+Code style	Multi-line JSX	Heavily compressed
+The complexity difference is real but smaller than the line count suggests. The Books page made a different architectural choice that pulled the entire edit workflow into the home file.
+
+## Hook Extraction
+A number of component pages have gotten quite large, like the TV and Movie home pages and interestingly, the Book home page. The solution is not to simply move the inner components (like the Dialog components) to separate file as that would entail a lot of prop drilling between the home page and the newly separated components. Instead, hook extraction is cleaner to componentinzing the functionality.
+
+Hook extraction means moving a cluster of related state variables and the functions that operate on them out of the component and into a custom use... function in a separate file. The custom hook returns only what the component needs to render.
+
+Example using the link dialog state from your file:
+
+Instead of this sitting in BooksHomePage:
+
+```tsx
+const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+const [linkValue, setLinkValue] = useState("");
+const [linkError, setLinkError] = useState<string | null>(null);
+const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
+
+function normalizeLinkUrl(value: string): string | null { ... }
+function openLinkDialog() { ... }
+function applyLink() { ... }
+
+const normalizedLinkPreview = linkValue.trim() ? normalizeLinkUrl(linkValue) : null;
+```
+
+You'd create src/features/books/hooks/use-link-dialog.ts:
+
+```tsx
+export function useLinkDialog(analysisEditor: Editor | null) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [linkValue, setLinkValue] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [openInNewTab, setOpenInNewTab] = useState(true);
+
+  function normalizeLinkUrl(...) { ... }
+  function open() { ... }
+  function apply() { ... }
+
+  return {
+    isOpen, linkValue, setLinkValue, linkError,
+    openInNewTab, setOpenInNewTab,
+    normalizedPreview: linkValue.trim() ? normalizeLinkUrl(linkValue) : null,
+    open, apply,
+  };
+}
+```
+
+Then in BooksHomePage:
+
+```tsx
+const linkDialog = useLinkDialog(analysisEditor);
+```
+
+Once the logic for the link dialog lives in useLinkDialog and the book dialog logic lives in useBookDialog, the extracted dialog components have a clean, small prop interface — just the hook's return value — rather than needing 10+ individual props passed down. That's what makes the file split genuinely cleaner rather than just moving clutter.
+
+## Hook Extraction versus Separate Routes
+
+In the Book home page architecture does it make sense to adopt a separate route for Adding and Editing a book, give the difference that the Add and Edit Book are in-page dialogs? Is having a separate route for Add and Edit Book preferrable to a hook extraction approach in the Book home page?
+
+When a separate route makes more sense:
+
+The form is complex enough to warrant its own page (the Movie add form with image upload, multiple tag types, site URL, TipTap editor is a full-page experience)
+The user benefits from a dedicated URL they can bookmark or navigate back to
+The edit experience is substantially different from the list/browse experience
+When in-page dialogs make more sense:
+
+The add/edit is quick and lightweight relative to the list page
+You want the user to stay in context — pick a book, edit it, stay on the same page
+The data is simple enough that a dialog doesn't feel cramped
+For the Books feature specifically:
+
+The book form (title, author, year, language, analysis, tags) is meaningfully simpler than the Movie form. A book dialog fits naturally. The current UX — select a book from the directory, click View or Edit, interact in a dialog, return to the directory — is a coherent workflow that a separate route would actually interrupt. You'd navigate away, save, and come back to a page that has lost your scroll position and search state.
