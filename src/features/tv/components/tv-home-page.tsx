@@ -17,6 +17,7 @@ import {
   getShowDetailAction,
   toggleShowLikeAction,
 } from "@/app/(features)/(tv)/tv/actions";
+import { startDiscussionThreadAction } from "@/components/discuss/discussion-actions";
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { TvShow, TvShowDetail } from "@/components/db/types/shows";
 import { Button } from "@/components/ui/button";
@@ -188,6 +189,7 @@ export function TvHomePage({
     imageAlt: `${ show.showTitle } show image`,
     showSiteUrl: show.showSiteUrl ?? null,
     showSiteBackground: show.showSiteBackground,
+    hasDiscussionThread: show.hasDiscussionThread,
   }));
 
   const topRatedShows = [...shows]
@@ -216,6 +218,7 @@ export function TvHomePage({
       imageAlt: `${ show.showTitle } show image`,
       showSiteUrl: show.showSiteUrl ?? null,
       showSiteBackground: show.showSiteBackground,
+      hasDiscussionThread: show.hasDiscussionThread,
     }));
 
   const stripItems = showStripMode === "latest" ? latestShows : topRatedShows;
@@ -242,6 +245,7 @@ export function TvHomePage({
 
   const [searchValue, setSearchValue] = useState("");
   const [selectedShow, setSelectedShow] = useState(showFinderRows[0]?.id ?? 0);
+  const [showSelectionRevision, setShowSelectionRevision] = useState(0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
   const filteredShows = showFinderRows.filter((show) => {
@@ -282,7 +286,7 @@ export function TvHomePage({
     return () => {
       isCancelled = true;
     };
-  }, [selectedShow]);
+  }, [selectedShow, showSelectionRevision]);
 
   const selectedShowName = showFinderRows.find((show) => show.id === selectedShow)?.name ?? "";
   const selectedShowBasic =
@@ -311,6 +315,7 @@ export function TvHomePage({
     if (show) {
       setSelectedShow(showId);
       setSelectedShowDetail(null);
+      setShowSelectionRevision((prev) => prev + 1);
     }
   }
 
@@ -361,6 +366,31 @@ export function TvHomePage({
       setSelectedShowDetail(result.show);
       setCommentText("");
       toast.success(result.message);
+    });
+  }
+
+  function handleStartDiscussion() {
+    if (!selectedShowBasic) {
+      return;
+    }
+
+    startEngageTransition(async () => {
+      const result = await startDiscussionThreadAction({
+        targetType: "show",
+        targetId: selectedShowBasic.id,
+        discussTopic: `${ selectedShowBasic.showTitle } Discussion`,
+        initialSummary: `${ member.firstName } started this show discussion.`,
+        revalidatePaths: ["/tv"],
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.push(`/tv/discussions/${ result.threadId }`);
+      router.refresh();
     });
   }
 
@@ -492,7 +522,7 @@ export function TvHomePage({
 
                 <div className="overflow-hidden rounded-[1.4rem] border border-[#d7ebf3]">
                   <div className="max-h-232 overflow-auto">
-                    <table className="min-w-248 border-collapse text-left">
+                    <table className="min-w-280 border-collapse text-left">
                       <thead className="sticky top-0 z-10 bg-[#eef8fc] text-xs uppercase tracking-[0.18em] text-[#4f7384]">
                         <tr>
                           <th className="px-4 py-3 font-bold">Show Name</th>
@@ -623,6 +653,57 @@ export function TvHomePage({
                           <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
                           { selectedShowLoveCount.toLocaleString() }
                         </span>
+                      </div>
+
+                      <div className="space-y-3 rounded-4xl border border-[#d7ebf3] bg-white p-4">
+                        <div>
+                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
+                          <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
+                        </div>
+
+                        { selectedShowDetail?.id !== selectedShow ? (
+                          <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-2 text-sm text-[#5f7987]">
+                            Loading discussion threads...
+                          </p>
+                        ) : selectedShowDetail.discussionThreads.length === 0 ? (
+                          <div className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-3 text-sm text-[#5f7987]">
+                            <p>No discussion threads have been added for this show yet.</p>
+                            <Button
+                              type="button"
+                              onClick={ handleStartDiscussion }
+                              disabled={ isEngaging || !selectedShowBasic }
+                              className="mt-3 rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]"
+                            >
+                              Start Discussion
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            { selectedShowDetail.discussionThreads.map((discussionThread) => (
+                              <article key={ discussionThread.id } className="rounded-2xl border border-[#d7ebf3] bg-[#f8fcff] px-4 py-4 text-sm text-[#3f6576] shadow-sm">
+                                <div className="flex flex-wrap items-start justify-between gap-3">
+                                  <div className="min-w-0 space-y-1">
+                                    <p className="text-base font-bold leading-snug text-[#15384a]">{ discussionThread.discussTopic }</p>
+                                    <p className="text-xs uppercase tracking-[0.16em] text-[#4f7384]">
+                                      { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                                    </p>
+                                  </div>
+
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    asChild
+                                    className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
+                                  >
+                                    <Link href={ `/tv/discussions/${ discussionThread.id }` }>
+                                      View Discussion
+                                    </Link>
+                                  </Button>
+                                </div>
+                              </article>
+                            )) }
+                          </div>
+                        ) }
                       </div>
                     </div>
 

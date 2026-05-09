@@ -125,6 +125,69 @@ export const optionReference = pgTable("option_reference", {
   isSelected: boolean("is_selected").notNull().default(false),
 });
 
+/*------------------------------- Discussion Thread Schema ------------------------------ */
+export const discussThread = pgTable("discuss_thread", {
+  id: serial("id").primaryKey(),
+  discussTopic: text("title").notNull(),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  topicJson: text("topic_json"),
+  closedAt: timestamp("closed_at"),
+  targetType: text("target_type").notNull(),
+  targetId: integer("fk_target_id").notNull(),
+  postMemberId: integer("fk_post_member_id").references(() => member.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('discuss_thread_family_created_idx').on(table.familyId),
+    index('discuss_thread_post_member_created_idx').on(table.postMemberId),
+    index('discuss_thread_target_id_idx').on(table.targetId, table.targetType),
+]);
+
+export const discussPostReply = pgTable("discuss_post_reply", {
+  id: serial("id").primaryKey(),
+  postReplyType: text("post_reply_type").notNull().default("post"),
+  summary: text("summary").notNull(),
+  contentJson: text("content_json").notNull().default("{}"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  parentPostId: integer("parent_post_id"),
+  rootPostId: integer("root_post_id"),
+  discussThreadId: integer("fk_discuss_thread_id").notNull().references(() => discussThread.id, {onDelete: 'cascade'}),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.parentPostId],
+      foreignColumns: [table.id],
+      name: "thread_post_reply_parent_post_fkey",
+    }),
+    foreignKey({
+      columns: [table.rootPostId],
+      foreignColumns: [table.id],
+      name: "thread_post_reply_root_post_fkey",
+    }),
+    index('discuss_post_reply_discuss_thread_seq_idx').on(table.discussThreadId, table.seqNo),
+    index('discuss_post_reply_discuss_thread_idx').on(table.discussThreadId),
+    index('discuss_post_reply_parent_post_idx').on(table.parentPostId),
+    index('discuss_post_reply_author_created_idx').on(table.authorMemberId),
+    unique('discuss_post_reply_discuss_thread_seq_uq').on(table.discussThreadId, table.seqNo),]);
+
+export const discussLike = pgTable("discuss_like", {
+  id: serial("id").primaryKey(),
+  discussPostId: integer("fk_discuss_post_id").notNull().references(() => discussPostReply.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("discuss_like_discuss_post_id_idx").on(table.discussPostId),
+    index("discuss_like_member_id_idx").on(table.memberId),
+    unique("discuss_like_discuss_post_member_id_uq").on(table.discussPostId, table.memberId),
+  ]
+);
+
+
 /*------------------------------- Family Threads Schema ------------------------------ */
 export const threadVisibility = pgEnum('visibility', ['public', 'private']);
 export const conversationStatus = pgEnum('status', ['active', 'archived', 'closed']);

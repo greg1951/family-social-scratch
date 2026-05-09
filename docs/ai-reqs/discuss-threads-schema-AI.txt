@@ -1,0 +1,30 @@
+Background
+
+The purpose of the discussion threads feature schema is to support discussion threads in most of the family social features.
+TV, movies, music, books, poems, and even recipes are all things that people like to discuss with each other. The discussion threads feature schema will allow us to support discussion threads in all of these features, and more, without having to create a new schema for each feature.
+The discussion threads schema have a "discuss" prefix, and the tables are defined in the "src/components/db/schema/family-social-schema-tables.ts" file.
+The has not been pushed to the database; doing so will be contingent on any notes you may provide.
+
+Notes about the "discuss" tables
+- The discussThread table will aggregate all of the discussion threads for all of the family social features.
+  - The targetType column will store an type code that identifies the family social feature: "show", "movie", "music", "book", "poem", "recipe"
+  - The targetId column will store the id of the specific item that the discussion thread is about. For example, if the targetType is "movie", then the targetId will store the id of the movie that the discussion thread is about.
+  - The targetId column in a sense is a foreign key to the specific family social feature table, but we won't be able to enforce this with a foreign key constraint because the targetType can be different for each row in the discussThread table.
+- The discussPostReply table contain the content of the thread posts and replies, although createdAt may well serve to do this.
+
+Notes about the UI implementation plan
+- The approach we are taking is to allow a discussion thread to be created or added to on a TV show, movie, etc.
+- The discussion thread will be done in a separate route group, so that discussion threads UI interaction happen in place.
+- In each of the features where we want to support discussion threads, we will add a "Discussion" tab to the item details page. 
+  - For example, in the movie details page, there will be a "Discussion" tab that will show the high-level discussion threads (based on discussionThread table) for that movie.
+  - Where a scroll strip card paradigm is in use, some icon on the card will indicate that there is a discussion thread for that item, and clicking on the icon will take the user to the discussion thread for that item.
+- The discussion thread UI will support nested replies, so that users can reply to specific posts in the thread, and those replies will be indented under the post they are replying to.
+- The discussion thread UI will also support upvoting and downvoting of posts and replies, so that users can indicate which posts and replies they find most helpful or relevant.
+
+Request
+- The purpose of this request is to evaluate the current schema design. 
+- Open questions or issues I would like to discuss include:
+  - Is seqNo in the discussPostReply table necessary, or can we rely on createdAt to order the posts and replies in a thread?
+  - In the discussPostReply table, there are parentPostId and rootPostId columns defined to support various levels of thread replies. Do we need both of these columns, or can we simplify the schema by only having one of these columns?
+- What phased approach would you recommend for implementing the discussion threads feature, and how would you prioritize the different components of the feature in each phase?
+- Are there any potential performance issues with the current schema design, and if so, how can we address them?

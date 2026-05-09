@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from "./discuss-threads";
+
 export type ShowTagType = "genre" | "adjective" | "channel";
 
 export interface ShowComment {
@@ -32,10 +34,12 @@ export interface TvShow {
   likenessDegree: number | null;
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<ShowTagType, string[]>>;
+  hasDiscussionThread: boolean;
 }
 
 export interface TvShowDetail extends TvShow {
   showComments: ShowComment[];
+  discussionThreads: DiscussionThreadSummary[];
 }
 
 export interface ShowTagOption {

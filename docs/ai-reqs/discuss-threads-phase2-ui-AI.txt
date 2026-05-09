@@ -1,0 +1,17 @@
+Background
+
+- The discussion threads feature is only partially implemented in the TV show UI at this point. 
+- TV shows identifies a show to which a discussion thread is associated, and surfaces a link to the discussion thread page in the show details page.
+- Presently if such a show is found, the View Discussion button will take the user to a page where that discussion thread is rendered. 
+- This discussion functionality is currently working and it resides in common code in the "src/components/discuss" folder.
+
+Request
+
+- The next step in the implementation of the discussion threads feature is to be able to create a new discussThread entry for a show that does not have any.
+  - This will involve adding a "Start Discussion" button in the show details page for shows that do not have a discussThread associated with them.
+  - When the "Start Discussion" button is clicked, common code in the "src/components/discuss" folder will be need to handle the creation of the discussThread entry in the database,
+
+- In the common code in the "src/components/discuss/discussion-posts-replies.tsx" file, there needs to be additional functionality for a user to select any level of the discussion and create a reply.
+  - This will involve adding a "Reply" button at each level of the discussion (i.e. for the main post and for each reply), and when the "Reply" button is clicked, a TipTab text input field should appear where the user can enter their reply, and upon submission, the reply should be added to the database and rendered in the UI.  
+
+

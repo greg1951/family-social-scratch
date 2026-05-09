@@ -11,6 +11,10 @@ import {
   showTemplate,
 } from "../schema/family-social-schema-tables";
 import {
+  loadDiscussionThreadSummariesByTargetIds,
+  loadDiscussionThreadSummariesForTargetId,
+} from "./queries-discuss-threads";
+import {
   AddShowCommentReturn,
   GetShowDetailReturn,
   SaveShowTemplateInput,
@@ -316,7 +320,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
 
   const showIds = showRows.map((row) => row.id);
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreadRows] = await Promise.all([
     db
       .select({
         showId: showComment.showId,
@@ -342,6 +346,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
       .from(showTag)
       .innerJoin(showTagReference, eq(showTagReference.id, showTag.tagId))
       .where(inArray(showTag.showId, showIds)),
+    loadDiscussionThreadSummariesByTargetIds(familyId, "show", showIds),
   ]);
 
   const memberIds = [...new Set(showRows.map((row) => row.memberId))];
@@ -424,6 +429,12 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     tagNamesByTypeByShowId.set(tagRow.showId, byType);
   }
 
+  const hasDiscussionThreadByShowId = new Map<number, boolean>();
+
+  for (const [targetId, summaries] of discussionThreadRows.entries()) {
+    hasDiscussionThreadByShowId.set(targetId, summaries.length > 0);
+  }
+
   return showRows.map((row) => ({
     id: row.id,
     showTitle: row.showTitle,
@@ -449,6 +460,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     likenessDegree: viewerLikeByShowId.get(row.id) ?? null,
     selectedTagIds: tagIdsByShowId.get(row.id) ?? [],
     tagNamesByType: tagNamesByTypeByShowId.get(row.id) ?? {},
+    hasDiscussionThread: hasDiscussionThreadByShowId.get(row.id) ?? false,
   }));
 }
 
@@ -468,7 +480,7 @@ async function loadShowDetail(
 
   const showRow = showRows[0];
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreads] = await Promise.all([
     db
       .select()
       .from(showComment)
@@ -490,6 +502,7 @@ async function loadShowDetail(
       .from(showTag)
       .innerJoin(showTagReference, eq(showTagReference.id, showTag.tagId))
       .where(eq(showTag.showId, showId)),
+    loadDiscussionThreadSummariesForTargetId(familyId, "show", showId),
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
@@ -573,6 +586,8 @@ async function loadShowDetail(
     selectedTagIds: tagIdsByShowId.get(showId) ?? [],
     tagNamesByType: tagNamesByTypeByShowId.get(showId) ?? {},
     showComments,
+    discussionThreads,
+    hasDiscussionThread: discussionThreads.length > 0,
   };
 }
 

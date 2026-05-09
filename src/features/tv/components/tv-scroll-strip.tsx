@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ type LatestShow = {
   commentsCount: number;
   thumbsUp: number;
   love: number;
+  hasDiscussionThread: boolean;
   imageSrc: string | null;
   imageAlt: string;
   showSiteUrl: string | null;
@@ -36,6 +37,7 @@ type TopRatedShow = {
   imageAlt: string;
   showSiteUrl: string | null;
   showSiteBackground: string;
+  hasDiscussionThread: boolean;
 };
 
 type TvScrollItem = LatestShow | TopRatedShow;
@@ -162,7 +164,7 @@ export function TvScrollStrip({
 
             return (
               <article
-                key={ item.name }
+                key={ item.id }
                 className="min-w-0"
               >
                 <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", isSelected ? "ring-2 ring-[#2d87a8] ring-offset-1" : accentClassName) }>
@@ -196,11 +198,18 @@ export function TvScrollStrip({
                       <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
                         { item.kind === "latest" ? "Recently added" : "Fan favorite" }
                       </div>
-                      { isSelected ? (
-                        <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#15384a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
-                          Selected
-                        </div>
-                      ) : null }
+                      <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2">
+                        { item.hasDiscussionThread ? (
+                          <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
+                            <MessageSquare className="size-4" aria-label="Discussion thread available" />
+                          </div>
+                        ) : null }
+                        { isSelected ? (
+                          <div className="rounded-full bg-[#15384a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
+                            Selected
+                          </div>
+                        ) : null }
+                      </div>
                     </div>
 
                     <div className="space-y-3 px-4 py-4">
