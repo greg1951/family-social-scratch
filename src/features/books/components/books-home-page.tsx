@@ -4,37 +4,23 @@ import type { JSONContent } from "@tiptap/core";
 import Underline from "@tiptap/extension-underline";
 import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, type Editor, useEditor } from "@tiptap/react";
+import { useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
-  Bold,
   Eye,
-  Heading3,
   Heart,
-  Italic,
   LibraryBig,
-  Link2,
-  List,
   MessageSquare,
   PenSquare,
   Plus,
-  Redo2,
-  Save,
   Search,
-  Tags,
-  Underline as UnderlineIcon,
-  Unlink,
-  Undo2,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
   addBookCommentAction,
-  saveBooksHomeBookAction,
   toggleBookLikeAction,
 } from "@/app/(features)/(books)/books/actions";
 import {
@@ -44,68 +30,24 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { BookTagOption, BooksHomeBook } from "@/components/db/types/books";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
-
-type BookDraft = {
-  id: number;
-  bookTitle: string;
-  authorName: string;
-  bookLanguage: string;
-  bookYear: string;
-  submitterName: string;
-  likesCount: number;
-  commentCount: number;
-  likedByMember: boolean;
-  memberId: number;
-  familyId: number;
-  status: string;
-  createdAt: Date;
-  analysisJson: string;
-  selectedTagIds: number[];
-  bookComments: Array<{
-    id: number;
-    createdAt: Date;
-    commenterName: string;
-    text: string;
-  }>;
-};
-
-type BookDialogMode = "view" | "edit" | "add";
+import {
+  createDraftFromBook,
+  createEmptyDraft,
+  useBookDialog,
+} from "@/features/books/hooks/use-book-dialog";
+import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
+import { BookDetailsDialog } from "@/features/books/components/dialogs/book-details-dialog";
+import { BookLinkDialog } from "@/features/books/components/dialogs/book-link-dialog";
 type DirectoryMode = "latest" | "top-rated";
-type SavePhase = "idle" | "saving" | "saved" | "error";
 
 const BOOK_TAG_CATEGORY_SLOTS = [
   { seqNo: 10, fallbackName: "Fiction" },
   { seqNo: 30, fallbackName: "Non-Fiction" },
   { seqNo: 90, fallbackName: "Other" },
 ] as const;
-
-type ToolbarButtonProps = {
-  label: string;
-  active?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-};
 
 function getEditorDocument(value?: string): JSONContent {
   const parsed = parseSerializedTipTapDocument(value);
@@ -134,186 +76,6 @@ function getSeqNoRange(seqNo: number) {
   };
 }
 
-function createSubmitterLabel(bookRecord: BooksHomeBook, member: MemberKeyDetails) {
-  if (bookRecord.submitterName) {
-    return bookRecord.submitterName;
-  }
-
-  if (bookRecord.memberId === member.memberId) {
-    return `${ member.firstName } ${ member.lastName }`;
-  }
-
-  return `Member #${ bookRecord.memberId }`;
-}
-
-function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKeyDetails): BookDraft {
-  const summaryComments = bookRecord.bookComments ?? [];
-
-  return {
-    id: bookRecord.id,
-    bookTitle: bookRecord.bookTitle,
-    authorName: bookRecord.authorName,
-    bookLanguage: bookRecord.bookLanguage,
-    bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
-    submitterName: createSubmitterLabel(bookRecord, member),
-    likesCount: bookRecord.likesCount ?? 0,
-    commentCount: summaryComments.length,
-    likedByMember: bookRecord.likedByMember ?? false,
-    memberId: bookRecord.memberId,
-    familyId: bookRecord.familyId,
-    status: bookRecord.status,
-    createdAt: new Date(bookRecord.createdAt),
-    analysisJson: bookRecord.analysisJson ?? JSON.stringify(createEmptyTipTapDocument()),
-    selectedTagIds: bookRecord.selectedTagIds ?? [],
-    bookComments: summaryComments,
-  };
-}
-
-function createEmptyDraft(member: MemberKeyDetails): BookDraft {
-  return {
-    id: -Date.now(),
-    bookTitle: "",
-    authorName: "",
-    bookLanguage: "English",
-    bookYear: "",
-    submitterName: `${ member.firstName } ${ member.lastName }`,
-    likesCount: 0,
-    commentCount: 0,
-    likedByMember: false,
-    memberId: member.memberId,
-    familyId: member.familyId,
-    status: "draft",
-    createdAt: new Date(),
-    analysisJson: JSON.stringify(createEmptyTipTapDocument()),
-    selectedTagIds: [],
-    bookComments: [],
-  };
-}
-
-function ToolbarButton({ label, active = false, disabled = false, onClick, children }: ToolbarButtonProps) {
-  return (
-    <Button
-      type="button"
-      size="sm"
-      variant="outline"
-      onClick={ onClick }
-      disabled={ disabled }
-      className={ active
-        ? "rounded-full border-[#39637a] bg-[#dff4ff] text-[#12374a]"
-        : "rounded-full border-[#c8d7df] bg-white text-[#3d5c6d]" }
-      aria-label={ label }
-    >
-      { children }
-    </Button>
-  );
-}
-
-function RichTextToolbar({
-  editor,
-  onSetLink,
-}: {
-  editor: Editor | null;
-  onSetLink: () => void;
-}) {
-  if (!editor) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-wrap gap-2 rounded-t-[1.4rem] border border-b-0 border-[#c8d7df] bg-[#f4fbff] p-3">
-      <ToolbarButton
-        label="Heading 3"
-        onClick={ () => editor.chain().focus().toggleHeading({ level: 3 }).run() }
-        active={ editor.isActive("heading", { level: 3 }) }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleHeading({ level: 3 }).run() }
-      >
-        <Heading3 className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Bold"
-        onClick={ () => editor.chain().focus().toggleBold().run() }
-        active={ editor.isActive("bold") }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleBold().run() }
-      >
-        <Bold className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Italic"
-        onClick={ () => editor.chain().focus().toggleItalic().run() }
-        active={ editor.isActive("italic") }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleItalic().run() }
-      >
-        <Italic className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Underline"
-        onClick={ () => editor.chain().focus().toggleUnderline().run() }
-        active={ editor.isActive("underline") }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleUnderline().run() }
-      >
-        <UnderlineIcon className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Set link"
-        onClick={ onSetLink }
-        active={ editor.isActive("link") }
-        disabled={ !editor.isEditable }
-      >
-        <Link2 className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Remove link"
-        onClick={ () => editor.chain().focus().extendMarkRange("link").unsetLink().run() }
-        disabled={ !editor.isEditable || !editor.isActive("link") }
-      >
-        <Unlink className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Bullet list"
-        onClick={ () => editor.chain().focus().toggleBulletList().run() }
-        active={ editor.isActive("bulletList") }
-        disabled={ !editor.isEditable || !editor.can().chain().focus().toggleBulletList().run() }
-      >
-        <List className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Undo"
-        onClick={ () => editor.chain().focus().undo().run() }
-        disabled={ !editor.can().chain().focus().undo().run() }
-      >
-        <Undo2 className="size-4" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Redo"
-        onClick={ () => editor.chain().focus().redo().run() }
-        disabled={ !editor.can().chain().focus().redo().run() }
-      >
-        <Redo2 className="size-4" />
-      </ToolbarButton>
-    </div>
-  );
-}
-
-function RichTextField({
-  editor,
-  minHeightClass,
-  onSetLink,
-}: {
-  editor: Editor | null;
-  minHeightClass: string;
-  onSetLink: () => void;
-}) {
-  return (
-    <div className="overflow-hidden rounded-[1.4rem] shadow-inner">
-      <RichTextToolbar editor={ editor } onSetLink={ onSetLink } />
-      <EditorContent
-        editor={ editor }
-        className={ `[&_.tiptap]:${ minHeightClass } [&_.tiptap]:rounded-b-[1.4rem] [&_.tiptap]:border [&_.tiptap]:border-[#c8d7df] [&_.tiptap]:bg-white [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-[#183746] [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#7eb2c7] [&_.tiptap_blockquote]:pl-4` }
-      />
-    </div>
-  );
-}
-
 export default function BooksHomePage({
   books,
   member,
@@ -323,36 +85,42 @@ export default function BooksHomePage({
   member: MemberKeyDetails;
   bookTags?: BookTagOption[];
 }) {
-  const router = useRouter();
   const previousBooksRef = useRef(books);
-  const [isSaving, startSaveTransition] = useTransition();
   const [isEngaging, startEngageTransition] = useTransition();
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
   const [selectedBookId, setSelectedBookId] = useState<number | null>(books[0]?.id ?? null);
-  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
-  const [bookDialogMode, setBookDialogMode] = useState<BookDialogMode>("view");
-  const [savePhase, setSavePhase] = useState<SavePhase>("idle");
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
-  const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
-  const [linkValue, setLinkValue] = useState("");
-  const [linkError, setLinkError] = useState<string | null>(null);
-  const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
   const deferredSearchValue = useDeferredValue(searchValue);
-  const [draft, setDraft] = useState<BookDraft>(() => {
+  const initialDraft = useMemo(() => {
     if (books[0]) {
       return createDraftFromBook(books[0], member);
     }
 
     return createEmptyDraft(member);
-  });
+  }, [books, member]);
 
   const selectedBook = bookItems.find((bookItem) => bookItem.id === selectedBookId) ?? null;
   const canEditSelected = selectedBook
     ? Boolean(member.isAdmin) || selectedBook.memberId === member.memberId
     : false;
+
+  const bookDialog = useBookDialog({
+    initialDraft,
+    member,
+    selectedBook,
+    canEditSelected,
+    onBookSaved(savedBook) {
+      setPendingSelectedBookId(savedBook.id);
+      setSelectedBookId(savedBook.id);
+    },
+  });
+
+  const draft = bookDialog.draft;
+  const { setDraft } = bookDialog;
+  const { markSaveSynced } = bookDialog;
 
   const analysisEditor = useEditor({
     extensions: [
@@ -365,7 +133,7 @@ export default function BooksHomePage({
       }),
     ],
     content: getEditorDocument(draft.analysisJson),
-    editable: bookDialogMode !== "view",
+    editable: bookDialog.bookDialogMode !== "view",
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -385,8 +153,8 @@ export default function BooksHomePage({
       return;
     }
 
-    analysisEditor.setEditable(bookDialogMode !== "view");
-  }, [analysisEditor, bookDialogMode]);
+    analysisEditor.setEditable(bookDialog.bookDialogMode !== "view");
+  }, [analysisEditor, bookDialog.bookDialogMode]);
 
   useEffect(() => {
     if (!analysisEditor) {
@@ -425,12 +193,13 @@ export default function BooksHomePage({
     if (receivedRefreshedBooks && pendingSelectedBookId && nextBookItems.some((bookItem) => bookItem.id === pendingSelectedBookId)) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingSelectedBookId(null);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setSavePhase("saved");
+      markSaveSynced();
     }
 
     previousBooksRef.current = books;
-  }, [books, member, pendingSelectedBookId, selectedBookId]);
+  }, [books, member, pendingSelectedBookId, selectedBookId, markSaveSynced]);
+
+  const linkDialog = useLinkDialog(analysisEditor);
 
   const directoryBooks = useMemo(() => {
     if (directoryMode === "latest") {
@@ -513,219 +282,9 @@ export default function BooksHomePage({
     return bookTags.filter((tagOption) => selectedBook.selectedTagIds.includes(tagOption.id));
   }, [bookTags, selectedBook]);
 
-  function normalizeLinkUrl(value: string): string | null {
-    const trimmedUrl = value.trim();
-
-    if (!trimmedUrl) {
-      return null;
-    }
-
-    const candidate = /^[a-zA-Z][a-zA-Z\d+.-]*:/.test(trimmedUrl)
-      ? trimmedUrl
-      : `https://${ trimmedUrl }`;
-
-    try {
-      const normalizedUrl = new URL(candidate);
-
-      if (!["http:", "https:", "mailto:", "tel:"].includes(normalizedUrl.protocol)) {
-        return null;
-      }
-
-      return normalizedUrl.toString();
-    } catch {
-      return null;
-    }
-  }
-
-  function openLinkDialog() {
-    if (!analysisEditor || !analysisEditor.isEditable) {
-      return;
-    }
-
-    const linkAttributes = analysisEditor.getAttributes("link") as {
-      href?: string;
-      target?: string | null;
-    };
-
-    setLinkValue(linkAttributes.href ?? "https://");
-    setOpenLinkInNewTab(linkAttributes.target === "_blank");
-    setLinkError(null);
-    setIsLinkDialogOpen(true);
-  }
-
-  function applyLink() {
-    if (!analysisEditor) {
-      return;
-    }
-
-    const trimmedUrl = linkValue.trim();
-
-    if (!trimmedUrl) {
-      analysisEditor.chain().focus().extendMarkRange("link").unsetLink().run();
-      setLinkError(null);
-      setIsLinkDialogOpen(false);
-      return;
-    }
-
-    const normalizedUrl = normalizeLinkUrl(trimmedUrl);
-
-    if (!normalizedUrl) {
-      setLinkError("Enter a valid http, https, mailto, or tel link.");
-      return;
-    }
-
-    setLinkValue(normalizedUrl);
-    setLinkError(null);
-
-    analysisEditor.chain().focus().extendMarkRange("link").setLink({
-      href: normalizedUrl,
-      target: openLinkInNewTab ? "_blank" : null,
-      rel: openLinkInNewTab ? "noopener noreferrer nofollow" : null,
-    }).run();
-
-    setIsLinkDialogOpen(false);
-  }
-
-  const normalizedLinkPreview = linkValue.trim() ? normalizeLinkUrl(linkValue) : null;
-
-  function getSelectedTagForCategory(categorySeqNo: number) {
-    const categoryRange = getSeqNoRange(categorySeqNo);
-
-    return draft.selectedTagIds.find((selectedTagId) => {
-      const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
-
-      if (!tagOption) {
-        return false;
-      }
-
-      return tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd;
-    });
-  }
-
-  function handleCategoryTagSelect(categorySeqNo: number, selectedValue: string) {
-    const categoryRange = getSeqNoRange(categorySeqNo);
-    const nextTagId = selectedValue === "none" ? null : Number(selectedValue);
-
-    setDraft((currentDraft) => {
-      const nextSelectedTagIds = currentDraft.selectedTagIds.filter((selectedTagId) => {
-        const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
-
-        if (!tagOption) {
-          return false;
-        }
-
-        return !(tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd);
-      });
-
-      if (nextTagId === null) {
-        return {
-          ...currentDraft,
-          selectedTagIds: nextSelectedTagIds,
-        };
-      }
-
-      if (nextSelectedTagIds.length >= 3) {
-        toast.error("Select no more than three book tags.");
-        return currentDraft;
-      }
-
-      return {
-        ...currentDraft,
-        selectedTagIds: [...nextSelectedTagIds, nextTagId],
-      };
-    });
-  }
-
   function handleSelectBook(bookId: number) {
     setCommentText("");
     setSelectedBookId(bookId);
-  }
-
-  function openBookDialog(mode: BookDialogMode) {
-    if (mode !== "add" && !selectedBook) {
-      return;
-    }
-
-    if (mode === "edit" && !canEditSelected) {
-      toast.error("Only the book submitter or an admin can edit this book.");
-      return;
-    }
-
-    if (mode === "add") {
-      setDraft(createEmptyDraft(member));
-    } else {
-      setDraft({ ...selectedBook! });
-    }
-
-    setSavePhase("idle");
-    setBookDialogMode(mode);
-    setIsBookDialogOpen(true);
-  }
-
-  function handleCancelDialog() {
-    setIsBookDialogOpen(false);
-  }
-
-  function handleSave() {
-    const normalizedTitle = draft.bookTitle.trim();
-    const normalizedAuthorName = draft.authorName.trim();
-    const normalizedLanguage = draft.bookLanguage.trim();
-    const normalizedYear = draft.bookYear.trim();
-
-    if (!normalizedTitle) {
-      toast.error("Enter a book name before saving.");
-      return;
-    }
-
-    if (!normalizedAuthorName) {
-      toast.error("Enter an author name before saving.");
-      return;
-    }
-
-    if (!normalizedLanguage) {
-      toast.error("Enter a book language before saving.");
-      return;
-    }
-
-    if (!/^\d{1,4}$/.test(normalizedYear)) {
-      toast.error("Enter a valid numeric book year.");
-      return;
-    }
-
-    if (draft.selectedTagIds.length < 1) {
-      toast.error("Select at least one book tag before saving.");
-      return;
-    }
-
-    setSavePhase("saving");
-
-    startSaveTransition(async () => {
-      const result = await saveBooksHomeBookAction({
-        id: draft.id > 0 ? draft.id : undefined,
-        bookTitle: normalizedTitle,
-        authorName: normalizedAuthorName,
-        bookLanguage: normalizedLanguage,
-        bookYear: Number(normalizedYear),
-        status: draft.status,
-        analysisJson: analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : draft.analysisJson,
-        selectedTagIds: draft.selectedTagIds,
-      });
-
-      if (!result.success) {
-        setSavePhase("error");
-        toast.error(result.message);
-        return;
-      }
-
-      const savedBook = createDraftFromBook(result.book, member);
-
-      setPendingSelectedBookId(savedBook.id);
-      setSelectedBookId(savedBook.id);
-      setDraft(savedBook);
-      setBookDialogMode("view");
-      toast.success(result.message);
-      router.refresh();
-    });
   }
 
   function applyBookRefresh(updatedBook: BooksHomeBook) {
@@ -839,7 +398,7 @@ export default function BooksHomePage({
                   />
                   <Button
                     type="button"
-                    onClick={ () => openBookDialog("view") }
+                    onClick={ () => bookDialog.openBookDialog("view") }
                     disabled={ !selectedBook }
                     className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
                   >
@@ -849,7 +408,7 @@ export default function BooksHomePage({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={ () => openBookDialog("edit") }
+                    onClick={ () => bookDialog.openBookDialog("edit") }
                     disabled={ !selectedBook || !canEditSelected }
                     className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
                   >
@@ -859,7 +418,7 @@ export default function BooksHomePage({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={ () => openBookDialog("add") }
+                    onClick={ () => bookDialog.openBookDialog("add") }
                     className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
                   >
                     <Plus className="size-4" />
@@ -933,7 +492,7 @@ export default function BooksHomePage({
                 <div className="grid gap-3 md:grid-cols-3">
                   { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;
-                    const isAwaitingServerSync = pendingSelectedBookId === bookItem.id && savePhase === "saving";
+                    const isAwaitingServerSync = pendingSelectedBookId === bookItem.id && bookDialog.savePhase === "saving";
 
                     return (
                       <button
@@ -1001,364 +560,29 @@ export default function BooksHomePage({
         </div>
       </div>
 
-      <Dialog open={ isBookDialogOpen } onOpenChange={ setIsBookDialogOpen }>
-        <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-4xl">
-          <DialogHeader>
-            <DialogTitle className="text-[#183746]">
-              { bookDialogMode === "add" ? "Add a New Book" : draft.bookTitle || "Book Details" }
-            </DialogTitle>
-            <DialogDescription className="text-[#51707e]">
-              { bookDialogMode === "add"
-                ? "Fill in the book details and analysis, then save."
-                : bookDialogMode === "edit"
-                  ? "Update the book details and analysis, then save."
-                  : "Read book details, analysis, tags, and family reactions." }
-            </DialogDescription>
-          </DialogHeader>
+      <BookDetailsDialog
+        bookDialog={ bookDialog }
+        linkDialog={ linkDialog }
+        analysisEditor={ analysisEditor }
+        tags={ {
+          selectedBookTags,
+          activeBookTags,
+          categoryTagOptions,
+        } }
+        engagement={ {
+          isEngaging,
+          commentText,
+          setCommentText,
+          onToggleLike: handleToggleLike,
+          onAddComment: handleAddComment,
+        } }
+        save={ {
+          onSave: () => bookDialog.handleSave(analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : draft.analysisJson),
+        } }
+        formatCreatedAt={ formatCreatedAt }
+      />
 
-          <div className="max-h-[85vh] space-y-4 overflow-auto pr-1">
-            { bookDialogMode !== "view" ? (
-              <div className="rounded-2xl border border-[#bdd9e8] bg-[#edf7fb] px-4 py-1">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm text-[#2d5a6f]">
-                    { bookDialogMode === "add" ? "Enter details for the new book submission." : "You are editing this book submission." }
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={ handleCancelDialog }
-                      disabled={ isSaving }
-                      className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
-                    >
-                      <X className="size-4" />
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={ handleSave }
-                      disabled={ isSaving }
-                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                    >
-                      <Save className="size-4" />
-                      { isSaving ? "Saving..." : "Save Book" }
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : null }
-
-            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#42748a]">Book Details</p>
-                  { bookDialogMode === "view" ? (
-                    <p className="mt-1 text-sm text-[#355161]">
-                      { draft.bookTitle } by { draft.authorName } ({ draft.bookYear || "Unknown year" }) &middot; { draft.bookLanguage }
-                    </p>
-                  ) : null }
-                </div>
-                { bookDialogMode === "view" ? (
-                  <p className="text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
-                    Added { formatCreatedAt(draft.createdAt) }
-                  </p>
-                ) : null }
-              </div>
-
-              { bookDialogMode !== "view" ? (
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]">Book Name</label>
-                    <Input
-                      value={ draft.bookTitle }
-                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookTitle: event.target.value })) }
-                      placeholder="Enter the book title"
-                      className="border-[#c8d7df] text-[#183746]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]">Author Name</label>
-                    <Input
-                      value={ draft.authorName }
-                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, authorName: event.target.value })) }
-                      placeholder="Enter the author name"
-                      className="border-[#c8d7df] text-[#183746]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]">Publication Year</label>
-                    <Input
-                      value={ draft.bookYear }
-                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookYear: event.target.value })) }
-                      placeholder="e.g. 1965"
-                      inputMode="numeric"
-                      className="border-[#c8d7df] text-[#183746]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]">Book Language</label>
-                    <Input
-                      value={ draft.bookLanguage }
-                      onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookLanguage: event.target.value })) }
-                      placeholder="e.g. English"
-                      className="border-[#c8d7df] text-[#183746]"
-                    />
-                  </div>
-                  {/* <div className="space-y-2 md:col-span-2">
-                    <label className="text-sm font-semibold text-[#355161]">Submitting Member</label>
-                    <Input
-                      value={ draft.submitterName }
-                      disabled
-                      className="border-[#c8d7df] bg-[#f2f8fb] text-[#3d5c6d]"
-                    />
-                  </div> */}
-                </div>
-              ) : null }
-            </div>
-
-            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#42748a]">Book Analysis</p>
-              { bookDialogMode === "view" ? (
-                <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-[#c8d7df] bg-white px-4 py-4 [&_.tiptap]:text-[#183746] [&_.tiptap]:outline-none [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#7eb2c7] [&_.tiptap_blockquote]:pl-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5">
-                  <EditorContent editor={ analysisEditor } />
-                </div>
-              ) : (
-                <div className="mt-3">
-                  <RichTextField
-                    editor={ analysisEditor }
-                    minHeightClass="min-h-[14rem]"
-                    onSetLink={ openLinkDialog }
-                  />
-                </div>
-              ) }
-            </div>
-
-            <div className="rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-[#355161]">Book Tags</p>
-                <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
-                  <Tags className="mr-2 size-3.5" />
-                  { bookDialogMode === "view"
-                    ? `${ selectedBookTags.length } tag${ selectedBookTags.length !== 1 ? "s" : "" }`
-                    : `${ draft.selectedTagIds.length } / 3 selected` }
-                </div>
-              </div>
-
-              { bookDialogMode === "view" ? (
-                selectedBookTags.length === 0 ? (
-                  <p className="mt-3 rounded-2xl border border-dashed border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#51707e]">
-                    This book has no tags selected yet.
-                  </p>
-                ) : (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    { selectedBookTags.map((tagOption) => (
-                      <span
-                        key={ tagOption.id }
-                        className="inline-flex items-center rounded-full border border-[#b8d4df] bg-white px-3 py-1 text-xs font-semibold text-[#355161]"
-                      >
-                        { tagOption.tagName }
-                      </span>
-                    )) }
-                  </div>
-                )
-              ) : (
-                activeBookTags.length === 0 ? (
-                  <p className="mt-3 rounded-3xl border border-dashed border-[#c8d7df] bg-white px-4 py-3 text-sm text-[#51707e]">
-                    No book tag options are loaded yet.
-                  </p>
-                ) : (
-                  <div className="mt-3 space-y-3">
-                    <p className="text-sm text-[#51707e]">Choose 1-3 tags across Fiction, Non-Fiction, and Other.</p>
-                    <div className="grid gap-3 md:grid-cols-3">
-                      { categoryTagOptions.map((categoryTagOption) => {
-                        const selectedTagId = getSelectedTagForCategory(categoryTagOption.seqNo);
-
-                        return (
-                          <div key={ categoryTagOption.seqNo } className="space-y-2 rounded-2xl border border-[#d7e4ea] bg-white p-3">
-                            <label className="text-sm font-semibold text-[#355161]">
-                              { categoryTagOption.categoryName }
-                            </label>
-                            <Select
-                              value={ selectedTagId ? String(selectedTagId) : "none" }
-                              onValueChange={ (value) => handleCategoryTagSelect(categoryTagOption.seqNo, value) }
-                            >
-                              <SelectTrigger className="border-[#c8d7df] text-[#183746]">
-                                <SelectValue placeholder={ `Select ${ categoryTagOption.categoryName } tag` } />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">No selection</SelectItem>
-                                <SelectGroup>
-                                  <SelectLabel>Category</SelectLabel>
-                                  <SelectItem value={ `category-${ categoryTagOption.seqNo }` } disabled>
-                                    { categoryTagOption.categoryName }
-                                  </SelectItem>
-                                </SelectGroup>
-                                { categoryTagOption.qualifierOptions.length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>Qualifiers</SelectLabel>
-                                    { categoryTagOption.qualifierOptions.map((tagOption) => (
-                                      <SelectItem key={ tagOption.id } value={ String(tagOption.id) }>
-                                        { tagOption.tagName }
-                                      </SelectItem>
-                                    )) }
-                                  </SelectGroup>
-                                ) : null }
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        );
-                      }) }
-                    </div>
-                  </div>
-                )
-              ) }
-            </div>
-
-            { bookDialogMode === "view" ? (
-              <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[#355161]">Family Comments</p>
-                    <p className="text-sm text-[#51707e]">Share your thoughts on this book with your family.</p>
-                  </div>
-                  <div className="inline-flex items-center rounded-full border border-[#c8d7df] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#2f6a80]">
-                    <MessageSquare className="mr-2 size-3.5" />
-                    { draft.commentCount } comments
-                  </div>
-                </div>
-
-                <div className="rounded-[1.15rem] border border-[#d9e5ea] bg-white px-3 py-3">
-                  <div className="mb-3 flex flex-wrap items-center gap-4">
-                    <Button
-                      type="button"
-                      onClick={ handleToggleLike }
-                      disabled={ isEngaging }
-                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                    >
-                      <Heart className={ `size-4 ${ draft.likedByMember ? "fill-white" : "" }` } />
-                      { draft.likedByMember ? "Unlike" : "Like" }
-                    </Button>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
-                      <Heart className="size-4 text-[#c06c4a]" />
-                      { draft.likesCount.toLocaleString() }
-                    </span>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
-                    <textarea
-                      id="book-comment-input"
-                      value={ commentText }
-                      onChange={ (event) => setCommentText(event.target.value) }
-                      placeholder="What stood out to you about this book?"
-                      disabled={ isEngaging }
-                      className="min-h-24 w-full rounded-xl border border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#183746] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3d819b]"
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        onClick={ handleAddComment }
-                        disabled={ isEngaging || commentText.trim().length < 2 }
-                        className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                      >
-                        Post Comment
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  { draft.bookComments.length === 0 ? (
-                    <p className="rounded-2xl border border-dashed border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#51707e]">
-                      No comments yet. Be the first family member to add one.
-                    </p>
-                  ) : (
-                    draft.bookComments.map((bookComment) => (
-                      <article key={ bookComment.id } className="rounded-2xl border border-[#d9e5ea] bg-white px-3 py-3 text-sm text-[#355161]">
-                        <p className="whitespace-pre-wrap leading-6">{ bookComment.text || "(No text in comment)" }</p>
-                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
-                          { bookComment.commenterName } · { formatCreatedAt(bookComment.createdAt) }
-                        </p>
-                      </article>
-                    ))
-                  ) }
-                </div>
-              </div>
-            ) : null }
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={ isLinkDialogOpen } onOpenChange={ setIsLinkDialogOpen }>
-        <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-[#183746]">Edit Link</DialogTitle>
-            <DialogDescription className="text-[#51707e]">
-              Add or replace the URL for the selected text. Leave it blank to remove the link.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-[#183746]" htmlFor="books-home-link-url">
-              URL
-            </label>
-            <Input
-              id="books-home-link-url"
-              value={ linkValue }
-              onChange={ (event) => {
-                setLinkValue(event.target.value);
-
-                if (linkError) {
-                  setLinkError(null);
-                }
-              } }
-              placeholder="https://example.com"
-              className="border-[#c8d7df] bg-white text-[#183746]"
-            />
-            <div className="flex items-center gap-2 pt-1">
-              <Checkbox
-                id="books-home-link-target"
-                checked={ openLinkInNewTab }
-                onCheckedChange={ (checked: boolean | "indeterminate") => setOpenLinkInNewTab(checked === true) }
-              />
-              <label className="text-sm text-[#355161]" htmlFor="books-home-link-target">
-                Open in new tab
-              </label>
-            </div>
-            { linkError ? (
-              <p className="text-sm text-red-500">{ linkError }</p>
-            ) : null }
-            <div className="rounded-xl border border-[#d9e5ea] bg-white px-3 py-3 text-sm text-[#355161]">
-              <p className="font-semibold text-[#183746]">Preview</p>
-              <p className="mt-1 break-all">
-                { normalizedLinkPreview ?? "Enter a valid URL to preview the saved link." }
-              </p>
-              <p className="mt-2 text-xs uppercase tracking-[0.18em] text-[#5d8aa0]">
-                { openLinkInNewTab ? "Opens In New Tab" : "Opens In Current Tab" }
-              </p>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={ () => {
-                if (analysisEditor?.isActive("link")) {
-                  analysisEditor.chain().focus().extendMarkRange("link").unsetLink().run();
-                }
-
-                setIsLinkDialogOpen(false);
-              } }
-            >
-              Remove Link
-            </Button>
-            <Button type="button" onClick={ applyLink }>
-              Apply Link
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <BookLinkDialog linkDialog={ linkDialog } />
     </section>
   );
 }
