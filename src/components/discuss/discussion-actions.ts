@@ -6,8 +6,9 @@ import {
   addDiscussionReply,
   addInitialDiscussionPost,
   createDiscussionThreadWithInitialPost,
+  toggleDiscussionReaction,
 } from '@/components/db/sql/queries-discuss-threads';
-import { AddDiscussionReplyInput, AddInitialPostInput, CreateDiscussionThreadInput } from '@/components/db/types/discuss-threads';
+import { AddDiscussionReplyInput, AddInitialPostInput, CreateDiscussionThreadInput, ToggleDiscussionReactionInput } from '@/components/db/types/discuss-threads';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
 function revalidatePaths(paths?: string[]) {
@@ -81,6 +82,30 @@ export async function addInitialDiscussionPostAction(
   }
 
   const result = await addInitialDiscussionPost(input, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePaths(input.revalidatePaths);
+  }
+
+  return result;
+}
+
+export async function toggleDiscussionReactionAction(
+  input: ToggleDiscussionReactionInput & { revalidatePaths?: string[] }
+) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to react to posts.',
+    };
+  }
+
+  const result = await toggleDiscussionReaction(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

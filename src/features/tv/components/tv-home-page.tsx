@@ -17,7 +17,7 @@ import {
   getShowDetailAction,
   toggleShowLikeAction,
 } from "@/app/(features)/(tv)/tv/actions";
-import { startDiscussionThreadAction } from "@/components/discuss/discussion-actions";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { TvShow, TvShowDetail } from "@/components/db/types/shows";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constan
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+
+
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -158,13 +160,7 @@ function ModalShowImage({ src, alt }: { src: string; alt: string }) {
   return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
 }
 
-export function TvHomePage({
-  shows,
-  member,
-}: {
-  shows: TvShow[];
-  member: MemberKeyDetails;
-}) {
+export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberKeyDetails }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedShowDetail, setSelectedShowDetail] = useState<TvShowDetail | null>(null);
@@ -366,31 +362,6 @@ export function TvHomePage({
       setSelectedShowDetail(result.show);
       setCommentText("");
       toast.success(result.message);
-    });
-  }
-
-  function handleStartDiscussion() {
-    if (!selectedShowBasic) {
-      return;
-    }
-
-    startEngageTransition(async () => {
-      const result = await startDiscussionThreadAction({
-        targetType: "show",
-        targetId: selectedShowBasic.id,
-        discussTopic: `${ selectedShowBasic.showTitle } Discussion`,
-        initialSummary: `${ member.firstName } started this show discussion.`,
-        revalidatePaths: ["/tv"],
-      });
-
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-
-      toast.success(result.message);
-      router.push(`/tv/discussions/${ result.threadId }`);
-      router.refresh();
     });
   }
 
@@ -656,9 +627,23 @@ export function TvHomePage({
                       </div>
 
                       <div className="space-y-3 rounded-4xl border border-[#d7ebf3] bg-white p-4">
-                        <div>
-                          <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
-                          <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
+                            <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
+                          </div>
+                          <StartDiscussionDialog
+                            targetType="show"
+                            targetId={ selectedShowBasic.id }
+                            topicLabel={ `${ selectedShowBasic.showTitle } Discussion ${ (selectedShowDetail?.id === selectedShow
+                              ? selectedShowDetail.discussionThreads.length
+                              : 0) + 1 }` }
+                            revalidatePaths={ ["/tv"] }
+                            onSuccessRoute="/tv/discussions/:threadId"
+                            disabled={ isEngaging || selectedShowDetail?.id !== selectedShow }
+                            triggerLabel="Add Discussion"
+                            triggerClassName="rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]"
+                          />
                         </div>
 
                         { selectedShowDetail?.id !== selectedShow ? (
@@ -668,37 +653,48 @@ export function TvHomePage({
                         ) : selectedShowDetail.discussionThreads.length === 0 ? (
                           <div className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-3 text-sm text-[#5f7987]">
                             <p>No discussion threads have been added for this show yet.</p>
-                            <Button
-                              type="button"
-                              onClick={ handleStartDiscussion }
-                              disabled={ isEngaging || !selectedShowBasic }
-                              className="mt-3 rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]"
-                            >
-                              Start Discussion
-                            </Button>
                           </div>
                         ) : (
                           <div className="space-y-3">
                             { selectedShowDetail.discussionThreads.map((discussionThread) => (
                               <article key={ discussionThread.id } className="rounded-2xl border border-[#d7ebf3] bg-[#f8fcff] px-4 py-4 text-sm text-[#3f6576] shadow-sm">
                                 <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="min-w-0 space-y-1">
+                                  <div className="min-w-0 space-y-1 flex-1">
                                     <p className="text-base font-bold leading-snug text-[#15384a]">{ discussionThread.discussTopic }</p>
                                     <p className="text-xs uppercase tracking-[0.16em] text-[#4f7384]">
                                       { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
                                     </p>
                                   </div>
 
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    asChild
-                                    className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
-                                  >
-                                    <Link href={ `/tv/discussions/${ discussionThread.id }` }>
-                                      View Discussion
-                                    </Link>
-                                  </Button>
+                                  <div className="flex flex-wrap items-center gap-3 shrink-0">
+                                    { discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                      <div className="flex flex-wrap items-center gap-2">
+                                        { discussionThread.likeCount > 0 && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f4fb] px-2 py-1 text-[0.65rem] font-semibold text-[#1f5a70]">
+                                            <ThumbsUp className="size-3" />
+                                            { discussionThread.likeCount }
+                                          </span>
+                                        ) }
+                                        { discussionThread.loveCount > 0 && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#fde4ee] px-2 py-1 text-[0.65rem] font-semibold text-[#aa3368]">
+                                            <Heart className="size-3 fill-current" />
+                                            { discussionThread.loveCount }
+                                          </span>
+                                        ) }
+                                      </div>
+                                    ) : null }
+
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      asChild
+                                      className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
+                                    >
+                                      <Link href={ `/tv/discussions/${ discussionThread.id }` }>
+                                        View Discussion
+                                      </Link>
+                                    </Button>
+                                  </div>
                                 </div>
                               </article>
                             )) }

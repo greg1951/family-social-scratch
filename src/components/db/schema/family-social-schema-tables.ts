@@ -178,6 +178,7 @@ export const discussLike = pgTable("discuss_like", {
   id: serial("id").primaryKey(),
   discussPostId: integer("fk_discuss_post_id").notNull().references(() => discussPostReply.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  reactionType: integer("reaction_type").notNull().default(1), // 1 = like (thumbs up), 2 = love (heart)
   createdAt: timestamp("created_at").defaultNow(),
 },
   (table) => [

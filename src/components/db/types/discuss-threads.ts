@@ -3,6 +3,8 @@ export interface DiscussionThreadSummary {
   discussTopic: string;
   createdAt: Date;
   memberFirstName: string;
+  likeCount: number;
+  loveCount: number;
 }
 
 export interface DiscussionPostReplyRecord {
@@ -16,6 +18,9 @@ export interface DiscussionPostReplyRecord {
   rootPostId: number | null;
   authorMemberId: number;
   authorName: string;
+  likeCount?: number;
+  loveCount?: number;
+  userReactionType?: number | null;
 }
 
 export interface DiscussionThreadDetail {
@@ -74,5 +79,23 @@ export type AddInitialPostReturn =
 	| {
 		success: true;
 		postId: number;
+		message: string;
+	};
+
+export interface PostReactionCounts {
+	likeCount: number;
+	loveCount: number;
+	userReactionType?: number | null; // 1 = like, 2 = love
+}
+
+export interface ToggleDiscussionReactionInput {
+	postId: number;
+	reactionType: number; // 1 = like, 2 = love
+}
+
+export type ToggleDiscussionReactionReturn =
+	| { success: false; message: string }
+	| {
+		success: true;
 		message: string;
 	};

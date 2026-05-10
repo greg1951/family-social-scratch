@@ -8,9 +8,9 @@ import { useMemo, useState, useTransition } from "react";
 import type { DiscussionPostReplyRecord } from "@/components/db/types/discuss-threads";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Bold, Italic, Link2, Underline as UnderlineIcon } from "lucide-react";
+import { Bold, Italic, Link2, Underline as UnderlineIcon, Heart, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
-import { addDiscussionReplyAction } from "@/components/discuss/discussion-actions";
+import { addDiscussionReplyAction, toggleDiscussionReactionAction } from "@/components/discuss/discussion-actions";
 import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
 
 const TiptapRenderer = dynamic(() => import("./tiptap-renderer"), { ssr: false });
@@ -63,8 +63,10 @@ export default function DiscussionPostsReplies({
 }) {
   const router = useRouter();
   const [isSubmittingReply, startSubmitReplyTransition] = useTransition();
+  const [isTogglingReaction, startToggleReactionTransition] = useTransition();
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<number>>(new Set());
   const [replyTargetId, setReplyTargetId] = useState<number | null>(null);
+  const [replyCaption, setReplyCaption] = useState("");
 
   const replyEditor = useEditor({
     extensions: [
@@ -171,6 +173,7 @@ export default function DiscussionPostsReplies({
     }
 
     setReplyTargetId(entryId);
+    setReplyCaption("");
     if (replyEditor) {
       replyEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
       replyEditor.commands.focus("end");
@@ -179,6 +182,7 @@ export default function DiscussionPostsReplies({
 
   function handleCancelReply() {
     setReplyTargetId(null);
+    setReplyCaption("");
     if (replyEditor) {
       replyEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
     }
@@ -190,10 +194,9 @@ export default function DiscussionPostsReplies({
       return;
     }
 
-    const replySummary = replyEditor.getText().trim();
-
-    if (!replySummary) {
-      toast.error("Reply text is required.");
+    const summary = replyCaption.trim();
+    if (!summary) {
+      toast.error("Reply Caption is required.");
       return;
     }
 
@@ -203,7 +206,7 @@ export default function DiscussionPostsReplies({
       const result = await addDiscussionReplyAction({
         threadId,
         replyToEntryId,
-        summary: replySummary,
+        summary,
         contentJson,
         revalidatePaths,
       });
@@ -215,7 +218,25 @@ export default function DiscussionPostsReplies({
 
       toast.success(result.message);
       setReplyTargetId(null);
+      setReplyCaption("");
       replyEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
+      router.refresh();
+    });
+  }
+
+  function handleToggleReaction(postId: number, reactionType: number) {
+    startToggleReactionTransition(async () => {
+      const result = await toggleDiscussionReactionAction({
+        postId,
+        reactionType,
+        revalidatePaths,
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
       router.refresh();
     });
   }
@@ -252,6 +273,19 @@ export default function DiscussionPostsReplies({
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#4f7384]">
           Write Reply
         </p>
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="reply-caption-input">
+          Reply Caption
+        </label>
+        <input
+          id="reply-caption-input"
+          type="text"
+          value={ replyCaption }
+          onChange={ (e) => setReplyCaption(e.target.value) }
+          placeholder="Enter a short summary/caption for this reply"
+          className="mb-4 w-full rounded border border-[#cfe3ec] bg-white px-3 py-2 text-sm text-[#15384a] focus:outline-none focus:ring-2 focus:ring-[#59cdf7]"
+          maxLength={ 120 }
+          disabled={ isSubmittingReply }
+        />
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#cfe3ec] bg-white px-2 py-2">
           <button
             type="button"
@@ -306,8 +340,11 @@ export default function DiscussionPostsReplies({
             <Link2 className="size-3.5" />
           </button>
         </div>
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="reply-content-editor">
+          Reply Content
+        </label>
         <div className="mt-2 rounded-xl border border-[#cfe3ec] bg-white p-3 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
-          <EditorContent editor={ replyEditor } />
+          <EditorContent id="reply-content-editor" editor={ replyEditor } />
         </div>
         <div className="mt-3 flex flex-wrap justify-end gap-2">
           <button
@@ -379,6 +416,40 @@ export default function DiscussionPostsReplies({
             <TiptapRenderer contentJson={ reply.contentJson } />
           </div>
         ) : null }
+
+        { reply.authorMemberId !== currentMemberId ? (
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={ () => handleToggleReaction(reply.id, 1) }
+              disabled={ isTogglingReaction }
+              className={ [
+                "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                reply.userReactionType === 1
+                  ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                  : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+              ].join(" ") }
+            >
+              <ThumbsUp className={ `size-3 ${ reply.userReactionType === 1 ? "fill-current" : "" }` } />
+              { (reply.likeCount ?? 0).toString().length > 1 ? reply.likeCount : "" }
+            </button>
+            <button
+              type="button"
+              onClick={ () => handleToggleReaction(reply.id, 2) }
+              disabled={ isTogglingReaction }
+              className={ [
+                "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                reply.userReactionType === 2
+                  ? "border-[#cf3f7f] bg-[#fde4ee] text-[#aa3368]"
+                  : "border-[#e8c9d9] bg-white text-[#7a4a5f] hover:bg-[#fff0f5]",
+              ].join(" ") }
+            >
+              <Heart className={ `size-3 ${ reply.userReactionType === 2 ? "fill-current" : "" }` } />
+              { (reply.loveCount ?? 0).toString().length > 1 ? reply.loveCount : "" }
+            </button>
+          </div>
+        ) : null }
+
         { renderReplyComposer(reply.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
 
         { childReplies.length > 0 ? (
@@ -456,6 +527,39 @@ export default function DiscussionPostsReplies({
                   </div>
                 ) : null }
 
+                { post.authorMemberId !== currentMemberId ? (
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={ () => handleToggleReaction(post.id, 1) }
+                      disabled={ isTogglingReaction }
+                      className={ [
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                        post.userReactionType === 1
+                          ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                          : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+                      ].join(" ") }
+                    >
+                      <ThumbsUp className={ `size-3.5 ${ post.userReactionType === 1 ? "fill-current" : "" }` } />
+                      { post.likeCount ?? 0 }
+                    </button>
+                    <button
+                      type="button"
+                      onClick={ () => handleToggleReaction(post.id, 2) }
+                      disabled={ isTogglingReaction }
+                      className={ [
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                        post.userReactionType === 2
+                          ? "border-[#cf3f7f] bg-[#fde4ee] text-[#aa3368]"
+                          : "border-[#e8c9d9] bg-white text-[#7a4a5f] hover:bg-[#fff0f5]",
+                      ].join(" ") }
+                    >
+                      <Heart className={ `size-3.5 ${ post.userReactionType === 2 ? "fill-current" : "" }` } />
+                      { post.loveCount ?? 0 }
+                    </button>
+                  </div>
+                ) : null }
+
                 { renderReplyComposer(post.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
 
                 { postReplies.length > 0 ? (
@@ -509,6 +613,40 @@ export default function DiscussionPostsReplies({
                         <TiptapRenderer contentJson={ reply.contentJson } />
                       </div>
                     ) : null }
+
+                    { reply.authorMemberId !== currentMemberId ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={ () => handleToggleReaction(reply.id, 1) }
+                          disabled={ isTogglingReaction }
+                          className={ [
+                            "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                            reply.userReactionType === 1
+                              ? "border-[#b88060] bg-[#fff3ed] text-[#9a5b44]"
+                              : "border-[#e7b8a8] bg-white text-[#9a5b44] hover:bg-[#fff0ea]",
+                          ].join(" ") }
+                        >
+                          <ThumbsUp className={ `size-3 ${ reply.userReactionType === 1 ? "fill-current" : "" }` } />
+                          { (reply.likeCount ?? 0).toString().length > 1 ? reply.likeCount : "" }
+                        </button>
+                        <button
+                          type="button"
+                          onClick={ () => handleToggleReaction(reply.id, 2) }
+                          disabled={ isTogglingReaction }
+                          className={ [
+                            "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                            reply.userReactionType === 2
+                              ? "border-[#d88080] bg-[#ffedea] text-[#aa3368]"
+                              : "border-[#e7b8a8] bg-white text-[#9a5b44] hover:bg-[#fff0ea]",
+                          ].join(" ") }
+                        >
+                          <Heart className={ `size-3 ${ reply.userReactionType === 2 ? "fill-current" : "" }` } />
+                          { (reply.loveCount ?? 0).toString().length > 1 ? reply.loveCount : "" }
+                        </button>
+                      </div>
+                    ) : null }
+
                     { renderReplyComposer(reply.id, "mt-3 rounded-xl border border-[#eec8bc] bg-[#fff2ec] p-3") }
                   </article>
                 );

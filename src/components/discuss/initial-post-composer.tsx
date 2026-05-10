@@ -15,6 +15,8 @@ import { toast } from "sonner";
 import { addInitialDiscussionPostAction } from "@/components/discuss/discussion-actions";
 import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
 import dynamic from "next/dynamic";
+import { useState } from "react";
+
 
 const TiptapRenderer = dynamic(() => import("./tiptap-renderer"), { ssr: false });
 
@@ -29,6 +31,7 @@ export default function InitialPostComposer({
 }) {
   const router = useRouter();
   const [isSubmitting, startSubmitTransition] = useTransition();
+  const [caption, setCaption] = useState("");
 
   const editor = useEditor({
     extensions: [
@@ -62,10 +65,9 @@ export default function InitialPostComposer({
       return;
     }
 
-    const summary = editor.getText().trim();
-
+    const summary = caption.trim();
     if (!summary) {
-      toast.error("Discussion post text is required.");
+      toast.error("Post Caption is required.");
       return;
     }
 
@@ -85,12 +87,14 @@ export default function InitialPostComposer({
       }
 
       toast.success(result.message);
+      setCaption("");
       editor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
       router.refresh();
     });
   }
 
   function handleCancel() {
+    setCaption("");
     if (editor) {
       editor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
     }
@@ -100,7 +104,7 @@ export default function InitialPostComposer({
     <div className="rounded-2xl border border-[#d7ebf3] bg-[#f8fcff] px-4 py-4 text-sm text-[#3f6576] shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#4f7384]">
-          Start Your Discussion
+          Start New Discussion
         </p>
       </div>
 
@@ -108,7 +112,23 @@ export default function InitialPostComposer({
         <p className="mb-2 text-xs font-semibold text-[#4f7384]">
           Topic: <span className="font-bold text-[#15384a]">{ threadTopic }</span>
         </p>
-        <EditorContent editor={ editor } />
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="post-caption-input">
+          Discussion Caption
+        </label>
+        <input
+          id="post-caption-input"
+          type="text"
+          value={ caption }
+          onChange={ (e) => setCaption(e.target.value) }
+          placeholder="Enter a short summary/caption for this discussion"
+          className="mb-4 w-full rounded border border-[#cfe3ec] bg-white px-3 py-2 text-sm text-[#15384a] focus:outline-none focus:ring-2 focus:ring-[#59cdf7]"
+          maxLength={ 120 }
+          disabled={ isSubmitting }
+        />
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="post-content-editor">
+          Discussion Content
+        </label>
+        <EditorContent id="post-content-editor" editor={ editor } />
       </div>
 
       <div className="mt-3 flex flex-wrap justify-end gap-2">

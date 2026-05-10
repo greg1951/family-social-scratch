@@ -5,6 +5,7 @@ import { getDiscussionThreadDetail } from "@/components/db/sql/queries-discuss-t
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import DiscussionPostsReplies from "@/components/discuss/discussion-posts-replies";
 import InitialPostComposer from "@/components/discuss/initial-post-composer";
+import { ArrowLeftIcon } from "lucide-react";
 
 function formatDate(value: Date): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -36,6 +37,7 @@ export default async function TvDiscussionThreadPage({
 
   const detailResult = await getDiscussionThreadDetail(threadId, memberKeyDetails.familyId, {
     targetType: "show",
+    currentMemberId: memberKeyDetails.memberId,
   });
 
   if (!detailResult.success) {
@@ -51,22 +53,23 @@ export default async function TvDiscussionThreadPage({
           <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
             Show Discussion
           </p>
+          <Link
+            href="/tv"
+            className="mt-5 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ArrowLeftIcon className="mr-2 h-3 w-3" />
+            Back to TV Shows
+          </Link>
           <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
             { thread.discussTopic }
           </h1>
           <p className="mt-2 text-sm text-[#d9f5ff]">
             Started by { thread.postMemberFirstName } on { formatDate(thread.createdAt) }
           </p>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#d9f5ff]">
+          {/* <div className="mt-4 flex flex-wrap items-center gap-2 text-xs uppercase tracking-[0.2em] text-[#d9f5ff]">
             <span>{ thread.status }</span>
             <span>Show #{ thread.targetId }</span>
-          </div>
-          <Link
-            href="/tv"
-            className="mt-5 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          >
-            Back to TV
-          </Link>
+          </div> */}
         </div>
 
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)]">

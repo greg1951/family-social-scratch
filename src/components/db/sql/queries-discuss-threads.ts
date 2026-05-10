@@ -1,10 +1,10 @@
 'use server';
 
 import db from '@/components/db/drizzle';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
-import { createTextTipTapDocument, parseSerializedTipTapDocument, serializeTipTapDocument } from '../types/poem-term-validation';
+import { and, asc, count, desc, eq, inArray } from 'drizzle-orm';
+import { parseSerializedTipTapDocument } from '../types/poem-term-validation';
 
-import { discussPostReply, discussThread, member } from '../schema/family-social-schema-tables';
+import { discussPostReply, discussThread, discussLike, member } from '../schema/family-social-schema-tables';
 import {
 	AddDiscussionReplyInput,
 	AddDiscussionReplyReturn,
@@ -13,6 +13,9 @@ import {
 	DiscussionPostReplyRecord,
 	DiscussionThreadDetail,
 	DiscussionThreadSummary,
+	PostReactionCounts,
+	ToggleDiscussionReactionInput,
+	ToggleDiscussionReactionReturn,
 } from '../types/discuss-threads';
 
 function createDiscussionMemberFirstName(firstName?: string | null): string {
@@ -27,10 +30,6 @@ function createDiscussionMemberName(firstName?: string | null, lastName?: string
 	}
 
 	return 'Unknown Member';
-}
-
-function createDefaultThreadContent(summary: string): string {
-	return serializeTipTapDocument(createTextTipTapDocument(summary));
 }
 
 async function getNextDiscussionSeqNo(threadId: number): Promise<number> {
@@ -72,16 +71,48 @@ export async function loadDiscussionThreadSummariesByTargetIds(
 		)
 		.orderBy(desc(discussThread.createdAt), asc(discussThread.id));
 
+	// Get all thread IDs to fetch reaction counts
+	const threadIds = rows.map((r) => r.id);
+	const reactionCountsByThreadId = new Map<number, { likeCount: number; loveCount: number }>();
+
+	if (threadIds.length > 0) {
+		// Fetch reaction counts for all posts in these threads
+		const reactionRows = await db
+			.select({
+				threadId: discussPostReply.discussThreadId,
+				reactionType: discussLike.reactionType,
+				reactionCount: count().mapWith(Number),
+			})
+			.from(discussPostReply)
+			.innerJoin(discussLike, eq(discussLike.discussPostId, discussPostReply.id))
+			.where(inArray(discussPostReply.discussThreadId, threadIds))
+			.groupBy(discussPostReply.discussThreadId, discussLike.reactionType);
+
+		// Aggregate counts by thread
+		for (const reaction of reactionRows) {
+			const current = reactionCountsByThreadId.get(reaction.threadId) ?? { likeCount: 0, loveCount: 0 };
+			if (reaction.reactionType === 1) {
+				current.likeCount += reaction.reactionCount;
+			} else if (reaction.reactionType === 2) {
+				current.loveCount += reaction.reactionCount;
+			}
+			reactionCountsByThreadId.set(reaction.threadId, current);
+		}
+	}
+
 	const summariesByTargetId = new Map<number, DiscussionThreadSummary[]>();
 
 	for (const row of rows) {
 		const summaries = summariesByTargetId.get(row.targetId) ?? [];
+		const counts = reactionCountsByThreadId.get(row.id) ?? { likeCount: 0, loveCount: 0 };
 
 		summaries.push({
 			id: row.id,
 			discussTopic: row.discussTopic,
 			createdAt: row.createdAt ?? new Date(),
 			memberFirstName: createDiscussionMemberFirstName(row.memberFirstName),
+			likeCount: counts.likeCount,
+			loveCount: counts.loveCount,
 		});
 
 		summariesByTargetId.set(row.targetId, summaries);
@@ -105,6 +136,7 @@ export async function getDiscussionThreadDetail(
 	familyId: number,
 	options?: {
 		targetType?: string;
+		currentMemberId?: number;
 	}
 ): Promise<{ success: true; thread: DiscussionThreadDetail } | { success: false; message: string }> {
 	const rows = await db
@@ -158,18 +190,73 @@ export async function getDiscussionThreadDetail(
 		.where(eq(discussPostReply.discussThreadId, threadId))
 		.orderBy(asc(discussPostReply.seqNo), asc(discussPostReply.createdAt), asc(discussPostReply.id));
 
-	const postsAndReplies: DiscussionPostReplyRecord[] = postReplyRows.map((row) => ({
-		id: row.id,
-		postReplyType: row.postReplyType,
-		summary: row.summary,
-		contentJson: row.contentJson,
-		createdAt: row.createdAt ?? new Date(),
-		seqNo: row.seqNo,
-		parentPostId: row.parentPostId,
-		rootPostId: row.rootPostId,
-		authorMemberId: row.authorMemberId,
-		authorName: createDiscussionMemberName(row.authorFirstName, row.authorLastName),
-	}));
+	// Load reaction counts for all posts
+	const postIds = postReplyRows.map((row) => row.id);
+	const reactionCountsByPostId = new Map<number, { likeCount: number; loveCount: number; userReactionType?: number | null }>();
+
+	if (postIds.length > 0) {
+		// Get reaction counts
+		const reactionRows = await db
+			.select({
+				postId: discussLike.discussPostId,
+				reactionType: discussLike.reactionType,
+				reactionCount: count().mapWith(Number),
+			})
+			.from(discussLike)
+			.where(inArray(discussLike.discussPostId, postIds))
+			.groupBy(discussLike.discussPostId, discussLike.reactionType);
+
+		for (const reaction of reactionRows) {
+			const current = reactionCountsByPostId.get(reaction.postId) ?? { likeCount: 0, loveCount: 0 };
+			if (reaction.reactionType === 1) {
+				current.likeCount = reaction.reactionCount;
+			} else if (reaction.reactionType === 2) {
+				current.loveCount = reaction.reactionCount;
+			}
+			reactionCountsByPostId.set(reaction.postId, current);
+		}
+
+		// Get user's reactions if currentMemberId is provided
+		if (options?.currentMemberId) {
+			const userReactionRows = await db
+				.select({
+					postId: discussLike.discussPostId,
+					reactionType: discussLike.reactionType,
+				})
+				.from(discussLike)
+				.where(
+					and(
+						inArray(discussLike.discussPostId, postIds),
+						eq(discussLike.memberId, options.currentMemberId)
+					)
+				);
+
+			for (const reaction of userReactionRows) {
+				const current = reactionCountsByPostId.get(reaction.postId) ?? { likeCount: 0, loveCount: 0 };
+				current.userReactionType = reaction.reactionType;
+				reactionCountsByPostId.set(reaction.postId, current);
+			}
+		}
+	}
+
+	const postsAndReplies: DiscussionPostReplyRecord[] = postReplyRows.map((row) => {
+		const reactionCounts = reactionCountsByPostId.get(row.id) ?? { likeCount: 0, loveCount: 0 };
+		return {
+			id: row.id,
+			postReplyType: row.postReplyType,
+			summary: row.summary,
+			contentJson: row.contentJson,
+			createdAt: row.createdAt ?? new Date(),
+			seqNo: row.seqNo,
+			parentPostId: row.parentPostId,
+			rootPostId: row.rootPostId,
+			authorMemberId: row.authorMemberId,
+			authorName: createDiscussionMemberName(row.authorFirstName, row.authorLastName),
+			likeCount: reactionCounts.likeCount,
+			loveCount: reactionCounts.loveCount,
+			userReactionType: reactionCounts.userReactionType,
+		};
+	});
 
 	return {
 		success: true,
@@ -197,6 +284,9 @@ export async function createDiscussionThreadWithInitialPost(
 	}
 ): Promise<CreateDiscussionThreadReturn> {
 	const normalizedTopic = input.discussTopic.trim();
+	const normalizedInitialSummary = input.initialSummary?.trim() ?? '';
+	const hasInitialSummary = normalizedInitialSummary.length > 0;
+	const hasInitialContentJson = Boolean(input.initialContentJson?.trim());
 
 	if (!normalizedTopic) {
 		return {
@@ -212,36 +302,23 @@ export async function createDiscussionThreadWithInitialPost(
 		};
 	}
 
-	const existingThreadRows = await db
-		.select({
-			id: discussThread.id,
-		})
-		.from(discussThread)
-		.where(
-			and(
-				eq(discussThread.familyId, actor.familyId),
-				eq(discussThread.targetType, input.targetType),
-				eq(discussThread.targetId, input.targetId),
-				eq(discussThread.status, 'active')
-			)
-		)
-		.orderBy(desc(discussThread.createdAt), desc(discussThread.id))
-		.limit(1);
-
-	const existingThread = existingThreadRows[0];
-
-	if (existingThread) {
+	if (hasInitialSummary !== hasInitialContentJson) {
 		return {
-			success: true,
-			threadId: existingThread.id,
-			message: 'An active discussion already exists for this item.',
+			success: false,
+			message: 'Both an initial caption and content are required when creating the first post.',
 		};
 	}
 
-	const defaultSummary = input.initialSummary?.trim() || `Discussion started: ${normalizedTopic}`;
-	const normalizedContentJson = input.initialContentJson?.trim()
-		? input.initialContentJson
-		: createDefaultThreadContent(defaultSummary);
+	if (hasInitialContentJson && input.initialContentJson) {
+		const parsedInitialContent = parseSerializedTipTapDocument(input.initialContentJson);
+
+		if (!parsedInitialContent.success) {
+			return {
+				success: false,
+				message: 'Initial post content must be valid TipTap JSON.',
+			};
+		}
+	}
 
 	const [insertedThread] = await db
 		.insert(discussThread)
@@ -255,15 +332,32 @@ export async function createDiscussionThreadWithInitialPost(
 		})
 		.returning({ id: discussThread.id });
 
-	// Don't create an initial post - let the user compose it when they arrive at the thread page
-	// if (input.initialSummary || input.initialContentJson) {
-	//   await db.insert(discussPostReply).values({...});
-	// }
+	if (hasInitialSummary && input.initialContentJson) {
+		try {
+			await db.insert(discussPostReply).values({
+				postReplyType: 'post',
+				summary: normalizedInitialSummary,
+				contentJson: input.initialContentJson,
+				seqNo: 1,
+				parentPostId: null,
+				rootPostId: null,
+				discussThreadId: insertedThread.id,
+				authorMemberId: actor.memberId,
+			});
+		} catch {
+			// Neon HTTP driver doesn't support transactions here; remove the orphaned thread on failure.
+			await db.delete(discussThread).where(eq(discussThread.id, insertedThread.id));
+			return {
+				success: false,
+				message: 'Unable to create the initial discussion post. Please try again.',
+			};
+		}
+	}
 
 	return {
 		success: true,
 		threadId: insertedThread.id,
-		message: 'Discussion created.',
+		message: hasInitialSummary ? 'Discussion and initial post created.' : 'Discussion created.',
 	};
 }
 
@@ -472,4 +566,150 @@ export async function addInitialDiscussionPost(
 		message: 'Discussion post created.',
 	};
 }
+
+export async function getPostReactionCounts(
+	postId: number,
+	memberId?: number
+): Promise<PostReactionCounts> {
+	const reactionRows = await db
+		.select({
+			reactionType: discussLike.reactionType,
+			reactionCount: count().mapWith(Number),
+		})
+		.from(discussLike)
+		.where(eq(discussLike.discussPostId, postId))
+		.groupBy(discussLike.reactionType);
+
+	let likeCount = 0;
+	let loveCount = 0;
+
+	for (const row of reactionRows) {
+		if (row.reactionType === 1) {
+			likeCount = row.reactionCount;
+		} else if (row.reactionType === 2) {
+			loveCount = row.reactionCount;
+		}
+	}
+
+	let userReactionType: number | null = null;
+
+	if (memberId) {
+		const userReactionRows = await db
+			.select({ reactionType: discussLike.reactionType })
+			.from(discussLike)
+			.where(
+				and(
+					eq(discussLike.discussPostId, postId),
+					eq(discussLike.memberId, memberId)
+				)
+			)
+			.limit(1);
+
+		userReactionType = userReactionRows[0]?.reactionType ?? null;
+	}
+
+	return {
+		likeCount,
+		loveCount,
+		userReactionType,
+	};
+}
+
+export async function toggleDiscussionReaction(
+	input: ToggleDiscussionReactionInput,
+	actor: {
+		familyId: number;
+		memberId: number;
+	}
+): Promise<ToggleDiscussionReactionReturn> {
+	// Validate reaction type
+	if (![1, 2].includes(input.reactionType)) {
+		return {
+			success: false,
+			message: 'Invalid reaction type. Must be 1 (like) or 2 (love).',
+		};
+	}
+
+	// Check if post exists and get its author
+	const postRows = await db
+		.select({
+			id: discussPostReply.id,
+			authorMemberId: discussPostReply.authorMemberId,
+		})
+		.from(discussPostReply)
+		.where(eq(discussPostReply.id, input.postId))
+		.limit(1);
+
+	if (postRows.length === 0) {
+		return {
+			success: false,
+			message: 'Post not found.',
+		};
+	}
+
+	const post = postRows[0];
+
+	// Prevent self-reactions
+	if (post.authorMemberId === actor.memberId) {
+		return {
+			success: false,
+			message: 'You cannot like or love your own post or reply.',
+		};
+	}
+
+	// Check if user already has a reaction
+	const existingReactionRows = await db
+		.select({
+			id: discussLike.id,
+			reactionType: discussLike.reactionType,
+		})
+		.from(discussLike)
+		.where(
+			and(
+				eq(discussLike.discussPostId, input.postId),
+				eq(discussLike.memberId, actor.memberId)
+			)
+		)
+		.limit(1);
+
+	const existingReaction = existingReactionRows[0];
+
+	if (existingReaction) {
+		// If toggling to the same type, remove the reaction
+		if (existingReaction.reactionType === input.reactionType) {
+			await db
+				.delete(discussLike)
+				.where(eq(discussLike.id, existingReaction.id));
+
+			return {
+				success: true,
+				message: `Reaction removed.`,
+			};
+		}
+
+		// Otherwise, update to the new reaction type
+		await db
+			.update(discussLike)
+			.set({ reactionType: input.reactionType })
+			.where(eq(discussLike.id, existingReaction.id));
+
+		return {
+			success: true,
+			message: `Reaction updated.`,
+		};
+	}
+
+	// Create new reaction
+	await db.insert(discussLike).values({
+		discussPostId: input.postId,
+		memberId: actor.memberId,
+		reactionType: input.reactionType,
+	});
+
+	return {
+		success: true,
+		message: `Reaction added.`,
+	};
+}
+
 
