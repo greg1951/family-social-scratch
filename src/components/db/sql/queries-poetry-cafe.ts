@@ -5,6 +5,7 @@ import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
+  removeUnusedLinesFromEnd,
   serializeTipTapDocument,
 } from '../types/poem-term-validation';
 import {
@@ -28,6 +29,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from './queries-family-activity';
+import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -131,6 +133,8 @@ async function loadPoetryHomePoems(
     .from(poemTag)
     .where(inArray(poemTag.poemId, poemFactIds));
 
+  const discussionThreadsByPoemId = await loadDiscussionThreadSummariesByTargetIds(familyId, 'poem', poemFactIds);
+
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
@@ -197,6 +201,8 @@ async function loadPoetryHomePoems(
       analysisJson: analysisComment?.commentJson,
       selectedTagIds: tagIdsByPoemId.get(row.id) ?? [],
       poemComments,
+      discussionThreads: discussionThreadsByPoemId.get(row.id) ?? [],
+      hasDiscussionThread: (discussionThreadsByPoemId.get(row.id) ?? []).length > 0,
     };
   });
 }
@@ -430,7 +436,8 @@ export async function savePoetryHomePoem(
     : [];
 
   const isAnalysisEmpty = isTipTapDocumentEmpty(parsedAnalysisJson.content);
-  const serializedVerseJson = serializeTipTapDocument(parsedVerseJson.content);
+  const cleanedVerseContent = removeUnusedLinesFromEnd(parsedVerseJson.content);
+  const serializedVerseJson = serializeTipTapDocument(cleanedVerseContent);
   const serializedAnalysisJson = serializeTipTapDocument(parsedAnalysisJson.content);
 
   const poemPayload = {

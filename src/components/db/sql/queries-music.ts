@@ -43,6 +43,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
+import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 
@@ -404,7 +405,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
 
   const musicIds = musicRows.map((row) => row.id);
 
-  const [commentRows, likeRows, tagRows, lyricsRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, lyricsRows, discussionThreadsByMusicId] = await Promise.all([
     db
       .select({
         musicId: musicComment.musicId,
@@ -436,6 +437,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
       })
       .from(musicLyrics)
       .where(inArray(musicLyrics.musicId, musicIds)),
+    loadDiscussionThreadSummariesByTargetIds(familyId, 'music', musicIds),
   ]);
 
   const memberIds = [...new Set(musicRows.map((row) => row.memberId))];
@@ -534,6 +536,8 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     likenessDegree: viewerLikeByMusicId.get(row.id) ?? null,
     selectedTagIds: tagIdsByMusicId.get(row.id) ?? [],
     tagNamesByType: tagNamesByTypeByMusicId.get(row.id) ?? {},
+    discussionThreads: discussionThreadsByMusicId.get(row.id) ?? [],
+    hasDiscussionThread: (discussionThreadsByMusicId.get(row.id) ?? []).length > 0,
   }));
 }
 
@@ -553,7 +557,7 @@ async function loadMusicDetail(
 
   const musicRow = musicRows[0];
 
-  const [commentRows, likeRows, tagRows, lyrics] = await Promise.all([
+  const [commentRows, likeRows, tagRows, lyrics, discussionThreadsByMusicId] = await Promise.all([
     db
       .select()
       .from(musicComment)
@@ -576,6 +580,7 @@ async function loadMusicDetail(
       .innerJoin(musicTagReference, eq(musicTagReference.id, musicTag.tagId))
       .where(eq(musicTag.musicId, musicId)),
     loadLyricsByMusicId(musicId),
+    loadDiscussionThreadSummariesByTargetIds(familyId, 'music', [musicId]),
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
@@ -656,6 +661,8 @@ async function loadMusicDetail(
     likenessDegree: viewerLike?.likenessDegree ?? null,
     selectedTagIds: tagIdsByMusicId.get(musicId) ?? [],
     tagNamesByType: tagNamesByTypeByMusicId.get(musicId) ?? {},
+    discussionThreads: discussionThreadsByMusicId.get(musicId) ?? [],
+    hasDiscussionThread: (discussionThreadsByMusicId.get(musicId) ?? []).length > 0,
     musicComments,
     lyrics,
   };

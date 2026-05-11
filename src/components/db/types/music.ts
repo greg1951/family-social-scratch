@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from './discuss-threads';
+
 export type MusicTagType = "genre" | "subGenre";
 
 export interface MusicComment {
@@ -30,6 +32,8 @@ export interface MusicRecord {
   likenessDegree: number | null;
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<MusicTagType, string[]>>;
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface MusicLyricsRecord {
@@ -44,6 +48,8 @@ export interface MusicLyricsRecord {
 export interface MusicDetail extends MusicRecord {
   musicComments: MusicComment[];
   lyrics: MusicLyricsRecord | null;
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface MusicTagOption {

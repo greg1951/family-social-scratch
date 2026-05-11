@@ -27,6 +27,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from './queries-family-activity';
+import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -129,6 +130,8 @@ async function loadBooksHomeBooks(
     .from(bookTag)
     .where(inArray(bookTag.bookId, bookIdsToLoad));
 
+  const discussionThreadsByBookId = await loadDiscussionThreadSummariesByTargetIds(familyId, 'book', bookIdsToLoad);
+
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
@@ -197,6 +200,8 @@ async function loadBooksHomeBooks(
       analysisJson: analysisComment?.commentJson,
       selectedTagIds: tagIdsByBookId.get(row.id) ?? [],
       bookComments,
+      discussionThreads: discussionThreadsByBookId.get(row.id) ?? [],
+      hasDiscussionThread: (discussionThreadsByBookId.get(row.id) ?? []).length > 0,
     };
   });
 }

@@ -175,7 +175,7 @@ export function FoodiesScrollStrip({
                       isSelected && "bg-[#eaf7ff]",
                     ) }
                   >
-                    <div className="relative aspect-16/10 overflow-hidden">
+                    <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                       { item.kind === "latest" ? (

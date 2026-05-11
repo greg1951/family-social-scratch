@@ -16,6 +16,8 @@ import {
 	PostReactionCounts,
 	ToggleDiscussionReactionInput,
 	ToggleDiscussionReactionReturn,
+	UpdateDiscussionEntryInput,
+	UpdateDiscussionEntryReturn,
 } from '../types/discuss-threads';
 
 function createDiscussionMemberFirstName(firstName?: string | null): string {
@@ -73,7 +75,7 @@ export async function loadDiscussionThreadSummariesByTargetIds(
 
 	// Get all thread IDs to fetch reaction counts
 	const threadIds = rows.map((r) => r.id);
-	const reactionCountsByThreadId = new Map<number, { likeCount: number; loveCount: number }>();
+	const reactionCountsByThreadId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
 
 	if (threadIds.length > 0) {
 		// Fetch reaction counts for all posts in these threads
@@ -90,8 +92,10 @@ export async function loadDiscussionThreadSummariesByTargetIds(
 
 		// Aggregate counts by thread
 		for (const reaction of reactionRows) {
-			const current = reactionCountsByThreadId.get(reaction.threadId) ?? { likeCount: 0, loveCount: 0 };
-			if (reaction.reactionType === 1) {
+			const current = reactionCountsByThreadId.get(reaction.threadId) ?? { dislikeCount: 0, likeCount: 0, loveCount: 0 };
+			if (reaction.reactionType === -1) {
+				current.dislikeCount += reaction.reactionCount;
+			} else if (reaction.reactionType === 1) {
 				current.likeCount += reaction.reactionCount;
 			} else if (reaction.reactionType === 2) {
 				current.loveCount += reaction.reactionCount;
@@ -104,13 +108,14 @@ export async function loadDiscussionThreadSummariesByTargetIds(
 
 	for (const row of rows) {
 		const summaries = summariesByTargetId.get(row.targetId) ?? [];
-		const counts = reactionCountsByThreadId.get(row.id) ?? { likeCount: 0, loveCount: 0 };
+		const counts = reactionCountsByThreadId.get(row.id) ?? { dislikeCount: 0, likeCount: 0, loveCount: 0 };
 
 		summaries.push({
 			id: row.id,
 			discussTopic: row.discussTopic,
 			createdAt: row.createdAt ?? new Date(),
 			memberFirstName: createDiscussionMemberFirstName(row.memberFirstName),
+			dislikeCount: counts.dislikeCount,
 			likeCount: counts.likeCount,
 			loveCount: counts.loveCount,
 		});
@@ -192,7 +197,7 @@ export async function getDiscussionThreadDetail(
 
 	// Load reaction counts for all posts
 	const postIds = postReplyRows.map((row) => row.id);
-	const reactionCountsByPostId = new Map<number, { likeCount: number; loveCount: number; userReactionType?: number | null }>();
+	const reactionCountsByPostId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number; userReactionType?: number | null }>();
 
 	if (postIds.length > 0) {
 		// Get reaction counts
@@ -207,8 +212,10 @@ export async function getDiscussionThreadDetail(
 			.groupBy(discussLike.discussPostId, discussLike.reactionType);
 
 		for (const reaction of reactionRows) {
-			const current = reactionCountsByPostId.get(reaction.postId) ?? { likeCount: 0, loveCount: 0 };
-			if (reaction.reactionType === 1) {
+			const current = reactionCountsByPostId.get(reaction.postId) ?? { dislikeCount: 0, likeCount: 0, loveCount: 0 };
+			if (reaction.reactionType === -1) {
+				current.dislikeCount = reaction.reactionCount;
+			} else if (reaction.reactionType === 1) {
 				current.likeCount = reaction.reactionCount;
 			} else if (reaction.reactionType === 2) {
 				current.loveCount = reaction.reactionCount;
@@ -232,7 +239,7 @@ export async function getDiscussionThreadDetail(
 				);
 
 			for (const reaction of userReactionRows) {
-				const current = reactionCountsByPostId.get(reaction.postId) ?? { likeCount: 0, loveCount: 0 };
+				const current = reactionCountsByPostId.get(reaction.postId) ?? { dislikeCount: 0, likeCount: 0, loveCount: 0 };
 				current.userReactionType = reaction.reactionType;
 				reactionCountsByPostId.set(reaction.postId, current);
 			}
@@ -240,7 +247,7 @@ export async function getDiscussionThreadDetail(
 	}
 
 	const postsAndReplies: DiscussionPostReplyRecord[] = postReplyRows.map((row) => {
-		const reactionCounts = reactionCountsByPostId.get(row.id) ?? { likeCount: 0, loveCount: 0 };
+		const reactionCounts = reactionCountsByPostId.get(row.id) ?? { dislikeCount: 0, likeCount: 0, loveCount: 0 };
 		return {
 			id: row.id,
 			postReplyType: row.postReplyType,
@@ -252,6 +259,7 @@ export async function getDiscussionThreadDetail(
 			rootPostId: row.rootPostId,
 			authorMemberId: row.authorMemberId,
 			authorName: createDiscussionMemberName(row.authorFirstName, row.authorLastName),
+			dislikeCount: reactionCounts.dislikeCount,
 			likeCount: reactionCounts.likeCount,
 			loveCount: reactionCounts.loveCount,
 			userReactionType: reactionCounts.userReactionType,
@@ -567,6 +575,72 @@ export async function addInitialDiscussionPost(
 	};
 }
 
+export async function updateDiscussionEntry(
+	input: UpdateDiscussionEntryInput,
+	actor: {
+		familyId: number;
+		memberId: number;
+	}
+): Promise<UpdateDiscussionEntryReturn> {
+	const normalizedSummary = input.summary.trim();
+
+	if (!normalizedSummary) {
+		return {
+			success: false,
+			message: 'Post text is required.',
+		};
+	}
+
+	const parsedContent = parseSerializedTipTapDocument(input.contentJson);
+
+	if (!parsedContent.success) {
+		return {
+			success: false,
+			message: 'Post content must be valid TipTap JSON.',
+		};
+	}
+
+	const entryRows = await db
+		.select({
+			id: discussPostReply.id,
+			authorMemberId: discussPostReply.authorMemberId,
+			threadFamilyId: discussThread.familyId,
+		})
+		.from(discussPostReply)
+		.innerJoin(discussThread, eq(discussThread.id, discussPostReply.discussThreadId))
+		.where(eq(discussPostReply.id, input.entryId))
+		.limit(1);
+
+	const entryRow = entryRows[0];
+
+	if (!entryRow || entryRow.threadFamilyId !== actor.familyId) {
+		return {
+			success: false,
+			message: 'Post or reply not found.',
+		};
+	}
+
+	if (entryRow.authorMemberId !== actor.memberId) {
+		return {
+			success: false,
+			message: 'You can only edit your own post or reply.',
+		};
+	}
+
+	await db
+		.update(discussPostReply)
+		.set({
+			summary: normalizedSummary,
+			contentJson: input.contentJson,
+		})
+		.where(eq(discussPostReply.id, entryRow.id));
+
+	return {
+		success: true,
+		message: 'Post updated.',
+	};
+}
+
 export async function getPostReactionCounts(
 	postId: number,
 	memberId?: number
@@ -581,10 +655,13 @@ export async function getPostReactionCounts(
 		.groupBy(discussLike.reactionType);
 
 	let likeCount = 0;
+	let dislikeCount = 0;
 	let loveCount = 0;
 
 	for (const row of reactionRows) {
-		if (row.reactionType === 1) {
+		if (row.reactionType === -1) {
+			dislikeCount = row.reactionCount;
+		} else if (row.reactionType === 1) {
 			likeCount = row.reactionCount;
 		} else if (row.reactionType === 2) {
 			loveCount = row.reactionCount;
@@ -609,6 +686,7 @@ export async function getPostReactionCounts(
 	}
 
 	return {
+		dislikeCount,
 		likeCount,
 		loveCount,
 		userReactionType,
@@ -623,10 +701,10 @@ export async function toggleDiscussionReaction(
 	}
 ): Promise<ToggleDiscussionReactionReturn> {
 	// Validate reaction type
-	if (![1, 2].includes(input.reactionType)) {
+	if (![-1, 1, 2].includes(input.reactionType)) {
 		return {
 			success: false,
-			message: 'Invalid reaction type. Must be 1 (like) or 2 (love).',
+			message: 'Invalid reaction type. Must be -1 (dislike), 1 (like), or 2 (love).',
 		};
 	}
 
@@ -653,7 +731,7 @@ export async function toggleDiscussionReaction(
 	if (post.authorMemberId === actor.memberId) {
 		return {
 			success: false,
-			message: 'You cannot like or love your own post or reply.',
+			message: 'You cannot react to your own post or reply.',
 		};
 	}
 

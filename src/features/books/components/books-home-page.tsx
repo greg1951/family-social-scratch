@@ -14,6 +14,8 @@ import {
   PenSquare,
   Plus,
   Search,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -33,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import {
   createDraftFromBook,
   createEmptyDraft,
@@ -385,15 +388,15 @@ export default function BooksHomePage({
 
         <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(9,56,82,0.7)] backdrop-blur">
           <div className="border-b border-[#d9e5ea] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(243,250,252,0.86))] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 flex-1">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">Book Directory</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
                   <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
                   <FeatureFaqHelp
                     href=" /feature-faq?category=Book%20Besties"
-                    buttonClassName="border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
-                    iconClassName="text-[#1d6d8f]"
+                    buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
+                    iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
                     tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
                   />
                   <Button
@@ -430,46 +433,136 @@ export default function BooksHomePage({
                 </p>
               </div>
 
-              <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
+              { selectedBook ? (
+                <div className="w-full rounded-[1.4rem] border border-[#d9e5ea] bg-white p-4 xl:w-104">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#3d819b]">Discussion Threads</p>
+                        <FeatureFaqHelp
+                          href="/feature-faq?category=Discussion%20Groups"
+                          buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
+                          tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
+                        />
+                      </div>
+                      <p className="mt-1 text-sm text-[#51707e]">Start or review book-specific discussion threads.</p>
+                    </div>
+                    <StartDiscussionDialog
+                      targetType="book"
+                      targetId={ selectedBook.id }
+                      topicLabel={ `${ selectedBook.bookTitle } Discussion` }
+                      revalidatePaths={ ["/books"] }
+                      onSuccessRoute="/books/discussions/:threadId"
+                      disabled={ isEngaging }
+                      triggerLabel="Add Discussion"
+                      triggerClassName="rounded-full bg-[#0f5c78] px-4 text-xs font-semibold text-white hover:bg-[#0a4860]"
+                    />
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    { selectedBook.discussionThreads.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-[#c8d7df] bg-[#f8fcff] px-3 py-3 text-sm text-[#51707e]">
+                        <p>No discussion threads have been added for this book yet.</p>
+                      </div>
+                    ) : (
+                      selectedBook.discussionThreads.map((discussionThread) => (
+                        <article key={ discussionThread.id } className="rounded-2xl border border-[#d9e5ea] bg-[#fbfdff] px-4 py-4 text-sm text-[#355161] shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-base font-bold leading-snug text-[#183746]">{ discussionThread.discussTopic }</p>
+                              <p className="text-xs uppercase tracking-[0.16em] text-[#648596]">
+                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-3">
+                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  { discussionThread.dislikeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5f8] px-2 py-1 text-[0.65rem] font-semibold text-[#355161]">
+                                      <ThumbsDown className="size-3" />
+                                      { discussionThread.dislikeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.likeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f3fa] px-2 py-1 text-[0.65rem] font-semibold text-[#1d6d8f]">
+                                      <ThumbsUp className="size-3" />
+                                      { discussionThread.likeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.loveCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fde9e0] px-2 py-1 text-[0.65rem] font-semibold text-[#b45b32]">
+                                      <Heart className="size-3 fill-current" />
+                                      { discussionThread.loveCount }
+                                    </span>
+                                  ) : null }
+                                </div>
+                              ) : null }
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="shrink-0 rounded-full border-[#9dd8f0] bg-white px-4 text-xs font-semibold text-[#0f5c78] hover:bg-[#e9f5fa] hover:text-[#0f5c78]"
+                              >
+                                <Link href={ `/books/discussions/${ discussionThread.id }` }>
+                                  View
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </article>
+                      ))
+                    ) }
+                  </div>
+                </div>
+              ) : null }
+
+              {/* <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
                 { filteredBooks.length } visible book{ filteredBooks.length !== 1 ? "s" : "" }
+              </div> */}
+            </div>
+
+            <div className="mt-5">
+              <div className="min-w-0">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
+                  <Input
+                    type="search"
+                    value={ searchValue }
+                    onChange={ (event) => setSearchValue(event.target.value) }
+                    placeholder="Search by title, author, year, language, or family member"
+                    className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
+                    aria-label="Search books"
+                  />
+                </div>
+
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[#355161]">
+                  <label className="inline-flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="book-directory-mode"
+                      value="latest"
+                      checked={ directoryMode === "latest" }
+                      onChange={ () => setDirectoryMode("latest") }
+                      className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                    />
+                    <span className="font-semibold">Latest Books</span>
+                  </label>
+                  <label className="inline-flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      name="book-directory-mode"
+                      value="top-rated"
+                      checked={ directoryMode === "top-rated" }
+                      onChange={ () => setDirectoryMode("top-rated") }
+                      className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                    />
+                    <span className="font-semibold">Top Rated Books</span>
+                  </label>
+                </div>
               </div>
-            </div>
-
-            <div className="relative mt-5">
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
-              <Input
-                type="search"
-                value={ searchValue }
-                onChange={ (event) => setSearchValue(event.target.value) }
-                placeholder="Search by title, author, year, language, or family member"
-                className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
-                aria-label="Search books"
-              />
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[#355161]">
-              <label className="inline-flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="book-directory-mode"
-                  value="latest"
-                  checked={ directoryMode === "latest" }
-                  onChange={ () => setDirectoryMode("latest") }
-                  className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
-                />
-                <span className="font-semibold">Latest Books</span>
-              </label>
-              <label className="inline-flex cursor-pointer items-center gap-2">
-                <input
-                  type="radio"
-                  name="book-directory-mode"
-                  value="top-rated"
-                  checked={ directoryMode === "top-rated" }
-                  onChange={ () => setDirectoryMode("top-rated") }
-                  className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
-                />
-                <span className="font-semibold">Top Rated Books</span>
-              </label>
             </div>
           </div>
 

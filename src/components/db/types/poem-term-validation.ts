@@ -150,3 +150,33 @@ export function isTipTapDocumentEmpty(content?: JSONContent): boolean {
 
   return true;
 }
+
+export function removeUnusedLinesFromEnd(content?: JSONContent): JSONContent {
+  if (!content || content.type !== "doc" || !Array.isArray(content.content)) {
+    return content ?? createEmptyTipTapDocument();
+  }
+
+  const contentCopy = [...content.content];
+
+  // Remove empty block elements from the end
+  while (contentCopy.length > 1) {
+    const lastBlock = contentCopy[contentCopy.length - 1];
+    
+    // Check if the last block is empty
+    if (isTipTapDocumentEmpty(lastBlock)) {
+      contentCopy.pop();
+    } else {
+      break;
+    }
+  }
+
+  // Ensure at least one block remains (empty paragraph for valid TipTap document)
+  if (contentCopy.length === 0) {
+    contentCopy.push({ type: "paragraph" });
+  }
+
+  return {
+    type: "doc",
+    content: contentCopy,
+  };
+}

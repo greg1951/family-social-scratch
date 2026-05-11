@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,7 @@ type LatestMovieItem = {
   commentsCount: number;
   thumbsUp: number;
   love: number;
+  hasDiscussionThread: boolean;
   imageSrc: string | null;
   imageAlt: string;
   movieSiteUrl: string | null;
@@ -32,6 +33,7 @@ type TopRatedMovieItem = {
   thumbsUp: number;
   love: number;
   commentsCount: number;
+  hasDiscussionThread: boolean;
   imageSrc: string | null;
   imageAlt: string;
   movieSiteUrl: string | null;
@@ -154,7 +156,7 @@ export function MovieScrollStrip({
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
+      <CardContent className="px-4 py-4 sm:px-5 sm:py-4">
         <div
           className="grid max-h-800 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
         >
@@ -181,7 +183,7 @@ export function MovieScrollStrip({
                       isSelected && "bg-[#fff3e8]",
                     ) }
                   >
-                    <div className="relative aspect-16/10 overflow-hidden">
+                    <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       { item.imageSrc ? (
                         <MovieImage src={ item.imageSrc } alt={ item.imageAlt } />
                       ) : item.movieSiteUrl ? (
@@ -199,11 +201,18 @@ export function MovieScrollStrip({
                           Top rated
                         </div>
                       ) : null }
-                      { isSelected ? (
-                        <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#5c2e1a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
-                          Selected
-                        </div>
-                      ) : null }
+                      <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2">
+                        { item.hasDiscussionThread ? (
+                          <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#b8581a] shadow-sm">
+                            <MessageSquare className="size-4" aria-label="Discussion thread available" />
+                          </div>
+                        ) : null }
+                        { isSelected ? (
+                          <div className="rounded-full bg-[#5c2e1a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
+                            Selected
+                          </div>
+                        ) : null }
+                      </div>
                     </div>
 
                     <div className="space-y-3 px-4 py-4">

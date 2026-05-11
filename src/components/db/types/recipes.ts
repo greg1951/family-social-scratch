@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from './discuss-threads';
+
 export interface RecipeComment {
   id: number;
   createdAt: Date;
@@ -38,6 +40,8 @@ export interface FoodiesRecipeDetail {
   templateId: number | null;
   recipeProTips: RecipeProTip[];
   recipeComments: RecipeComment[];
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface FoodiesRecipe {
@@ -61,6 +65,8 @@ export interface FoodiesRecipe {
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<RecipeTagType, string[]>>;
   templateId: number | null;
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface RecipeTagOption {

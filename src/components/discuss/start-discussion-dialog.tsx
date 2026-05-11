@@ -237,7 +237,7 @@ export default function StartDiscussionDialog({
             <EditorContent
               id="start-discussion-content-editor"
               editor={ editor }
-              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none"
+              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_table]:w-full [&_table]:border-collapse [&_table_td]:border [&_table_td]:border-[#cfe3ec] [&_table_td]:p-2 [&_table_th]:border [&_table_th]:border-[#cfe3ec] [&_table_th]:bg-[#f0f7fa] [&_table_th]:p-2"
             />
           </div>
 

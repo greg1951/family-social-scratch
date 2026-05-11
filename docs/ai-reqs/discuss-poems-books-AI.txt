@@ -1,0 +1,22 @@
+Background
+
+- The discussion threads feature has been implemented in the TV and Movies features. 
+  - The home page for TV and Movies uses a Finder list 
+  - This allows an item to be selected in the list or in the scroll strip to render the Discussion Group section for the selected item.
+- The Poem and Book features however do not have a Finder list.
+  - A poem or book selected in the scroll strip then enables button in the directory sections to view, edit or add poems/books.
+- There are common discussion thread dialogs implemented in the "src/components/discuss" folder that are used by the TV and Movie features, and these dialogs will also be used for the Poem and Book features.
+
+Request
+
+- This request is to implement common discussion thread dialogs for the Poem and Book features.
+- The question is where to position the new Discussion Threads section?
+  - Inside the Poetry and Book directories, to the right of the Latest Poems/Books section and the Search input field.
+  - Wrap the radio buttons and the search input field in a div, aligned on the left and aligned on the right would be the Discussion Threads section.
+
+-------------------------------------
+
+- I've decided the placement of the Discussion Threads section should be at the top right side of the Poetry and Book Directory section 
+  - The current placement drastically expands the Book and Poetry directory sections, and pushes the scroll strip down the page, which is not ideal.
+  - Wrap the title and the various buttons in a div, and then align that div to the left, and then place the Discussion Threads section in a div aligned to the right.
+

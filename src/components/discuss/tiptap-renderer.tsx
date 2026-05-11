@@ -34,6 +34,11 @@ export default function TiptapRenderer({ contentJson }: { contentJson: string })
     ],
     content: parsedContent,
     immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap text-sm leading-6 text-[#214457] focus:outline-none",
+      },
+    },
   });
 
   if (!parsedContent) {
@@ -41,7 +46,7 @@ export default function TiptapRenderer({ contentJson }: { contentJson: string })
   }
 
   return (
-    <div className="prose prose-sm max-w-none">
+    <div className="max-w-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_p]:my-2 [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cfe3ec] [&_.tiptap_td]:p-2 [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cfe3ec] [&_.tiptap_th]:bg-[#f0f7fa] [&_.tiptap_th]:p-2">
       <EditorContent editor={ editor } />
     </div>
   );

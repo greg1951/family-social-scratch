@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, Utensils, X } from "lucide-react";
+import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils, X } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -34,6 +34,7 @@ import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -748,8 +749,8 @@ export function FoodiesHomePage({
                     <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
                     <FeatureFaqHelp
                       href="/feature-faq?category=Family+Foodies"
-                      buttonClassName="border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
-                      iconClassName="text-[#4f7a2a]"
+                      buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
+                      iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
                     <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View Recipe</Button>
@@ -857,23 +858,105 @@ export function FoodiesHomePage({
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)]">
-              <div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+            { selectedRecipeBasic ? (
+              <div className="w-full rounded-[1.4rem] border border-[#cfe8b2] bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
-                      Recipe Reactions
-                    </p>
-                    <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
-                      Like or love this recipe, and share your thoughts with the family.
-                    </p>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-[#647a50]">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Discussion Threads</p>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Discussion%20Groups"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#cfe8b2] bg-gradient-to-b from-[#fbfff3] to-[#f4fae7] text-[#5d7f3f] shadow-[0_8px_18px_rgba(93,127,63,0.2)] group-hover:shadow-[0_12px_26px_rgba(93,127,63,0.28)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#5d7f3f]"
+                        tooltipClassName="bg-[#2f4820] text-[#f4fae7]"
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-[#647a50]">Follow the conversation that belongs to this recipe.</p>
                   </div>
-                  {/* <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
+                  <StartDiscussionDialog
+                    targetType="recipe"
+                    targetId={ selectedRecipeBasic.id }
+                    topicLabel={ `${ selectedRecipeBasic.recipeTitle } Discussion` }
+                    revalidatePaths={ ["/foodies"] }
+                    onSuccessRoute="/foodies/discussions/:threadId"
+                    disabled={ isEngaging }
+                    triggerLabel="Add Discussion"
+                    triggerClassName="rounded-full bg-[#578c24] px-4 text-xs font-semibold text-white hover:bg-[#4a7320]"
+                  />
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  { selectedRecipeBasic.discussionThreads.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-[#cfe8b2] bg-[#fbfff3] px-3 py-3 text-sm text-[#647a50]">
+                      <p>No discussion threads have been added for this recipe yet.</p>
+                    </div>
+                  ) : (
+                    selectedRecipeBasic.discussionThreads.map((discussionThread) => (
+                      <article key={ discussionThread.id } className="rounded-2xl border border-[#cfe8b2] bg-[#fbfff7] px-4 py-4 text-sm text-[#5e7347] shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-base font-bold leading-snug text-[#2f4820]">{ discussionThread.discussTopic }</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#7a906d]">
+                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 flex-wrap items-center gap-3">
+                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                { discussionThread.dislikeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f1f4e8] px-2 py-1 text-[0.65rem] font-semibold text-[#5e7347]">
+                                    <ThumbsDown className="size-3" />
+                                    { discussionThread.dislikeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.likeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef9d9] px-2 py-1 text-[0.65rem] font-semibold text-[#578c24]">
+                                    <ThumbsUp className="size-3" />
+                                    { discussionThread.likeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.loveCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fadcc7] px-2 py-1 text-[0.65rem] font-semibold text-[#c5731f]">
+                                    <Heart className="size-3 fill-current" />
+                                    { discussionThread.loveCount }
+                                  </span>
+                                ) : null }
+                              </div>
+                            ) : null }
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#cfe8b2] bg-white px-4 text-xs font-semibold text-[#2f4820] hover:bg-[#f7fce8] hover:text-[#2f4820]"
+                            >
+                              <Link href={ `/foodies/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  ) }
+                </div>
+              </div>
+            ) : null }
+
+            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)]"><div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
+              Recipe Reactions
+            </p>
+              <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
+                Like or love this recipe, and share your thoughts with the family.
+              </p>
+            </div>
+              {/* <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
                     <MessageSquareText className="mr-2 size-3.5" />
                     { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic?.commentCount ?? 0 } comments
                   </div> */}
-                </div>
-              </div>
+            </div>
+            </div>
 
               <div className="space-y-5 px-5 py-5 sm:px-6">
                 { selectedRecipeBasic ? (

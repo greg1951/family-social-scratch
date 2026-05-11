@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from './discuss-threads';
+
 export interface Poem {
   id: number;
   poemTitle: string;
@@ -41,6 +43,8 @@ export interface PoetryHomePoem {
   analysisJson?: string;
   selectedTagIds: number[];
   poemComments: PoetryHomeComment[];
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface PoetryHomeComment {

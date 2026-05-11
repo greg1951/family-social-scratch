@@ -7,8 +7,9 @@ import {
   addInitialDiscussionPost,
   createDiscussionThreadWithInitialPost,
   toggleDiscussionReaction,
+  updateDiscussionEntry,
 } from '@/components/db/sql/queries-discuss-threads';
-import { AddDiscussionReplyInput, AddInitialPostInput, CreateDiscussionThreadInput, ToggleDiscussionReactionInput } from '@/components/db/types/discuss-threads';
+import { AddDiscussionReplyInput, AddInitialPostInput, CreateDiscussionThreadInput, ToggleDiscussionReactionInput, UpdateDiscussionEntryInput } from '@/components/db/types/discuss-threads';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
 function revalidatePaths(paths?: string[]) {
@@ -106,6 +107,30 @@ export async function toggleDiscussionReactionAction(
   }
 
   const result = await toggleDiscussionReaction(input, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePaths(input.revalidatePaths);
+  }
+
+  return result;
+}
+
+export async function updateDiscussionEntryAction(
+  input: UpdateDiscussionEntryInput & { revalidatePaths?: string[] }
+) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to edit posts.',
+    };
+  }
+
+  const result = await updateDiscussionEntry(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

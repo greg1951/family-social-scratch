@@ -182,7 +182,7 @@ export function TvScrollStrip({
                       isSelected && "bg-[#eaf7ff]",
                     ) }
                   >
-                    <div className="relative aspect-16/10 overflow-hidden">
+                    <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       { item.imageSrc ? (
                         <ShowImage src={ item.imageSrc } alt={ item.imageAlt } />
                       ) : item.showSiteUrl ? (

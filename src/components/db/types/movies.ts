@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from './discuss-threads';
+
 export type MovieTagType = "genre" | "adjective" | "channel";
 
 export interface MovieComment {
@@ -30,10 +32,13 @@ export interface MovieRecord {
   likenessDegree: number | null;
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<MovieTagType, string[]>>;
+  hasDiscussionThread: boolean;
 }
 
 export interface MovieDetail extends MovieRecord {
   movieComments: MovieComment[];
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface MovieTagOption {

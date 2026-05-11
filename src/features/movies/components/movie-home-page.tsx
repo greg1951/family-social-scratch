@@ -17,6 +17,7 @@ import {
   getMovieDetailAction,
   toggleMovieLikeAction,
 } from "@/app/(features)/(movies)/movies/actions";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { MovieDetail, MovieRecord } from "@/components/db/types/movies";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
+      hasDiscussionThread: movie.hasDiscussionThread,
       imageSrc: movie.movieImageUrl ?? null,
       imageAlt: `${ movie.movieTitle } movie image`,
       movieSiteUrl: movie.movieSiteUrl ?? null,
@@ -146,6 +148,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
       commentsCount: movie.commentCount,
+      hasDiscussionThread: movie.hasDiscussionThread,
       imageSrc: movie.movieImageUrl ?? null,
       imageAlt: `${ movie.movieTitle } movie image`,
       movieSiteUrl: movie.movieSiteUrl ?? null,
@@ -323,8 +326,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">Movie Finder</h2>
                       <FeatureFaqHelp
                         href="/feature-faq?category=TV%20and%20Movie%20Reviews"
-                        buttonClassName="border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
-                        iconClassName="text-[#b8581a]"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
                         tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
                       />
                       <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Movie</Button>
@@ -345,7 +348,89 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)]"><div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.86))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#8b5a3c]">React to this movie and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMovieBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMovieDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMovie ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own movie. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#6d5c52]"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic?.loveCount ?? 0).toLocaleString() }</span></div></div><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p><p className="text-xs text-[#8b5a3c]">Share your thoughts about this movie with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-comment-input">Add Comment</label><textarea id="movie-comment-input" value={ commentText } onChange={ (event) => setCommentText(event.target.value) } placeholder="What did you think about this movie?" disabled={ !selectedMovieBasic || isEngaging } className="min-h-24 w-full rounded-xl border border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#5c2e1a] outline-none transition focus-visible:ring-2 focus-visible:ring-[#d4a574]" /><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMovieBasic || isEngaging || commentText.trim().length < 2 } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMovieDetail?.id === selectedMovie && selectedMovieDetail.movieComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p> : selectedMovieDetail?.id !== selectedMovie ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p> : (selectedMovieDetail?.movieComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]"><p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-6 py-10 text-center text-[#8b5a3c]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#d4a574]" /><p className="text-lg font-semibold text-[#5c2e1a]">Select a movie to view comments.</p><p className="mt-2 text-sm">Choose a movie from the finder list to see and post family comments.</p></div> }</div></div>
+            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)]"><div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.86))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#8b5a3c]">React to this movie and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMovieBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMovieDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMovie ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own movie. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#6d5c52]"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic?.loveCount ?? 0).toLocaleString() }</span></div></div>
+
+              { selectedMovieDetail?.id === selectedMovie && (
+                <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Discussion%20Groups"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
+                        tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
+                      />
+                    </div>
+                    <div>
+                      {/* <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p> */ }
+                      <p className="text-sm text-[#8b5a3c]">Follow the conversation about this movie with your family.</p>
+                    </div>
+                    <StartDiscussionDialog
+                      targetType="movie"
+                      targetId={ selectedMovieBasic.id }
+                      topicLabel={ `${ selectedMovieBasic.movieTitle } Discussion` }
+                      revalidatePaths={ ["/movies"] }
+                      onSuccessRoute="/movies/discussions/:threadId"
+                      disabled={ isEngaging }
+                      triggerLabel="Add Discussion"
+                      triggerClassName="rounded-full bg-[#b8581a] px-4 text-xs font-semibold text-white hover:bg-[#964815]"
+                    />
+                  </div>
+                  { selectedMovieDetail.discussionThreads && selectedMovieDetail.discussionThreads.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#8b5a3c]">
+                      <p>No discussion threads yet. Be the first to start one!</p>
+                    </div>
+                  ) : selectedMovieDetail.discussionThreads && selectedMovieDetail.discussionThreads.length > 0 ? (
+                    <div className="space-y-2">
+                      { selectedMovieDetail.discussionThreads.map((discussionThread) => (
+                        <article key={ discussionThread.id } className="rounded-xl border border-[#f0d9c4] bg-white px-3 py-2.5 text-sm text-[#734f3a] shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div className="min-w-0 space-y-0.5">
+                              <p className="font-bold leading-snug text-[#5c2e1a]">{ discussionThread.discussTopic }</p>
+                              <p className="text-sm text-[#8b5a3c]">{ discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }</p>
+                              { (discussionThread.dislikeCount ?? 0) > 0 || (discussionThread.likeCount ?? 0) > 0 || (discussionThread.loveCount ?? 0) > 0 ? (
+                                <div className="flex flex-wrap items-center gap-2 pt-1">
+                                  { (discussionThread.dislikeCount ?? 0) > 0 ? (
+                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#6d5c52]">
+                                      <ThumbsDown className="size-3 text-[#6d5c52]" />
+                                      { discussionThread.dislikeCount }
+                                    </span>
+                                  ) : null }
+                                  { (discussionThread.likeCount ?? 0) > 0 ? (
+                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#8a5a22]">
+                                      <ThumbsUp className="size-3 text-[#b8581a]" />
+                                      { discussionThread.likeCount }
+                                    </span>
+                                  ) : null }
+                                  { (discussionThread.loveCount ?? 0) > 0 ? (
+                                    <span className="inline-flex items-center gap-1 text-sm font-semibold text-[#8f2f58]">
+                                      <Heart className="size-3 fill-[#cf3f7f] text-[#cf3f7f]" />
+                                      { discussionThread.loveCount }
+                                    </span>
+                                  ) : null }
+                                </div>
+                              ) : null }
+                            </div>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#e8c4a0] bg-white px-2 py-1 text-sm font-semibold text-[#7b3306] hover:bg-[#fffbf7] hover:text-[#7b3306]"
+                            >
+                              <Link href={ `/movies/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </article>
+                      )) }
+                    </div>
+                  ) : null }
+                </div>
+              ) }
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p><p className="text-xs text-[#8b5a3c]">Share your thoughts about this movie with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-comment-input">Add Comment</label><textarea id="movie-comment-input" value={ commentText } onChange={ (event) => setCommentText(event.target.value) } placeholder="What did you think about this movie?" disabled={ !selectedMovieBasic || isEngaging } className="min-h-24 w-full rounded-xl border border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#5c2e1a] outline-none transition focus-visible:ring-2 focus-visible:ring-[#d4a574]" /><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMovieBasic || isEngaging || commentText.trim().length < 2 } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMovieDetail?.id === selectedMovie && selectedMovieDetail.movieComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p> : selectedMovieDetail?.id !== selectedMovie ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p> : (selectedMovieDetail?.movieComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]"><p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-6 py-10 text-center text-[#8b5a3c]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#d4a574]" /><p className="text-lg font-semibold text-[#5c2e1a]">Select a movie to view comments.</p><p className="mt-2 text-sm">Choose a movie from the finder list to see and post family comments.</p></div> }</div></div>
           </div>
         </div>
       </div>

@@ -46,6 +46,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
+import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "cuisine",
@@ -359,7 +360,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
 
   const recipeIds = recipeRows.map((row) => row.id);
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreadsByRecipeId] = await Promise.all([
     db
       .select({
         id: recipeComment.id,
@@ -386,6 +387,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
       .from(recipeTag)
       .innerJoin(recipeTagReference, eq(recipeTagReference.id, recipeTag.tagId))
       .where(inArray(recipeTag.recipeId, recipeIds)),
+    loadDiscussionThreadSummariesByTargetIds(familyId, 'recipe', recipeIds),
   ]);
 
   const memberIds = [...new Set(recipeRows.map((row) => row.memberId))];
@@ -476,6 +478,8 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     selectedTagIds: tagIdsByRecipeId.get(row.id) ?? [],
     tagNamesByType: tagNamesByTypeByRecipeId.get(row.id) ?? {},
     templateId: row.templateId ?? null,
+    discussionThreads: discussionThreadsByRecipeId.get(row.id) ?? [],
+    hasDiscussionThread: (discussionThreadsByRecipeId.get(row.id) ?? []).length > 0,
   }));
 }
 
@@ -1005,7 +1009,7 @@ async function loadFoodiesRecipeDetail(
   }
 
   const recipeRow = recipeRows[0];
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreadsByRecipeId] = await Promise.all([
     db
       .select()
       .from(recipeComment)
@@ -1027,6 +1031,7 @@ async function loadFoodiesRecipeDetail(
       .from(recipeTag)
       .innerJoin(recipeTagReference, eq(recipeTagReference.id, recipeTag.tagId))
       .where(eq(recipeTag.recipeId, recipeId)),
+    loadDiscussionThreadSummariesByTargetIds(familyId, 'recipe', [recipeId]),
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
@@ -1107,6 +1112,8 @@ async function loadFoodiesRecipeDetail(
     selectedTagIds: tagIdsByRecipeId.get(recipeId) ?? [],
     tagNamesByType: tagNamesByTypeByRecipeId.get(recipeId) ?? {},
     templateId: recipeRow.templateId ?? null,
+    discussionThreads: discussionThreadsByRecipeId.get(recipeId) ?? [],
+    hasDiscussionThread: (discussionThreadsByRecipeId.get(recipeId) ?? []).length > 0,
     recipeProTips: recipeProTipRows.map((row) => ({
       id: row.id,
       createdAt: row.createdAt ?? new Date(),

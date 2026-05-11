@@ -8,10 +8,10 @@ import { useMemo, useState, useTransition } from "react";
 import type { DiscussionPostReplyRecord } from "@/components/db/types/discuss-threads";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { Bold, Italic, Link2, Underline as UnderlineIcon, Heart, ThumbsUp } from "lucide-react";
+import { Bold, Italic, Link2, Underline as UnderlineIcon, Heart, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
-import { addDiscussionReplyAction, toggleDiscussionReactionAction } from "@/components/discuss/discussion-actions";
-import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
+import { addDiscussionReplyAction, toggleDiscussionReactionAction, updateDiscussionEntryAction } from "@/components/discuss/discussion-actions";
+import { createEmptyTipTapDocument, parseSerializedTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
 
 const TiptapRenderer = dynamic(() => import("./tiptap-renderer"), { ssr: false });
 
@@ -64,11 +64,33 @@ export default function DiscussionPostsReplies({
   const router = useRouter();
   const [isSubmittingReply, startSubmitReplyTransition] = useTransition();
   const [isTogglingReaction, startToggleReactionTransition] = useTransition();
+  const [isSavingEdit, startSaveEditTransition] = useTransition();
   const [expandedEntryIds, setExpandedEntryIds] = useState<Set<number>>(new Set());
   const [replyTargetId, setReplyTargetId] = useState<number | null>(null);
   const [replyCaption, setReplyCaption] = useState("");
+  const [editingEntryId, setEditingEntryId] = useState<number | null>(null);
+  const [editCaption, setEditCaption] = useState("");
 
   const replyEditor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+    ],
+    content: createEmptyTipTapDocument() as JSONContent,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-[8rem] text-sm leading-6 text-[#15384a] focus:outline-none",
+      },
+    },
+  });
+
+  const editEditor = useEditor({
     extensions: [
       StarterKit,
       Underline,
@@ -173,6 +195,7 @@ export default function DiscussionPostsReplies({
     }
 
     setReplyTargetId(entryId);
+    setEditingEntryId(null);
     setReplyCaption("");
     if (replyEditor) {
       replyEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
@@ -186,6 +209,69 @@ export default function DiscussionPostsReplies({
     if (replyEditor) {
       replyEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
     }
+  }
+
+  function handleEditClick(entryId: number) {
+    const selectedEntry = entries.find((entry) => entry.id === entryId);
+
+    if (!selectedEntry || selectedEntry.authorMemberId !== currentMemberId) {
+      return;
+    }
+
+    setReplyTargetId(null);
+    setEditingEntryId(entryId);
+    setEditCaption(selectedEntry.summary);
+
+    const parsed = parseSerializedTipTapDocument(selectedEntry.contentJson);
+    if (editEditor) {
+      editEditor.commands.setContent(
+        parsed.success ? parsed.content : (createEmptyTipTapDocument() as JSONContent)
+      );
+      editEditor.commands.focus("end");
+    }
+  }
+
+  function handleCancelEdit() {
+    setEditingEntryId(null);
+    setEditCaption("");
+    if (editEditor) {
+      editEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
+    }
+  }
+
+  function handleSubmitEdit(entryId: number) {
+    if (!editEditor) {
+      toast.error("Edit editor is still loading.");
+      return;
+    }
+
+    const summary = editCaption.trim();
+    if (!summary) {
+      toast.error("Post Caption is required.");
+      return;
+    }
+
+    const contentJson = serializeTipTapDocument(editEditor.getJSON() as JSONContent);
+
+    startSaveEditTransition(async () => {
+      const result = await updateDiscussionEntryAction({
+        entryId,
+        summary,
+        contentJson,
+        revalidatePaths,
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setEditingEntryId(null);
+      setEditCaption("");
+      editEditor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
+      router.refresh();
+    });
   }
 
   function handleSubmitReply(replyToEntryId: number) {
@@ -261,6 +347,28 @@ export default function DiscussionPostsReplies({
     }
 
     replyEditor.chain().focus().extendMarkRange("link").setLink({ href: normalizedUrl }).run();
+  }
+
+  function handleSetEditLink() {
+    if (!editEditor) {
+      return;
+    }
+
+    const currentUrl = editEditor.getAttributes("link").href as string | undefined;
+    const nextUrl = window.prompt("Enter URL", currentUrl ?? "https://");
+
+    if (nextUrl === null) {
+      return;
+    }
+
+    const normalizedUrl = nextUrl.trim();
+
+    if (!normalizedUrl) {
+      editEditor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editEditor.chain().focus().extendMarkRange("link").setLink({ href: normalizedUrl }).run();
   }
 
   function renderReplyComposer(replyToEntryId: number, panelClassName: string) {
@@ -368,6 +476,111 @@ export default function DiscussionPostsReplies({
     );
   }
 
+  function renderEditComposer(entryId: number, panelClassName: string) {
+    if (editingEntryId !== entryId) {
+      return null;
+    }
+
+    return (
+      <div className={ panelClassName }>
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#4f7384]">
+          Edit Post or Reply
+        </p>
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="edit-caption-input">
+          Caption
+        </label>
+        <input
+          id="edit-caption-input"
+          type="text"
+          value={ editCaption }
+          onChange={ (e) => setEditCaption(e.target.value) }
+          placeholder="Update your caption"
+          className="mb-4 w-full rounded border border-[#cfe3ec] bg-white px-3 py-2 text-sm text-[#15384a] focus:outline-none focus:ring-2 focus:ring-[#59cdf7]"
+          maxLength={ 120 }
+          disabled={ isSavingEdit }
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-xl border border-[#cfe3ec] bg-white px-2 py-2">
+          <button
+            type="button"
+            onClick={ () => editEditor?.chain().focus().toggleBold().run() }
+            className={ [
+              "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition",
+              editEditor?.isActive("bold")
+                ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+            ].join(" ") }
+            aria-label="Bold"
+          >
+            <Bold className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={ () => editEditor?.chain().focus().toggleItalic().run() }
+            className={ [
+              "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition",
+              editEditor?.isActive("italic")
+                ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+            ].join(" ") }
+            aria-label="Italic"
+          >
+            <Italic className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={ () => editEditor?.chain().focus().toggleUnderline().run() }
+            className={ [
+              "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition",
+              editEditor?.isActive("underline")
+                ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+            ].join(" ") }
+            aria-label="Underline"
+          >
+            <UnderlineIcon className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={ handleSetEditLink }
+            className={ [
+              "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold transition",
+              editEditor?.isActive("link")
+                ? "border-[#2d87a8] bg-[#e4f4fb] text-[#1f5a70]"
+                : "border-[#c9e2ec] bg-white text-[#2c5f75] hover:bg-[#eef8fc]",
+            ].join(" ") }
+            aria-label="Link"
+          >
+            <Link2 className="size-3.5" />
+          </button>
+        </div>
+        <label className="block mb-2 text-xs font-semibold text-[#4f7384]" htmlFor="edit-content-editor">
+          Content
+        </label>
+        <div className="mt-2 rounded-xl border border-[#cfe3ec] bg-white p-3 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
+          <EditorContent id="edit-content-editor" editor={ editEditor } />
+        </div>
+        <div className="mt-3 flex flex-wrap justify-end gap-2">
+          <button
+            type="button"
+            onClick={ handleCancelEdit }
+            disabled={ isSavingEdit }
+            className="rounded-full border border-[#c9e2ec] bg-white px-4 py-1.5 text-xs font-semibold text-[#2c5f75] transition hover:bg-[#eef8fc]"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={ () => handleSubmitEdit(entryId) }
+            disabled={ isSavingEdit }
+            className="rounded-full bg-[#2d87a8] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#256e89] disabled:opacity-60"
+          >
+            { isSavingEdit ? "Saving..." : "Save" }
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   function renderReplyNode(reply: ThreadEntry, depth: number) {
     const replyExpanded = expandedEntryIds.has(reply.id);
     const childReplies = childRepliesByParentId.get(reply.id) ?? [];
@@ -398,7 +611,15 @@ export default function DiscussionPostsReplies({
               >
                 Reply
               </button>
-            ) : null }
+            ) : (
+              <button
+                type="button"
+                onClick={ () => handleEditClick(reply.id) }
+                className="rounded-full border border-[#9dc2d1] bg-white px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[#215066] transition hover:bg-[#e5f4fa]"
+              >
+                Edit
+              </button>
+            ) }
             <button
               type="button"
               onClick={ () => toggleExpanded(reply.id) }
@@ -419,6 +640,20 @@ export default function DiscussionPostsReplies({
 
         { reply.authorMemberId !== currentMemberId ? (
           <div className="mt-2 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={ () => handleToggleReaction(reply.id, -1) }
+              disabled={ isTogglingReaction }
+              className={ [
+                "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                reply.userReactionType === -1
+                  ? "border-[#6d5c52] bg-[#efebe8] text-[#4f433d]"
+                  : "border-[#d8d0cb] bg-white text-[#6d5c52] hover:bg-[#f6f2ef]",
+              ].join(" ") }
+            >
+              <ThumbsDown className={ `size-3 ${ reply.userReactionType === -1 ? "fill-current" : "" }` } />
+              { (reply.dislikeCount ?? 0).toString().length > 1 ? reply.dislikeCount : "" }
+            </button>
             <button
               type="button"
               onClick={ () => handleToggleReaction(reply.id, 1) }
@@ -451,6 +686,7 @@ export default function DiscussionPostsReplies({
         ) : null }
 
         { renderReplyComposer(reply.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
+        { renderEditComposer(reply.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
 
         { childReplies.length > 0 ? (
           <div className="mt-3 space-y-3">
@@ -508,7 +744,15 @@ export default function DiscussionPostsReplies({
                       >
                         Reply
                       </button>
-                    ) : null }
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={ () => handleEditClick(post.id) }
+                        className="rounded-full border border-[#9dc2d1] bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#215066] transition hover:bg-[#e5f4fa]"
+                      >
+                        Edit
+                      </button>
+                    ) }
                     <button
                       type="button"
                       onClick={ () => toggleExpanded(post.id) }
@@ -529,6 +773,20 @@ export default function DiscussionPostsReplies({
 
                 { post.authorMemberId !== currentMemberId ? (
                   <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={ () => handleToggleReaction(post.id, -1) }
+                      disabled={ isTogglingReaction }
+                      className={ [
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition",
+                        post.userReactionType === -1
+                          ? "border-[#6d5c52] bg-[#efebe8] text-[#4f433d]"
+                          : "border-[#d8d0cb] bg-white text-[#6d5c52] hover:bg-[#f6f2ef]",
+                      ].join(" ") }
+                    >
+                      <ThumbsDown className={ `size-3.5 ${ post.userReactionType === -1 ? "fill-current" : "" }` } />
+                      { post.dislikeCount ?? 0 }
+                    </button>
                     <button
                       type="button"
                       onClick={ () => handleToggleReaction(post.id, 1) }
@@ -561,6 +819,7 @@ export default function DiscussionPostsReplies({
                 ) : null }
 
                 { renderReplyComposer(post.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
+                { renderEditComposer(post.id, "mt-3 rounded-xl border border-[#cfe3ec] bg-[#f2fbff] p-3") }
 
                 { postReplies.length > 0 ? (
                   <div className="mt-4 space-y-3 border-l-2 border-[#c7e6f1] pl-4">
@@ -595,7 +854,15 @@ export default function DiscussionPostsReplies({
                           >
                             Reply
                           </button>
-                        ) : null }
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={ () => handleEditClick(reply.id) }
+                            className="rounded-full border border-[#e7b8a8] bg-white px-3 py-1 text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[#9a5b44] transition hover:bg-[#fff0ea]"
+                          >
+                            Edit
+                          </button>
+                        ) }
                         <button
                           type="button"
                           onClick={ () => toggleExpanded(reply.id) }
@@ -616,6 +883,20 @@ export default function DiscussionPostsReplies({
 
                     { reply.authorMemberId !== currentMemberId ? (
                       <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={ () => handleToggleReaction(reply.id, -1) }
+                          disabled={ isTogglingReaction }
+                          className={ [
+                            "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[0.6rem] font-semibold transition",
+                            reply.userReactionType === -1
+                              ? "border-[#b88060] bg-[#fff3ed] text-[#9a5b44]"
+                              : "border-[#e7b8a8] bg-white text-[#9a5b44] hover:bg-[#fff0ea]",
+                          ].join(" ") }
+                        >
+                          <ThumbsDown className={ `size-3 ${ reply.userReactionType === -1 ? "fill-current" : "" }` } />
+                          { (reply.dislikeCount ?? 0).toString().length > 1 ? reply.dislikeCount : "" }
+                        </button>
                         <button
                           type="button"
                           onClick={ () => handleToggleReaction(reply.id, 1) }
@@ -648,6 +929,7 @@ export default function DiscussionPostsReplies({
                     ) : null }
 
                     { renderReplyComposer(reply.id, "mt-3 rounded-xl border border-[#eec8bc] bg-[#fff2ec] p-3") }
+                    { renderEditComposer(reply.id, "mt-3 rounded-xl border border-[#eec8bc] bg-[#fff2ec] p-3") }
                   </article>
                 );
               }) }

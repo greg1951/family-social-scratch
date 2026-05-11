@@ -15,6 +15,8 @@ import {
   Plus,
   Search,
   Tags,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -26,6 +28,7 @@ import {
   togglePoemLikeAction,
 } from "@/app/(features)/(poetry)/poetry/actions";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import {
   createEmptyTipTapDocument,
   parseSerializedTipTapDocument,
@@ -58,6 +61,8 @@ type PoemDraft = {
   verseJson: string;
   analysisJson: string;
   selectedTagIds: number[];
+  discussionThreads: PoetryHomePoem["discussionThreads"];
+  hasDiscussionThread: boolean;
   poemComments: Array<{
     id: number;
     createdAt: Date;
@@ -115,6 +120,8 @@ function createDraftFromPoem(poemRecord: PoetryHomePoem, member: MemberKeyDetail
     verseJson: poemRecord.verseJson ?? JSON.stringify(createEmptyTipTapDocument()),
     analysisJson: poemRecord.analysisJson ?? JSON.stringify(createEmptyTipTapDocument()),
     selectedTagIds: poemRecord.selectedTagIds ?? [],
+    discussionThreads: poemRecord.discussionThreads ?? [],
+    hasDiscussionThread: poemRecord.hasDiscussionThread ?? false,
     poemComments: poemRecord.poemComments ?? [],
   };
 }
@@ -405,15 +412,15 @@ export default function PoetryHomePage({
 
         <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)] backdrop-blur">
           <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 flex-1">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Poetry Directory</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
                   <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Select a Poem Submission</h2>
                   <FeatureFaqHelp
                     href=" /feature-faq?category=Poetry%20Cafe"
-                    buttonClassName="border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
-                    iconClassName="text-[#6e3f98]"
+                    buttonClassName="h-4 w-4 md:h-7 md:w-7border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
+                    iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
                     tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
                   />
                   <Button
@@ -450,47 +457,137 @@ export default function PoetryHomePage({
                 </p>
               </div>
 
+              { selectedPoem ? (
+                <div className="w-full rounded-[1.4rem] border border-[#e4d9ee] bg-white p-4 xl:w-104">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Discussion Threads</p>
+                        <FeatureFaqHelp
+                          href="/feature-faq?category=Discussion%20Groups"
+                          buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#e4d9ee] bg-gradient-to-b from-[#fcf7ff] to-[#f0e3ff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
+                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
+                          tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
+                        />
+                      </div>
+                      <p className="mt-1 text-sm text-[#77578f]">Follow the conversation that belongs to this poem.</p>
+                    </div>
+                    <StartDiscussionDialog
+                      targetType="poem"
+                      targetId={ selectedPoem.id }
+                      topicLabel={ `${ selectedPoem.poemTitle } Discussion` }
+                      revalidatePaths={ ["/poetry"] }
+                      onSuccessRoute="/poetry/discussions/:threadId"
+                      disabled={ isEngaging }
+                      triggerLabel="Add Discussion"
+                      triggerClassName="rounded-full bg-[#5a2f85] px-4 text-xs font-semibold text-white hover:bg-[#47216b]"
+                    />
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    { selectedPoem.discussionThreads.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-3 py-3 text-sm text-[#77578f]">
+                        <p>No discussion threads have been added for this poem yet.</p>
+                      </div>
+                    ) : (
+                      selectedPoem.discussionThreads.map((discussionThread) => (
+                        <article key={ discussionThread.id } className="rounded-2xl border border-[#e5daf0] bg-[#fcfaff] px-4 py-4 text-sm text-[#5f466f] shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-base font-bold leading-snug text-[#43245d]">{ discussionThread.discussTopic }</p>
+                              <p className="text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
+                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-3">
+                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  { discussionThread.dislikeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3edf8] px-2 py-1 text-[0.65rem] font-semibold text-[#5f466f]">
+                                      <ThumbsDown className="size-3" />
+                                      { discussionThread.dislikeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.likeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#efe6fb] px-2 py-1 text-[0.65rem] font-semibold text-[#6e3f98]">
+                                      <ThumbsUp className="size-3" />
+                                      { discussionThread.likeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.loveCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fbe7f2] px-2 py-1 text-[0.65rem] font-semibold text-[#a14f7a]">
+                                      <Heart className="size-3 fill-current" />
+                                      { discussionThread.loveCount }
+                                    </span>
+                                  ) : null }
+                                </div>
+                              ) : null }
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="shrink-0 rounded-full border-[#d8b5ff] bg-white px-4 text-xs font-semibold text-[#43245d] hover:bg-[#f5e9ff] hover:text-[#43245d]"
+                              >
+                                <Link href={ `/poetry/discussions/${ discussionThread.id }` }>
+                                  View
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </article>
+                      ))
+                    ) }
+                  </div>
+                </div>
+              ) : null }
+
               {/* <div className="rounded-full border border-[#e4d9ee] bg-[#faf6ff] px-4 py-2 text-sm font-semibold text-[#77578f]">
                 { poemItems.length } poem{ poemItems.length !== 1 ? "s" : "" }
               </div> */}
             </div>
 
-            <div className="relative mt-5">
-              <div className="mb-3 flex flex-wrap gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
-                  <input
-                    type="radio"
-                    name="poetry-directory-mode"
-                    value="latest"
-                    checked={ directoryMode === "latest" }
-                    onChange={ () => setDirectoryMode("latest") }
-                    className="size-4 border-[#b79ad1] text-[#6e3f98]"
-                  />
-                  Latest Poems
-                </label>
+            <div className="mt-5">
+              <div className="min-w-0">
+                <div className="mb-3 flex flex-wrap gap-3">
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                    <input
+                      type="radio"
+                      name="poetry-directory-mode"
+                      value="latest"
+                      checked={ directoryMode === "latest" }
+                      onChange={ () => setDirectoryMode("latest") }
+                      className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                    />
+                    Latest Poems
+                  </label>
 
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
-                  <input
-                    type="radio"
-                    name="poetry-directory-mode"
-                    value="top-rated"
-                    checked={ directoryMode === "top-rated" }
-                    onChange={ () => setDirectoryMode("top-rated") }
-                    className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                    <input
+                      type="radio"
+                      name="poetry-directory-mode"
+                      value="top-rated"
+                      checked={ directoryMode === "top-rated" }
+                      onChange={ () => setDirectoryMode("top-rated") }
+                      className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                    />
+                    Top Rated Poems
+                  </label>
+                </div>
+
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
+                  <Input
+                    type="search"
+                    value={ searchValue }
+                    onChange={ (event) => setSearchValue(event.target.value) }
+                    placeholder="Search by poem, poet, year, or family member"
+                    className="h-12 rounded-full border-[#d7d0ea] bg-white pl-11 pr-4 text-sm text-[#43245d] shadow-sm"
+                    aria-label="Search poems"
                   />
-                  Top Rated Poems
-                </label>
+                </div>
               </div>
-
-              <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
-              <Input
-                type="search"
-                value={ searchValue }
-                onChange={ (event) => setSearchValue(event.target.value) }
-                placeholder="Search by poem, poet, year, or family member"
-                className="h-12 rounded-full border-[#d7d0ea] bg-white pl-11 pr-4 text-sm text-[#43245d] shadow-sm"
-                aria-label="Search poems"
-              />
             </div>
           </div>
 

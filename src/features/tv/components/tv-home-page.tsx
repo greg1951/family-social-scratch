@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquareText, Plus, Search, ThumbsUp, Tv } from "lucide-react";
+import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
@@ -452,8 +452,8 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       <h2 className="text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
                       <FeatureFaqHelp
                         href="/feature-faq?category=TV%20and%20Movie%20Reviews"
-                        buttonClassName="border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
-                        iconClassName="text-[#2a819d]"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
                       <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View Show</Button>
@@ -629,7 +629,15 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       <div className="space-y-3 rounded-4xl border border-[#d7ebf3] bg-white p-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
+                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
+                              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
+                              <FeatureFaqHelp
+                                href="/feature-faq?category=Discussion%20Groups"
+                                buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                                iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
+                                tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
+                              />
+                            </div>
                             <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
                           </div>
                           <StartDiscussionDialog
@@ -667,8 +675,14 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                                   </div>
 
                                   <div className="flex flex-wrap items-center gap-3 shrink-0">
-                                    { discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                    { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
                                       <div className="flex flex-wrap items-center gap-2">
+                                        { discussionThread.dislikeCount > 0 && (
+                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#efebe8] px-2 py-1 text-[0.65rem] font-semibold text-[#4f433d]">
+                                            <ThumbsDown className="size-3" />
+                                            { discussionThread.dislikeCount }
+                                          </span>
+                                        ) }
                                         { discussionThread.likeCount > 0 && (
                                           <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f4fb] px-2 py-1 text-[0.65rem] font-semibold text-[#1f5a70]">
                                             <ThumbsUp className="size-3" />
@@ -691,7 +705,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                                       className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
                                     >
                                       <Link href={ `/tv/discussions/${ discussionThread.id }` }>
-                                        View Discussion
+                                        View
                                       </Link>
                                     </Button>
                                   </div>

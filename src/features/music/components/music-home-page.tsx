@@ -32,6 +32,7 @@ import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -323,7 +324,12 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
                       <h2 className="text-2xl font-black tracking-tight text-[#5c2e1a]">
                         Music Finder</h2>
-                      <FeatureFaqHelp href="/feature-faq?category=Music%20Lovers" buttonClassName="border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]" iconClassName="text-[#b8581a]" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]" /><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Music</Button>{ canViewLyricsSelectedMusic ? <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link></Button> : null }<Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/music/add-music"><Plus className="size-3.5" />Add Music</Link></Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Music</Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Lyrics</Button>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Music%20Lovers"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]" iconClassName="text-[#b8581a]" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]" />
+                      <Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Music</Button>{ canViewLyricsSelectedMusic ? <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link></Button> : null }<Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/music/add-music"><Plus className="size-3.5" />Add Music</Link></Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Music</Button><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50">
+                        <Edit3 className="size-3.5" />Edit Lyrics
+                      </Button>
                     </div>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">
                       Search by title, genre, song or album, and family member.</p></div>
@@ -338,6 +344,92 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                 <div className="min-w-0 overflow-hidden rounded-[1.4rem] border border-[#f0d9c4]"><div className="max-h-232 overflow-auto"><table className="min-w-248 border-collapse text-left"><thead className="sticky top-0 z-10 bg-[#fff6ef] text-xs uppercase tracking-[0.18em] text-[#a85a3a]"><tr><th className="px-4 py-3 font-bold">Music Name</th><th className="px-4 py-3 font-bold">Thumbs Down</th><th className="px-4 py-3 font-bold">Thumbs Up</th><th className="px-4 py-3 font-bold">Love</th><th className="px-4 py-3 font-bold">Year</th><th className="px-4 py-3 font-bold">Genre</th><th className="px-4 py-3 font-bold">Sub Genre</th><th className="px-4 py-3 font-bold">Song/Album</th><th className="px-4 py-3 font-bold">Added By</th><th className="px-4 py-3 font-bold">Comments</th></tr></thead><tbody>{ filteredMusics.map((music) => { const isSelected = selectedMusic === music.id; return <tr key={ music.id } className="border-t border-[#f5e8e0] bg-white transition hover:bg-[#fffaf5]"><td className="px-2 py-2 sm:px-3"><button type="button" onClick={ () => setSelectedMusic(music.id) } className={ ["flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a574]", isSelected ? "bg-[#fdf6ef] shadow-sm" : "hover:bg-[#fffbf7]"].join(" ") }><span className="font-semibold text-[#5c2e1a]">{ music.name }</span>{ isSelected ? <span className="rounded-full bg-[#b8581a] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">Selected</span> : null }</button></td><td className="px-4 py-3 text-sm font-semibold text-[#6d5c52]"><span className="inline-flex items-center gap-2"><ThumbsDown className="size-4 text-[#6d5c52]" />{ music.thumbsDown }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8a5a22]"><span className="inline-flex items-center gap-2"><ThumbsUp className="size-4 text-[#b8581a]" />{ music.thumbsUp }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8f2f58]"><span className="inline-flex items-center gap-2"><Heart className="size-4 text-[#cf3f7f]" />{ music.love }</span></td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.year }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.genre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.subGenre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.reviewType }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ music.addedBy }</td><td className="px-4 py-3 text-sm font-semibold text-[#8b5a3c]"><span className="inline-flex items-center gap-2"><MessageSquareText className="size-4 text-[#a85a3a]" />{ music.comments }</span></td></tr>; }) }</tbody></table></div>{ filteredMusics.length === 0 ? <div className="border-t border-[#f5e8e0] px-4 py-8 text-center text-sm text-[#8b5a3c]">No music posts match that search yet.</div> : null }</div>
               </div>
             </div>
+
+            { selectedMusicBasic ? (
+              <div className="w-full rounded-[1.4rem] border border-[#e8c4a0] bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Discussion%20Groups"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
+                        tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-[#8b5a3c]">Follow the conversation that belongs to this music.</p>
+                  </div>
+                  <StartDiscussionDialog
+                    targetType="music"
+                    targetId={ selectedMusicBasic.id }
+                    topicLabel={ `${ selectedMusicBasic.musicTitle } Discussion` }
+                    revalidatePaths={ ["/music"] }
+                    onSuccessRoute="/music/discussions/:threadId"
+                    disabled={ isEngaging }
+                    triggerLabel="Add Discussion"
+                    triggerClassName="rounded-full bg-[#b8581a] px-4 text-xs font-semibold text-white hover:bg-[#964815]"
+                  />
+                </div>
+
+                <div className="mt-3 space-y-3">
+                  { selectedMusicBasic.discussionThreads.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-[#e8c4a0] bg-[#fffaf4] px-3 py-3 text-sm text-[#8b5a3c]">
+                      <p>No discussion threads have been added for this music yet.</p>
+                    </div>
+                  ) : (
+                    selectedMusicBasic.discussionThreads.map((discussionThread) => (
+                      <article key={ discussionThread.id } className="rounded-2xl border border-[#e8c4a0] bg-[#fffbf7] px-4 py-4 text-sm text-[#7b5c4c] shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-base font-bold leading-snug text-[#5c2e1a]">{ discussionThread.discussTopic }</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#9b7560]">
+                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 flex-wrap items-center gap-3">
+                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                { discussionThread.dislikeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f5eee7] px-2 py-1 text-[0.65rem] font-semibold text-[#7b5c4c]">
+                                    <ThumbsDown className="size-3" />
+                                    { discussionThread.dislikeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.likeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e8] px-2 py-1 text-[0.65rem] font-semibold text-[#b8581a]">
+                                    <ThumbsUp className="size-3" />
+                                    { discussionThread.likeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.loveCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fde7f2] px-2 py-1 text-[0.65rem] font-semibold text-[#b85a85]">
+                                    <Heart className="size-3 fill-current" />
+                                    { discussionThread.loveCount }
+                                  </span>
+                                ) : null }
+                              </div>
+                            ) : null }
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#e8c4a0] bg-white px-4 text-xs font-semibold text-[#5c2e1a] hover:bg-[#fff6ef] hover:text-[#5c2e1a]"
+                            >
+                              <Link href={ `/music/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    ))
+                  ) }
+                </div>
+              </div>
+            ) : null }
 
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)]"><div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.86))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Music Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#8b5a3c]">React to this music and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMusicBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMusicDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMusic ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own music. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#6d5c52]"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMusicDetail?.noRatingCount ?? selectedMusicBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMusicDetail?.thumbsUpCount ?? selectedMusicBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMusicDetail?.loveCount ?? selectedMusicBasic?.loveCount ?? 0).toLocaleString() }</span></div></div><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p><p className="text-xs text-[#8b5a3c]">Share your thoughts about this music with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-comment-input">Add Comment</label><textarea id="music-comment-input" value={ commentText } onChange={ (event) => setCommentText(event.target.value) } placeholder="What did you think about this music?" disabled={ !selectedMusicBasic || isEngaging } className="min-h-24 w-full rounded-xl border border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#5c2e1a] outline-none transition focus-visible:ring-2 focus-visible:ring-[#d4a574]" /><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMusicBasic || isEngaging || commentText.trim().length < 2 } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p> : selectedMusicDetail?.id !== selectedMusic ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p> : (selectedMusicDetail?.musicComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]"><p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-6 py-10 text-center text-[#8b5a3c]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#d4a574]" /><p className="text-lg font-semibold text-[#5c2e1a]">Select a music to view comments.</p><p className="mt-2 text-sm">Choose a music from the finder list to see and post family comments.</p></div> }</div></div>
           </div>

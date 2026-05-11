@@ -1,3 +1,5 @@
+import type { DiscussionThreadSummary } from './discuss-threads';
+
 export interface Book {
   id: number;
   bookTitle: string;
@@ -33,6 +35,8 @@ export interface BooksHomeBook {
   analysisJson?: string;
   selectedTagIds: number[];
   bookComments: BookHomeComment[];
+  discussionThreads: DiscussionThreadSummary[];
+  hasDiscussionThread: boolean;
 }
 
 export interface BookHomeComment {

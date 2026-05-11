@@ -10,6 +10,7 @@ import {
   movieTagReference,
   movieTemplate,
 } from "../schema/family-social-schema-tables";
+import { loadDiscussionThreadSummariesByTargetIds, loadDiscussionThreadSummariesForTargetId } from "./queries-discuss-threads";
 import {
   AddMovieCommentReturn,
   GetMovieDetailReturn,
@@ -316,7 +317,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
 
   const movieIds = movieRows.map((row) => row.id);
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreadRows] = await Promise.all([
     db
       .select({
         movieId: movieComment.movieId,
@@ -342,6 +343,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
       .from(movieTag)
       .innerJoin(movieTagReference, eq(movieTagReference.id, movieTag.tagId))
       .where(inArray(movieTag.movieId, movieIds)),
+    loadDiscussionThreadSummariesByTargetIds(familyId, "movie", movieIds),
   ]);
 
   const memberIds = [...new Set(movieRows.map((row) => row.memberId))];
@@ -369,6 +371,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
   const viewerLikeByMovieId = new Map<number, number>();
   const tagIdsByMovieId = new Map<number, number[]>();
   const tagNamesByTypeByMovieId = new Map<number, Partial<Record<MovieTagType, string[]>>>();
+  const hasDiscussionThreadByMovieId = new Map<number, boolean>();
 
   for (const commentRow of commentRows) {
     if (commentRow.ismovieReviewer) {
@@ -412,6 +415,10 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     tagNamesByTypeByMovieId.set(tagRow.movieId, byType);
   }
 
+  for (const [targetId, summaries] of discussionThreadRows.entries()) {
+    hasDiscussionThreadByMovieId.set(targetId, summaries.length > 0);
+  }
+
   return movieRows.map((row) => ({
     id: row.id,
     movieTitle: row.movieTitle,
@@ -435,6 +442,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     likenessDegree: viewerLikeByMovieId.get(row.id) ?? null,
     selectedTagIds: tagIdsByMovieId.get(row.id) ?? [],
     tagNamesByType: tagNamesByTypeByMovieId.get(row.id) ?? {},
+    hasDiscussionThread: hasDiscussionThreadByMovieId.get(row.id) ?? false,
   }));
 }
 
@@ -454,7 +462,7 @@ async function loadMovieDetail(
 
   const movieRow = movieRows[0];
 
-  const [commentRows, likeRows, tagRows] = await Promise.all([
+  const [commentRows, likeRows, tagRows, discussionThreads] = await Promise.all([
     db
       .select()
       .from(movieComment)
@@ -476,6 +484,7 @@ async function loadMovieDetail(
       .from(movieTag)
       .innerJoin(movieTagReference, eq(movieTagReference.id, movieTag.tagId))
       .where(eq(movieTag.movieId, movieId)),
+    loadDiscussionThreadSummariesForTargetId(familyId, "movie", movieId),
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
@@ -557,6 +566,8 @@ async function loadMovieDetail(
     selectedTagIds: tagIdsByMovieId.get(movieId) ?? [],
     tagNamesByType: tagNamesByTypeByMovieId.get(movieId) ?? {},
     movieComments,
+    discussionThreads,
+    hasDiscussionThread: discussionThreads.length > 0,
   };
 }
 
