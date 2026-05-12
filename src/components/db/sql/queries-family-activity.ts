@@ -15,6 +15,19 @@ const POST_ACTION_TYPES = [
   "COMMENT_CREATED",
   "LIKE_ADDED",
   "LOVE_ADDED",
+  "DISCUSS_START",
+  "DISCUSS_REPLY",
+  "DISCUSS_REACT",
+] as const;
+
+const FAMILY_WIDE_ACTION_TYPES = [
+  "THREAD_CREATED",
+  "GAME_STARTED",
+  "INVITE_SENT",
+  "MEMBER_JOINED",
+  "DISCUSS_START",
+  "DISCUSS_REPLY",
+  "DISCUSS_REACT",
 ] as const;
 
 export type FeaturePostsRawRow = {
@@ -107,7 +120,7 @@ export async function getThreadAndGameActivity(familyId: number): Promise<Thread
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED", "INVITE_SENT", "MEMBER_JOINED"]),
+        inArray(familyActivity.actionType, [...FAMILY_WIDE_ACTION_TYPES]),
       ),
     )
     .groupBy(member.id, member.firstName, member.lastName, familyActivity.actionType);
@@ -128,7 +141,7 @@ export async function getThreadAndGameActivityFamilySummary(
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.actionType, ["THREAD_CREATED", "GAME_STARTED", "INVITE_SENT", "MEMBER_JOINED"]),
+        inArray(familyActivity.actionType, [...FAMILY_WIDE_ACTION_TYPES]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),
       ),
@@ -141,6 +154,9 @@ export async function getThreadAndGameActivityFamilySummary(
 export const FAMILY_ACTIVITY_ACTION_TYPES = {
   POST_CREATED: "POST_CREATED",
   COMMENT_CREATED: "COMMENT_CREATED",
+  DISCUSS_START: "DISCUSS_START",
+  DISCUSS_REPLY: "DISCUSS_REPLY",
+  DISCUSS_REACT: "DISCUSS_REACT",
   THREAD_CREATED: "THREAD_CREATED",
   GAME_STARTED: "GAME_STARTED",
   LIKE_ADDED: "LIKE_ADDED",

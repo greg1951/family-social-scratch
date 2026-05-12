@@ -38,6 +38,9 @@ function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartDat
       COMMENT_CREATED: featureRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
       LIKE_ADDED: featureRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
       LOVE_ADDED: featureRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
+      DISCUSS_START: featureRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
+      DISCUSS_REPLY: featureRows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
+      DISCUSS_REACT: featureRows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
     };
   });
 }
@@ -52,6 +55,9 @@ function buildMemberPostsData(rows: MemberPostsRawRow[]): MemberPostsChartData {
       COMMENT_CREATED: memberRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
       LIKE_ADDED: memberRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
       LOVE_ADDED: memberRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
+      DISCUSS_START: memberRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
+      DISCUSS_REPLY: memberRows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
+      DISCUSS_REACT: memberRows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
     };
   });
 }
@@ -64,6 +70,9 @@ function buildThreadGameData(rows: { actionType: string; count: number }[]): Thr
       GAME_STARTED: rows.find((r) => r.actionType === "GAME_STARTED")?.count ?? 0,
       INVITES_SENT: rows.find((r) => r.actionType === "INVITE_SENT")?.count ?? 0,
       NEW_MEMBERS_JOINED: rows.find((r) => r.actionType === "MEMBER_JOINED")?.count ?? 0,
+      DISCUSS_START: rows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
+      DISCUSS_REPLY: rows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
+      DISCUSS_REACT: rows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
     },
   ];
 }
@@ -97,7 +106,8 @@ export default async function FamilyMemberDashboard({
   }
 
   const now = new Date();
-  const defaultStartDate = new Date(now.getTime() - (14 * 24 * 60 * 60 * 1000));
+  const defaultStartDate = new Date(now);
+  defaultStartDate.setMonth(defaultStartDate.getMonth() - 1);
   const params = await searchParams;
   const startDate = parseDate(params.startDate, defaultStartDate);
   const endDate = parseDate(params.endDate, now);

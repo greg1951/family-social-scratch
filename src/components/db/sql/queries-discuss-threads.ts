@@ -3,8 +3,23 @@
 import db from '@/components/db/drizzle';
 import { and, asc, count, desc, eq, inArray } from 'drizzle-orm';
 import { parseSerializedTipTapDocument } from '../types/poem-term-validation';
+import {
+	createFamilyActivityRecord,
+	FAMILY_ACTIVITY_ACTION_TYPES,
+} from './queries-family-activity';
 
-import { discussPostReply, discussThread, discussLike, member } from '../schema/family-social-schema-tables';
+import {
+	book,
+	discussPostReply,
+	discussThread,
+	discussLike,
+	member,
+	movie,
+	music,
+	poem,
+	recipe,
+	show,
+} from '../schema/family-social-schema-tables';
 import {
 	AddDiscussionReplyInput,
 	AddDiscussionReplyReturn,
@@ -32,6 +47,92 @@ function createDiscussionMemberName(firstName?: string | null, lastName?: string
 	}
 
 	return 'Unknown Member';
+}
+
+function resolveDiscussionFeatureName(targetType: string): string {
+	switch (targetType) {
+		case 'show':
+			return 'TV Junkies';
+		case 'movie':
+			return 'Movie Maniacs';
+		case 'book':
+			return 'Book Besties';
+		case 'poem':
+			return 'Poetry Cafe';
+		case 'recipe':
+			return 'Family Foodies';
+		case 'music':
+			return 'Music Lovers';
+		default:
+			return 'Family Discussions';
+	}
+}
+
+async function resolveDiscussionPostName(
+	familyId: number,
+	targetType: string,
+	targetId: number,
+	fallbackTopic: string,
+): Promise<string> {
+	if (!Number.isInteger(targetId) || targetId <= 0) {
+		return fallbackTopic;
+	}
+
+	if (targetType === 'show') {
+		const rows = await db
+			.select({ title: show.showTitle })
+			.from(show)
+			.where(and(eq(show.id, targetId), eq(show.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	if (targetType === 'movie') {
+		const rows = await db
+			.select({ title: movie.movieTitle })
+			.from(movie)
+			.where(and(eq(movie.id, targetId), eq(movie.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	if (targetType === 'book') {
+		const rows = await db
+			.select({ title: book.bookTitle })
+			.from(book)
+			.where(and(eq(book.id, targetId), eq(book.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	if (targetType === 'poem') {
+		const rows = await db
+			.select({ title: poem.poemTitle })
+			.from(poem)
+			.where(and(eq(poem.id, targetId), eq(poem.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	if (targetType === 'recipe') {
+		const rows = await db
+			.select({ title: recipe.recipeTitle })
+			.from(recipe)
+			.where(and(eq(recipe.id, targetId), eq(recipe.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	if (targetType === 'music') {
+		const rows = await db
+			.select({ title: music.musicTitle })
+			.from(music)
+			.where(and(eq(music.id, targetId), eq(music.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+
+	return fallbackTopic;
 }
 
 async function getNextDiscussionSeqNo(threadId: number): Promise<number> {
@@ -362,6 +463,22 @@ export async function createDiscussionThreadWithInitialPost(
 		}
 	}
 
+	const featureName = resolveDiscussionFeatureName(input.targetType);
+	const postName = await resolveDiscussionPostName(
+		actor.familyId,
+		input.targetType,
+		input.targetId,
+		normalizedTopic,
+	);
+
+	await createFamilyActivityRecord({
+		actionType: FAMILY_ACTIVITY_ACTION_TYPES.DISCUSS_START,
+		featureName,
+		postName,
+		familyId: actor.familyId,
+		memberId: actor.memberId,
+	});
+
 	return {
 		success: true,
 		threadId: insertedThread.id,
@@ -398,6 +515,9 @@ export async function addDiscussionReply(
 		.select({
 			id: discussThread.id,
 			status: discussThread.status,
+			targetType: discussThread.targetType,
+			targetId: discussThread.targetId,
+			discussTopic: discussThread.discussTopic,
 		})
 		.from(discussThread)
 		.where(and(eq(discussThread.id, input.threadId), eq(discussThread.familyId, actor.familyId)))
@@ -464,6 +584,22 @@ export async function addDiscussionReply(
 		discussThreadId: input.threadId,
 		authorMemberId: actor.memberId,
 	}).returning({ id: discussPostReply.id });
+
+	const featureName = resolveDiscussionFeatureName(threadRow.targetType);
+	const postName = await resolveDiscussionPostName(
+		actor.familyId,
+		threadRow.targetType,
+		threadRow.targetId,
+		threadRow.discussTopic,
+	);
+
+	await createFamilyActivityRecord({
+		actionType: FAMILY_ACTIVITY_ACTION_TYPES.DISCUSS_REPLY,
+		featureName,
+		postName,
+		familyId: actor.familyId,
+		memberId: actor.memberId,
+	});
 
 	return {
 		success: true,
@@ -713,9 +849,13 @@ export async function toggleDiscussionReaction(
 		.select({
 			id: discussPostReply.id,
 			authorMemberId: discussPostReply.authorMemberId,
+			targetType: discussThread.targetType,
+			targetId: discussThread.targetId,
+			discussTopic: discussThread.discussTopic,
 		})
 		.from(discussPostReply)
-		.where(eq(discussPostReply.id, input.postId))
+		.innerJoin(discussThread, eq(discussThread.id, discussPostReply.discussThreadId))
+		.where(and(eq(discussPostReply.id, input.postId), eq(discussThread.familyId, actor.familyId)))
 		.limit(1);
 
 	if (postRows.length === 0) {
@@ -771,6 +911,22 @@ export async function toggleDiscussionReaction(
 			.set({ reactionType: input.reactionType })
 			.where(eq(discussLike.id, existingReaction.id));
 
+		const featureName = resolveDiscussionFeatureName(post.targetType);
+		const postName = await resolveDiscussionPostName(
+			actor.familyId,
+			post.targetType,
+			post.targetId,
+			post.discussTopic,
+		);
+
+		await createFamilyActivityRecord({
+			actionType: FAMILY_ACTIVITY_ACTION_TYPES.DISCUSS_REACT,
+			featureName,
+			postName,
+			familyId: actor.familyId,
+			memberId: actor.memberId,
+		});
+
 		return {
 			success: true,
 			message: `Reaction updated.`,
@@ -782,6 +938,22 @@ export async function toggleDiscussionReaction(
 		discussPostId: input.postId,
 		memberId: actor.memberId,
 		reactionType: input.reactionType,
+	});
+
+	const featureName = resolveDiscussionFeatureName(post.targetType);
+	const postName = await resolveDiscussionPostName(
+		actor.familyId,
+		post.targetType,
+		post.targetId,
+		post.discussTopic,
+	);
+
+	await createFamilyActivityRecord({
+		actionType: FAMILY_ACTIVITY_ACTION_TYPES.DISCUSS_REACT,
+		featureName,
+		postName,
+		familyId: actor.familyId,
+		memberId: actor.memberId,
 	});
 
 	return {

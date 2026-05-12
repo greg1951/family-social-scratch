@@ -38,5 +38,30 @@ Additional tracking in the familyActivity table is needed for the following acti
 - For the "invite" activity, only implement it as a part of the founder's Invite dashboard flow ("src/app/(family)/family-founder-account"). 
   - Do NOT implement any "invite" activity tracking in the new family setup ("src/app/(new-setup)/(family-setup)" route group).
 
+------------------------
 
+Background
+See the "familyActivity" table in "src/components/db/schema/family-social-schema-tables.ts"
+The queries related to the familyActivity table are in "src/components/db/sql/queries-family-activity.ts"
+The family dashboard route is defined in the "src/app/(family-charts)/family-dashboard" route.
+There are presently three stacked bar charts in the family dashboard
+- Feature Posts: shows the comments, like, loves, and posts for each feature
+- Member Activity: shows the comments, like, loves, and posts for each member
+- Family-Wide Activity: shows the games started, Invites sent, New Members joined, and Family Threads posted for the family as a whole.
 
+Request
+Additional tracking in the familyActivity table is needed for the following activities related to Discussion Threads.
+- Discussion Threads started in the family 
+  - activity_type: "DISCUSS_START", 
+  - feature_name: used current feature names for the feature_name column, 
+  - post_name: the title of the TV show, movie, book, poem, recipe, music (song or album title)
+- A member replying in a discussion thread 
+  - activity_type: "DISCUSS_REPLY", 
+  - feature_name: used current feature names for the feature_name column, e.g. "TV Junkies", "Movie Maniacs", etc.
+  - post_name: the title of the TV show, movie, book, poem, recipe, music (song or album title)
+- A member reacting (not like, like, love) in a discussion thread 
+  - activity_type: "DISCUSS_REACT", 
+  - feature_name: used current feature names for the feature_name column, e.g. "TV Junkies", "Movie Maniacs", etc.
+  - post_name: the title of the TV show, movie, book, poem, recipe, music (song or album title)
+
+Update the stacked bar charts to include the above metrics related to discussion threads.

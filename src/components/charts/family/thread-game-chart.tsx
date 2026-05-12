@@ -17,6 +17,9 @@ export type ThreadGameChartData = {
   GAME_STARTED: number;
   INVITES_SENT: number;
   NEW_MEMBERS_JOINED: number;
+  DISCUSS_START: number;
+  DISCUSS_REPLY: number;
+  DISCUSS_REACT: number;
 }[];
 
 const chartConfig = {
@@ -24,6 +27,9 @@ const chartConfig = {
   GAME_STARTED: { label: "Games", color: "var(--chart-2)" },
   INVITES_SENT: { label: "Invites", color: "var(--chart-3)" },
   NEW_MEMBERS_JOINED: { label: "New Members", color: "var(--chart-4)" },
+  DISCUSS_START: { label: "Discuss Starts", color: "#fb923c" },
+  DISCUSS_REPLY: { label: "Discuss Replies", color: "#22c55e" },
+  DISCUSS_REACT: { label: "Discuss Reacts", color: "#8b5cf6" },
 } satisfies ChartConfig;
 
 export default function ThreadGameChart({ data }: { data: ThreadGameChartData }) {
@@ -35,8 +41,8 @@ export default function ThreadGameChart({ data }: { data: ThreadGameChartData })
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center">
-        <ChartContainer config={ chartConfig } className="mx-auto h-60 w-full min-w-0">
-          <BarChart accessibilityLayer data={ data } margin={ { left: 12, right: 12 } }>
+        <ChartContainer config={ chartConfig } className="mx-auto h-72 w-full min-w-0">
+          <BarChart accessibilityLayer data={ data } margin={ { top: 56, left: 12, right: 12 } }>
             <CartesianGrid vertical={ false } />
             <XAxis
               dataKey="member"
@@ -46,11 +52,14 @@ export default function ThreadGameChart({ data }: { data: ThreadGameChartData })
               tick={ { fontSize: 12 } }
             />
             <ChartTooltip content={ <ChartTooltipContent hideLabel /> } />
-            <ChartLegend content={ <ChartLegendContent /> } />
+            <ChartLegend verticalAlign="top" height={ 56 } content={ <ChartLegendContent className="flex-wrap gap-x-3 gap-y-1 text-[11px]" /> } />
             <Bar dataKey="THREAD_CREATED" fill="#3b82f6" radius={ [4, 4, 0, 0] } />
             <Bar dataKey="GAME_STARTED" fill="var(--chart-2)" radius={ [4, 4, 0, 0] } />
             <Bar dataKey="INVITES_SENT" fill="var(--chart-3)" radius={ [4, 4, 0, 0] } />
             <Bar dataKey="NEW_MEMBERS_JOINED" fill="var(--chart-4)" radius={ [4, 4, 0, 0] } />
+            <Bar dataKey="DISCUSS_START" fill="#fb923c" radius={ [4, 4, 0, 0] } />
+            <Bar dataKey="DISCUSS_REPLY" fill="#22c55e" radius={ [4, 4, 0, 0] } />
+            <Bar dataKey="DISCUSS_REACT" fill="#8b5cf6" radius={ [4, 4, 0, 0] } />
           </BarChart>
         </ChartContainer>
       </CardContent>

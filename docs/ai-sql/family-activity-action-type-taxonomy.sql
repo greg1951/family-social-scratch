@@ -47,6 +47,21 @@ SET action_type = 'MEMBER_JOINED'
 WHERE lower(action_type) IN ('join', 'joined', 'member_joined')
   AND action_type <> 'MEMBER_JOINED';
 
+UPDATE family_activity
+SET action_type = 'DISCUSS_START'
+WHERE lower(action_type) IN ('discuss_start', 'discussion_start', 'discussion_started')
+  AND action_type <> 'DISCUSS_START';
+
+UPDATE family_activity
+SET action_type = 'DISCUSS_REPLY'
+WHERE lower(action_type) IN ('discuss_reply', 'discussion_reply', 'discussion_replied')
+  AND action_type <> 'DISCUSS_REPLY';
+
+UPDATE family_activity
+SET action_type = 'DISCUSS_REACT'
+WHERE lower(action_type) IN ('discuss_react', 'discussion_react', 'discussion_reacted')
+  AND action_type <> 'DISCUSS_REACT';
+
 DO $$
 BEGIN
   ALTER TABLE family_activity
@@ -60,7 +75,10 @@ BEGIN
         'LIKE_ADDED',
         'LOVE_ADDED',
         'INVITE_SENT',
-        'MEMBER_JOINED'
+        'MEMBER_JOINED',
+        'DISCUSS_START',
+        'DISCUSS_REPLY',
+        'DISCUSS_REACT'
       )
     );
 END $$;
