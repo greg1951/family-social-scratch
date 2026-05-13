@@ -113,7 +113,7 @@ function appendSupportReplyLink(
 	const parsedDocument = parseSerializedTipTapDocument(responseJson);
 	const baseDocument = parsedDocument.success
 		? parsedDocument.content
-		: createTextTipTapDocument("You have a new response from Family Social Support.");
+		: createTextTipTapDocument("You have a new response from My Family Social Support.");
 	const replyPath = buildSupportReplyPath(issueId, responseId);
 	const nextContent = Array.isArray(baseDocument.content) ? [...baseDocument.content] : [];
 

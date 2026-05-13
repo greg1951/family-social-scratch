@@ -90,7 +90,7 @@ export default function ResetPasswordForm() {
             Did you remember your password? { " " } <Link href="/login" className="underline">Login</Link>
           </div>
           <div className="text-muted-foreground text-sm">
-            Visit the Family Social Home { " " } <Link href="/" className="underline">Go Home</Link>
+            Visit the My Family Social Home { " " } <Link href="/" className="underline">Go Home</Link>
           </div>
         </CardFooter>
       </form>

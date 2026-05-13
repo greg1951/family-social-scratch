@@ -38,7 +38,7 @@ export function StatusUpdateDialog({ open, onOpenChange, redirectUrl, submission
         } }
       >
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">Setting Up Your Family Social Account</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Setting Up Your My Family Social Account</DialogTitle>
           <DialogDescription>
             Please wait while we complete the following steps...
           </DialogDescription>

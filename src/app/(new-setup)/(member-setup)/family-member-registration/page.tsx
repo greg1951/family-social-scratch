@@ -141,12 +141,12 @@ export default async function FamilyMemberRegistration({ searchParams }
               <div className="text-muted-foreground text-xs">
                 <p className="text-green-900 pb-2">
                   <CircleCheck className="inline mr-2 text-green-900" size={ 20 } />
-                  Select the link below to navigate to the Family Social home and then bookmark that page.
+                  Select the link below to navigate to the My Family Social home and then bookmark that page.
                 </p>
                 {/* Take Me Home!{ "   " } */ }
                 <Link className="underline"
                   href="/" >
-                  Family Social Home Page
+                  My Family Social Home Page
                 </Link>
               </div>
 

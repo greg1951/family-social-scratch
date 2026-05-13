@@ -14,7 +14,7 @@ export default function FamilyHome() {
       <CardHeader className="rounded-t-xl bg-linear-to-r from-[#59cdf7] to-[#9de4fe] px-4 py-4 md:px-6 md:py-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <CardTitle className="text-xl font-extrabold text-slate-900 md:text-3xl">Start Your Family Social Trial</CardTitle>
+            <CardTitle className="text-xl font-extrabold text-slate-900 md:text-3xl">Start Your My Family Social Trial</CardTitle>
             <CardDescription className="mt-2 text-sm text-slate-800 md:text-base">
               A quick 4-step setup to launch your private family space.
             </CardDescription>

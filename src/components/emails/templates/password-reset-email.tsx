@@ -44,8 +44,8 @@ export const PasswordResetEmail = ({ link }: { link: string }) => (
                 style={ { width: '72px', paddingLeft: '12px', paddingRight: '8px' } }
               >
                 <Img
-                  src='https://kbgfamilysocial.com/images/emails/family-social-logo-small.png'
-                  alt='Family Social'
+                  src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
+                  alt='My Family Social logo'
                   width='50'
                   height='50'
                   className='rounded-full py-3'
@@ -53,8 +53,8 @@ export const PasswordResetEmail = ({ link }: { link: string }) => (
               </Column>
               <Column align='left' valign='middle'>
                 <Text className='m-0 mb-4 font-app text-base leading-7'>
-                  You requested a password reset on Family Social. The big blue button below will
-                  take you to the Family Social page where you can reset your password.
+                  You requested a password reset on My Family Social. The big blue button below will
+                  take you to the My Family Social page where you can reset your password.
                 </Text>
               </Column>
             </Row>

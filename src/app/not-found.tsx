@@ -18,7 +18,7 @@ export default function NotFound() {
           <div className="flex align-middle">
             <p className="font-extrabold text-green-900 text-xs md:text-base">
               Pardon the dust.<br></br><br></br>
-              Family Social is under construction.<br></br><br></br>
+              My Family Social is under construction.<br></br><br></br>
               Use the browser Back to return to previous page.
             </p>
           </div>

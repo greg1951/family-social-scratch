@@ -97,7 +97,7 @@ export default function FamilyMemberDashboardPie() {
       <CardHeader className="flex-row items-start space-y-0 pb-0">
         <div className="grid gap-1">
           <CardTitle>Family Member Dashboard</CardTitle>
-          <CardDescription>Family Social Feature Activity</CardDescription>
+          <CardDescription>My Family Social Feature Activity</CardDescription>
         </div>
         <Select value={ activeMonth } onValueChange={ setActiveMonth }>
           <SelectTrigger

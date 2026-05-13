@@ -111,7 +111,7 @@ export default function LoginForm() {
               Welcome Back
             </div>
             <CardTitle className="mt-3 text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
-              Family Social Login
+              My Family Social Login
             </CardTitle>
             {/* <CardDescription className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#315363]">
               Step back into your family circles with your email, password, and family name.
@@ -128,7 +128,7 @@ export default function LoginForm() {
                       <FormItem>
                         <FormLabel className="font-extrabold text-sm md:text-base">Email</FormLabel>
                         <FormControl>
-                          <Input { ...field } type="email" placeholder="Email used in Family Social" className="text-xs" />
+                          <Input { ...field } type="email" placeholder="Email used in My Family Social" className="text-xs" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -187,7 +187,7 @@ export default function LoginForm() {
                           </Button>
                         </HoverCardTrigger>
                         <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
-                          <p className='text-sm p-1'>When you join Family Social you become part of a unique family. Your family name is required to sign in.</p>
+                          <p className='text-sm p-1'>When you join My Family Social you become part of a unique family. Your family name is required to sign in.</p>
                           <p className='text-sm p-1'>In your email invitation, and in the login instructions email you received after registering,
                             your family name was prominently mentioned.</p>
                           <p className='text-sm p-1'>If you have not registered in a family, then there is no signin needed. Select the &quot;Take me home&quot; link below to return to the main page.</p>
@@ -247,7 +247,7 @@ export default function LoginForm() {
               <div className="flex items-center justify-between rounded-2xl border border-[#d8eef7] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(223,246,255,0.38))] px-3 py-2.5 shadow-[0_14px_30px_-30px_rgba(16,54,74,0.85)]">
                 <div>
                   <p className="text-sm font-bold text-[#10364a]">Take me home</p>
-                  <p className="text-xs text-[#5a7381]">Return to the Family Social landing page.</p>
+                  <p className="text-xs text-[#5a7381]">Return to the My Family Social landing page.</p>
                 </div>
                 <Link
                   className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-[#005472] shadow-sm transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"

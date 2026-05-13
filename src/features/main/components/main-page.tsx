@@ -10,9 +10,9 @@ export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
   const whatsNewItems = [
     "Customer support is here to help! Check out our informative Frequently Asked Questions (FAQ) page.",
-    "All Family Social features are live! Check them out and start sharing your favorites with your family.",
+    "All My Family Social features are live! Check them out and start sharing your favorites with your family.",
     "Visit the Family Dashboard to see charts about your family activity across all channels.",
-    "The Family Social Dev Team is working on a new Photo Galleries feature. You'll be able to create albums, upload and share them with the rest of the family!",
+    "The My Family Social Dev Team is working on a new Photo Galleries feature. You'll be able to create albums, upload and share them with the rest of the family!",
     "Personalize your account by uploading a lovely mugshot to your profile.",
   ];
   const ctaCardClasses = [
@@ -23,7 +23,7 @@ export default async function MainPage() {
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
   ].join(" ");
 
-  let title: string = "Welcome to Family Social!";
+  let title: string = "Welcome to My Family Social!";
   if (memberKeyDetails.isLoggedIn) {
     title = `Welcome back, ${ memberKeyDetails.firstName }!`;
   }
@@ -56,7 +56,7 @@ export default async function MainPage() {
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What's New in Family Social?
+                      What's New in  My Family Social?
                     </Link>
                     {/* <Link
                       href="/help-subscribe"
@@ -78,7 +78,7 @@ export default async function MainPage() {
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What's New in Family Social?
+                      What's New in  My Family Social?
                     </Link>
                   </>
                 ) }

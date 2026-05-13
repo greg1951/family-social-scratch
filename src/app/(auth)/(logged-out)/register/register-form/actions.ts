@@ -35,7 +35,7 @@ export const registerUser = async({
     if (!findFamilyResult.success) {
       return {
         error: true,
-        message: 'Family name is not registered in Family Social'
+        message: 'Family name is not registered in My Family Social'
       }
     }
 
@@ -44,7 +44,7 @@ export const registerUser = async({
     if (findMemberResult.error) {
       return {
         error: true,
-        message: 'Family member email not found'
+        message: 'Family member email not found in My Family Social'
       }
     }
 

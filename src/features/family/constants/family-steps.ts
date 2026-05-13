@@ -32,7 +32,7 @@
       { id: 3, label: 'Add Founder credentials', status: 'pending' },
       { id: 4, label: 'Add Founder notifications', status: 'pending' },
       { id: 5, label: 'Add invited family members', status: 'pending' },
-      { id: 6, label: 'Send emails to the new Family Social family', status: 'pending' },
+      { id: 6, label: 'Send emails to the new My Family Social family', status: 'pending' },
   ];
 
   export const initialRegistrationSteps: SubmissionStep[] = [

@@ -43,6 +43,19 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
         <Container style={ { padding: '20px' } } className='rounded-lg border border-brandBorder bg-brandPanel px-8 py-6'>
           <Section>
             <Row>
+              <Column
+                align='left'
+                valign='top'
+                style={ { width: '150px', paddingLeft: '12px', paddingRight: '8px' } }
+              >
+                <Img
+                  src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
+                  alt='My Family Social logo'
+                  width='50'
+                  height='50'
+                  className='rounded-full py-3'
+                />
+              </Column>
               <Column align='left' valign='middle'>
                 <Text className='m-0 mb-4 font-app text-base leading-7'>
                   { founderName } welcomes you to the { familyName } family, { memberName }! Here you&apos;ll find some
@@ -51,7 +64,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               </Column>
             </Row>
           </Section>
-          <Section style={ { width: '700px' } }>
+          <Section style={ { width: '800px' } }>
             <Row>
               <Column align='left' valign='top'>
                 <Text className='m-0 font-app pt-2 text-left text-base leading-6'>
@@ -97,13 +110,13 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               </Column>
             </Row>
           </Section>
-          <Section style={ { width: '700px' } }>
+          <Section style={ { width: '800px' } }>
             <Text className='m-0 mb-4 font-app pt-2 text-left text-base leading-6'>
               After you login go to the <b>My Account</b> page and update your profile. Then, go explore the site and all the wonderful features we have to offer! We are so
-              excited to have you as part of the { familyName } family on Family Social!
+              excited to have you as part of the { familyName } family on My Family Social!
             </Text>
           </Section>
-          <Section style={ { width: '700px' } }>
+          <Section style={ { width: '800px' } }>
             <Row>
               <Column align='center'
                 valign='top'
@@ -112,7 +125,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                   <Button href="https://kbgfamilysocial.com/login"
                     className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
                   >
-                    Family Social Login
+                    My Family Social Login
                   </Button>
                 </Text>
               </Column>

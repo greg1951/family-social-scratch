@@ -3,17 +3,17 @@ import { FileText, Folder, Settings, Users, HelpCircle, Info, Heart, CircleAlert
 export const generalFaqItems = [
   {
     value: "item-10",
-    category: "Family Social",
+    category: "My Family Social",
     trigger: (
       <div>
-        <p className="text-base font-semibold">What is Family Social?</p>
+        <p className="text-base font-semibold">What is My Family Social?</p>
         <p className="text-xs text-slate-600">Learn about our platform and features.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-2 text-base">
         <span>
-          <p>Family Social is a platform that helps families stay connected and organized. All of the features are available during trial period.</p>
+          <p>My Family Social is a platform that helps families stay connected and organized. All of the features are available during trial period.</p>
           <ul className="list-disc ml-6 mt-2">
             <li>Family Messaging and picture sharing</li>
             <li>TV, Music, Movie, Book Reviews</li>
@@ -42,7 +42,7 @@ export const generalFaqItems = [
     category: "Start a Family",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How to create a family in Family Social?</p>
+        <p className="text-base font-semibold">How to create a family in My Family Social?</p>
         <p className="text-xs text-slate-600">Learn how easy the setup is for a new family.</p>
       </div>
     ),
@@ -56,7 +56,7 @@ export const generalFaqItems = [
             <li>Invite family members to join via email</li>
             <li>Confirm and create the family account.</li>
           </ol>
-          <p className="pt-2 italic pb-2">If you are already registered in Family Social, you must use a different email to create a new family.</p>
+          <p className="pt-2 italic pb-2">If you are already registered in My Family Social, you must use a different email to create a new family.</p>
           <p style={ { marginTop: 8 } }>
             <a href="https://kbgfamilysocial.com/family-setup-home" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Start a Family today!</a>
           </p>
@@ -75,20 +75,20 @@ export const generalFaqItems = [
   },
   {
     value: "item-30",
-    category: "Family Social",
+    category: "My Family Social",
     trigger: (
       <div>
-        <p className="text-base font-semibold">What does the Family Registration form look like?</p>
+        <p className="text-base font-semibold">What does the My Family Social Registration form look like?</p>
         <p className="text-xs text-slate-600">It's a simple form but you need to fill it out correctly because of the credentials it will create when submitted.</p>
       </div>
     ),
     content: (
       <div className="flex items-center justify-center pt-2">
         <span>
-          <p className="pb-2 text-base">👇Here is the form on Family Social where the link in the invitation email will redirect you.👇</p>
+          <p className="pb-2 text-base">👇Here is the form on My Family Social where the link in the invitation email will redirect you.👇</p>
           <img
             src="images/support/faq-registration.jpg"
-            alt="Family Registration screenshot"
+            alt="My Family Social Registration screenshot"
           // style={ { maxWidth: '300px', marginTop: 12, borderRadius: 8 } }
           />
           <span className="flex flex-col items-start gap-2 mt-4 text-base">
@@ -117,7 +117,7 @@ export const generalFaqItems = [
     content: (
       <div className="grid md:grid-cols-2 text-base">
         <span className="flex flex-col items-start gap-2 mt-4">
-          <p>After you register there is a link on the page to take you to the login page. However, you can always find the login on the Family Social homepage.</p>
+          <p>After you register there is a link on the page to take you to the login page. However, you can always find the login on the My Family Social homepage.</p>
           <p>There are three fields needed to login, and they are all case sensitive. These are fields you entered when you filled out the family registration form.</p>
           <ol className="list-decimal ml-6 mt-2">
             <li>The Email address</li>
@@ -163,7 +163,7 @@ export const generalFaqItems = [
             <li>Enter your email address and submit the form.</li>
           </ol>
           <span className="flex flex-col items-start gap-2 mt-4">
-            <p>You will receive a link to reset your password on the Family Social site. The link expires in 1 hour, so check your email promptly.</p>
+            <p>You will receive a link to reset your password on the My Family Social site. The link expires in 1 hour, so check your email promptly.</p>
             <p style={ { marginTop: 8 } }>
               <a href="https://kbgfamilysocial.com/password-reset" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Reset your password</a>
             </p>
@@ -198,13 +198,13 @@ export const generalFaqItems = [
 
         </div>
         <span className="flex flex-col items-start gap-2 mt-4">
-          <p>On the Family Social main page header, select the <b>Settings</b> option and follow the steps below.</p>
+          <p>On the My Family Social main page header, select the <b>Settings</b> option and follow the steps below.</p>
           <ol className="list-decimal ml-6 mt-2 py-2">
             <li>In Settings, select the <b>My Account</b> option.</li>
             <li>In My Account header, click on the <b>Upload Profile Image</b> option.</li>
             <li>Upload a good mugshot of yourself. Follow the recommended guidelines for image size and format.</li>
             <li>Once uploaded <b>Go Back</b> to My Account add <u>optional</u> info, like <i>cell number</i>, <i>nick name</i>, and your <i>birthday</i>.</li>
-            <li>Open the <b>My Settings</b> tab and select which Family Social features you would like to be notified when someone posts or interacts with your content.</li>
+            <li>Open the <b>My Settings</b> tab and select which My Family Social features you would like to be notified when someone posts or interacts with your content.</li>
             <li>Open the <b>My Family</b> tab to see all your family members.</li>
             <li>If you would like to recommend a new family member fill out the <b>Suggest New Family Member</b> form and submit it.
               The family founder will get a private message in Family Threads about your suggestion.</li>
@@ -283,7 +283,7 @@ export const founderFaqItems = [
       <div className="grid md:grid-cols-1 text-base">
         <div className="flex items-center justify-center mt-0">
           <span>
-            <p>Family Social allows the family members to post TV and Movie reviews. The following guidelines must be followed:</p>
+            <p>My Family Social allows the family members to post TV and Movie reviews. The following guidelines must be followed:</p>
             <ol className="list-decimal ml-6 mt-2">
               <li>Content in the review must not use profanity or offensive language.</li>
               <li>Content that is uploaded must adhere to Fair Use guidelines.</li>
@@ -355,7 +355,7 @@ export const featureFaqItems = [
         <span>
           <p className="text-base font-semibold">Adding a TV show review is easy. Start by clicking on the "Add Show" button in the upper right corner.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Start with a good template. Family Social provides a "Global" template, but a family member can create their own.</li>
+            <li>Start with a good template. My Family Social provides a "Global" template, but a family member can create their own.</li>
             <li>When you pick a template it will prefill the review edit area with helpful headings.</li>
             <li>Next, start filling in the general information about the show, starting at the top of the page.</li>
             <li>Find a good image of the show or even easier, a website link to IMDB or YouTube. There's a separate FAQ on uploading images.</li>
@@ -397,7 +397,7 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">You found some great TV show image but wait, don't upload it just yet! There are licensing considerations!</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Google is just a search engine and it will return wonderful images but they are <u>licensed</u>.</li>
-            <li>In Family Social they are used not for commercial purposes but for reviews and discussion. This means they must be credited to comply with <u>Fair Use guidelines</u>.</li>
+            <li>In My Family Social they are used not for commercial purposes but for reviews and discussion. This means they must be credited to comply with <u>Fair Use guidelines</u>.</li>
             <li>Fair Use image attribution requires a <b>Title</b> and a <b>Source</b>.</li>
             <pre className="pt-2 pb-2">
               <code>
@@ -472,7 +472,7 @@ export const featureFaqItems = [
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Go to IMDB or YouTube and find the TV Show you want to use.</li>
             <li>Copy the URL of the TV Show to your clipboard.</li>
-            <li>In Family Social TV Junkies home page, select the Add Show option and complete the form as instructed below.</li>
+            <li>In My Family Social TV Junkies home page, select the Add Show option and complete the form as instructed below.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-130"
@@ -480,7 +480,7 @@ export const featureFaqItems = [
               alt="IMDB Link"
             />
           </div>
-          <p className="text-base font-semibold">In Family Social TV Junkies <b>Add Show</b>:</p>
+          <p className="text-base font-semibold">In My Family Social TV Junkies <b>Add Show</b>:</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Enter the <b>Show Name</b> as you want it to appear in the home page.</li>
             <li>Paste the URL you copied from IMDB or YouTube into the <b>Show Site URL</b> field.</li>
@@ -653,7 +653,7 @@ export const featureFaqItems = [
       <div className="grid md:grid-cols-1 text-base">
         <span>
           <p className="text-base font-semibold">Visit the Poetry Terms page for poetry definitions and explanations.</p>
-          <p className="text-sm text-slate-600">Family Social provides a dictionary of poetry terms to help define terms you may see in the poetry submissions.</p>
+          <p className="text-sm text-slate-600">My Family Social provides a dictionary of poetry terms to help define terms you may see in the poetry submissions.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Select the <b>Poetry Terms</b> button in the <b>Poetry Cafe</b> heading.</li>
             <li>A term search field is provided or scroll the list to find a term.</li>

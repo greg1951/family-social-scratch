@@ -20,7 +20,7 @@ export const sendLoginInstructionsEmail = async (
     }  
     const sendResult = await resend.emails.send({
       from: familySocialEmail,
-      subject: "Your Instructions to Sign In to Family Social",
+      subject: "Your Instructions to Sign In to My Family Social",
       to: inviteEmail,
       react: React.createElement(MemberSigninEmail, 
         { memberName: userInfo.firstName, 

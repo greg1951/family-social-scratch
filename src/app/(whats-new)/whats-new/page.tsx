@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "Discussion Threads were added to all of the features",
+    summary: "You can now start a discussion thread on any post in the family social experience! This is a great way to have a conversation about a specific post and keep all of the related comments and reactions in one place. Try it out and let us know what you think!",
+    category: "Features",
+    date: "May 11, 2026",
+  },
+  {
     title: "Customer support is here to help!",
     summary: "Solid questions deserve solid answers! Check out our FAQ page. If you find something that isn't covered in the FAQ, open a support ticket and we'll get back to you straight away.",
     category: "Support",
@@ -21,7 +27,7 @@ const updates = [
   },
   {
     title: "Family Threads is Live!",
-    summary: "It's the Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
+    summary: "It's the My Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
     category: "Features",
     date: "April 22, 2026",
   },
@@ -33,7 +39,7 @@ const updates = [
   },
   {
     title: "TV Junkies Unite!",
-    summary: "TV Junkies is now live in the Family Social! Check it out and start adding your favorite shows.",
+    summary: "TV Junkies is now live in My Family Social! Check it out and start adding your favorite shows.",
     category: "Features",
     date: "April 21, 2026",
   },
@@ -74,8 +80,8 @@ export default function WhatsNewPage() {
     <section className="font-app min-h-screen bg-linear-to-b from-slate-50 to-white px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(52,44,98,0.95),rgba(93,73,164,0.86)_56%,rgba(170,144,238,0.8))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(35,27,73,0.92)] sm:px-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e5dcff]">Family Social</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">What&apos;s New in the Family</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e5dcff]">My Family Social</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">What&apos;s New in My Family Social</h1>
           <p className="mt-3 max-w-3xl text-sm text-[#efe8ff] sm:text-base">
             A simple timeline of the newest activity across your family channels.
           </p>

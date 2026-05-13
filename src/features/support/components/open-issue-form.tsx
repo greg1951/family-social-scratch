@@ -319,13 +319,13 @@ export function OpenIssueForm({ memberName, familyName }: OpenIssueFormProps) {
         <div className="mx-auto max-w-5xl space-y-6">
           <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(10,64,79,0.95),rgba(24,115,143,0.9)_50%,rgba(249,197,121,0.85))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.9)] sm:px-8">
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#def8ff]">
-              Family Social Support
+              My Family Social Support
             </p>
             <h1 className="pt-2 mt-3 text-2xl font-black tracking-tight sm:text-3xl">
               Open Support Ticket
             </h1>
             <p className="pt-2 mt-3 max-w-2xl text-sm leading-6 text-[#eafcff]">
-              After submitting your ticket, you will receive updates in your <b>Family Threads</b>. When you sign in, you will see a notification when support responds to your ticket.
+              After submitting your ticket, you will receive updates in your <b>My Family Social Threads</b>. When you sign in, you will see a notification when support responds to your ticket.
             </p>
             <div className="pt-2">
               <Link

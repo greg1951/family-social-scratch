@@ -147,7 +147,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       }
       updateStepStatus(5, 'completed');
 
-      // Step 6: Send emails to join new Family Social family
+      // Step 6: Send emails to join new My Family Social family
       updateStepStatus(6, 'inProgress');
       const founderDetails: FounderDetails = {
         email: registrationDetails.email,
@@ -195,7 +195,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       if (founderEmailCheck.exists) {
         form.setError('email', {
           type: 'manual',
-          message: 'This email address is already in use in Family Social.',
+          message: 'This email address is already in use in My Family Social.',
         });
         return;
       }
@@ -232,7 +232,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       if (inUseEmails.length > 0) {
         setMemberEmailValidationError(
-          `One or more invited email addresses are already in use in Family Social: ${ inUseEmails.join(', ') }`
+          `One or more invited email addresses are already in use in My Family Social: ${ inUseEmails.join(', ') }`
         );
         return;
       }
@@ -790,7 +790,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
                           <p className="text-xs text-neutral-800">
                             If corrections need to be made, use the <b>Back</b> button to return to the step and update the information.<br></br><br></br>
-                            Otherwise, <b>Confirm</b> these setup that will create your new Family Social site and send invitations to invited members.
+                            Otherwise, <b>Confirm</b> these setup that will create your new My Family Social site and send invitations to invited members.
                           </p>
                         </div>
 

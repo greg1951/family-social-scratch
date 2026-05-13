@@ -39,7 +39,7 @@ export const sendFamilyInviteEmails = async (
   
       const sendResult = await resend.emails.send({
         from: familySocialEmail,
-        subject: "You're Invited to Join the Family Social Platform",
+        subject: "You're Invited to Join the My Family Social Platform",
         to: invite.email,
         react: React.createElement(MemberInviteEmail, 
           { memberName: invite.firstName, 

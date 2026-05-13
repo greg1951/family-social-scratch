@@ -15,7 +15,7 @@ export default function ResetPassword() {
             </div>
             <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">Send Family Name Email</CardTitle>
             <CardDescription className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-[#315363]">
-              We will email your family name if your address is already connected to a Family Social family.
+              We will email your family name if your address is already connected to a My Family Social family.
             </CardDescription>
           </CardHeader>
           <CardContent>
