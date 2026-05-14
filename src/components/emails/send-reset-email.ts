@@ -31,7 +31,7 @@ export const sendPasswordResetEmail = async (email: string) => {
   
   const resetLink=`${process.env.SITE_BASE_URL}/update-password?token=${insertRecord.token}`; 
   const sendResult = await resend.emails.send({
-    from: "admin@updates.knotboardgames.com",
+    from: "family.social@updates.knotboardgames.com",
     subject: "Your Password Reset Request",
     to: email,
     react: React.createElement(PasswordResetEmail, { link: resetLink, }),

@@ -47,8 +47,8 @@ export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessag
                 <Img
                   src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
                   alt='My Family Social logo'
-                  width='50'
-                  height='50'
+                  width='150'
+                  height='150'
                   className='rounded-full py-3'
                 />
               </Column>

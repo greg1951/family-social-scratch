@@ -67,7 +67,7 @@ export const familyActivity = pgTable("family_activity", {
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow(),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").references(() => member.id),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
 }, (table) => [
   index('family_activity_family_id_idx').on(table.familyId),
   index('family_activity_member_id_idx').on(table.memberId),
@@ -231,7 +231,7 @@ export const threadConversation = pgTable("thread_conversation", {
   archivedAt: timestamp("archived_at"),
   archiveBatchId: integer("archive_batch_id"),
   archiveObjectKey: text("archive_object_key"),
-  senderMemberId: integer("fk_sender_member_id").references(() => member.id),
+  senderMemberId: integer("fk_sender_member_id").references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
 },
   (table) => [
@@ -243,7 +243,7 @@ export const threadConversation = pgTable("thread_conversation", {
 export const threadPostReply = pgTable("thread_post_reply", {
   id: serial("id").primaryKey(),
   conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id),
-  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   type: text("type").notNull().default("post"),
   content: text("content").notNull(),
   contentJson: text("content_json").notNull().default("{}"),
@@ -289,8 +289,8 @@ export const threadPostAttachment = pgTable("thread_post_attachment", {
 
 export const threadRecipientState = pgTable("thread_recipient_state", {
   id: serial("id").primaryKey(),
-  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id),
-  recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id),
+  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
+  recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   deliveryType: text("delivery_type").notNull().default("threads"),
   readAt: timestamp("read_at"),
   answeredAt: timestamp("answered_at"),

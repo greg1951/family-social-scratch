@@ -51,14 +51,14 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                 <Img
                   src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
                   alt='My Family Social logo'
-                  width='50'
-                  height='50'
+                  width='150'
+                  height='150'
                   className='rounded-full py-3'
                 />
               </Column>
               <Column align='left' valign='middle'>
                 <Text className='m-0 mb-4 font-app text-base leading-7'>
-                  { founderName } welcomes you to the { familyName } family, { memberName }! Here you&apos;ll find some
+                  Welcome to the <b>{ familyName }</b> family, { memberName }! Here you&apos;ll find some
                   information about how to sign in and get started.
                 </Text>
               </Column>
@@ -68,13 +68,13 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
             <Row>
               <Column align='left' valign='top'>
                 <Text className='m-0 font-app pt-2 text-left text-base leading-6'>
-                  As shown in the login page below, there are three fields required to sign in:
+                  As shown in the login snippet below, there are <u>three fields</u> required to sign in:
                   your <i>email address</i>, the <i>password</i> you created during registration,
                   and the <i>family name</i>.
                 </Text>
                 <Text className='m-0 font-app pt-2 text-left text-base leading-6'>
                   Make note of your family name: <b>{ familyName }</b>. It must be entered exactly this way when you sign in,
-                  including the capitalization. (The information shown below is just an example and is <u>not</u> your information.)
+                  including the capitalization.
                 </Text>
               </Column>
             </Row>
@@ -113,7 +113,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
           <Section style={ { width: '800px' } }>
             <Text className='m-0 mb-4 font-app pt-2 text-left text-base leading-6'>
               After you login go to the <b>My Account</b> page and update your profile. Then, go explore the site and all the wonderful features we have to offer! We are so
-              excited to have you as part of the { familyName } family on My Family Social!
+              excited to have you as part of the <b>{ familyName }</b> family on My Family Social!
             </Text>
           </Section>
           <Section style={ { width: '800px' } }>
