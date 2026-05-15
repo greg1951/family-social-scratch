@@ -127,6 +127,7 @@ export function BookDetailsDialog({
                 { bookDialog.bookDialogMode === "view" ? (
                   <p className="mt-1 text-sm text-[#355161]">
                     { draft.bookTitle } by { draft.authorName } ({ draft.bookYear || "Unknown year" }) &middot; { draft.bookLanguage }
+                    { draft.bookSeriesName.trim() ? ` · Series: ${ draft.bookSeriesName.trim() }` : "" }
                   </p>
                 ) : null }
               </div>
@@ -173,6 +174,15 @@ export function BookDetailsDialog({
                     value={ draft.bookLanguage }
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookLanguage: event.target.value })) }
                     placeholder="e.g. English"
+                    className="border-[#c8d7df] text-[#183746]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#355161]">Book Series Name</label>
+                  <Input
+                    value={ draft.bookSeriesName }
+                    onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookSeriesName: event.target.value })) }
+                    placeholder="Enter optional book series name if book is in a series"
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>

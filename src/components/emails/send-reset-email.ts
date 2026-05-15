@@ -6,6 +6,7 @@ import * as React from "react";
 import { Resend } from 'resend';
 import { mailer } from "@/lib/email";
 import PasswordResetEmail from "@/components/emails/templates/password-reset-email";
+import { familySocialEmail } from "../../features/family/constants/family-steps";
 
 export const sendPasswordResetEmail = async (email: string) => {
 
@@ -31,7 +32,7 @@ export const sendPasswordResetEmail = async (email: string) => {
   
   const resetLink=`${process.env.SITE_BASE_URL}/update-password?token=${insertRecord.token}`; 
   const sendResult = await resend.emails.send({
-    from: "family.social@updates.knotboardgames.com",
+    from: familySocialEmail,
     subject: "Your Password Reset Request",
     to: email,
     react: React.createElement(PasswordResetEmail, { link: resetLink, }),

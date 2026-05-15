@@ -212,3 +212,18 @@ export type addThreadReplyReturn =
       postId: number;
       message: string;
     };
+
+export type UpdateThreadReplyInput = {
+  conversationId: number;
+  postId: number;
+  content: string;
+  contentJson: string;
+};
+
+export type updateThreadReplyReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      postId: number;
+      message: string;
+    };

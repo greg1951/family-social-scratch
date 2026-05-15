@@ -188,6 +188,7 @@ async function loadBooksHomeBooks(
       bookTitle: row.bookTitle,
       authorName: row.authorName,
       bookLanguage: row.bookLanguage,
+      bookSeriesName: row.bookSeriesName,
       bookYear: row.bookYear,
       status: row.status,
       createdAt: row.createdAt as Date,
@@ -265,6 +266,7 @@ export async function saveBooksHomeBook(
   const normalizedTitle = input.bookTitle.trim();
   const normalizedAuthorName = input.authorName.trim();
   const normalizedLanguage = input.bookLanguage.trim() || 'English';
+  const normalizedSeriesName = (input.bookSeriesName ?? '').trim();
   const uniqueTagIds = [...new Set(input.selectedTagIds)].slice(0, 3);
   const parsedAnalysisJson = parseSerializedTipTapDocument(input.analysisJson.trim());
 
@@ -286,6 +288,13 @@ export async function saveBooksHomeBook(
     return {
       success: false,
       message: 'Enter a valid book year before saving.',
+    };
+  }
+
+  if (normalizedSeriesName && normalizedSeriesName.length < 5) {
+    return {
+      success: false,
+      message: 'Book Series Name must be at least 5 characters when provided.',
     };
   }
 
@@ -361,6 +370,7 @@ export async function saveBooksHomeBook(
     bookTitle: normalizedTitle,
     authorName: normalizedAuthorName,
     bookLanguage: normalizedLanguage,
+    bookSeriesName: normalizedSeriesName || null,
     bookYear: input.bookYear,
     status: input.status.trim() || 'draft',
     memberId: existingBook?.memberId ?? actor.memberId,
@@ -513,6 +523,7 @@ export async function saveBooksHomeBook(
               bookTitle: existingBook.bookTitle,
               authorName: existingBook.authorName,
               bookLanguage: existingBook.bookLanguage,
+              bookSeriesName: existingBook.bookSeriesName,
               bookYear: existingBook.bookYear,
               status: existingBook.status,
               memberId: existingBook.memberId,
@@ -707,6 +718,7 @@ export async function getAllFamilyBooks(familyId: number)
     bookTitle: row.bookTitle,
     authorName: row.authorName,
     bookLanguage: row.bookLanguage,
+    bookSeriesName: row.bookSeriesName,
     bookYear: row.bookYear,
     status: row.status,
     createdAt: row.createdAt as Date,

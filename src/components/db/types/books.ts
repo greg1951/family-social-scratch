@@ -5,6 +5,7 @@ export interface Book {
   bookTitle: string;
   authorName: string;
   bookLanguage: string;
+  bookSeriesName?: string | null;
   bookYear: number;
   status: string;
   createdAt: Date;
@@ -23,6 +24,7 @@ export interface BooksHomeBook {
   bookTitle: string;
   authorName: string;
   bookLanguage: string;
+  bookSeriesName?: string | null;
   bookYear: number;
   status: string;
   createdAt: Date;
@@ -68,6 +70,7 @@ export interface SaveBooksHomeBookInput {
   bookTitle: string;
   authorName: string;
   bookLanguage: string;
+  bookSeriesName?: string;
   bookYear: number;
   status: string;
   analysisJson: string;

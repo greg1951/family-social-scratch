@@ -19,3 +19,14 @@ Notify the founder when a new member registers.
 - At the end of the member registration process, send the founder a thread with the name, email address of the member who registered.
 - This should be coordinated with task to create a family_activity record for the MEMBER_JOINED action type, which should be created when a new member registers to join the family. 
   - The family_activity record should include the memberId of the new member and the familyId of the family they joined.
+
+----------------------------------
+
+In step 4 of the family setup process, after the founder submits the form, the founder is sent a Family Threads private message with the Title of "Invited Family Members". 
+The purpose of this request is to replace that message content with the content from the "docs/ai-reqs/founder-to-invitees-email.json" file. The content in that file should be used as the template for the message that is sent to the founder after they invite new members to their family. The message should include the list of invited members and instructions for the founder on what to do next.
+In the json file you will find several strings that are to be substituted with actual values, depending on the new family creation.
+- Both areas are delimited by double exclamation marks and a descriptor. In all cases the double exclamation marks and descriptor should be removed and replaced with the actual content.
+  - !!member1@whocares.com, member2@whocares.com!! should be replaced with the actual list of invited members and their email addresses. 
+  - !!family-name!! should be replaced with the actual name of the family that was created.
+
+

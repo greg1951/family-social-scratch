@@ -1,0 +1,439 @@
+{
+  "type": "doc",
+  "content": [
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Next Steps"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "The members you have invited to your new family will receive a separate email from "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "my-family-social"
+        },
+        {
+          "type": "text",
+          "text": " with invitation links and details about the platform. Many times this email however, ends up in their spam or junk mail folders and not in their inbox. "
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "The steps below are optional, but by sending them a personal email from your email you may be able to alert them to the email in their spam or junk mail folders."
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    },
+    {
+      "type": "orderedList",
+      "attrs": {
+        "start": 1,
+        "type": null
+      },
+      "content": [
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Copy"
+                },
+                {
+                  "type": "text",
+                  "text": " ("
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "italic"
+                    }
+                  ],
+                  "text": "Ctl-C"
+                },
+                {
+                  "type": "text",
+                  "text": ") the "
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Invited Family Members"
+                },
+                {
+                  "type": "text",
+                  "text": " (the text between 👉 and 👈) to your clipboard."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Open"
+                },
+                {
+                  "type": "text",
+                  "text": " a new email in your email client (e.g. Gmail or Outlook)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Paste"
+                },
+                {
+                  "type": "text",
+                  "text": " ("
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "italic"
+                    }
+                  ],
+                  "text": "Ctl-V"
+                },
+                {
+                  "type": "text",
+                  "text": ") the invited members list into the "
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "To:"
+                },
+                {
+                  "type": "text",
+                  "text": " field of the new email."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Copy"
+                },
+                {
+                  "type": "text",
+                  "text": " all the text between 👉 and 👈 in the "
+                },
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Text To Copy"
+                },
+                {
+                  "type": "text",
+                  "text": " below (and paste into the body of your email. "
+                },
+                {
+                  "type": "hardBreak"
+                },
+                {
+                  "type": "text",
+                  "text": "(Feel free to revise the text.)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "listItem",
+          "content": [
+            {
+              "type": "paragraph",
+              "content": [
+                {
+                  "type": "text",
+                  "marks": [
+                    {
+                      "type": "bold"
+                    }
+                  ],
+                  "text": "Send"
+                },
+                {
+                  "type": "text",
+                  "text": " the email."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Invited Family Members"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "👉!!member1@whocares.com, member2@whocares.com!!👈"
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    },
+    {
+      "type": "heading",
+      "attrs": {
+        "level": 3
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Text To Copy"
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "👉Hello to all! I have created a trial account of "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "My Family Social"
+        },
+        {
+          "type": "text",
+          "text": " and invited all of you to join my new Family. That email has information about what My Family Social is, the cool features and things we can share there, like TV, Movies, Music reviews, Book and Poetry clubs, recipe, photos sharing, discussion groups, and much more. "
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "The problem though is that invitation email is likely in your "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "spam"
+        },
+        {
+          "type": "text",
+          "text": " or "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "junk"
+        },
+        {
+          "type": "text",
+          "text": " mail folder. If you don't see it in your Inbox, then look for an email from "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "my-family-social"
+        },
+        {
+          "type": "text",
+          "text": " as the sender in spam or junk mail. If you find it there, mark it as "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "not spam"
+        },
+        {
+          "type": "text",
+          "text": " or "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "underline"
+            }
+          ],
+          "text": "junk"
+        },
+        {
+          "type": "text",
+          "text": " mail. "
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    },
+    {
+      "type": "paragraph",
+      "content": [
+        {
+          "type": "text",
+          "text": "At the bottom of the invitation email is a link to register in the !!"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "family-name"
+        },
+        {
+          "type": "text",
+          "text": "!! family. The registration will create credentials for you to login. When you register, you'll get another email with useful information on how to sign in to the !!"
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "family-name"
+        },
+        {
+          "type": "text",
+          "text": "!! and new member "
+        },
+        {
+          "type": "text",
+          "marks": [
+            {
+              "type": "bold"
+            }
+          ],
+          "text": "next steps"
+        },
+        {
+          "type": "text",
+          "text": " 👈"
+        }
+      ]
+    },
+    {
+      "type": "paragraph"
+    }
+  ]
+}

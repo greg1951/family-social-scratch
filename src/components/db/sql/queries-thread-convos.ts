@@ -15,6 +15,8 @@ import {
   getConvoSummariesReturn,
   getThreadConversationDetailReturn,
   getThreadRecipientOptionsReturn,
+  updateThreadReplyReturn,
+  UpdateThreadReplyInput,
   updateThreadRecipientStateReturn,
 } from '../types/thread-convos';
 import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
@@ -548,9 +550,7 @@ export async function createThreadConversationWithInitialPost(
 
   const senderFullName = `${senderRecord.firstName} ${senderRecord.lastName}`.trim();
 
-  const dedupedRecipientIds = Array.from(new Set(
-    input.recipientMemberIds.filter((recipientId) => recipientId !== context.senderMemberId),
-  ));
+  const dedupedRecipientIds = Array.from(new Set(input.recipientMemberIds));
   const isFamilyBroadcast = input.primaryCategory === 'family_broadcast';
 
   if (isFamilyBroadcast && !context.isFounder) {
@@ -1044,6 +1044,143 @@ export async function addThreadReply(
     success: true,
     postId: insertedPost.id,
     message: 'Reply posted.',
+  };
+}
+
+/*------------------ updateThreadReply ------------------ */
+export async function updateThreadReply(
+  input: UpdateThreadReplyInput,
+  context: { familyId: number; memberId: number },
+): Promise<updateThreadReplyReturn> {
+  const normalizedContent = input.content.trim();
+
+  if (!normalizedContent) {
+    return {
+      success: false,
+      message: 'Reply text is required.',
+    };
+  }
+
+  const [familyRecord] = await db
+    .select({ status: family.status })
+    .from(family)
+    .where(eq(family.id, context.familyId));
+
+  if (!familyRecord) {
+    return {
+      success: false,
+      message: 'Family context was not found.',
+    };
+  }
+
+  if (familyRecord.status === 'expired') {
+    return {
+      success: false,
+      message: 'Your family account is expired and is currently read-only for threads.',
+    };
+  }
+
+  const [postRow] = await db
+    .select({
+      id: threadPostReply.id,
+      authorMemberId: threadPostReply.authorMemberId,
+      type: threadPostReply.type,
+      softDeletedAt: threadPostReply.softDeletedAt,
+      conversationId: threadConversation.id,
+      senderMemberId: threadConversation.senderMemberId,
+      visibility: threadConversation.visibility,
+      status: threadConversation.status,
+      recipientStateId: threadRecipientState.id,
+    })
+    .from(threadPostReply)
+    .innerJoin(threadConversation, eq(threadConversation.id, threadPostReply.conversationId))
+    .leftJoin(
+      threadRecipientState,
+      and(
+        eq(threadRecipientState.conversationId, threadConversation.id),
+        eq(threadRecipientState.recipientMemberId, context.memberId),
+      ),
+    )
+    .where(and(
+      eq(threadPostReply.id, input.postId),
+      eq(threadConversation.id, input.conversationId),
+      eq(threadConversation.familyId, context.familyId),
+    ));
+
+  if (!postRow) {
+    return {
+      success: false,
+      message: 'Reply was not found.',
+    };
+  }
+
+  if (postRow.type !== 'reply') {
+    return {
+      success: false,
+      message: 'Only thread replies can be edited.',
+    };
+  }
+
+  if (postRow.softDeletedAt) {
+    return {
+      success: false,
+      message: 'This reply can no longer be edited.',
+    };
+  }
+
+  if (postRow.authorMemberId !== context.memberId) {
+    return {
+      success: false,
+      message: 'You can only edit your own replies.',
+    };
+  }
+
+  if (postRow.status !== 'active') {
+    return {
+      success: false,
+      message: 'Replies can only be edited on active threads.',
+    };
+  }
+
+  const canEdit = await canMemberAccessThreadConversation({
+    senderMemberId: postRow.senderMemberId,
+    memberId: context.memberId,
+    visibility: postRow.visibility,
+    recipientStateId: postRow.recipientStateId,
+  });
+
+  if (!canEdit) {
+    return {
+      success: false,
+      message: 'You are not allowed to edit this reply.',
+    };
+  }
+
+  try {
+    await db
+      .update(threadPostReply)
+      .set({
+        content: normalizedContent,
+        contentJson: input.contentJson,
+      })
+      .where(eq(threadPostReply.id, input.postId));
+  } catch (error) {
+    if (!isMissingContentJsonColumnError(error)) {
+      throw error;
+    }
+
+    await db
+      .update(threadPostReply)
+      .set({
+        content: normalizedContent,
+      })
+      .where(eq(threadPostReply.id, input.postId));
+  }
+
+  return {
+    success: true,
+    postId: input.postId,
+    message: 'Reply updated.',
   };
 }
 

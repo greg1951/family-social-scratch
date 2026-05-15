@@ -548,7 +548,7 @@ export function MovieAddPage({
                   </div>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
                   <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
@@ -572,6 +572,8 @@ export function MovieAddPage({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-end">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Your Rating</label>
                   <div className="flex items-center gap-2">
@@ -607,10 +609,10 @@ export function MovieAddPage({
                     </Button>
                   </div>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
-                <Input id="movie-year" type="number" value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } />
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
+                  <Input id="movie-year" type="number" value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } className="max-w-36" />
+                </div>
               </div>
               <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
                 <p className="text-sm font-semibold text-[#5c2e1a]">Movie Tags</p>

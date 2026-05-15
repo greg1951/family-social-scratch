@@ -73,7 +73,10 @@ export default async function ThreadConversationDetailRoutePage({
           </Link>
         </div>
 
-        <ThreadConversationDetailPage conversation={ conversation } />
+        <ThreadConversationDetailPage
+          conversation={ conversation }
+          currentMemberId={ memberKeyDetails.memberId }
+        />
       </div>
     </section>
   );

@@ -48,7 +48,13 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
 
   const onSubmit = (values: InviteMemberValues) => {
     onAddInvite(values)
-    form.reset()
+    const persistedNote = form.getValues('inviteFounderMessage') ?? ''
+    form.reset({
+      firstName: '',
+      lastName: '',
+      email: '',
+      inviteFounderMessage: persistedNote,
+    })
   }
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {

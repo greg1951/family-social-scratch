@@ -234,6 +234,7 @@ export default function BooksHomePage({
       || bookItem.authorName.toLowerCase().includes(normalizedQuery)
       || bookItem.bookYear.toLowerCase().includes(normalizedQuery)
       || bookItem.bookLanguage.toLowerCase().includes(normalizedQuery)
+      || (bookItem.bookSeriesName ?? "").toLowerCase().includes(normalizedQuery)
       || bookItem.submitterName.toLowerCase().includes(normalizedQuery)
     ));
   }, [deferredSearchValue, directoryBooks]);
@@ -532,7 +533,7 @@ export default function BooksHomePage({
                     type="search"
                     value={ searchValue }
                     onChange={ (event) => setSearchValue(event.target.value) }
-                    placeholder="Search by title, author, year, language, or family member"
+                    placeholder="Search by title, author, year, language, series, or family member"
                     className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
                     aria-label="Search books"
                   />

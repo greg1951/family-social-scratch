@@ -467,7 +467,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">
                         Image Credit
                       </p>
-                      <p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMovieBasic.movieImageCredit || "No movie image credit provided." }</p>
+                      <p className="mt-2 text-sm leading-6 text-[#734f3a] wrap-anywhere">{ selectedMovieBasic.movieImageCredit || "No movie image credit provided." }</p>
                     </div> : null }
                   { selectedMovieBasic.movieSiteUrl ? (
                     <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4">

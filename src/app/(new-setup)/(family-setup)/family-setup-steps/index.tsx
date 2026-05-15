@@ -22,6 +22,7 @@ import { isMemberEmailInUse, sendEmails } from './actions';
 import { insertInvites } from "@/components/db/sql/queries-family-invite";
 import { addMemberNotifications } from '@/app/(new-setup)/(member-setup)/family-member-registration/actions';
 import { FounderDetails, NewFamilyMember } from '@/features/family/types/family-members';
+import { createThreadConversationWithInitialPost } from '@/components/db/sql/queries-thread-convos';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -169,6 +170,197 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         throw new Error(sendMemberEmailResult.message);
       };
       updateStepStatus(6, 'completed');
+
+      // Step 3: Collect invited member emails into a comma-delimited string
+      const invitedEmails = members.map(member => member.email).join(', ');
+
+      // Step 4: Send private message to the family founder with instructions
+      const plainTextMessage = `Next Steps\n\nCopy the invited members list to your clipboard and paste into the To field of a new email.\n\nInvited Family Members: ${ invitedEmails }`;
+
+      const threadInput = {
+        title: 'Invited Family Members',
+        subject: 'Your Invited Family Members',
+        visibility: 'private' as const,
+        recipientMemberIds: [insertMemberResult.id],
+        content: plainTextMessage,
+        contentJson: JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'heading',
+              attrs: { level: 3 },
+              content: [{ type: 'text', text: 'Next Steps' }],
+            },
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'The members you have invited to your new family will receive a separate email from ' },
+                { type: 'text', text: 'my-family-social', marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' with invitation links and details about the platform. Many times this email however, ends up in their spam or junk mail folders and not in their inbox. ' },
+              ],
+            },
+            {
+              type: 'paragraph',
+            },
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: 'The steps below are optional, but by sending them a personal email from your email you may be able to alert them to the email in their spam or junk mail folders.' }],
+            },
+            {
+              type: 'paragraph',
+            },
+            {
+              type: 'orderedList',
+              attrs: { start: 1, type: null },
+              content: [
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'Copy', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' (Ctl-C) the ' },
+                        { type: 'text', text: 'Invited Family Members', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' (the text between 👉 and 👈) to your clipboard.' },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'Open', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' a new email in your email client (e.g. Gmail or Outlook)' },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'Paste', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' (Ctl-V) the invited members list into the ' },
+                        { type: 'text', text: 'To:', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' field of the new email.' },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'Copy', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' all the text between 👉 and 👈 in the ' },
+                        { type: 'text', text: 'Text To Copy', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' below (and paste into the body of your email. (Feel free to revise the text.)' },
+                      ],
+                    },
+                  ],
+                },
+                {
+                  type: 'listItem',
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        { type: 'text', text: 'Send', marks: [{ type: 'bold' }] },
+                        { type: 'text', text: ' the email.' },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 'heading',
+              attrs: { level: 3 },
+              content: [{ type: 'text', text: 'Invited Family Members' }],
+            },
+            {
+              type: 'paragraph',
+              content: [{ type: 'text', text: '👉' + invitedEmails + '👈' }],
+            },
+            {
+              type: 'paragraph',
+            },
+            {
+              type: 'heading',
+              attrs: { level: 3 },
+              content: [{ type: 'text', text: 'Text To Copy' }],
+            },
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: '👉Hello to all! I have created a trial account of ' },
+                { type: 'text', text: 'My Family Social', marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' and invited all of you to join my new Family. That email has information about what My Family Social is, the cool features and things we can share there, like TV, Movies, Music reviews, Book and Poetry clubs, recipe, photos sharing, discussion groups, and much more. ' },
+              ],
+            },
+            {
+              type: 'paragraph',
+            },
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'The problem though is that invitation email is likely in your ' },
+                { type: 'text', text: 'spam', marks: [{ type: 'underline' }] },
+                { type: 'text', text: ' or ' },
+                { type: 'text', text: 'junk', marks: [{ type: 'underline' }] },
+                { type: 'text', text: ' mail folder. If you don\'t see it in your Inbox, then look for an email from ' },
+                { type: 'text', text: 'my-family-social', marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' as the sender in spam or junk mail. If you find it there, mark it as ' },
+                { type: 'text', text: 'not spam', marks: [{ type: 'underline' }] },
+                { type: 'text', text: ' or ' },
+                { type: 'text', text: 'junk', marks: [{ type: 'underline' }] },
+                { type: 'text', text: ' mail. ' },
+              ],
+            },
+            {
+              type: 'paragraph',
+            },
+            {
+              type: 'paragraph',
+              content: [
+                { type: 'text', text: 'At the bottom of the invitation email is a link to register in the ' },
+                { type: 'text', text: values.familyName, marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' family. The registration will create credentials for you to login. When you register, you\'ll get another email with useful information on how to sign in to the ' },
+                { type: 'text', text: values.familyName, marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' and new member ' },
+                { type: 'text', text: 'next steps', marks: [{ type: 'bold' }] },
+                { type: 'text', text: ' 👈' },
+              ],
+            },
+            {
+              type: 'paragraph',
+            },
+          ],
+        }),
+      };
+
+      const threadResult = await createThreadConversationWithInitialPost(threadInput, {
+        familyId: insertFamilyResult.id,
+        senderMemberId: insertMemberResult.id,
+        isFounder: true,
+      });
+
+      if (!threadResult.success) {
+        updateStepStatus(6, 'error', threadResult.message);
+        throw new Error(threadResult.message);
+      }
+
+      setShowStatusDialog(false);
+      router.push('/login');
+      return;
 
     } catch (error) {
       console.error('Error during form submission:', error);
@@ -789,8 +981,13 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           </div>
 
                           <p className="text-xs text-neutral-800">
-                            If corrections need to be made, use the <b>Back</b> button to return to the step and update the information.<br></br><br></br>
+                            If corrections need to be made, use the <b>Back</b> button to return to the step and update the information.
+                          </p>
+                          <p className="text-xs text-neutral-800 mt-2">
                             Otherwise, <b>Confirm</b> these setup that will create your new My Family Social site and send invitations to invited members.
+                          </p>
+                          <p className="text-xs text-neutral-800 mt-2">
+                            You will also be sent an <u>important message</u> in Family Threads, addressed to you as the family founder. However, first you must login using your new credentials and then go to <b>Family Threads</b>.
                           </p>
                         </div>
 

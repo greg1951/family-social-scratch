@@ -4,3 +4,32 @@ Let's now add the inviteFounderMessage on the form that create a new family, by 
 - The last step begins on line 649 of the same file.
 - When the form is submitted, it is the lines 162-163 of the same file that sends the emails. 
 - The inviteFounderMessage should be added to the payload sent to the backend, for all of the invited members of the new family.
+
+-------------------------------------
+
+Background
+- The New Family Registration form reside in file "src/app/(new-setup)/family-setup-steps/index.tsx"
+- It is a multi-step form. The stepNumber variable is used to track the current step of the form. 
+- Step 4 begins on line 713 and runs through line 812. In this step, the new family creation is submitted to the backend.
+
+Request
+- On the Step 4 confirmation page, When the family founder submits the form
+  - Put the email addresses collected in Step 3 into a comma delimted string 
+  - Send that list as a private message to the family founder in Family Threads 
+  - The family thread message should have the comma delimited string of invited emails. 
+    - The note should suggest to the family founder to send a personal email to the provided email addresses in the founder's own email client.
+  - The Family threads message should contain the following two paragraphs to be sent as a part of that personal email:
+- On the submission of the form, include a message to the founder to reference the family thread message.
+I have signed up for a trial account of My Family Social and you were recently sent an invitation by My Family Social to register in the family I created. That email has information about what My Family Social is, the cool features and things we can share there, like recipes, TV, Movie, Book, Recipes, photos and much more. At the bottom of the My Family Social invitation email is a link to register. 
+
+You may not see the invitation email because may have gone to your span or junk mail folder. The sender is "my-family-social". In the email I attached a note from me. Take a look and join us if you can. If you decide it's not your thing, you can always leave (we'll miss you though).  
+
+-------------------------------------
+
+- The message to the family founder submitted on Step 4 is NOT the message sent to the invited members.
+- Instead, the message to the family founder should be a message that references:
+  - A comma-delimited list of the email addresses of the invited members.
+  - There should be a note to that the founder should send a personal email to those addresses. 
+  - The message should tell them to look for a my-family-social email in their inbox or spam/junk folder.
+  - They will use that email to join the My Family Social platform.
+  - Use Rich Text formatting to make the message clear and easy to read.

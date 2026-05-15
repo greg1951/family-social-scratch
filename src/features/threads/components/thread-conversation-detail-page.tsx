@@ -7,11 +7,12 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ArchiveRestore, Eye, EyeOff, MessageCircleReply, Bold, Italic, Underline as UnderlineIcon, List, Undo2, Redo2 } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, EyeOff, MessageCircleReply, Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   addThreadReplyAction,
+  updateThreadReplyAction,
   updateThreadArchiveStateAction,
   updateThreadReadStateAction,
 } from "@/app/(features)/(threads)/threads/actions";
@@ -26,6 +27,7 @@ import { Button } from "@/components/ui/button";
 
 type ThreadConversationDetailPageProps = {
   conversation: ThreadConversationDetail;
+  currentMemberId: number;
 };
 
 function formatDate(value: Date | null): string {
@@ -88,9 +90,10 @@ function ThreadPostBody({ content, contentJson }: { content: string; contentJson
   );
 }
 
-export function ThreadConversationDetailPage({ conversation }: ThreadConversationDetailPageProps) {
+export function ThreadConversationDetailPage({ conversation, currentMemberId }: ThreadConversationDetailPageProps) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [editingPostId, setEditingPostId] = useState<number | null>(null);
   const normalizedTitle = conversation.title.trim().toLowerCase();
   const normalizedSubject = (conversation.subject ?? "").trim().toLowerCase();
   const isSupportResponseThread = conversation.visibility === "private"
@@ -103,6 +106,17 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
     editorProps: {
       attributes: {
         class: "tiptap min-h-[10rem]",
+      },
+    },
+  });
+
+  const editReplyEditor = useEditor({
+    extensions: [StarterKit, Underline],
+    content: createEmptyTipTapDocument() as JSONContent,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-[8rem]",
       },
     },
   });
@@ -203,6 +217,54 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
     });
   }
 
+  function beginEditingPost(postId: number, content: string, contentJson: string) {
+    if (!editReplyEditor) {
+      toast.error("Reply editor is still loading.");
+      return;
+    }
+
+    editReplyEditor.commands.setContent(getPostDocument(contentJson, content));
+    setEditingPostId(postId);
+  }
+
+  function cancelEditingPost() {
+    setEditingPostId(null);
+    editReplyEditor?.commands.setContent(createEmptyTipTapDocument());
+  }
+
+  function saveEditedPost(postId: number) {
+    if (!editReplyEditor) {
+      toast.error("Reply editor is still loading.");
+      return;
+    }
+
+    const normalizedReply = editReplyEditor.getText().trim();
+
+    if (!normalizedReply) {
+      toast.error("Reply cannot be empty.");
+      return;
+    }
+
+    startSaveTransition(async () => {
+      const result = await updateThreadReplyAction({
+        conversationId: conversation.id,
+        postId,
+        content: normalizedReply,
+        contentJson: serializeTipTapDocument(editReplyEditor.getJSON()),
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setEditingPostId(null);
+      editReplyEditor.commands.setContent(createEmptyTipTapDocument());
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
   async function handleOpenAttachment(objectKey: string) {
     try {
       const response = await fetch("/api/s3-upload", {
@@ -274,7 +336,65 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
               <p className="text-xs font-medium text-[#8c62aa]">{ formatDate(post.createdAt) }</p>
             </div>
 
-            <ThreadPostBody content={ post.content } contentJson={ post.contentJson } />
+            { editingPostId === post.id ? (
+              <div className="mt-3 overflow-hidden rounded-[1.1rem] border border-[#ddc5ee]">
+                <div className="flex flex-wrap gap-2 border-b border-[#ead8f7] bg-[#f9f1ff] px-3 py-2">
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleBold().run() }>
+                    <Bold className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleItalic().run() }>
+                    <Italic className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleUnderline().run() }>
+                    <UnderlineIcon className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleHeading({ level: 3 }).run() }>
+                    H3
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleBulletList().run() }>
+                    <List className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().toggleOrderedList().run() }>
+                    <ListOrdered className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().undo().run() }>
+                    <Undo2 className="size-4" />
+                  </Button>
+                  <Button type="button" size="sm" variant="outline" onClick={ () => editReplyEditor?.chain().focus().redo().run() }>
+                    <Redo2 className="size-4" />
+                  </Button>
+                </div>
+
+                <EditorContent
+                  editor={ editReplyEditor }
+                  className="[&_.tiptap]:min-h-32 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-sm [&_.tiptap]:text-[#4d2a66] [&_.tiptap]:outline-none [&_.tiptap_h3]:text-base [&_.tiptap_h3]:font-semibold [&_.tiptap_h3]:leading-6 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5"
+                />
+
+                <div className="flex justify-end gap-2 border-t border-[#ead8f7] bg-[#f9f1ff] px-3 py-2">
+                  <Button type="button" size="sm" variant="outline" onClick={ cancelEditingPost } disabled={ isSaving }>
+                    Cancel
+                  </Button>
+                  <Button type="button" size="sm" onClick={ () => saveEditedPost(post.id) } disabled={ isSaving } className="bg-[#7b3ca2] text-white hover:bg-[#633183]">
+                    Save
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ThreadPostBody content={ post.content } contentJson={ post.contentJson } />
+            ) }
+
+            { post.type === "reply" && post.authorMemberId === currentMemberId && editingPostId !== post.id && (
+              <div className="mt-3 flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={ () => beginEditingPost(post.id, post.content, post.contentJson) }
+                >
+                  Edit Reply
+                </Button>
+              </div>
+            ) }
 
             { post.attachments.length > 0 && (
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -310,8 +430,14 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
               <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleUnderline().run() }>
                 <UnderlineIcon className="size-4" />
               </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleHeading({ level: 3 }).run() }>
+                H3
+              </Button>
               <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleBulletList().run() }>
                 <List className="size-4" />
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().toggleOrderedList().run() }>
+                <ListOrdered className="size-4" />
               </Button>
               <Button type="button" size="sm" variant="outline" onClick={ () => replyEditor?.chain().focus().undo().run() }>
                 <Undo2 className="size-4" />
@@ -323,7 +449,7 @@ export function ThreadConversationDetailPage({ conversation }: ThreadConversatio
 
             <EditorContent
               editor={ replyEditor }
-              className="[&_.tiptap]:min-h-40 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-sm [&_.tiptap]:text-[#4d2a66] [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5"
+              className="[&_.tiptap]:min-h-40 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-sm [&_.tiptap]:text-[#4d2a66] [&_.tiptap]:outline-none [&_.tiptap_h3]:text-base [&_.tiptap_h3]:font-semibold [&_.tiptap_h3]:leading-6 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5"
             />
           </div>
 

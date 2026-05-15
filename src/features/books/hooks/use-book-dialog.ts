@@ -12,6 +12,7 @@ export type BookDraft = {
   bookTitle: string;
   authorName: string;
   bookLanguage: string;
+  bookSeriesName: string;
   bookYear: string;
   submitterName: string;
   likesCount: number;
@@ -65,6 +66,7 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     bookTitle: bookRecord.bookTitle,
     authorName: bookRecord.authorName,
     bookLanguage: bookRecord.bookLanguage,
+    bookSeriesName: bookRecord.bookSeriesName ?? "",
     bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
     submitterName: createSubmitterLabel(bookRecord, member),
     likesCount: bookRecord.likesCount ?? 0,
@@ -88,6 +90,7 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     bookTitle: "",
     authorName: "",
     bookLanguage: "English",
+    bookSeriesName: "",
     bookYear: "",
     submitterName: `${ member.firstName } ${ member.lastName }`,
     likesCount: 0,
@@ -204,6 +207,7 @@ export function useBookDialog({
     const normalizedTitle = draft.bookTitle.trim();
     const normalizedAuthorName = draft.authorName.trim();
     const normalizedLanguage = draft.bookLanguage.trim();
+    const normalizedSeriesName = draft.bookSeriesName.trim();
     const normalizedYear = draft.bookYear.trim();
 
     if (!normalizedTitle) {
@@ -218,6 +222,11 @@ export function useBookDialog({
 
     if (!normalizedLanguage) {
       toast.error("Enter a book language before saving.");
+      return;
+    }
+
+    if (normalizedSeriesName && normalizedSeriesName.length < 5) {
+      toast.error("Book Series Name must be at least 5 characters when provided.");
       return;
     }
 
@@ -239,6 +248,7 @@ export function useBookDialog({
         bookTitle: normalizedTitle,
         authorName: normalizedAuthorName,
         bookLanguage: normalizedLanguage,
+        bookSeriesName: normalizedSeriesName,
         bookYear: Number(normalizedYear),
         status: draft.status,
         analysisJson,

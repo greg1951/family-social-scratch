@@ -155,7 +155,7 @@ export const discussPostReply = pgTable("discuss_post_reply", {
   parentPostId: integer("parent_post_id"),
   rootPostId: integer("root_post_id"),
   discussThreadId: integer("fk_discuss_thread_id").notNull().references(() => discussThread.id, {onDelete: 'cascade'}),
-  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   },
   (table) => [
     foreignKey({
@@ -172,7 +172,7 @@ export const discussPostReply = pgTable("discuss_post_reply", {
     index('discuss_post_reply_discuss_thread_idx').on(table.discussThreadId),
     index('discuss_post_reply_parent_post_idx').on(table.parentPostId),
     index('discuss_post_reply_author_created_idx').on(table.authorMemberId),
-    unique('discuss_post_reply_discuss_thread_seq_uq').on(table.discussThreadId, table.seqNo),]);
+  ]);
 
 export const discussLike = pgTable("discuss_like", {
   id: serial("id").primaryKey(),
@@ -232,7 +232,7 @@ export const threadConversation = pgTable("thread_conversation", {
   archiveBatchId: integer("archive_batch_id"),
   archiveObjectKey: text("archive_object_key"),
   senderMemberId: integer("fk_sender_member_id").references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('thread_conversation_family_created_idx').on(table.familyId, table.createdAt),
@@ -242,7 +242,7 @@ export const threadConversation = pgTable("thread_conversation", {
 
 export const threadPostReply = pgTable("thread_post_reply", {
   id: serial("id").primaryKey(),
-  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id),
+  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
   authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   type: text("type").notNull().default("post"),
   content: text("content").notNull(),
@@ -462,6 +462,7 @@ export const book = pgTable("book", {
   authorName: text("author_name").notNull().default("anonymous"),
   bookLanguage: text("book_language").notNull().default("english"),
   bookYear: integer("book_year").notNull().default(0),
+  bookSeriesName: text("book_series_name"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
   memberId: integer("fk_member_id").notNull().references(() => member.id),

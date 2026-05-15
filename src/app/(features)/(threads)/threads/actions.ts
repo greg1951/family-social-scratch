@@ -7,10 +7,15 @@ import {
   archiveAllReadConversationsForRecipient,
   archiveSenderConversation,
   createThreadConversationWithInitialPost,
+  updateThreadReply,
   updateRecipientThreadArchiveState,
   updateRecipientThreadReadState,
 } from '@/components/db/sql/queries-thread-convos';
-import { AddThreadReplyInput, CreateThreadConversationInput } from '@/components/db/types/thread-convos';
+import {
+  AddThreadReplyInput,
+  CreateThreadConversationInput,
+  UpdateThreadReplyInput,
+} from '@/components/db/types/thread-convos';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
 export async function archiveReadThreadsAction() {
@@ -67,6 +72,29 @@ export async function addThreadReplyAction(input: AddThreadReplyInput) {
   }
 
   const result = await addThreadReply(input, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePath('/threads');
+    revalidatePath(`/threads/${ input.conversationId }`);
+  }
+
+  return result;
+}
+
+export async function updateThreadReplyAction(input: UpdateThreadReplyInput) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to edit a reply.',
+    };
+  }
+
+  const result = await updateThreadReply(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });
