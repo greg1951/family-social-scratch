@@ -24,6 +24,7 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { ThreadConversationDetail } from "@/components/db/types/thread-convos";
 import { Button } from "@/components/ui/button";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 type ThreadConversationDetailPageProps = {
   conversation: ThreadConversationDetail;
@@ -52,6 +53,131 @@ function getPostDocument(contentJson: string, fallbackContent: string): JSONCont
   }
 
   return createTextTipTapDocument(fallbackContent);
+}
+
+function formatFileSize(value: number | null): string {
+  if (!value || value <= 0) {
+    return "-";
+  }
+
+  if (value < 1024) {
+    return `${ value } B`;
+  }
+
+  if (value < 1024 * 1024) {
+    return `${ (value / 1024).toFixed(1) } KB`;
+  }
+
+  return `${ (value / (1024 * 1024)).toFixed(1) } MB`;
+}
+
+function isImageAttachment(mimeType: string | null, fileName: string | null, objectKey: string): boolean {
+  if (mimeType?.toLowerCase().startsWith("image/")) {
+    return true;
+  }
+
+  const candidate = (fileName ?? objectKey).toLowerCase();
+  return /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(candidate);
+}
+
+function ThreadAttachmentImageCard({
+  objectKey,
+  fileName,
+  fileSizeBytes,
+  onOpen,
+}: {
+  objectKey: string;
+  fileName: string | null;
+  fileSizeBytes: number | null;
+  onOpen: (objectKey: string) => void;
+}) {
+  const [resolvedSrc, setResolvedSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      const key = extractS3KeyFromValue(objectKey);
+
+      if (!key) {
+        if (!isCancelled) {
+          setResolvedSrc(null);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(null);
+          }
+          return;
+        }
+
+        const body = await response.json();
+
+        if (!isCancelled) {
+          setResolvedSrc(typeof body?.url === "string" ? body.url : null);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(null);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [objectKey]);
+
+  const displayName = fileName ?? objectKey;
+
+  return (
+    <article className="min-w-62 max-w-62 sm:min-w-72 sm:max-w-72">
+      <button
+        type="button"
+        onClick={ () => onOpen(objectKey) }
+        className="group w-full rounded-[1.2rem] border border-[#e5d1f2] bg-[#faf5ff] text-left shadow-[0_14px_30px_-26px_rgba(90,20,120,0.7)] transition hover:bg-[#f4e9ff]"
+      >
+        <div className="relative aspect-[16/6.7] overflow-hidden rounded-t-[1.2rem] sm:aspect-16/10">
+          { resolvedSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={ resolvedSrc }
+              alt={ displayName }
+              className="h-full w-full object-cover transition duration-200 group-hover:scale-[1.01]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-[#efe2fa] text-xs font-semibold uppercase tracking-[0.16em] text-[#7a4a9a]">
+              Preview unavailable
+            </div>
+          ) }
+        </div>
+        <div className="space-y-1 px-3 py-3">
+          <p className="line-clamp-1 text-sm font-semibold text-[#5b2b78]" title={ displayName }>
+            { displayName }
+          </p>
+          <p className="text-xs font-medium text-[#8c62aa]">
+            { formatFileSize(fileSizeBytes) }
+          </p>
+        </div>
+      </button>
+    </article>
+  );
 }
 
 function ThreadPostBody({ content, contentJson }: { content: string; contentJson: string }) {
@@ -397,19 +523,43 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
             ) }
 
             { post.attachments.length > 0 && (
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                { post.attachments.map((attachment) => (
-                  <button
-                    type="button"
-                    key={ attachment.id }
-                    onClick={ () => handleOpenAttachment(attachment.s3ObjectKey) }
-                    className="inline-flex items-center justify-between rounded-lg border border-[#e5d1f2] bg-[#faf5ff] px-3 py-2 text-sm text-[#5b2b78] hover:bg-[#f4e9ff]"
-                  >
-                    <span className="line-clamp-1 pr-3">{ attachment.fileName ?? attachment.s3ObjectKey }</span>
-                    <span className="text-xs font-semibold text-[#8c62aa]">Open</span>
-                  </button>
-                )) }
-              </div>
+              <>
+                { post.attachments.filter((attachment) => isImageAttachment(attachment.mimeType, attachment.fileName, attachment.s3ObjectKey)).length > 0 && (
+                  <div className="mt-4 overflow-x-auto pb-1">
+                    <div className="flex gap-3">
+                      { post.attachments
+                        .filter((attachment) => isImageAttachment(attachment.mimeType, attachment.fileName, attachment.s3ObjectKey))
+                        .map((attachment) => (
+                          <ThreadAttachmentImageCard
+                            key={ attachment.id }
+                            objectKey={ attachment.s3ObjectKey }
+                            fileName={ attachment.fileName }
+                            fileSizeBytes={ attachment.fileSizeBytes }
+                            onOpen={ handleOpenAttachment }
+                          />
+                        )) }
+                    </div>
+                  </div>
+                ) }
+
+                { post.attachments.filter((attachment) => !isImageAttachment(attachment.mimeType, attachment.fileName, attachment.s3ObjectKey)).length > 0 && (
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    { post.attachments
+                      .filter((attachment) => !isImageAttachment(attachment.mimeType, attachment.fileName, attachment.s3ObjectKey))
+                      .map((attachment) => (
+                        <button
+                          type="button"
+                          key={ attachment.id }
+                          onClick={ () => handleOpenAttachment(attachment.s3ObjectKey) }
+                          className="inline-flex items-center justify-between rounded-lg border border-[#e5d1f2] bg-[#faf5ff] px-3 py-2 text-sm text-[#5b2b78] hover:bg-[#f4e9ff]"
+                        >
+                          <span className="line-clamp-1 pr-3">{ attachment.fileName ?? attachment.s3ObjectKey }</span>
+                          <span className="text-xs font-semibold text-[#8c62aa]">Open</span>
+                        </button>
+                      )) }
+                  </div>
+                ) }
+              </>
             ) }
           </article>
         )) }

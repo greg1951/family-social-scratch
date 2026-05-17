@@ -95,6 +95,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                       FAQ
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/threads/thread-template">
+                      Edit Templates
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) }

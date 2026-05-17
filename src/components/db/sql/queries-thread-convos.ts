@@ -44,7 +44,6 @@ export async function canMemberAccessThreadConversation(params: {
   recipientStateId: number | null;
 }): Promise<boolean> {
   return params.senderMemberId === params.memberId
-    || params.visibility === 'public'
     || Boolean(params.recipientStateId);
 }
 
@@ -370,11 +369,69 @@ export async function getConvoSummaries(familyId: number, memberId: number)
       eq(threadConversation.familyId, familyId),
       or(
         eq(threadConversation.senderMemberId, memberId),
-        eq(threadConversation.visibility, 'public'),
         isNotNull(threadRecipientState.id),
       ),
     ))
     .orderBy(desc(threadConversation.createdAt));
+
+  const conversationIds = rows.map((row) => row.id);
+  const recipientNamesByConversationId = new Map<number, string[]>();
+  const replyCountByConversationId = new Map<number, number>();
+  const imageCountByConversationId = new Map<number, number>();
+
+  if (conversationIds.length > 0) {
+    const recipientRows = await db
+      .select({
+        conversationId: threadRecipientState.conversationId,
+        firstName: member.firstName,
+      })
+      .from(threadRecipientState)
+      .innerJoin(member, eq(member.id, threadRecipientState.recipientMemberId))
+      .where(inArray(threadRecipientState.conversationId, conversationIds))
+      .orderBy(asc(threadRecipientState.conversationId), asc(member.firstName), asc(member.lastName));
+
+    for (const row of recipientRows) {
+      if (!row.firstName) {
+        continue;
+      }
+
+      const currentNames = recipientNamesByConversationId.get(row.conversationId) ?? [];
+      if (!currentNames.includes(row.firstName)) {
+        currentNames.push(row.firstName);
+        recipientNamesByConversationId.set(row.conversationId, currentNames);
+      }
+    }
+
+    const replyRows = await db
+      .select({
+        conversationId: threadPostReply.conversationId,
+        replyCount: count().mapWith(Number),
+      })
+      .from(threadPostReply)
+      .where(and(
+        inArray(threadPostReply.conversationId, conversationIds),
+        eq(threadPostReply.type, 'reply'),
+      ))
+      .groupBy(threadPostReply.conversationId);
+
+    for (const row of replyRows) {
+      replyCountByConversationId.set(row.conversationId, row.replyCount);
+    }
+
+    const imageRows = await db
+      .select({
+        conversationId: threadPostReply.conversationId,
+        imageCount: count(threadPostAttachment.id).mapWith(Number),
+      })
+      .from(threadPostAttachment)
+      .innerJoin(threadPostReply, eq(threadPostReply.id, threadPostAttachment.postId))
+      .where(inArray(threadPostReply.conversationId, conversationIds))
+      .groupBy(threadPostReply.conversationId);
+
+    for (const row of imageRows) {
+      imageCountByConversationId.set(row.conversationId, row.imageCount);
+    }
+  }
 
   return {
     success: true,
@@ -387,6 +444,7 @@ export async function getConvoSummaries(familyId: number, memberId: number)
       senderMemberId: row.senderMemberId,
       senderFirstName: row.senderFirstName,
       senderLastName: row.senderLastName,
+      recipientNames: recipientNamesByConversationId.get(row.id) ?? [],
       recipientStateId: row.recipientStateId,
       recipientMemberId: row.recipientMemberId,
       recipientFirstName: row.recipientFirstName,
@@ -397,6 +455,8 @@ export async function getConvoSummaries(familyId: number, memberId: number)
       conversationArchivedAt: row.conversationArchivedAt,
       postContent: row.postContent,
       postType: row.postType,
+      replyCount: replyCountByConversationId.get(row.id) ?? 0,
+      imageCount: imageCountByConversationId.get(row.id) ?? 0,
     })),
   };
 }
@@ -562,7 +622,7 @@ export async function createThreadConversationWithInitialPost(
 
   let recipientIdsToInsert: number[] = [];
 
-  if (input.visibility === 'public') {
+  if (isFamilyBroadcast) {
     const audienceRows = await db
       .select({ memberId: member.id })
       .from(member)
@@ -579,7 +639,7 @@ export async function createThreadConversationWithInitialPost(
     if (dedupedRecipientIds.length === 0) {
       return {
         success: false,
-        message: 'Select at least one recipient for a private thread.',
+        message: 'Select at least one recipient for this thread.',
       };
     }
 

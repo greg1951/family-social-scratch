@@ -87,7 +87,7 @@ describe("Thread action create/failure regression", () => {
   it("returns create failure message and does not revalidate", async () => {
     createThreadConversationWithInitialPostMock.mockResolvedValue({
       success: false,
-      message: "Select at least one recipient for a private thread.",
+      message: "Select at least one recipient for this thread.",
     });
 
     const result = await createThreadConversationAction({
@@ -100,7 +100,7 @@ describe("Thread action create/failure regression", () => {
 
     expect(result).toEqual({
       success: false,
-      message: "Select at least one recipient for a private thread.",
+      message: "Select at least one recipient for this thread.",
     });
     expect(revalidatePathMock).not.toHaveBeenCalled();
   });

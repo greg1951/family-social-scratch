@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { MessageSquareText, Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send } from "lucide-react";
+import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -81,8 +81,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
           s.title,
           s.senderFirstName,
           s.senderLastName,
-          s.recipientFirstName,
-          s.recipientLastName,
+          s.recipientNames.join(" "),
           s.postContent,
           s.visibility,
           s.status,
@@ -312,15 +311,14 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 <table className="w-full min-w-4xl border-collapse text-left">
                   <thead className="sticky top-0 z-10 bg-[#faf5ff] text-xs uppercase tracking-[0.18em] text-[#8840b0]">
                     <tr>
-                      <th className="px-4 py-3 font-bold">#</th>
+                      <th className="px-4 py-3 font-bold">Sent</th>
                       <th className="px-4 py-3 font-bold">Title</th>
                       <th className="px-4 py-3 font-bold">Sender</th>
-                      <th className="px-4 py-3 font-bold">Recipient</th>
+                      <th className="px-4 py-3 font-bold">Recipients</th>
                       <th className="px-4 py-3 font-bold">Visibility</th>
-                      <th className="px-4 py-3 font-bold">Type</th>
+                      <th className="px-4 py-3 font-bold">Activity</th>
                       <th className="px-4 py-3 font-bold">Message</th>
                       <th className="px-4 py-3 font-bold">Status</th>
-                      <th className="px-4 py-3 font-bold">Sent</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -338,9 +336,9 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                             isUnread ? "bg-[#fdf5ff]" : "bg-white",
                           ].join(" ") }
                         >
-                          {/* ID */ }
-                          <td className="px-4 py-3 text-xs font-mono text-[#9a6ab8]">
-                            { s.id }
+                          {/* Sent timestamp */ }
+                          <td className="whitespace-nowrap px-4 py-3 text-sm text-[#9a7ab8]">
+                            { formatDate(s.createdAt) }
                           </td>
 
                           {/* Title */ }
@@ -364,9 +362,9 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
 
                           {/* Recipient */ }
                           <td className="px-4 py-3 text-sm text-[#5c3a7a]">
-                            { s.recipientFirstName
-                              ? `${ s.recipientFirstName } ${ s.recipientLastName ?? "" }`.trim()
-                              : <span className="text-[#b0a0c0]">All</span> }
+                            { s.recipientNames.length > 0
+                              ? s.recipientNames.join(", ")
+                              : <span className="text-[#b0a0c0]">—</span> }
                           </td>
 
                           {/* Visibility */ }
@@ -382,17 +380,20 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                             ) }
                           </td>
 
-                          {/* Type */ }
+                          {/* Activity */ }
                           <td className="px-4 py-3">
-                            { s.postType === "reply" ? (
-                              <span className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-[#6060c0]">
-                                <Reply className="size-3" /> Reply
+                            <div className="flex flex-wrap items-center gap-2 text-[0.72rem] font-semibold text-[#6b4a86]">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#f5ecff] px-2 py-1 text-[#6d2f93]">
+                                <Reply className="size-3" />
+                                { s.replyCount }
                               </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[0.72rem] font-semibold text-[#8840b0]">
-                                <MessageSquareText className="size-3" /> Post
-                              </span>
-                            ) }
+                              { s.imageCount > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-[#eef6ff] px-2 py-1 text-[#2f5f93]">
+                                  <ImageIcon className="size-3" />
+                                  { s.imageCount }
+                                </span>
+                              ) }
+                            </div>
                           </td>
 
                           {/* Message preview */ }
@@ -494,10 +495,6 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                             </DropdownMenu>
                           </td>
 
-                          {/* Sent timestamp */ }
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-[#9a7ab8]">
-                            { formatDate(s.createdAt) }
-                          </td>
                         </tr>
                       );
                     }) }

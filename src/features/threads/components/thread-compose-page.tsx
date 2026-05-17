@@ -2,6 +2,8 @@
 
 import type { JSONContent } from "@tiptap/core";
 import LinkExtension from "@tiptap/extension-link";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -30,8 +32,10 @@ import { toast } from "sonner";
 import { createThreadConversationAction } from "@/app/(features)/(threads)/threads/actions";
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { ThreadRecipientOption } from "@/components/db/types/thread-convos";
+import type { ThreadTemplate } from "@/components/db/types/thread-templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { replaceTemplateVariables, validateTipTapDocument } from "@/features/threads/utils/template-variables";
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 
@@ -48,20 +52,52 @@ function slugifyFileSegment(value: string): string {
     .slice(0, 40);
 }
 
+function normalizeTemplateContentForEditor(node: JSONContent): JSONContent {
+  const normalizedType =
+    node.type === "taskList"
+      ? "bulletList"
+      : node.type === "taskItem"
+        ? "listItem"
+        : node.type;
+
+  const normalizedContent = Array.isArray(node.content)
+    ? node.content.map((child) => normalizeTemplateContentForEditor(child))
+    : node.content;
+
+  // taskItem attrs (like checked) are not valid on listItem nodes.
+  const normalizedAttrs = node.type === "taskItem" ? undefined : node.attrs;
+
+  return {
+    ...node,
+    type: normalizedType,
+    attrs: normalizedAttrs,
+    content: normalizedContent,
+  };
+}
+
 type ThreadComposePageProps = {
   memberId: number;
   firstName: string;
   isFounder: boolean;
   recipients: ThreadRecipientOption[];
+  templates: ThreadTemplate[];
+  founderData: { firstName: string; lastName: string };
 };
 
-export function ThreadComposePage({ memberId, firstName, isFounder, recipients }: ThreadComposePageProps) {
+export function ThreadComposePage({
+  memberId,
+  firstName,
+  isFounder,
+  recipients,
+  templates,
+  founderData,
+}: ThreadComposePageProps) {
   const router = useRouter();
   const [isSubmitting, startSubmitTransition] = useTransition();
   const [title, setTitle] = useState("");
-  const [subject, setSubject] = useState("");
   const [audience, setAudience] = useState<"private" | "public" | "family_broadcast">("private");
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[]>([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
   const [emailAlso, setEmailAlso] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const filteredRecipients = useMemo(
@@ -69,16 +105,23 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
     [memberId, recipients],
   );
 
-  const editor = useEditor({
-    extensions: [
+  const editorExtensions = useMemo(
+    () => [
       StarterKit,
       Underline,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       LinkExtension.configure({
         openOnClick: false,
         autolink: true,
         defaultProtocol: "https",
       }),
     ],
+    [],
+  );
+
+  const editor = useEditor({
+    extensions: editorExtensions,
     content: getEditorDocument(),
     immediatelyRender: false,
     editorProps: {
@@ -86,13 +129,13 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
         class: "tiptap min-h-[12rem]",
       },
     },
-  });
+  }, []);
 
   const selectedRecipientCount = selectedRecipientIds.length;
-  const isPublicAudience = audience === "public" || audience === "family_broadcast";
+  const isFamilyBroadcastAudience = audience === "family_broadcast";
 
   const recipientLabel = useMemo(() => {
-    if (isPublicAudience) {
+    if (isFamilyBroadcastAudience) {
       return `All active family members (${ filteredRecipients.length }) except you`;
     }
 
@@ -101,7 +144,7 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
     }
 
     return `${ selectedRecipientCount } recipient${ selectedRecipientCount === 1 ? "" : "s" } selected`;
-  }, [filteredRecipients.length, isPublicAudience, selectedRecipientCount]);
+  }, [filteredRecipients.length, isFamilyBroadcastAudience, selectedRecipientCount]);
 
   function toggleRecipient(recipientId: number) {
     setSelectedRecipientIds((currentIds) => (
@@ -109,6 +152,85 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
         ? currentIds.filter((id) => id !== recipientId)
         : [...currentIds, recipientId]
     ));
+  }
+
+  function handleTemplateSelection(templateId: number | null) {
+    setSelectedTemplateId(templateId);
+
+    if (!editor) {
+      return;
+    }
+
+    if (templateId === null) {
+      editor.commands.setContent(createEmptyTipTapDocument(), {
+        emitUpdate: false,
+      });
+      return;
+    }
+
+    const selectedTemplate = templates.find((t) => t.id === templateId);
+    if (!selectedTemplate) {
+      console.error(`Template with id ${ templateId } not found in templates list`);
+      toast.error("Template not found.");
+      return;
+    }
+
+    try {
+      // Validate the original template JSON structure
+      const validationError = validateTipTapDocument(
+        JSON.parse(selectedTemplate.templateJson)
+      );
+      if (validationError) {
+        console.error("Template validation failed:", validationError);
+        console.error("Invalid template content:", selectedTemplate.templateJson);
+        toast.error(`Template structure is invalid: ${ validationError }`);
+        return;
+      }
+
+      // Replace variables with family data
+      const replacedJson = replaceTemplateVariables(selectedTemplate.templateJson, {
+        founderFirstName: founderData.firstName,
+        founderLastName: founderData.lastName,
+      });
+
+      // Parse and set the editor content
+      const parsed = parseSerializedTipTapDocument(replacedJson);
+
+      if (!parsed.success) {
+        console.error("Template JSON parsing failed:", parsed.message);
+        console.error("Replaced template content:", replacedJson);
+        toast.error(`Failed to parse template: ${ parsed.message }`);
+        return;
+      }
+
+      const content = parsed.content;
+
+      // Some templates include taskList/taskItem nodes. If setContent fails,
+      // degrade gracefully to bulletList/listItem so text remains visible.
+      let didSetContent = editor.commands.setContent(content, {
+        emitUpdate: false,
+      });
+
+      if (!didSetContent) {
+        const normalizedContent = normalizeTemplateContentForEditor(content);
+        didSetContent = editor.commands.setContent(normalizedContent, {
+          emitUpdate: false,
+        });
+      }
+
+      if (!didSetContent) {
+        toast.error("Unable to render this template in the editor.");
+        return;
+      }
+
+      editor.commands.focus("end");
+
+      toast.success(`Template "${ selectedTemplate.templateName }" loaded successfully.`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      console.error("Template loading error:", errorMessage, error);
+      toast.error(`Failed to load template: ${ errorMessage }`);
+    }
   }
 
   function handleFileSelection(event: React.ChangeEvent<HTMLInputElement>) {
@@ -219,8 +341,8 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
       return;
     }
 
-    if (!isPublicAudience && selectedRecipientIds.length === 0) {
-      toast.error("Choose at least one recipient for a private thread.");
+    if (!isFamilyBroadcastAudience && selectedRecipientIds.length === 0) {
+      toast.error("Choose at least one recipient for this thread.");
       return;
     }
 
@@ -229,10 +351,9 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
         const attachments = await uploadAttachments();
         const result = await createThreadConversationAction({
           title: normalizedTitle,
-          subject: subject.trim() || undefined,
-          visibility: isPublicAudience ? "public" : "private",
+          visibility: audience === "public" || audience === "family_broadcast" ? "public" : "private",
           primaryCategory: audience === "family_broadcast" ? "family_broadcast" : null,
-          recipientMemberIds: isPublicAudience ? [] : selectedRecipientIds,
+          recipientMemberIds: isFamilyBroadcastAudience ? filteredRecipients.map((recipient) => recipient.memberId) : selectedRecipientIds,
           content: contentText,
           contentJson: serializeTipTapDocument(editor.getJSON()),
           attachments,
@@ -307,15 +428,23 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
               />
             </label>
 
-            <label className="space-y-2">
-              <span className="text-sm font-semibold text-[#5a2a78]">Subject (optional)</span>
-              <Input
-                value={ subject }
-                onChange={ (event) => setSubject(event.target.value) }
-                placeholder="Food, schedule, and ride sharing"
-                className="border-[#d7b5ea]"
-              />
-            </label>
+            { templates.length > 0 && (
+              <label className="space-y-2">
+                <span className="text-sm font-semibold text-[#5a2a78]">Template (optional)</span>
+                <select
+                  value={ selectedTemplateId || "" }
+                  onChange={ (e) => handleTemplateSelection(e.target.value ? Number(e.target.value) : null) }
+                  className="block w-full rounded-lg border border-[#d7b5ea] bg-white px-3 py-2 text-sm text-[#5a2a78] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#a569c9]"
+                >
+                  <option value="">No template</option>
+                  { templates.map((template) => (
+                    <option key={ template.id } value={ template.id }>
+                      { template.templateName }
+                    </option>
+                  )) }
+                </select>
+              </label>
+            ) }
           </div>
 
           <div className="mt-5 grid gap-4 lg:grid-cols-[16rem_1fr]">
@@ -368,35 +497,40 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
 
             <div className="rounded-[1.2rem] border border-[#eddaf8] bg-white p-4">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#7a4a9a]">Recipients</p>
-              { isPublicAudience ? (
+              { isFamilyBroadcastAudience && (
                 <p className="mt-3 text-sm text-[#6f4b86]">
                   { audience === "family_broadcast"
-                    ? "Family Broadcast has public visibility and is shown to all members in Threads."
-                    : "Public messages are visible in the Threads list for all family members." }
+                    ? "Family Broadcast has public visibility and is automatically addressed to all active family members."
+                    : "Public messages are automatically addressed to all active family members." }
                 </p>
-              ) : (
-                <div className="mt-3 grid max-h-44 gap-2 overflow-auto pr-1 sm:grid-cols-2">
-                  { filteredRecipients.map((recipient) => {
-                    const checked = selectedRecipientIds.includes(recipient.memberId);
-                    return (
-                      <label
-                        key={ recipient.memberId }
-                        className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#ead8f7] bg-[#fbf7ff] px-3 py-2 text-sm text-[#5a2a78]"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={ checked }
-                          onChange={ () => toggleRecipient(recipient.memberId) }
-                        />
-                        <span>
-                          { recipient.firstName } { recipient.lastName }
-                          { recipient.isFounder ? " (Family Founder)" : "" }
-                        </span>
-                      </label>
-                    );
-                  }) }
-                </div>
               ) }
+              <div className="mt-3 grid max-h-44 gap-2 overflow-auto pr-1 sm:grid-cols-2">
+                { filteredRecipients.map((recipient) => {
+                  const checked = isFamilyBroadcastAudience || selectedRecipientIds.includes(recipient.memberId);
+                  return (
+                    <label
+                      key={ recipient.memberId }
+                      className={ [
+                        "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm",
+                        isFamilyBroadcastAudience
+                          ? "cursor-default border-[#d7d8ef] bg-[#f7f8ff] text-[#5b6284]"
+                          : "cursor-pointer border-[#ead8f7] bg-[#fbf7ff] text-[#5a2a78]",
+                      ].join(" ") }
+                    >
+                      <input
+                        type="checkbox"
+                        checked={ checked }
+                        disabled={ isFamilyBroadcastAudience }
+                        onChange={ () => toggleRecipient(recipient.memberId) }
+                      />
+                      <span>
+                        { recipient.firstName } { recipient.lastName }
+                        { recipient.isFounder ? " (Family Founder)" : "" }
+                      </span>
+                    </label>
+                  );
+                }) }
+              </div>
             </div>
           </div>
 
@@ -423,6 +557,15 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
               <Button type="button" size="sm" variant="outline" onClick={ () => editor?.chain().focus().toggleBulletList().run() }>
                 <List className="size-4" />
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={ () => editor?.chain().focus().toggleTaskList().run() }
+                className="px-2 text-xs font-semibold"
+              >
+                To-Do
+              </Button>
               <Button type="button" size="sm" variant="outline" onClick={ () => editor?.chain().focus().setHorizontalRule().run() }>
                 <Minus className="size-4" />
               </Button>
@@ -441,7 +584,7 @@ export function ThreadComposePage({ memberId, firstName, isFounder, recipients }
             </div>
             <EditorContent
               editor={ editor }
-              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none [&_.tiptap_h2]:mt-3 [&_.tiptap_h2]:text-xl [&_.tiptap_h2]:font-bold [&_.tiptap_h3]:mt-2 [&_.tiptap_h3]:text-lg [&_.tiptap_h3]:font-semibold [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#d9bdeb] [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_a]:text-[#6e3f90] [&_.tiptap_a]:underline"
+              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none [&_.tiptap_h2]:mt-3 [&_.tiptap_h2]:text-xl [&_.tiptap_h2]:font-bold [&_.tiptap_h3]:mt-2 [&_.tiptap_h3]:text-lg [&_.tiptap_h3]:font-semibold [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#d9bdeb] [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_ul:not([data-type='taskList'])]:list-disc [&_.tiptap_ul:not([data-type='taskList'])]:pl-5 [&_.tiptap_a]:text-[#6e3f90] [&_.tiptap_a]:underline"
             />
           </div>
 

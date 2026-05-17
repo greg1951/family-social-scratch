@@ -67,4 +67,5 @@ export {
   threadPostReply,
   threadRecipientState,
   threadPostAttachment,
+  threadTemplate,
 } from './family-social-schema-tables';

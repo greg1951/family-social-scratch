@@ -312,6 +312,17 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
     unique('thread_recipient_state_conversation_recipient_uq').on(table.conversationId, table.recipientMemberId),
 ]);
 
+export const threadTemplate = pgTable("thread_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  templateCategory: text("template_category").notNull().default("thread"),
+  templateJson: text("template_json").notNull().default("{}"),
+  seqNo: integer("seq_no").notNull().default(1),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+
 /*------------------------------- Games Scoreboard ------------------------------ */
 //export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
 

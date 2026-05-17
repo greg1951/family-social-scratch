@@ -76,6 +76,7 @@ export type ConvoSummary = {
   senderMemberId: number | null;
   senderFirstName: string | null;
   senderLastName: string | null;
+  recipientNames: string[];
   recipientStateId: number | null;
   recipientMemberId: number | null;
   recipientFirstName: string | null;
@@ -86,6 +87,8 @@ export type ConvoSummary = {
   conversationArchivedAt: Date | null;
   postContent: string | null;
   postType: string | null;
+  replyCount: number;
+  imageCount: number;
 };
 
 export type getConvoSummariesReturn =

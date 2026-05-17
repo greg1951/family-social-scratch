@@ -76,12 +76,23 @@ describe("Thread conversation access rules", () => {
     expect(result).toBe(true);
   });
 
-  it("allows public conversation access", async () => {
+  it("blocks non-recipient access to public conversations", async () => {
     const result = await canMemberAccessThreadConversation({
       senderMemberId: 12,
       memberId: 44,
       visibility: "public",
       recipientStateId: null,
+    });
+
+    expect(result).toBe(false);
+  });
+
+  it("allows recipient access to public conversations", async () => {
+    const result = await canMemberAccessThreadConversation({
+      senderMemberId: 12,
+      memberId: 44,
+      visibility: "public",
+      recipientStateId: 99,
     });
 
     expect(result).toBe(true);
