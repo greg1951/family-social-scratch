@@ -81,13 +81,11 @@ export const familyS3Credentials = pgTable("family_s3_credentials", {
   bucketName: text("bucket_name").notNull(),
   region: text("region").notNull().default("us-east-2"),  
   isActive: boolean("is_active").notNull().default(true),
-  updatedAt: timestamp("updated_at"),
-  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 }, (table) => [
   index('family_s3_credentials_family_id_idx').on(table.familyId),
   index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
-  // uniqueIndex('family_active_credential_uniq').on(table.familyId).where(sql`${table.isActive} = true`),
 ]);
 
 export const member = pgTable("member", {

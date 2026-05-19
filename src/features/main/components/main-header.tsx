@@ -28,6 +28,7 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
                 <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />
+                <NavBar isLoggedIn={ isLoggedIn } href="/galleries" src="/icons/galleries.png" title="Photo Galleries" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Scoreboards" />
                 <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" />
                 <MainDropMenu

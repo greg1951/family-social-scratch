@@ -14,6 +14,7 @@
 8. [Await All](#await-all)
 9. [Multi-Step Forms](#multi-step-forms)
 10. [Running PSQL Locally to Neon](#running-psql-locally-to-neon)
+    1. [Running MJS Script](#running-mjs-script)
 11. [TipTap Headless](#tiptap-headless)
     1. [Installation](#installation)
     2. [Configuration](#configuration)
@@ -260,7 +261,7 @@ Although they are user friendly they may implement very length form pages. Case 
 Neon let's you export data from the database tables (one at a time) but the import of a CSV file into the table didn't work and their AI was not helpful. The AI did suggest using a psql command to do the copy.
 
 1. Had to [install PostgreSql locally](https://www.postgresql.org/download/windows/) (database and tools) 
-2. Set the Windows path to reference the bin directory in the installation folder (`C:\Program Files\PostgreSQL\18\bin`).
+2. Set the Windows path to reference the bin directory in the installation folder (`"C:\Program Files\PostgreSQL\18\bin"`).
 3. Run the following psql command to connect to the family social database:
 
    `psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"`
@@ -293,6 +294,16 @@ Neon let's you export data from the database tables (one at a time) but the impo
       WHERE conrelid = 'family_activity'::regclass
       AND contype = 'c'
   ```
+
+## Running MJS Script
+These scripts are run in the project directory to populate tables. In the case below, the script will interrogate environment variables for S3 and will insert an entry into the family_s3_credentials table based on an input argument of family_id (28-thosecrazyhughletts)
+
+```bash
+ $env:S3_CREDENTIALS_MASTER_KEY="971dfe252b2b03c2af1b9536e61d41baa0edf71e9945fc1f13a32b46fc51ff5a"; $env:FAMILY_SOCIAL_DATABASE_URL="postgresql://neondb_owner:************@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=verify-full&channel_binding=require"; $env:AWS_ACCESS_KEY_ID="YOUR_AWS_ACCESS_KEY_ID"; $env:AWS_SECRET_ACCESS_KEY="YOUR_AWS_SECRET_ACCESS_KEY"; $env:AWS_S3_BUCKET_NAME="thosecrazyhughletts"; $env:AWS_REGION="us-east-2"; npm run seed:family-s3 -- --family-id 28 --rotate
+ ```
+
+  **Note**: Database credential above has been obfuscated.
+
 
 # TipTap Headless
 The Poetry Cafe and Family Foodies features will implement a rich text editor. It will be used to a greater degree in the Family Foodies rather than the Poetry Cafe. Saving the content will use a JSON output rather than HTML. 
