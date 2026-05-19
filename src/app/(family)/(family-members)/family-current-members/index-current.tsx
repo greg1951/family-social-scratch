@@ -8,8 +8,8 @@ import { useEffect, useState } from "react";
 import { CurrentMembersFormSchema } from "@/features/family/components/validation/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { CircleCheckBig } from "lucide-react";
-import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
+import { CircleCheckBig, UserRoundX } from "lucide-react";
+import { CurrentFamilyMember, FounderDetails, RemovableFamilyMember } from "@/features/family/types/family-members";
 import { CurrentMembersDialog } from "./current-members-dialog";
 import { toast } from "sonner";
 import { processInviteDeletes, processInviteUpdates, sendInviteEmails } from "./actions";
@@ -25,15 +25,25 @@ import {
 } from "@/features/family/services/client-side";
 import { ArrowRight } from "lucide-react";
 import MemberListIdentity from "@/components/common/member-list-identity";
+import { RemoveMemberDialog } from "./remove-member-dialog";
 
 type FormValues = z.infer<typeof CurrentMembersFormSchema>;
 
-export default function CurrentMembersAccountForm({ familyMembers, founderDetails }: { familyMembers: CurrentFamilyMember[], founderDetails: FounderDetails }) {
+export default function CurrentMembersAccountForm({
+  familyMembers,
+  founderDetails,
+  joinedMembers,
+}: {
+  familyMembers: CurrentFamilyMember[];
+  founderDetails: FounderDetails;
+  joinedMembers: RemovableFamilyMember[];
+}) {
 
   const router = useRouter();
   const [submissionSteps, setSubmissionSteps] =
     useState<SubmissionStep[]>(initialCurrentInviteSteps);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [removeMemberDialogOpen, setRemoveMemberDialogOpen] = useState(false);
 
 
   const form = useForm<FormValues>({
@@ -45,7 +55,15 @@ export default function CurrentMembersAccountForm({ familyMembers, founderDetail
   const { isDirty } = form.formState;
 
   const [members, setMembers] = useState<CurrentFamilyMember[]>(familyMembers);
-  const [originalMembers] = useState<CurrentFamilyMember[]>(familyMembers);
+  const [originalMembers, setOriginalMembers] = useState<CurrentFamilyMember[]>(familyMembers);
+
+  useEffect(() => {
+    setMembers(familyMembers);
+    setOriginalMembers(familyMembers);
+    form.reset({
+      currentFamilyMembers: familyMembers,
+    });
+  }, [familyMembers, form]);
 
   const getStatusClasses = (status: string) => {
     const normalized = status.toLowerCase();
@@ -181,13 +199,24 @@ export default function CurrentMembersAccountForm({ familyMembers, founderDetail
       <Form { ...form }>
         <form onSubmit={ form.handleSubmit(processForm) } className="space-y-4">
           <div className="gap-y-2 ">
-            <CurrentMembersDialog
-              members={ members }
-              onResendMember={ handleResendMember }
-              onRemoveMember={ handleRemoveMember }
-              onResetMember={ handleResetMember }
-              onInviteMember={ handleInviteMember }
-            />
+            <div className="flex flex-wrap gap-2">
+              <CurrentMembersDialog
+                members={ members }
+                onResendMember={ handleResendMember }
+                onRemoveMember={ handleRemoveMember }
+                onResetMember={ handleResetMember }
+                onInviteMember={ handleInviteMember }
+              />
+
+              <Button
+                type="button"
+                onClick={ () => setRemoveMemberDialogOpen(true) }
+                className="border border-amber-200 bg-amber-50 font-semibold text-amber-800 hover:bg-amber-100"
+              >
+                <UserRoundX className="mr-2 h-4 w-4" />
+                Remove Member
+              </Button>
+            </div>
 
             <div className="rounded-md border p-1">
               <p className="mb-3 text-sm font-semibold text-neutral-800">Current Members ({ members.length })</p>
@@ -239,6 +268,11 @@ export default function CurrentMembersAccountForm({ familyMembers, founderDetail
         onOpenChange={ setShowStatusDialog }
         redirectUrl="/family-founder-account?tab=current-family"
         submissionSteps={ submissionSteps }
+      />
+      <RemoveMemberDialog
+        open={ removeMemberDialogOpen }
+        onOpenChange={ setRemoveMemberDialogOpen }
+        joinedMembers={ joinedMembers }
       />
     </CardContent>
   )

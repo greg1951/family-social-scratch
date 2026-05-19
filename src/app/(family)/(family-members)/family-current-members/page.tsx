@@ -3,10 +3,10 @@ import { redirect } from "next/navigation";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { NewMembersFormSchema } from "@/features/family/components/validation/schema";
-import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getJoinedFamilyMembersForRemoval } from "@/components/db/sql/queries-family-member";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import CurrentMembersAccountForm from "./index-current";
-import { CurrentFamilyMember } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, RemovableFamilyMember } from "@/features/family/types/family-members";
 import { copyMemberToFounderDetails } from "@/features/family/services/client-side";
 
 type FormValues = z.infer<typeof NewMembersFormSchema>;
@@ -27,8 +27,12 @@ export default async function FamilyCurrentMembersPage() {
 
   // console.log('FamilyCurrentMembersPage->memberKeyDetails: ', memberKeyDetails);
 
-  const membersResult = await getAllFamilyMembers(memberKeyDetails.familyId);
+  const [membersResult, joinedMembersResult] = await Promise.all([
+    getAllFamilyMembers(memberKeyDetails.familyId),
+    getJoinedFamilyMembersForRemoval(memberKeyDetails.familyId),
+  ]);
   let familyMembers: CurrentFamilyMember[] = [];
+  let joinedFamilyMembers: RemovableFamilyMember[] = [];
 
   if (membersResult.success && membersResult.members) {
     // console.log('FamilyCurrentMembersPage->getAllFamilyMembers->membersResult: ', membersResult);
@@ -40,6 +44,17 @@ export default async function FamilyCurrentMembersPage() {
       status: member.status,
       memberImageUrl: member.memberImageUrl ?? null,
     })) as CurrentFamilyMember[];
+  }
+
+  if (joinedMembersResult.success) {
+    joinedFamilyMembers = joinedMembersResult.members.map((member) => ({
+      memberId: member.memberId,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      status: member.status,
+      memberImageUrl: member.memberImageUrl ?? null,
+    }));
   }
 
   const founderDetails = copyMemberToFounderDetails(memberKeyDetails);
@@ -66,7 +81,11 @@ export default async function FamilyCurrentMembersPage() {
               </div>
             </CardDescription>
           </div>
-          <CurrentMembersAccountForm familyMembers={ familyMembers } founderDetails={ founderDetails } />
+          <CurrentMembersAccountForm
+            familyMembers={ familyMembers }
+            founderDetails={ founderDetails }
+            joinedMembers={ joinedFamilyMembers }
+          />
         </Card>
 
       </div >

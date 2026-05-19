@@ -34,6 +34,15 @@ export type CurrentFamilyMember = {
   memberImageUrl?: string | null;
 }
 
+export type RemovableFamilyMember = {
+  memberId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+  memberImageUrl?: string | null;
+}
+
 export type CurrentMemberDirtyFields = {
   currentMembers?: {
     status?: string;

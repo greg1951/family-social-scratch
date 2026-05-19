@@ -2,6 +2,8 @@
 
 import type { JSONContent } from "@tiptap/core";
 import LinkExtension from "@tiptap/extension-link";
+import TaskItem from "@tiptap/extension-task-item";
+import TaskList from "@tiptap/extension-task-list";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -169,10 +171,7 @@ function ThreadAttachmentImageCard({
         </div>
         <div className="space-y-1 px-3 py-3">
           <p className="line-clamp-1 text-sm font-semibold text-[#5b2b78]" title={ displayName }>
-            { displayName }
-          </p>
-          <p className="text-xs font-medium text-[#8c62aa]">
-            { formatFileSize(fileSizeBytes) }
+            { displayName } { fileSizeBytes ? `(${ formatFileSize(fileSizeBytes) })` : "" }
           </p>
         </div>
       </button>
@@ -186,6 +185,8 @@ function ThreadPostBody({ content, contentJson }: { content: string; contentJson
     extensions: [
       StarterKit,
       Underline,
+      TaskList,
+      TaskItem.configure({ nested: true }),
       LinkExtension.configure({
         autolink: true,
         defaultProtocol: "https",
@@ -226,7 +227,7 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
     && (normalizedTitle === "support response" || normalizedSubject === "your support ticket has a new response");
 
   const replyEditor = useEditor({
-    extensions: [StarterKit, Underline],
+    extensions: [StarterKit, Underline, TaskList, TaskItem.configure({ nested: true })],
     content: createEmptyTipTapDocument() as JSONContent,
     immediatelyRender: false,
     editorProps: {
@@ -237,7 +238,7 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
   });
 
   const editReplyEditor = useEditor({
-    extensions: [StarterKit, Underline],
+    extensions: [StarterKit, Underline, TaskList, TaskItem.configure({ nested: true })],
     content: createEmptyTipTapDocument() as JSONContent,
     immediatelyRender: false,
     editorProps: {

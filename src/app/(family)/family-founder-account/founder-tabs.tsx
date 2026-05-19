@@ -4,7 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MessageCircleMore, UserPenIcon, UserPlus, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails, RemovableFamilyMember } from "@/features/family/types/family-members";
 import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
 import FamilyNotificationsForm from "../family-notifications";
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
@@ -27,11 +27,13 @@ export default function FounderAccountTabs({
   founderDetails,
   notifications,
   currentFamilyMembers,
+  joinedFamilyMembers,
 }: {
   // accountDetails: AccountDetails | null;
   founderDetails: FounderDetails;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
   currentFamilyMembers: CurrentFamilyMember[];
+  joinedFamilyMembers: RemovableFamilyMember[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -85,7 +87,11 @@ export default function FounderAccountTabs({
       </TabsContent>
 
       <TabsContent value="current-family" className="mt-4 rounded-lg border">
-        <CurrentMembersAccountForm familyMembers={ currentFamilyMembers } founderDetails={ founderDetails } />
+        <CurrentMembersAccountForm
+          familyMembers={ currentFamilyMembers }
+          founderDetails={ founderDetails }
+          joinedMembers={ joinedFamilyMembers }
+        />
       </TabsContent>
     </Tabs>
   );

@@ -12,6 +12,90 @@ import {
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "@/components/db/sql/queries-family-activity";
 import { createThreadConversationWithInitialPost } from "@/components/db/sql/queries-thread-convos";
+import { getThreadTemplates } from "@/components/db/sql/queries-thread-templates";
+
+type TipTapNode = {
+  type?: string;
+  text?: string;
+  content?: TipTapNode[];
+};
+
+function replaceTemplateVariables(
+  templateJson: string,
+  memberFirstName: string,
+  familyName: string,
+  founderFirstName: string,
+) {
+  return templateJson
+    .replace(/!!member-first!!/g, memberFirstName)
+    .replace(/!!family-name!!/g, familyName)
+    .replace(/!!family-founder-first!!/g, founderFirstName);
+}
+
+function extractPlainTextFromTipTapNode(node: TipTapNode): string {
+  const parts: string[] = [];
+
+  if (typeof node.text === "string") {
+    parts.push(node.text);
+  }
+
+  if (Array.isArray(node.content)) {
+    for (const child of node.content) {
+      const childText = extractPlainTextFromTipTapNode(child);
+      if (childText) {
+        parts.push(childText);
+      }
+    }
+  }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+async function buildNewMemberRegistrationThreadContent(
+  memberFirstName: string,
+  familyName: string,
+  founderFirstName: string,
+) {
+  const templatesResult = await getThreadTemplates("global");
+  const template = templatesResult.success
+    ? templatesResult.templates.find((item) => item.templateName === "New Member Registration" && item.status === "active")
+    : undefined;
+
+  if (!template) {
+    const fallbackText = [
+      "A new family member has completed registration.",
+      "",
+      `Member Name: ${ memberFirstName }`,
+      `Family Name: ${ familyName }`,
+    ].join("\n");
+
+    return {
+      content: fallbackText,
+      contentJson: JSON.stringify({
+        type: "doc",
+        content: [
+          {
+            type: "paragraph",
+            content: [{ type: "text", text: fallbackText }],
+          },
+        ],
+      }),
+    };
+  }
+
+  const replacedJson = replaceTemplateVariables(
+    template.templateJson,
+    memberFirstName,
+    familyName,
+    founderFirstName,
+  );
+  const parsedTemplate = JSON.parse(replacedJson) as TipTapNode;
+
+  return {
+    content: extractPlainTextFromTipTapNode(parsedTemplate),
+    contentJson: replacedJson,
+  };
+}
 
 
 export const addRegisteredMember = async(memberDetails:RegisterMemberInput) => {
@@ -104,29 +188,20 @@ export const notifyFounderOfNewMemberRegistration = async({
   newMemberLastName: string;
   newMemberEmail: string;
 }) => {
-  const threadContent = [
-    "A new family member has completed registration.",
-    "",
-    `Member Name: ${ newMemberFirstName } ${ newMemberLastName }`,
-    `Member Email: ${ newMemberEmail }`,
-  ].join("\n");
+  const { content, contentJson } = await buildNewMemberRegistrationThreadContent(
+    newMemberFirstName,
+    founderDetails.familyName,
+    founderDetails.firstName,
+  );
 
   const threadResult = await createThreadConversationWithInitialPost(
     {
-      title: "New Family Member Registered",
-      subject: "Member registration completed",
+      title: "New Member Registration",
+      subject: "New family member registered",
       visibility: "private",
       recipientMemberIds: [founderDetails.memberId],
-      content: threadContent,
-      contentJson: JSON.stringify({
-        type: "doc",
-        content: [
-          {
-            type: "paragraph",
-            content: [{ type: "text", text: threadContent }],
-          },
-        ],
-      }),
+      content,
+      contentJson,
     },
     {
       familyId: founderDetails.familyId,

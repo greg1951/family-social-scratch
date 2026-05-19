@@ -16,3 +16,24 @@ The goal of this requirement is to validate the email addresses that are entered
 In both of these steps, query the member table using the "getMemberDetailsByEmail" query to check if the email address entered is already associated with an existing member.
 - If the email address is already associated with an existing member, display an error message to the user indicating that the email address is already in use in Family Social.
 - If the email address is not associated with an existing member, allow the user to proceed with the family setup process.
+
+----------------------------------
+
+Background
+After someone joins the family and then wants to leave, the founder will have permission to remove the member. 
+- The member will send a thread to the founder indicating such.
+- The founder will need to then remove the member. 
+  - There is a **soft delete** which is to set the member status to "retired". This allows the member's contributions to remain in the family. The retired member's user record will be removed.
+    - Need to identify what select queries would need to be filter the status code of "retired"
+  - There is **hard delete** which is to delete all traces of the user. (There is a specific path or flow the deletes would need to follow, to avoid integrity issues.)
+    - Be mindful of the delete rules defined in the database. Only certain paths will allow the data deletes to cascade when a member is deleted.
+
+Request    
+- The logic for the founder to do either of the two types of deletes should be implemented in the Founder's family tab.
+  - Presently there is an Open Members Dialog that allows the founder to do certain actions. This dialog is not to be changed.
+  - Instead, the option to remove a family member should be added as a new button (Remove Member) in that dialog.
+    - When the founder clicks the Remove Member button, a new dialog should open that shows only members who have joined the family.
+    - In that dialog, the founder can select a member and then choose to either soft delete (user-round-minus) or hard delete (user-round-x) the member.
+    - A soft delete will set the member's status to "retired" and the member's first name set to "Retired" and the last name to "Member". This allows the member's contributions to remain in the family, but removes the member's user record.
+    - A hard delete will remove the member in the member table which should cascade to any table to remove the member's contributions to the family. 
+      - The hard delete should follow a specific path to avoid integrity issues. The member's record should be deleted first which will cascade to delete the member's contributions in other tables. Then, any threads that only had the deleted member as a participant can be deleted.

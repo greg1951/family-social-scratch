@@ -1,14 +1,25 @@
 'use server';
 
 import { deleteInvite, updateFamilyInviteStatus, getInvitebyInviteId } from "@/components/db/sql/queries-family-invite";
-import { deleteMember, findMemberIdByEmail } from "@/components/db/sql/queries-family-member";
-import { deleteUserByUserId, getUserByEmail } from "@/components/db/sql/queries-user";
+import {
+  deleteInviteByEmail,
+  updateFamilyInviteStatusByEmail,
+} from "@/components/db/sql/queries-family-invite";
+import {
+  deleteMember,
+  findMemberIdByEmail,
+  hardDeleteFamilyMember,
+  softRetireFamilyMember,
+} from "@/components/db/sql/queries-family-member";
+import { deleteUserByMemberId, deleteUserByUserId, getUserByEmail } from "@/components/db/sql/queries-user";
 import { StatusUpdateCounts, StatusUpdateProcessing } from "@/components/db/types/family-member";
+import { deleteOrphanThreadConversationsForFamily } from "@/components/db/sql/queries-thread-convos";
 import { sendFamilyInviteEmails } from "@/components/emails/send-invites-emails";
 import { FounderDetails } from "@/features/family/types/family-members";
 import { MemberKeyDetails, RegistrationMemberDetails } from "@/features/family/types/family-steps";
 import { error } from "console";
 import { revalidatePath } from "next/cache";
+import { getMemberPageDetails } from "@/features/family/services/family-services";
 
 /*----------------- processInviteDeletes ------------------ */
 export async function processInviteDeletes({updatedInvites, statusUpdateCounts, founderDetails}
@@ -220,4 +231,80 @@ try {
       message: "All member status updates processed successfully.",
     };
   }
+}
+
+export async function removeFamilyMemberAction(input: {
+  targetMemberId: number;
+  deleteType: 'soft' | 'hard';
+}) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn || !memberDetails.isFounder) {
+    return {
+      success: false as const,
+      message: 'Only the family founder can remove members.',
+    };
+  }
+
+  if (!Number.isInteger(input.targetMemberId) || input.targetMemberId <= 0) {
+    return {
+      success: false as const,
+      message: 'A valid member is required.',
+    };
+  }
+
+  if (input.targetMemberId === memberDetails.memberId) {
+    return {
+      success: false as const,
+      message: 'The founder account cannot be removed.',
+    };
+  }
+
+  if (input.deleteType === 'soft') {
+    const retireResult = await softRetireFamilyMember(input.targetMemberId, memberDetails.familyId);
+    if (!retireResult.success) {
+      return retireResult;
+    }
+
+    const deleteUserResult = await deleteUserByMemberId(retireResult.memberId);
+    if (deleteUserResult.error) {
+      return {
+        success: false as const,
+        message: deleteUserResult.message ?? 'Failed to remove retired member user account.',
+      };
+    }
+
+    await updateFamilyInviteStatusByEmail(memberDetails.familyId, retireResult.email, 'retired');
+
+    revalidatePath('/family-founder-account');
+    revalidatePath('/family-founder-account?tab=current-family');
+
+    return {
+      success: true as const,
+      message: 'Member retired successfully. Contributions were kept and user access was removed.',
+    };
+  }
+
+  // Remove the user record first so the member row can be deleted without FK conflicts.
+  await deleteUserByMemberId(input.targetMemberId);
+
+  const deleteMemberResult = await hardDeleteFamilyMember(input.targetMemberId, memberDetails.familyId);
+  if (!deleteMemberResult.success) {
+    return deleteMemberResult;
+  }
+
+  await deleteInviteByEmail(memberDetails.familyId, deleteMemberResult.email);
+
+  const cleanupResult = await deleteOrphanThreadConversationsForFamily(memberDetails.familyId);
+
+  revalidatePath('/family-founder-account');
+  revalidatePath('/family-founder-account?tab=current-family');
+  revalidatePath('/threads');
+
+  return {
+    success: true as const,
+    message: cleanupResult.deletedConversationCount > 0
+      ? `Member deleted. Removed ${cleanupResult.deletedConversationCount} orphan thread${cleanupResult.deletedConversationCount === 1 ? '' : 's'} with no remaining participants.`
+      : 'Member deleted successfully.',
+  };
 }

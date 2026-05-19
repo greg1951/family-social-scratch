@@ -280,3 +280,22 @@ export async function deleteUserByUserId(userId: number)
     error: false,
   }
 }
+
+export async function deleteUserByMemberId(memberId: number)
+  : Promise<ErrorReturnType> {
+
+  const deleteUserResult = await db
+    .delete(user)
+    .where(eq(user.memberId, memberId));
+
+  if (!deleteUserResult) {
+    return {
+      error: true,
+      message: `Failed to delete user for memberId ${memberId}`,
+    };
+  }
+
+  return {
+    error: false,
+  };
+}

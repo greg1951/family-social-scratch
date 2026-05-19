@@ -787,6 +787,39 @@ export async function getUnreadThreadCountForRecipient(memberId: number): Promis
   return Number(row?.unreadCount ?? 0);
 }
 
+export async function deleteOrphanThreadConversationsForFamily(familyId: number) {
+  const orphanRows = await db
+    .select({
+      id: threadConversation.id,
+    })
+    .from(threadConversation)
+    .leftJoin(
+      threadRecipientState,
+      eq(threadRecipientState.conversationId, threadConversation.id),
+    )
+    .where(eq(threadConversation.familyId, familyId))
+    .groupBy(threadConversation.id)
+    .having(sql`count(${threadRecipientState.id}) = 0`);
+
+  if (orphanRows.length === 0) {
+    return {
+      success: true as const,
+      deletedConversationCount: 0,
+    };
+  }
+
+  const orphanConversationIds = orphanRows.map((row) => row.id);
+
+  await db
+    .delete(threadConversation)
+    .where(inArray(threadConversation.id, orphanConversationIds));
+
+  return {
+    success: true as const,
+    deletedConversationCount: orphanConversationIds.length,
+  };
+}
+
 /*------------------ getThreadConversationDetail ------------------ */
 export async function getThreadConversationDetail(
   conversationId: number,

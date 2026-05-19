@@ -311,4 +311,52 @@ export async function deleteInvite(inviteId:number) {
   };
 }
 
+export async function updateFamilyInviteStatusByEmail(
+  familyId: number,
+  email: string,
+  status: string,
+) {
+  const updateResult = await db
+    .update(familyInvitation)
+    .set({
+      status,
+      statusUpdate: new Date(),
+    })
+    .where(and(
+      eq(familyInvitation.familyId, familyId),
+      eq(familyInvitation.email, email),
+    ));
+
+  if (!updateResult) {
+    return {
+      success: false,
+      message: `Failed to update invite status for ${email}.`,
+    };
+  }
+
+  return {
+    success: true,
+  };
+}
+
+export async function deleteInviteByEmail(familyId: number, email: string) {
+  const deleteResult = await db
+    .delete(familyInvitation)
+    .where(and(
+      eq(familyInvitation.familyId, familyId),
+      eq(familyInvitation.email, email),
+    ));
+
+  if (!deleteResult) {
+    return {
+      success: false,
+      message: `Failed to delete invite record for ${email}.`,
+    };
+  }
+
+  return {
+    success: true,
+  };
+}
+
 

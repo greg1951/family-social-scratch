@@ -1,6 +1,6 @@
 "use server";
 
-import { count, eq, and } from 'drizzle-orm';
+import { count, eq, and, asc, ne } from 'drizzle-orm';
 import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
@@ -104,7 +104,10 @@ export async function getMemberDetailsByUserId(userId:number)
       mfaActive: user.twoFactorActivated,
     })
     .from(user).rightJoin(member, eq(user.memberId, member.id)).innerJoin(family, eq(member.familyId, family.id))
-    .where(eq(user.id, userId)
+    .where(and(
+      eq(user.id, userId),
+      ne(member.status, 'retired'),
+    )
   );
 
   if (!selectResult) {
@@ -156,7 +159,10 @@ export async function getMemberDetailsByEmail(email:string)
       mfaActive: user.twoFactorActivated,
     })
     .from(user).rightJoin(member, eq(user.memberId, member.id)).leftJoin(family, eq(member.familyId, family.id))
-    .where(eq(user.email, email)
+    .where(and(
+      eq(user.email, email),
+      ne(member.status, 'retired'),
+    )
   );
 
   if (!selectResult) {
@@ -310,7 +316,10 @@ export async function getAllFamilyMembers(familyId: number)
         eq(familyInvitation.email, member.email),
       ),
     )
-    .where(eq(familyInvitation.familyId, familyId));
+    .where(and(
+      eq(familyInvitation.familyId, familyId),
+      ne(familyInvitation.status, 'retired'),
+    ));
   
   if (result[0]) 
     return {
@@ -399,5 +408,90 @@ export async function deleteMember(memberId:number) {
   }
   return {
     success: true,
+  };
+}
+
+export async function getJoinedFamilyMembersForRemoval(familyId: number) {
+  const rows = await db
+    .select({
+      memberId: member.id,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      status: member.status,
+      memberImageUrl: member.memberImageUrl,
+    })
+    .from(member)
+    .where(and(
+      eq(member.familyId, familyId),
+      eq(member.status, 'active'),
+      eq(member.isFounder, false),
+      eq(member.isGuest, false),
+    ))
+    .orderBy(asc(member.firstName), asc(member.lastName));
+
+  return {
+    success: true as const,
+    members: rows,
+  };
+}
+
+export async function softRetireFamilyMember(memberId: number, familyId: number) {
+  const [updatedMember] = await db
+    .update(member)
+    .set({
+      status: 'retired',
+      firstName: 'Retired',
+      lastName: 'Member',
+      nickName: '',
+    })
+    .where(and(
+      eq(member.id, memberId),
+      eq(member.familyId, familyId),
+      eq(member.isFounder, false),
+    ))
+    .returning({
+      memberId: member.id,
+      email: member.email,
+    });
+
+  if (!updatedMember) {
+    return {
+      success: false as const,
+      message: 'Member could not be retired.',
+    };
+  }
+
+  return {
+    success: true as const,
+    memberId: updatedMember.memberId,
+    email: updatedMember.email,
+  };
+}
+
+export async function hardDeleteFamilyMember(memberId: number, familyId: number) {
+  const [deletedMember] = await db
+    .delete(member)
+    .where(and(
+      eq(member.id, memberId),
+      eq(member.familyId, familyId),
+      eq(member.isFounder, false),
+    ))
+    .returning({
+      memberId: member.id,
+      email: member.email,
+    });
+
+  if (!deletedMember) {
+    return {
+      success: false as const,
+      message: 'Member could not be deleted.',
+    };
+  }
+
+  return {
+    success: true as const,
+    memberId: deletedMember.memberId,
+    email: deletedMember.email,
   };
 }

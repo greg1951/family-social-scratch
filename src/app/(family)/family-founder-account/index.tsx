@@ -195,7 +195,7 @@ export default function FounderDetailsForm({ founderDetails }
                   <FormItem>
                     <FormLabel className="font-extrabold text-center">Birthday</FormLabel>
                     <Popover open={ open } onOpenChange={ setOpen }>
-                      <PopoverTrigger className="flex justify-start">
+                      <PopoverTrigger asChild className="flex justify-start">
                         <Button type="button" variant="outline" id="date" className="justify-start font-normal">
                           { date ? date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' }) : "Select date" }
                         </Button>

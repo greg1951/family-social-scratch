@@ -136,7 +136,7 @@ export const discussThread = pgTable("discuss_thread", {
   closedAt: timestamp("closed_at"),
   targetType: text("target_type").notNull(),
   targetId: integer("fk_target_id").notNull(),
-  postMemberId: integer("fk_post_member_id").references(() => member.id),
+  postMemberId: integer("fk_post_member_id").references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
 },
   (table) => [
@@ -177,7 +177,7 @@ export const discussPostReply = pgTable("discuss_post_reply", {
 export const discussLike = pgTable("discuss_like", {
   id: serial("id").primaryKey(),
   discussPostId: integer("fk_discuss_post_id").notNull().references(() => discussPostReply.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   reactionType: integer("reaction_type").notNull().default(1), // 1 = like (thumbs up), 2 = love (heart)
   createdAt: timestamp("created_at").defaultNow(),
 },
@@ -353,7 +353,7 @@ export const gamePlayerState = pgTable("game_player_state", {
   id: serial("id").primaryKey(),
   playPosition: integer("play_position"),
   status: text("status").notNull().default("active"),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
 },
   (table) => [
@@ -386,7 +386,7 @@ export const poem = pgTable("poem", {
   poemYear: integer("poem_year").notNull().default(0),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id),
 },
   (table) => [
@@ -412,7 +412,7 @@ export const poemComment = pgTable("poem_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   poemVerseId: integer("fk_poem_verse_id").notNull().references(() => poemVerse.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('poem_comment_poem_verse_id_idx').on(table.poemVerseId),
@@ -444,7 +444,7 @@ export const poemTag = pgTable("poem_tag", {
 export const poemLike = pgTable("poem_like", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 },
   (table) => [
@@ -476,8 +476,8 @@ export const book = pgTable("book", {
   bookSeriesName: text("book_series_name"),
   status: text("status").notNull().default("draft"),
   createdAt: timestamp("created_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
-  familyId: integer("fk_family_id").notNull().references(() => family.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('book_member_id_idx').on(table.memberId),
@@ -491,7 +491,7 @@ export const bookComment = pgTable("book_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('book_comment_book_id_idx').on(table.bookId),
@@ -523,7 +523,7 @@ export const bookTag = pgTable("book_tag", {
 export const bookLike = pgTable("book_like", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   createdAt: timestamp("created_at").defaultNow(),
 },
   (table) => [
@@ -554,9 +554,9 @@ export const recipe = pgTable("recipe", {
   prepTimeMins: integer("prep_time_minutes").notNull().default(0),
   cookTimeMins: integer("cook_time_minutes").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
-  templateId: integer("fk_template_id").references(() => recipeTemplate.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  templateId: integer("fk_template_id").references(() => recipeTemplate.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('recipe_member_id_idx').on(table.memberId),
@@ -571,7 +571,7 @@ export const recipeComment = pgTable("recipe_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('recipe_comment_recipe_id_idx').on(table.recipeId),
@@ -586,8 +586,8 @@ export const recipeTemplate = pgTable("recipe_template", {
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('recipe_template_member_id_idx').on(table.memberId),
@@ -621,7 +621,7 @@ export const recipeLike = pgTable("recipe_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
   (table) => [
@@ -653,8 +653,8 @@ export const show = pgTable("show", {
   showLastYear: integer("show_last_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
   seasonCount: integer("season_count").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('show_member_id_idx').on(table.memberId),
@@ -668,7 +668,7 @@ export const showComment = pgTable("show_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('show_comment_show_id_idx').on(table.showId),
@@ -683,7 +683,7 @@ export const showTemplate = pgTable("show_template", {
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id"),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id"),
 },
   (table) => [
@@ -717,7 +717,7 @@ export const showLike = pgTable("show_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   showId: integer("fk_show_id").notNull().references(() => show.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
   (table) => [
@@ -739,8 +739,8 @@ export const movie = pgTable("movie", {
   movieSiteBackground: text("movie_site_background").notNull().default("#000000"),
   movieDebutYear: integer("movie_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('movie_member_id_idx').on(table.memberId),
@@ -803,7 +803,7 @@ export const movieLike = pgTable("movie_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   movieId: integer("fk_movie_id").notNull().references(() => movie.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
   (table) => [
@@ -823,8 +823,8 @@ export const music = pgTable("music", {
   musicImageUrl: text("music_image_url"),
   musicDebutYear: integer("music_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('music_member_id_idx').on(table.memberId),
@@ -838,7 +838,7 @@ export const musicComment = pgTable("music_comment", {
   commentJson: text("comment_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
   musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('music_comment_music_id_idx').on(table.musicId),
@@ -852,7 +852,7 @@ export const musicLyrics = pgTable("music_lyrics", {
   updatedAt: timestamp("updated_at").defaultNow(),
   status: text("status").notNull().default("draft"),
   musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'set null'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('music_lyrics_music_id_idx').on(table.musicId),
@@ -867,8 +867,8 @@ export const musicTemplate = pgTable("music_template", {
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'set null'}),
-  familyId: integer("fk_family_id"),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'cascade'}),
 },
   (table) => [
     index('music_template_member_id_idx').on(table.memberId),
@@ -901,7 +901,7 @@ export const musicLike = pgTable("music_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   musicId: integer("fk_music_id").notNull().references(() => music.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'set null' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
   (table) => [

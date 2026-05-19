@@ -4,10 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getMemberDetails } from "@/app/(family)/family-member-account/actions";
 import { AccountDetails } from "@/features/auth/types/auth-types";
 import { getUser2fa } from "@/components/db/sql/queries-user";
-import { getAllFamilyMembers, getFamilyFounderDetails } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers, getFamilyFounderDetails, getJoinedFamilyMembersForRemoval } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { CurrentFamilyMember, FounderDetails, NewFamilyInvite } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails, NewFamilyInvite, RemovableFamilyMember } from "@/features/family/types/family-members";
 import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
 import { toast } from "sonner";
@@ -38,10 +38,12 @@ export default async function FamilyMyAccountPage() {
     memberNotificationsResult,
     currentMembersResult,
     memberImageResult,
+    joinedMembersResult,
   ] = await Promise.all([
     getMemberNotifications(memberKeyDetails.memberId),
     getAllFamilyMembers(memberKeyDetails.familyId),
     getMemberImageDetailsByMemberId(memberKeyDetails.memberId),
+    getJoinedFamilyMembersForRemoval(memberKeyDetails.familyId),
   ]);
 
   const memberImageUrl = memberImageResult.success ? memberImageResult.memberImageUrl : null;
@@ -53,6 +55,7 @@ export default async function FamilyMyAccountPage() {
 
   const newFamilyMembers: NewFamilyInvite[] = [];
   let currentFamilyMembers: CurrentFamilyMember[] = [];
+  let joinedFamilyMembers: RemovableFamilyMember[] = [];
 
   if (currentMembersResult.success && currentMembersResult.members) {
     // console.log('FamilyCurrentMembersPage->getAllFamilyMembers->membersResult: ', currentMembersResult);
@@ -64,6 +67,17 @@ export default async function FamilyMyAccountPage() {
       status: member.status,
       memberImageUrl: member.memberImageUrl ?? null,
     })) as CurrentFamilyMember[];
+  }
+
+  if (joinedMembersResult.success) {
+    joinedFamilyMembers = joinedMembersResult.members.map((member) => ({
+      memberId: member.memberId,
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+      status: member.status,
+      memberImageUrl: member.memberImageUrl ?? null,
+    }));
   }
 
 
@@ -118,6 +132,7 @@ export default async function FamilyMyAccountPage() {
               founderDetails={ founderDetails }
               notifications={ notifications }
               currentFamilyMembers={ currentFamilyMembers }
+              joinedFamilyMembers={ joinedFamilyMembers }
             />
           </CardContent>
         </Card>

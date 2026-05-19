@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test:threads": "vitest run --dir src/features/threads/tests",
+    "test:threads-ui": "vitest run src/features/threads/tests/thread-conversation-detail-ui-regression.test.tsx",
     "seed:poem-terms": "node ./scripts/import-poem-terms.mjs",
     "seed:book-besties": "node ./scripts/seed-book-besties.mjs",
     "seed:family-s3": "node ./scripts/seed-family-s3-credentials.mjs"

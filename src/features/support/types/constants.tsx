@@ -228,12 +228,12 @@ export const founderFaqItems = [
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p>At the present time, an email address is the only means of identifying family members.</p>
+          <p>An email address uniquely identifies a family member.</p>
           <ol className="list-decimal ml-6 mt-2">
-            <li>Each family member must have a unique email address.</li>
+            <li>Therefore each family member can belong to only one family.</li>
             <li>If you are the family founder, you cannot start another family using your current email address.</li>
-            <li>If a family member belongs to another family, they cannot join a new family without leaving their current one.</li>
-            <li>The family founder can invite new members and remove existing members from the family, if necessary.</li>
+            <li>If a family member belongs to a family, they can only join another family if they have an alternate email address.</li>
+            <li>The family founder can invite new members at any time, and can remove members from the family as well.</li>
           </ol>
         </span>
       </div>
@@ -254,16 +254,22 @@ export const founderFaqItems = [
         <div className="flex items-center justify-center mt-0">
           <span>
             <p>The steps below would be followed.</p>
-            <ol className="list-decimal ml-6 mt-2">
-              <li>Family member who wants to retire sends a high-priority thread to the family founder.</li>
-              <li>The family founder acknowledges the request and initiates the removal process.</li>
-              <li>There are two ways to remove a member: <u>soft</u> and <u>hard</u>, as described below.</li>
-            </ol>
-            <p className="pt-2">The two ways the founder can remove the member are:</p>
-            <ol className="list-decimal ml-6 mt-2">
-              <li>"soft" removal: effectively deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact, known as "Retired Member". The retired member could be reactivated at a later time.</li>
-              <li>"hard" removal: permanently removes the member from the family by deleting the member and all of their content from the family. The member could be reinvited at a later time.</li>
-            </ol>
+            <ul className="list-disc ml-6 mt-2">
+              <li>Family member who wants to leave a family needs to let the family founder know via a private message in Family Threads.</li>
+              <li>That family member should select and fill in the <b>Leave a Family Notification</b> template in Family Threads.</li>
+              <li>When the family founder gets the message the founder will remove the member in the Founder Account settings.</li>
+            </ul>
+            <p className="pt-2">The founder can remove the member using one of two methods:</p>
+            <ul className="list-disc ml-6 mt-2">
+              <li>"soft" delete: effectively deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact, known as "Retired Member". The retired member could be reactivated at a later time.</li>
+              <li>"hard" delete: permanently removes the member from the family by deleting the member and all of their content from the family. The member could be reinvited at a later time.</li>
+            </ul>
+            <div className="flex justify-center pt-2 pb-2">
+              <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-170"
+                src="/images/support/faq-founder-hard-delete.jpg"
+                alt="Founder Image Example"
+              />
+            </div>
           </span>
         </div>
       </div>
@@ -284,22 +290,22 @@ export const founderFaqItems = [
         <div className="flex items-center justify-center mt-0">
           <span>
             <p>My Family Social allows the family members to post TV and Movie reviews. The following guidelines must be followed:</p>
-            <ol className="list-decimal ml-6 mt-2">
+            <ul className="list-disc ml-6 mt-2">
               <li>Content in the review must not use profanity or offensive language.</li>
               <li>Content that is uploaded must adhere to Fair Use guidelines.</li>
-              <li>Image Credit must be provided for any images used which consists of <i>Title</i> and <i>Source URL</i>.</li>
-            </ol>
+              <li>Image Credit must be provided for any images used which consists of <i>Title</i> and <i>Source</i> (URL).</li>
+            </ul>
           </span>
         </div>
         <div className="flex justify-center pt-2 pb-2">
           <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-170"
-            src="/images/support/faq-founder-image-example.jpg"
+            src="/images/support/faq-founder-image-credit.jpg"
             alt="Founder Image Example"
           />
         </div>
         <div className="flex justify-center align-middle pt-4">
           <Info size={ 30 } className="inline-block mr-1" />
-          <p className="text-sm pt-2 font-semibold">Most members will not follow the rigor required for image attribution. They should instead use a website URL from IMDB or YouTube.</p>
+          <p className="p-2">My Family Social will do its best to ensure that all content adheres to these guidelines but your help to ensure compliance is appreciated.</p>
         </div>
       </div>
     ),
@@ -364,7 +370,7 @@ export const featureFaqItems = [
             <li>Your show can be in <b>Draft</b> mode until you decide to <b>Publish</b> it and make the review visible to others.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-200 md:h-150"
+            <img className="aspect-auto object-cover w-130 h-95 md:w-200 md:h-150"
               src="/images/support/faq-add-tv-show.jpg"
               alt="Add TV Show"
             />
@@ -409,7 +415,7 @@ export const featureFaqItems = [
             <li>The format shown here is required, otherwise the <u>upload will not be permitted</u>.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-65 md:w-220 md:h-120"
+            <img className="aspect-auto object-cover w-150 h-85 md:w-220 md:h-120"
               src="/images/support/faq-tv-image-credit.jpg"
               alt="TV Show Image Credit"
             />
@@ -446,7 +452,7 @@ export const featureFaqItems = [
             <li>When editing a post or reply, the rich text editor provides formatting options like adding a link to <u>George</u>'s favorite Batman.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-65 md:w-220 md:h-180"
+            <img className="aspect-auto object-cover w-120 h-95 md:w-220 md:h-180"
               src="/images/support/faq-discuss-post-reply.jpg"
               alt="Discussion Group Post Reply"
             />
@@ -475,7 +481,7 @@ export const featureFaqItems = [
             <li>In My Family Social TV Junkies home page, select the Add Show option and complete the form as instructed below.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-130"
+            <img className="aspect-auto object-cover w-150 h-95 md:w-230 md:h-130"
               src="/images/support/faq-tv-imdb-url.jpg"
               alt="IMDB Link"
             />
@@ -523,7 +529,7 @@ export const featureFaqItems = [
             <li>Once the song is safely saved, you can add lyrics to it by choosing the <b>Add Lyrics</b> button. </li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-200 md:h-80"
+            <img className="aspect-auto object-cover w-190 h-65 md:w-200 md:h-80"
               src="/images/support/faq-edit-song-lyrics.jpg"
               alt="Music Lyrics"
             />
@@ -563,7 +569,7 @@ export const featureFaqItems = [
             <p className="text-base font-semibold pt-2 pb-2">Remember this is a template you want to use when adding recipes, not your actual recipe.</p>
           </span>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-110"
+            <img className="aspect-auto object-cover w-180 h-95 md:w-220 md:h-110"
               src="/images/support/faq-foodies-edit-template.jpg"
               alt="Recipe Template"
             />
@@ -608,7 +614,7 @@ export const featureFaqItems = [
             <li>When you select a template, it will prefill the Recipe edit area below. Pick different template and see which template fits your needs.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+            <img className="aspect-auto object-cover w-180 h-75 md:w-220 md:h-80"
               src="/images/support/faq-foodies-add-recipe-templates-list.jpg"
               alt="Recipe Templates list"
             />
@@ -619,7 +625,7 @@ export const featureFaqItems = [
             <li>If you are happy with the image preview, select the <b>Upload Image</b> button.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+            <img className="aspect-auto object-cover w-150 h-75 md:w-220 md:h-80"
               src="/images/support/faq-foodies-add-recipe-file-upload.jpg"
               alt="Recipe File Upload"
             />
@@ -630,7 +636,7 @@ export const featureFaqItems = [
             <li>If you originally got the recipe from another source and then changed it, be sure to credit the original source in the Pro Tips section.</li>
           </ul>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-80"
+            <img className="aspect-auto object-cover w-170 h-65 md:w-220 md:h-80"
               src="/images/support/faq-foodies-pro-tips.jpg"
               alt="Pro Tips"
             />
@@ -660,7 +666,7 @@ export const featureFaqItems = [
             <li>Selecting the term will display its definition and explanation.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-270 md:h-60"
+            <img className="aspect-auto object-cover w-220 h-55 md:w-270 md:h-60"
               src="/images/support/faq-poetry-term-search.jpg"
               alt="Poetry Term Search"
             />
@@ -692,7 +698,7 @@ export const featureFaqItems = [
             <li>In the <b>Poem Analysis</b> section, you can provide your interpretation and insights about the poem, referencing <u>line numbers</u>.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-250 md:h-120"
+            <img className="aspect-auto object-cover w-170 h-80 md:w-250 md:h-120"
               src="/images/support/faq-poetry-verse-analysis.jpg"
               alt="Poetry Verse Analysis"
             />
@@ -721,10 +727,10 @@ export const featureFaqItems = [
             <p className="pt-2 pb-2 text-xs"><u>Tip</u>: Personalizing the review to your experience is the kind of review people enjoy reading.</p>
             <li>Write your own book review, incorporating what you've learned from the sample reviews and book terms.</li>
             <li>Keep your book review in Draft status until you're ready to submit it. Then, let it rip!</li>
+            <p className="text-sm">Explore the Terms Page, there's a lot of good information to help you write better reviews.</p>
           </ol>
-          <p className="text-base font-semibold">Explore the Terms Page, there's a lot of good information to help you write better reviews.</p>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-125"
+            <img className="aspect-auto object-cover w-150 h-95 md:w-220 md:h-125"
               src="/images/support/faq-book-terms.jpg"
               alt="Book Terms Page"
             />
@@ -755,9 +761,42 @@ export const featureFaqItems = [
             <li>There are three lists of <b>Book Tags</b> to choose from, pick at least one.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-100 h-75 md:w-170 md:h-170"
+            <img className="aspect-auto object-cover w-180 h-140 md:w-170 md:h-170"
               src="/images/support/faq-book-add-sections.jpg"
               alt="Book Review Sections"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-200",
+    category: "Family Threads",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Why should I use Family threads? I can simply text someone!</p>
+        <p className="text-sm text-slate-600">We're not trying to replace texting, but Family Threads offers a more organized and private way to communicate within your family.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Listed below are some reasons to use Family Threads.</p>
+          <p className="text-sm">All of the reasons listed below have one thing in common: they help you stay connected with your family in a more organized and private way.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>You're planning a family event around a certain date and want to know who can make it</li>
+            <li>You've just shared some exciting news and want to see everyone's reactions</li>
+            <li>You have a question or need advice from your family</li>
+            <li>You want to share a special moment or achievement with your family</li>
+            <li>You have some pictures you'd like your family to see</li>
+            <li>You want to send a private message to a family member and don't want to text or email it</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-150 h-95 md:w-210 md:h-130"
+              src="/images/support/faq-threads-pics.jpg"
+              alt="Family Threads Pictures"
             />
           </div>
         </span>

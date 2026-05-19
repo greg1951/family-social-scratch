@@ -38,7 +38,13 @@ type CurrentMembersDialogProps = {
   onInviteMember: (id: number) => void
 }
 
-export function CurrentMembersDialog({ members, onResendMember, onRemoveMember, onResetMember, onInviteMember }: CurrentMembersDialogProps) {
+export function CurrentMembersDialog({
+  members,
+  onResendMember,
+  onRemoveMember,
+  onResetMember,
+  onInviteMember,
+}: CurrentMembersDialogProps) {
   const [infoOpen, setInfoOpen] = useState(false)
 
   const form = useForm<UpdateMemberValues>({
