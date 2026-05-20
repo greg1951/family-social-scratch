@@ -77,7 +77,7 @@ function RecipeImage({ src, alt }: { src: string; alt: string }) {
     const resolveSignedUrl = async () => {
       const key = extractS3KeyFromValue(src);
 
-      if (!key || !key.startsWith("foodies/")) {
+      if (!key) {
         if (!isCancelled) {
           setResolvedSrc(src);
         }

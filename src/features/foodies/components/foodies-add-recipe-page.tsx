@@ -373,7 +373,7 @@ export function FoodiesAddRecipePage({
       }
 
       const key = extractS3KeyFromValue(recipeImageUrl);
-      if (!key || !key.startsWith("foodies/")) {
+      if (!key) {
         if (!isCancelled) {
           setImagePreviewUrl(recipeImageUrl);
         }

@@ -1,5 +1,6 @@
 const HTTP_URL_REGEX = /^https?:\/\//i;
 const KNOWN_S3_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
+const FAMILY_PREFIX_REGEX = /^family-\d+$/i;
 
 function extractKnownFolderKey(pathValue: string): string | null {
   const segments = pathValue.split("/").filter(Boolean);
@@ -9,7 +10,9 @@ function extractKnownFolderKey(pathValue: string): string | null {
     return null;
   }
 
-  const key = segments.slice(folderIndex).join("/");
+  const hasFamilyPrefix = folderIndex > 0 && FAMILY_PREFIX_REGEX.test(segments[folderIndex - 1] ?? "");
+  const keyStartIndex = hasFamilyPrefix ? folderIndex - 1 : folderIndex;
+  const key = segments.slice(keyStartIndex).join("/");
   return key || null;
 }
 
@@ -61,7 +64,14 @@ export function extractS3KeyFromValue(value: string | null | undefined): string 
 
   // Handle legacy/plain values shaped as: <bucket>/<folder>/<file>
   const [firstSegment, secondSegment] = normalized.split("/");
-  if (firstSegment && secondSegment && !KNOWN_S3_FOLDERS.has(firstSegment) && KNOWN_S3_FOLDERS.has(secondSegment)) {
+  const isFamilyPrefixed = firstSegment ? FAMILY_PREFIX_REGEX.test(firstSegment) : false;
+  if (
+    firstSegment &&
+    secondSegment &&
+    !isFamilyPrefixed &&
+    !KNOWN_S3_FOLDERS.has(firstSegment) &&
+    KNOWN_S3_FOLDERS.has(secondSegment)
+  ) {
     normalized = normalized.slice(firstSegment.length + 1);
   }
 

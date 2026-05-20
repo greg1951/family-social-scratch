@@ -8,6 +8,7 @@ import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
 const ALLOWED_ACTIONS = new Set(["upload", "download"]);
 const SAFE_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
+const FAMILY_PREFIX_REGEX = /^family-\d+$/i;
 const IS_DEV = process.env.NODE_ENV !== "production";
 
 type ResolvedS3Context = {
@@ -21,8 +22,16 @@ function isSafeFileName(fileName: string) {
 }
 
 function isSafeObjectKey(key: string) {
-  const [folder, fileName, ...rest] = key.split("/");
-  if (!folder || !fileName || rest.length > 0) {
+  const segments = key.split("/").filter(Boolean);
+
+  let folder: string | undefined;
+  let fileName: string | undefined;
+
+  if (segments.length === 2) {
+    [folder, fileName] = segments;
+  } else if (segments.length === 3 && FAMILY_PREFIX_REGEX.test(segments[0] ?? "")) {
+    [, folder, fileName] = segments;
+  } else {
     return false;
   }
 
@@ -43,6 +52,19 @@ function buildPublicObjectUrl(key: string, bucket: string, region: string) {
   }
 
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+}
+
+function getFamilyScopedPrefix(familyId: number) {
+  return `family-${familyId}`;
+}
+
+function toFamilyScopedKey(objectKey: string, familyId: number) {
+  const prefix = getFamilyScopedPrefix(familyId);
+  if (objectKey.toLowerCase().startsWith(`${prefix.toLowerCase()}/`)) {
+    return objectKey;
+  }
+
+  return `${prefix}/${objectKey}`;
 }
 
 function getEnvFallbackS3Context(): ResolvedS3Context | null {
@@ -122,15 +144,17 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const keyParam = searchParams.get("key");
-  const objectKey = extractS3KeyFromValue(keyParam);
+  const normalizedObjectKey = extractS3KeyFromValue(keyParam);
 
-  if (!objectKey || !isSafeObjectKey(objectKey)) {
+  if (!normalizedObjectKey || !isSafeObjectKey(normalizedObjectKey)) {
     return NextResponse.json({ error: "Invalid object key" }, { status: 400 });
   }
 
+  let objectKey = normalizedObjectKey;
+
   try {
     const s3Context = await getS3ClientForFamily(memberDetails.familyId);
-    const downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
+    let downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
 
     let response;
     try {
@@ -141,8 +165,22 @@ export async function GET(request: Request) {
         })
       );
     } catch (primaryError) {
-      const envFallbackContext = IS_DEV ? getEnvFallbackS3Context() : null;
       const primaryMessage = primaryError instanceof Error ? primaryError.message : "";
+      const isKeyNotFound = primaryMessage.toLowerCase().includes("specified key does not exist");
+      const familyScopedObjectKey = toFamilyScopedKey(objectKey, memberDetails.familyId);
+      const shouldRetryFamilyScoped = isKeyNotFound && familyScopedObjectKey !== objectKey;
+
+      if (shouldRetryFamilyScoped) {
+        objectKey = familyScopedObjectKey;
+        downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
+        response = await downloadContext.client.send(
+          new GetObjectCommand({
+            Bucket: downloadContext.bucketName,
+            Key: objectKey,
+          })
+        );
+      } else {
+      const envFallbackContext = IS_DEV ? getEnvFallbackS3Context() : null;
       const canRetryWithEnv =
         Boolean(envFallbackContext) &&
         primaryMessage.toLowerCase().includes("access key id you provided does not exist");
@@ -167,6 +205,7 @@ export async function GET(request: Request) {
           Key: objectKey,
         })
       );
+      }
     }
 
     const bodyBytes = await response.Body?.transformToByteArray();
@@ -263,7 +302,10 @@ export async function POST(request: Request) {
     }
   }
 
-  const objectKey = action === "upload" ? `${folder}/${fileName}` : normalizedDownloadKey!;
+  const objectKey =
+    action === "upload"
+      ? toFamilyScopedKey(`${folder}/${fileName}`, memberDetails.familyId)
+      : normalizedDownloadKey!;
 
   try {
     const s3Context = await getS3ClientForFamily(memberDetails.familyId);

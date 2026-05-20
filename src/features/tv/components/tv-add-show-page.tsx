@@ -269,7 +269,7 @@ export function TvAddShowPage({
     const resolveSignedPreview = async () => {
       const key = extractS3KeyFromValue(showImageUrl);
 
-      if (!key || !key.startsWith("tv/")) {
+      if (!key) {
         if (!isCancelled) {
           setImagePreviewUrl(showImageUrl);
         }

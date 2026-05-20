@@ -10,9 +10,18 @@ describe("extractS3KeyFromValue", () => {
     expect(extractS3KeyFromValue("my-bucket/members/avatar.jpg")).toBe("members/avatar.jpg");
   });
 
+  it("preserves plain family-prefixed key", () => {
+    expect(extractS3KeyFromValue("family-28/movies/poster.jpg")).toBe("family-28/movies/poster.jpg");
+  });
+
   it("returns key for virtual-hosted-style S3 URL", () => {
     const value = "https://my-bucket.s3.us-east-2.amazonaws.com/members/avatar.jpg";
     expect(extractS3KeyFromValue(value)).toBe("members/avatar.jpg");
+  });
+
+  it("returns family-prefixed key for virtual-hosted-style S3 URL", () => {
+    const value = "https://my-bucket.s3.us-east-2.amazonaws.com/family-28/movies/poster.jpg";
+    expect(extractS3KeyFromValue(value)).toBe("family-28/movies/poster.jpg");
   });
 
   it("returns key for path-style S3 URL", () => {
@@ -23,6 +32,11 @@ describe("extractS3KeyFromValue", () => {
   it("returns key for non-aws custom domain URL when path contains known folder", () => {
     const value = "https://cdn.family-social.app/assets/movies/poster.jpg";
     expect(extractS3KeyFromValue(value)).toBe("movies/poster.jpg");
+  });
+
+  it("returns family-prefixed key for non-aws custom domain URL", () => {
+    const value = "https://cdn.family-social.app/assets/family-28/movies/poster.jpg";
+    expect(extractS3KeyFromValue(value)).toBe("family-28/movies/poster.jpg");
   });
 
   it("returns null for non-aws URL without known folder path", () => {
