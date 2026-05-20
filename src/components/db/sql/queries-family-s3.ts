@@ -59,45 +59,7 @@ type RotateFamilyS3CredentialsResult =
       message: string;
     };
 
-export async function getActiveS3CredentialsByFamilyId(
-  familyId: number
-): Promise<ActiveFamilyS3CredentialsResult> {
-  const [record] = await db
-    .select({
-      credentialId: familyS3Credentials.id,
-      familyId: familyS3Credentials.familyId,
-      encryptedAccessKey: familyS3Credentials.encryptedAccessKey,
-      encryptedSecretKey: familyS3Credentials.encryptedSecretKey,
-      bucketName: familyS3Credentials.bucketName,
-      region: familyS3Credentials.region,
-      isActive: familyS3Credentials.isActive,
-      createdAt: familyS3Credentials.createdAt,
-      updatedAt: familyS3Credentials.updatedAt,
-    })
-    .from(familyS3Credentials)
-    .where(and(eq(familyS3Credentials.familyId, familyId), eq(familyS3Credentials.isActive, true)))
-    .orderBy(desc(familyS3Credentials.createdAt));
-
-  if (!record) {
-    return {
-      success: false,
-      message: `No active S3 credentials found for familyId ${familyId}`,
-    };
-  }
-
-  return {
-    success: true,
-    credentialId: record.credentialId,
-    familyId: record.familyId,
-    encryptedAccessKey: record.encryptedAccessKey,
-    encryptedSecretKey: record.encryptedSecretKey,
-    bucketName: record.bucketName,
-    region: record.region,
-    isActive: record.isActive,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
-}
+// getActiveS3CredentialsByFamilyId is now deprecated and replaced by getActiveS3CredentialForFamily in s3Credentials.ts
 
 export async function createFamilyS3Credentials(
   input: CreateFamilyS3CredentialsInput

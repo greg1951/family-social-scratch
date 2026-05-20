@@ -1,1 +1,1 @@
-export { POST } from "./router";
+export { GET, POST } from "./router";

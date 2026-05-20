@@ -1,4 +1,4 @@
-import { PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
@@ -8,6 +8,13 @@ import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
 const ALLOWED_ACTIONS = new Set(["upload", "download"]);
 const SAFE_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
+const IS_DEV = process.env.NODE_ENV !== "production";
+
+type ResolvedS3Context = {
+  client: S3Client;
+  bucketName: string;
+  region: string;
+};
 
 function isSafeFileName(fileName: string) {
   return SAFE_FILE_NAME_REGEX.test(fileName) && !fileName.includes("..") && !fileName.includes("/") && !fileName.includes("\\");
@@ -38,6 +45,159 @@ function buildPublicObjectUrl(key: string, bucket: string, region: string) {
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
 }
 
+function getEnvFallbackS3Context(): ResolvedS3Context | null {
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  const bucketName = process.env.AWS_S3_BUCKET_NAME;
+  const region = process.env.AWS_REGION ?? "us-east-2";
+
+  if (!accessKeyId || !secretAccessKey || !bucketName) {
+    return null;
+  }
+
+  return {
+    client: new S3Client({
+      region,
+      credentials: {
+        accessKeyId,
+        secretAccessKey,
+      },
+    }),
+    bucketName,
+    region,
+  };
+}
+
+async function resolveDownloadContext(
+  requestId: string,
+  baseContext: ResolvedS3Context,
+  objectKey: string
+): Promise<ResolvedS3Context> {
+  if (!IS_DEV) {
+    return baseContext;
+  }
+
+  const envFallbackContext = getEnvFallbackS3Context();
+  const contexts: ResolvedS3Context[] = [baseContext];
+
+  if (envFallbackContext) {
+    contexts.push(envFallbackContext);
+  }
+
+  let resolved = baseContext;
+
+  for (const candidate of contexts) {
+    try {
+      await candidate.client.send(
+        new HeadObjectCommand({
+          Bucket: candidate.bucketName,
+          Key: objectKey,
+        })
+      );
+
+      resolved = candidate;
+      break;
+    } catch {
+      // Continue trying alternate context in development rollout.
+    }
+  }
+
+  // console.info("[api/s3-upload] download context selected", {
+  //   requestId,
+  //   objectKey,
+  //   bucketName: resolved.bucketName,
+  //   region: resolved.region,
+  // });
+
+  return resolved;
+}
+
+export async function GET(request: Request) {
+  const memberDetails = await getMemberPageDetails();
+  const requestId = crypto.randomUUID();
+
+  if (!memberDetails.isLoggedIn || !memberDetails.familyId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const keyParam = searchParams.get("key");
+  const objectKey = extractS3KeyFromValue(keyParam);
+
+  if (!objectKey || !isSafeObjectKey(objectKey)) {
+    return NextResponse.json({ error: "Invalid object key" }, { status: 400 });
+  }
+
+  try {
+    const s3Context = await getS3ClientForFamily(memberDetails.familyId);
+    const downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
+
+    let response;
+    try {
+      response = await downloadContext.client.send(
+        new GetObjectCommand({
+          Bucket: downloadContext.bucketName,
+          Key: objectKey,
+        })
+      );
+    } catch (primaryError) {
+      const envFallbackContext = IS_DEV ? getEnvFallbackS3Context() : null;
+      const primaryMessage = primaryError instanceof Error ? primaryError.message : "";
+      const canRetryWithEnv =
+        Boolean(envFallbackContext) &&
+        primaryMessage.toLowerCase().includes("access key id you provided does not exist");
+
+      if (!canRetryWithEnv || !envFallbackContext) {
+        throw primaryError;
+      }
+
+      if (IS_DEV) {
+        console.warn("[api/s3-upload] retrying download with env fallback credentials", {
+          requestId,
+          objectKey,
+          primaryErrorMessage: primaryMessage,
+          fallbackBucketName: envFallbackContext.bucketName,
+          fallbackRegion: envFallbackContext.region,
+        });
+      }
+
+      response = await envFallbackContext.client.send(
+        new GetObjectCommand({
+          Bucket: envFallbackContext.bucketName,
+          Key: objectKey,
+        })
+      );
+    }
+
+    const bodyBytes = await response.Body?.transformToByteArray();
+
+    if (!bodyBytes) {
+      return NextResponse.json({ error: "Object not found" }, { status: 404 });
+    }
+
+    const safeBytes = Uint8Array.from(bodyBytes);
+    const blob = new Blob([safeBytes], {
+      type: response.ContentType ?? "application/octet-stream",
+    });
+
+    return new NextResponse(blob, {
+      status: 200,
+      headers: {
+        "Content-Type": response.ContentType ?? "application/octet-stream",
+        "Cache-Control": "private, max-age=60",
+      },
+    });
+  } catch (error) {
+    console.error("[api/s3-upload] failed to stream object", {
+      requestId,
+      familyId: memberDetails.familyId,
+      objectKey,
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ error: "Failed to load image" }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const memberDetails = await getMemberPageDetails();
   const requestId = crypto.randomUUID();
@@ -53,15 +213,15 @@ export async function POST(request: Request) {
 
   const { fileName, contentType, action, folder } = await request.json();
 
-  // console.info("[api/s3-upload] incoming request", {
-  //   requestId,
-  //   action,
-  //   folder,
-  //   fileName,
-  //   contentType,
-  //   memberId: memberDetails.memberId,
-  //   familyId: memberDetails.familyId,
-  // });
+  // if (IS_DEV) {
+  //   console.info("[api/s3-upload] request", {
+  //     requestId,
+  //     action,
+  //     fileName,
+  //     folder,
+  //     familyId: memberDetails.familyId,
+  //   });
+  // }
 
   if (!ALLOWED_ACTIONS.has(action)) {
     console.warn("[api/s3-upload] invalid action", { requestId, action });
@@ -107,40 +267,25 @@ export async function POST(request: Request) {
 
   try {
     const s3Context = await getS3ClientForFamily(memberDetails.familyId);
-    // console.info("[api/s3-upload] resolved S3 context", {
-    //   requestId,
-    //   familyId: memberDetails.familyId,
-    //   bucketName: s3Context.bucketName,
-    //   region: s3Context.region,
-    //   action,
-    //   objectKey,
-    // });
 
-    let command;
     if (action === "upload") {
-      command = new PutObjectCommand({
+      const command = new PutObjectCommand({
         Bucket: s3Context.bucketName,
         Key: objectKey,
         ContentType: contentType,
       });
-    } else {
-      command = new GetObjectCommand({
-        Bucket: s3Context.bucketName,
-        Key: objectKey,
-      });
-    }
 
-    // URL expires in 60 seconds
-    const url = await getSignedUrl(s3Context.client, command, { expiresIn: 60 });
-    // console.info("[api/s3-upload] generated signed URL", {
-    //   requestId,
-    //   action,
-    //   expiresInSeconds: 60,
-    //   objectKey,
-    //   bucketName: s3Context.bucketName,
-    //   region: s3Context.region,
-    // });
-    if (action === "upload") {
+      const url = await getSignedUrl(s3Context.client, command, { expiresIn: 60 });
+
+      // if (IS_DEV) {
+      //   console.info("[api/s3-upload] signed upload URL created", {
+      //     requestId,
+      //     objectKey,
+      //     bucketName: s3Context.bucketName,
+      //     region: s3Context.region,
+      //   });
+      // }
+
       return NextResponse.json({
         url,
         s3Key: objectKey,
@@ -148,6 +293,19 @@ export async function POST(request: Request) {
         signedContentType: contentType,
       });
     }
+
+    const downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
+    const url = `/api/s3-upload?key=${encodeURIComponent(objectKey)}`;
+
+    // if (IS_DEV) {
+    //   console.info("[api/s3-upload] proxied download URL created", {
+    //     requestId,
+    //     objectKey,
+    //     bucketName: downloadContext.bucketName,
+    //     region: downloadContext.region,
+    //     proxyUrl: url,
+    //   });
+    // }
 
     return NextResponse.json({ url, s3Key: objectKey });
   } catch (error) {

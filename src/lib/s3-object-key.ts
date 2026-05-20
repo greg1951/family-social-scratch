@@ -1,4 +1,17 @@
 const HTTP_URL_REGEX = /^https?:\/\//i;
+const KNOWN_S3_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
+
+function extractKnownFolderKey(pathValue: string): string | null {
+  const segments = pathValue.split("/").filter(Boolean);
+  const folderIndex = segments.findIndex((segment) => KNOWN_S3_FOLDERS.has(segment));
+
+  if (folderIndex === -1) {
+    return null;
+  }
+
+  const key = segments.slice(folderIndex).join("/");
+  return key || null;
+}
 
 function stripQueryAndHash(value: string) {
   return value.split(/[?#]/, 1)[0] ?? "";
@@ -17,12 +30,26 @@ export function extractS3KeyFromValue(value: string | null | undefined): string 
   if (HTTP_URL_REGEX.test(trimmed)) {
     try {
       const url = new URL(trimmed);
+      const decodedPath = decodeURIComponent(url.pathname);
+      const normalizedPath = decodedPath.replace(/^\/+/, "");
+
       if (!url.hostname.endsWith("amazonaws.com")) {
-        return null;
+        return extractKnownFolderKey(normalizedPath);
       }
 
-      const decodedPath = decodeURIComponent(url.pathname);
-      return decodedPath.replace(/^\/+/, "") || null;
+      // Support both S3 virtual-hosted-style and path-style URLs.
+      // - virtual-hosted: <bucket>.s3.<region>.amazonaws.com/<key>
+      // - path-style: s3.<region>.amazonaws.com/<bucket>/<key>
+      const host = url.hostname.toLowerCase();
+      const isPathStyleHost = host === "s3.amazonaws.com" || host.startsWith("s3.");
+
+      if (isPathStyleHost) {
+        const [, ...keyParts] = normalizedPath.split("/");
+        const pathStyleKey = keyParts.join("/");
+        return pathStyleKey || null;
+      }
+
+      return normalizedPath || null;
     } catch {
       return null;
     }
@@ -30,6 +57,13 @@ export function extractS3KeyFromValue(value: string | null | undefined): string 
 
   const withoutQuery = stripQueryAndHash(trimmed);
   const decoded = decodeURIComponent(withoutQuery);
-  const normalized = decoded.replace(/^\/+/, "");
+  let normalized = decoded.replace(/^\/+/, "");
+
+  // Handle legacy/plain values shaped as: <bucket>/<folder>/<file>
+  const [firstSegment, secondSegment] = normalized.split("/");
+  if (firstSegment && secondSegment && !KNOWN_S3_FOLDERS.has(firstSegment) && KNOWN_S3_FOLDERS.has(secondSegment)) {
+    normalized = normalized.slice(firstSegment.length + 1);
+  }
+
   return normalized || null;
 }
