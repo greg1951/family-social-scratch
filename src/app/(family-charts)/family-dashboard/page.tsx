@@ -27,6 +27,7 @@ const FEATURE_POST_NAMES = [
   "Family Foodies",
   "Poetry Cafe",
   "Book Besties",
+  "Family Gallery",
 ] as const;
 
 function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartData {
@@ -36,6 +37,7 @@ function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartDat
       feature,
       POST_CREATED: featureRows.find((r) => r.actionType === "POST_CREATED")?.count ?? 0,
       COMMENT_CREATED: featureRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
+      ALBUM_SHARED: featureRows.find((r) => r.actionType === "ALBUM_SHARED")?.count ?? 0,
       LIKE_ADDED: featureRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
       LOVE_ADDED: featureRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
       DISCUSS_START: featureRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
@@ -53,6 +55,7 @@ function buildMemberPostsData(rows: MemberPostsRawRow[]): MemberPostsChartData {
       member: memberName,
       POST_CREATED: memberRows.find((r) => r.actionType === "POST_CREATED")?.count ?? 0,
       COMMENT_CREATED: memberRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
+      ALBUM_SHARED: memberRows.find((r) => r.actionType === "ALBUM_SHARED")?.count ?? 0,
       LIKE_ADDED: memberRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
       LOVE_ADDED: memberRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
       DISCUSS_START: memberRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,

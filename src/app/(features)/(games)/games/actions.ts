@@ -5,6 +5,7 @@ import {
   archiveGameStateRecord,
   createGameStateRecord,
   createGuestMemberRecord,
+  deleteGameStateRecord,
   getGameScoreboardDetailsByGameId,
   saveGameScoreboardRecord,
 } from "@/components/db/sql/queries-game-scoreboards";
@@ -55,6 +56,11 @@ export interface ArchiveGameInput {
   gameId: number;
 }
 
+export interface DeleteGameInput {
+  familyId: number;
+  gameId: number;
+}
+
 export async function startGameAction(input: StartGameInput) {
   const result = await createGameStateRecord(input);
 
@@ -87,6 +93,16 @@ export async function loadGameScoreboardAction(input: LoadGameScoreboardInput) {
 
 export async function archiveGameAction(input: ArchiveGameInput) {
   const result = await archiveGameStateRecord(input.gameId, input.familyId);
+
+  if (result.success) {
+    revalidatePath("/games");
+  }
+
+  return result;
+}
+
+export async function deleteGameAction(input: DeleteGameInput) {
+  const result = await deleteGameStateRecord(input.gameId, input.familyId);
 
   if (result.success) {
     revalidatePath("/games");

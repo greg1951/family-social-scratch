@@ -804,6 +804,73 @@ export const featureFaqItems = [
     ),
     icon: FileText,
   },
+  {
+    value: "item-300",
+    category: "Photo Galleries",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">I'm in the Family Photo Gallery but I don't see any way to upload pictures. How do I do this?</p>
+        <p className="text-sm text-slate-600">The Family Photo Gallery is designed for viewing shared albums. To upload pictures, go to <b>My Gallery</b>.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Go to <b>My Gallery</b> and follow the steps below.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Upload pictures to your private photo gallery. No one has access to your gallery except you.</li>
+            <li>Before uploading picture, edit the file names and provide a short meaningful name. After you upload, the file names will be used as photo captions. It will save you a little editing.</li>
+            <li>In the upload dialog select the files you want to upload and click the upload button.</li>
+            <li>The photos will be added to your family storage service, give it a  little time please!</li>
+            <li>After they've uploaded, you can organize them into albums and share them with your family.</li>
+            <li>If you add a short description to the pictures, that will be shown when family member mouse over your pictures.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-100 h-120 md:w-150 md:h-180"
+              src="/images/support/faq-member-gallery-add-album.jpg"
+              alt="Photo Galleries Pictures"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-400",
+    category: "Game Scoreboards",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">What does the Game Scoreboard feature provide?</p>
+        <p className="text-sm text-slate-600">Families play games. The Game Scoreboard feature allows you to track scores and rankings for a number of popular games.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">In addition to tracking scores, there are leader boards, player stats and game history for each of the games.</p>
+          <p className="text-sm ">Mexican Train, Acquire, Cricket (Darts) and Crokinole (for our California and our Canadian friends).</p>
+          <ul className="list-disc ml-6 mt-2 text-sm">
+            <li>It takes time to develop and perfect a game board. We will grow the game list over time.</li>
+            <li>If there's a game we're missing, let us know by opening a support ticket and we'll take a look at adding it.</li>
+          </ul>
+          <p className="text-sm p-2">Shown below is an example of the Cricket dart game scoreboard. It uses a ledger entry format so the scores are automatically recorded.</p>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-120 h-90 md:w-230 md:h-180"
+              src="/images/support/faq-game-cricket-scoreboard.jpg"
+              alt="Game Scoreboard"
+            />
+          </div>
+          <div className="flex justify-left">
+            <Info size={ 30 } className="inline-block mr-1" />
+            <p className="text-sm p-2">Note the <i>Leaderboard</i>, <i>Player Stats</i>, and <i>Game History</i> sections to the right of the scoreboard.</p>
+
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
 ]
 
 

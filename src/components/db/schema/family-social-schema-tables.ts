@@ -321,6 +321,78 @@ export const threadTemplate = pgTable("thread_template", {
 });
 
 
+/*-------------------------------- Photo Galleries ------------------------------ */
+export const galleryPhoto = pgTable("gallery_photo", {
+  id: serial("id").primaryKey(),
+  caption: text("caption"),
+  photoYear: integer("photo_year").notNull().default(0),
+  photoImageUrl: text("photo_image_url").notNull(),
+  fileName: text("file_name"),
+  fileSizeBytes: integer("file_size_bytes"),
+  mimeType: text("mime_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('gallery_photo_member_id_idx').on(table.memberId),
+]);
+
+export const galleryAlbum = pgTable("gallery_album", {
+  id: serial("id").primaryKey(),
+  caption: text("caption"),
+  albumName: text("album_name").notNull(),
+  albumDescription: text("album_description"),
+  isShared: boolean("is_shared").notNull().default(false),
+  isLiked: boolean("is_liked").notNull().default(false),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('gallery_album_member_id_idx').on(table.memberId),
+]);
+
+export const galleryAlbumPhoto = pgTable("gallery_album_photo", {
+  id: serial("id").primaryKey(),
+  caption: text("caption"),
+  albumPhotoDescription: text("album_photo_description"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  photoId: integer("fk_photo_id").notNull().references(() => galleryPhoto.id, {onDelete: 'cascade'}),
+  albumId: integer("fk_album_id").notNull().references(() => galleryAlbum.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('gallery_album_photo_member_id_idx').on(table.memberId),
+    index('gallery_album_photo_photo_id_idx').on(table.photoId),
+    index('gallery_album_photo_album_id_idx').on(table.albumId),
+]);
+
+export const galleryAlbumPhotoLike = pgTable("gallery_album_photo_like", {
+  id: serial("id").primaryKey(),
+  likeType: integer("like_type").notNull().default(1), // 1 = like (thumbs up), 2 = love (heart)
+  albumPhotoId: integer("fk_gallery_album_photo_id").notNull().references(() => galleryAlbumPhoto.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("gallery_album_photo_like_gallery_album_photo_id_idx").on(table.albumPhotoId),
+    index("gallery_album_photo_like_member_id_idx").on(table.memberId),
+  ]
+);
+
+export const galleryAlbumComment = pgTable("gallery_album_photo_comment", {
+  id: serial("id").primaryKey(),
+  commentText: text("comment_text").notNull().default(""),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  albumId: integer("fk_gallery_album_id").notNull().references(() => galleryAlbum.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("gallery_album_comment_member_id_idx").on(table.memberId),
+    index("gallery_album_comment_gallery_album_id_idx").on(table.albumId),
+  ]
+);
+
 /*------------------------------- Games Scoreboard ------------------------------ */
 //export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
 

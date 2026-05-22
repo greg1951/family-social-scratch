@@ -20,6 +20,9 @@
     2. [Configuration](#configuration)
     3. [Persistence](#persistence)
 12. [Amazon S3](#amazon-s3)
+    1. [Trial Account Bucket](#trial-account-bucket)
+    2. [Production Account Bucket](#production-account-bucket)
+    3. [The Family S3 Credentials Table](#the-family-s3-credentials-table)
 13. [Lint and Build Cleanup](#lint-and-build-cleanup)
 14. [Videos](#videos)
 15. [Component Code Size](#component-code-size)
@@ -366,19 +369,44 @@ fetch('/api/editor/content')
 # Amazon S3
 A storage service is needed as there will be a great many files uploaded (and downloaded) in the application. 
 
-The plan is to create an S3 bucket for each new family. There is no other means of assuring the privacy of the content consumed by a family. 
+The S3 client install command line in VS Code is: `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner`
+
+The plan is to create an S3 bucket for each family subscription accounts, to provide isolation data protection. Trial accounts however run within one bucket. When (if) they upgrade to a subscription, then a lift and shift will be performed on the trial account S3 content.
 
 (The same will be true for the family database tables; more on that later).
 
-As a template, the `thosecrazyhughletts` S3 bucket was created in the `us-east-2` region. The naming of the bucket will be a conversion of the family name to lowercase. The `family-social-s3-user` was defined in AWS IAM with `AmazonS3FullAccess` permission.
+## Trial Account Bucket
+The trial account bucket is currently in the `thosecrazyhughletts` S3 bucket. This will be renamed to `trialaccountbucket` sometime in the future. The S3 bucket was created in the `us-east-2` region, where the current EC2 server is running. There is no need for  AWS_ACCESS_KEY or AWS_REGION environment variables.
 
-Within the bucket the following folders were created to store the content for each of the features. (The folder names don't need to be created up front. appending a folder to the s3 bucket name will create the folder anyway; it's just FYI).
+The naming of the bucket will be a conversion of the family name to lowercase. The `family-social-s3-user` was defined in AWS IAM with `AmazonS3FullAccess` permission.
+
+Within the trial-account bucket there is a high-level folder: `family-##` that contains the familyId of the the trial account. Within the family folder, then the following folders were created to store the content for each of the features. 
 
 ![](docs/pngs/s3-bucket-folders.png)
 
 Members who want to add a profile picture can select the file and upload it to the `members` folder. TV, Movies, Foodies, and Threads are other features where images come into play.
 
-The S3 client install command line in VS Code is: `npm install @aws-sdk/client-s3 @aws-sdk/s3-request-presigner`
+## Production Account Bucket
+When a family upgrades from a trial to a subscription account, a separate S3 bucket will be created. The S3 artifacts in the trial `bucket/family-##` will be moved to the new subscription bucket.
+
+## The Family S3 Credentials Table
+The table described below is used to configure the S3 credentials for a family. For the *trial* family account the same credential is duplicated. However, in a *subscription* account, there is a separate database and table setup for each family. In the latter case, there will only be one entry in the table.
+
+```sql
+export const familyS3Credentials = pgTable("family_s3_credentials", {
+  id: serial("id").primaryKey(),
+  encryptedAccessKey: text("encrypted_access_key").notNull(),
+  encryptedSecretKey: text("encrypted_secret_key").notNull(),
+  bucketName: text("bucket_name").notNull(),
+  region: text("region").notNull().default("us-east-2"),  
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+}, (table) => [
+  index('family_s3_credentials_family_id_idx').on(table.familyId),
+  index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
+]);
+```
 
 # Lint and Build Cleanup
 There is a concept called `lint debt` which arises from unresolved warning and errors the linter finds. Rather than waiting a long time between reducing the `lint debt` follow the practices below.

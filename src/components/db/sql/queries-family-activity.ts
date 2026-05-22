@@ -8,6 +8,7 @@ const FEATURE_POST_NAMES = [
   "Family Foodies",
   "Poetry Cafe",
   "Book Besties",
+  "Family Gallery",
 ] as const;
 
 const POST_ACTION_TYPES = [
@@ -15,6 +16,7 @@ const POST_ACTION_TYPES = [
   "COMMENT_CREATED",
   "LIKE_ADDED",
   "LOVE_ADDED",
+  "ALBUM_SHARED",
   "DISCUSS_START",
   "DISCUSS_REPLY",
   "DISCUSS_REACT",
@@ -154,6 +156,7 @@ export async function getThreadAndGameActivityFamilySummary(
 export const FAMILY_ACTIVITY_ACTION_TYPES = {
   POST_CREATED: "POST_CREATED",
   COMMENT_CREATED: "COMMENT_CREATED",
+  ALBUM_SHARED: "ALBUM_SHARED",
   DISCUSS_START: "DISCUSS_START",
   DISCUSS_REPLY: "DISCUSS_REPLY",
   DISCUSS_REACT: "DISCUSS_REACT",

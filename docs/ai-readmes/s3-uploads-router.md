@@ -1,3 +1,103 @@
+
+# S3 Upload/Download Route Explanation
+
+Source: router.ts
+
+## What this route does
+
+This route handles image uploads and downloads for authenticated family members by:
+
+- Validating the caller is logged in and has a familyId (137, 142, 240, 250)
+- Validating allowed actions and safe S3 key formats (8, 10, 20, 24)
+- Generating signed upload URLs for direct browser-to-S3 uploads (314, 320)
+- Serving downloads through a protected proxy endpoint (137, 340)
+
+---
+
+## Key guardrails
+
+- Allowed folders: members, movies, tv, music, foodies, threads (8)
+- Allowed actions: upload, download (9)
+- File names must match a strict safe pattern (10, 20)
+- Object keys must be either:
+  - folder/fileName (11, 24)
+  - family-<id>/folder/fileName
+- Upload keys are family-scoped using family-<familyId>/... (61, 306)
+
+These checks reduce path traversal risk and keep tenant data isolated.
+
+---
+
+## Upload flow
+
+1. Client sends POST with action = upload and: (253)
+   - fileName
+   - contentType
+   - folder
+   
+2. Route validates: (266, 271, 276, 281, 286)
+   - User auth/family
+   - folder is allowed
+   - fileName is safe
+   - contentType is one of image/png, image/jpeg, image/jpg
+
+3. Route creates S3 object key: (306, 61)
+   - family-<familyId>/<folder>/<fileName>
+
+4. Route creates a PutObject command and signs it (60-second expiry).
+
+5. Route returns JSON:
+   - url: signed PUT URL
+   - s3Key: stored object key
+   - fileUrl: computed public-style S3 URL
+   - signedContentType
+
+Result: browser uploads directly to S3 using the signed URL.
+
+---
+
+## Download flow (two-step)
+
+### Step 1: Request a download URL
+
+1. Client sends POST with action = download and fileName/key input. (253, 292)
+2. Route normalizes key with extractS3KeyFromValue. (292, 301, 24)
+3. Route validates key safety. 
+4. Route returns: (340, 351)
+   - url = /api/s3-upload?key=<encoded-key>
+   - s3Key
+
+This returns a local proxy URL, not the image bytes. (340, 351)
+
+### Step 2: Fetch image bytes from GET endpoint
+
+1. Client requests GET /api/s3-upload?key=... (137, 147, 150)
+2. Route validates auth and key safety. (156, 93, 112, 70)
+3. Route resolves family S3 client context. 
+4. Route tries GetObject. (162)
+5. If key not found, it retries with family-scoped key.
+6. In development, it may retry with env fallback AWS credentials/context. (169, 177, 185, 203)
+7. On success, route streams bytes back with:
+   - Content-Type from S3 (or application/octet-stream fallback)
+   - Cache-Control: private, max-age=60
+
+Errors: (142, 150, 214, 236, 362)
+- 401 for unauthorized
+- 400 for invalid input
+- 404 when object body missing
+- 500 for other failures
+
+---
+
+## Why downloads are proxied through this API
+
+- Enforces app-level authorization before returning image bytes (141)
+- Avoids exposing bucket internals and supports safer access control (170, 93)
+- Supports migration/fallback behavior (scoped key retry and dev credential fallback)
+
+# Source Code
+
+```tsx
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
@@ -5,7 +105,7 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { getS3ClientForFamily } from "@/lib/s3-client-factory";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
-const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads", "galleries"]);
+const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
 const ALLOWED_ACTIONS = new Set(["upload", "download"]);
 const SAFE_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
 const FAMILY_PREFIX_REGEX = /^family-\d+$/i;
@@ -21,8 +121,6 @@ function isSafeFileName(fileName: string) {
   return SAFE_FILE_NAME_REGEX.test(fileName) && !fileName.includes("..") && !fileName.includes("/") && !fileName.includes("\\");
 }
 
-const MEMBER_PREFIX_REGEX = /^member-\d+$/i;
-
 function isSafeObjectKey(key: string) {
   const segments = key.split("/").filter(Boolean);
 
@@ -30,20 +128,9 @@ function isSafeObjectKey(key: string) {
   let fileName: string | undefined;
 
   if (segments.length === 2) {
-    // folder/filename
     [folder, fileName] = segments;
   } else if (segments.length === 3 && FAMILY_PREFIX_REGEX.test(segments[0] ?? "")) {
-    // family-##/folder/filename
     [, folder, fileName] = segments;
-  } else if (
-    segments.length === 4 &&
-    FAMILY_PREFIX_REGEX.test(segments[0] ?? "") &&
-    segments[1] === "galleries" &&
-    MEMBER_PREFIX_REGEX.test(segments[2] ?? "")
-  ) {
-    // family-##/galleries/member-##/filename
-    folder = "galleries";
-    fileName = segments[3];
   } else {
     return false;
   }
@@ -65,14 +152,6 @@ function buildPublicObjectUrl(key: string, bucket: string, region: string) {
   }
 
   return `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
-}
-
-function buildS3Uri(key: string, bucket: string) {
-  if (!bucket || !key) {
-    return null;
-  }
-
-  return `s3://${bucket}/${key}`;
 }
 
 function getFamilyScopedPrefix(familyId: number) {
@@ -325,9 +404,7 @@ export async function POST(request: Request) {
 
   const objectKey =
     action === "upload"
-      ? folder === "galleries"
-        ? toFamilyScopedKey(`galleries/member-${memberDetails.memberId}/${fileName}`, memberDetails.familyId)
-        : toFamilyScopedKey(`${folder}/${fileName}`, memberDetails.familyId)
+      ? toFamilyScopedKey(`${folder}/${fileName}`, memberDetails.familyId)
       : normalizedDownloadKey!;
 
   try {
@@ -354,7 +431,6 @@ export async function POST(request: Request) {
       return NextResponse.json({
         url,
         s3Key: objectKey,
-        s3Uri: buildS3Uri(objectKey, s3Context.bucketName),
         fileUrl: buildPublicObjectUrl(objectKey, s3Context.bucketName, s3Context.region),
         signedContentType: contentType,
       });
@@ -386,3 +462,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to generate URL" }, { status: 500 });
   }
 }
+```

@@ -1,5 +1,6 @@
 const HTTP_URL_REGEX = /^https?:\/\//i;
-const KNOWN_S3_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads"]);
+const S3_URL_REGEX = /^s3:\/\//i;
+const KNOWN_S3_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads", "galleries"]);
 const FAMILY_PREFIX_REGEX = /^family-\d+$/i;
 
 function extractKnownFolderKey(pathValue: string): string | null {
@@ -56,6 +57,21 @@ export function extractS3KeyFromValue(value: string | null | undefined): string 
     } catch {
       return null;
     }
+  }
+
+  if (S3_URL_REGEX.test(trimmed)) {
+    const withoutScheme = trimmed.replace(S3_URL_REGEX, "");
+    const normalizedValue = stripQueryAndHash(withoutScheme).replace(/^\/+/, "");
+    const segments = normalizedValue.split("/").filter(Boolean);
+
+    if (segments.length >= 2) {
+      // s3://<bucket>/<key...>
+      const [, ...keyParts] = segments;
+      const key = keyParts.join("/");
+      return key || null;
+    }
+
+    return null;
   }
 
   const withoutQuery = stripQueryAndHash(trimmed);

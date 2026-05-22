@@ -15,6 +15,7 @@ export type FeaturePostsChartData = {
   feature: string;
   POST_CREATED: number;
   COMMENT_CREATED: number;
+  ALBUM_SHARED: number;
   LIKE_ADDED: number;
   LOVE_ADDED: number;
   DISCUSS_START: number;
@@ -25,6 +26,7 @@ export type FeaturePostsChartData = {
 const chartConfig = {
   POST_CREATED: { label: "Posts", color: "#d1d5db" },
   COMMENT_CREATED: { label: "Comments", color: "var(--chart-2)" },
+  ALBUM_SHARED: { label: "Albums", color: "#fbbf24" },
   LIKE_ADDED: { label: "Likes", color: "#93c5fd" },
   LOVE_ADDED: { label: "Loves", color: "#f472b6" },
   DISCUSS_START: { label: "Discuss Starts", color: "#fb923c" },
@@ -38,6 +40,7 @@ const featureNameMap: Record<string, string> = {
   "Family Foodies": "Foodies",
   "Poetry Cafe": "Poets",
   "Book Besties": "Besties",
+  "Family Gallery": "Gallery",
 };
 
 export default function FeaturePostsChart({ data }: { data: FeaturePostsChartData }) {
@@ -64,6 +67,7 @@ export default function FeaturePostsChart({ data }: { data: FeaturePostsChartDat
             <ChartLegend verticalAlign="top" height={ 56 } content={ <ChartLegendContent className="flex-wrap gap-x-3 gap-y-1 text-[11px]" /> } />
             <Bar dataKey="POST_CREATED" stackId="a" fill="#d1d5db" radius={ [0, 0, 0, 0] } />
             <Bar dataKey="COMMENT_CREATED" stackId="a" fill="var(--chart-2)" radius={ [0, 0, 0, 0] } />
+            <Bar dataKey="ALBUM_SHARED" stackId="a" fill="#fbbf24" radius={ [0, 0, 0, 0] } />
             <Bar dataKey="LIKE_ADDED" stackId="a" fill="#93c5fd" radius={ [0, 0, 0, 0] } />
             <Bar dataKey="LOVE_ADDED" stackId="a" fill="#f472b6" radius={ [0, 0, 0, 0] } />
             <Bar dataKey="DISCUSS_START" stackId="a" fill="#fb923c" radius={ [0, 0, 0, 0] } />

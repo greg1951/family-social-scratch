@@ -28,6 +28,11 @@ WHERE lower(action_type) IN ('post', 'post_created')
   AND action_type <> 'POST_CREATED';
 
 UPDATE family_activity
+SET action_type = 'ALBUM_SHARED'
+WHERE lower(action_type) IN ('album_shared', 'album', 'shared_album')
+  AND action_type <> 'ALBUM_SHARED';
+
+UPDATE family_activity
 SET action_type = 'LIKE_ADDED'
 WHERE lower(action_type) IN ('like', 'liked', 'like_added')
   AND action_type <> 'LIKE_ADDED';
@@ -70,6 +75,7 @@ BEGIN
       action_type IN (
         'POST_CREATED',
         'COMMENT_CREATED',
+        'ALBUM_SHARED',
         'THREAD_CREATED',
         'GAME_STARTED',
         'LIKE_ADDED',

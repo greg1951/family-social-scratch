@@ -1,0 +1,50 @@
+BACKGROUND
+- There are five new database tables that were added to support the Photo Galleries feature.
+- The tables can be found in "src/components/db/schema/famil-social-schema-tables.ts" with a prefix of "gallery".
+
+App Router Pages
+- Members will have their own Member Photo Gallery home page where they can upload their pictures and create albums. 
+  - This page is located at "src/app/(features)/(galleries)/member-gallery/page.tsx". 
+- Albums that have been shared by members will be visible on the Family Photo Gallery home page. 
+  - This page is located at "src/app/(features)/(galleries)/family-gallery/page.tsx".
+
+REQUIREMENTS
+
+Photo Uploading on S3
+- Members can upload their photos to Amazon S3 for storage.
+- The uploaded photos will be stored in the familyS3Credentials., in the "galleries/member-##" folder inside the "family-##" folder in the S3 bucket.
+- The S3 file name uploaded to the member's gallery directory will consist of "member-##/caption.jpg/png"
+- A sample of a photoImageUrl is "s3://thosecrazyhughletts/family-28/galleries/member-63/small-weird-headshot.jpg"
+
+Family Gallery Home Page
+- The Family Gallery home page is where members can view the albums that have been shared by other members of the family.
+- The main page will provide a link to the family gallery home page.
+- The Family Gallery home page will have a header that provides:
+  - a Back to Main Menu button, and a link to the Member Gallery home page.
+  - Below the header are two sections:  
+    - The first section is the Photo Finder on the right half of the page, which allows members to search for photos by caption or family member name. 
+    - The second section is the photo scroll strip on the left half of the page, which displays the photos from the selected shared albums. The photos will be displayed in a horizontal scroll strip, ordered by the latest album additions.    
+- The Family Gallery home page will provide a Photo Finder list, ordered by the latest album additions but searchable by caption or family member name, that will display photos from all of the shared albums. 
+- Clicking on an album will automatically render the photo albums in the photo scroll strip.
+
+Member Gallery Home Page
+
+- The Member Gallery home page is where members can manage their photo albums and pictures.
+- The page will display a list of the member's photos and albums.
+- The Member Gallery home page will have a header that provides:
+  - A header with these buttons: "Back to Main Page", "Back to Family Gallery" buttons
+  - Below the header are two sections:  
+    - The first section is the photo scroll strip on the left half of the page, which displays the members uploaded photos.
+      - A member can have photos that are not in any album, and these photos will be displayed in the photo scroll strip. 
+      - Photos that are in an album will be displayed in the photo scroll strip when the album is selected. 
+        - The photos will be displayed in a horizontal scroll strip, ordered by the latest uploads.
+    - The second section is the Album Finder on the right half of the page, which allows members to view and manage their albums. 
+      - The album list will display the member's albums in a vertical list.
+      - There will be an Add Album button at the top of the album list that allows members to create a new album, as well as an Edit album button. 
+        - When the Add Album button is clicked, a new album will be created with default values and added to the top of the album list. The member can then click the Edit Album button for the new album to edit its details and add photos to it.
+        - When adding or editing an album, the member should be able to resequence the photos in the album by dragging and dropping the photos into the desired order. The seqNo field in the galleryPhoto table will be used to determine the order of the photos in the album. The photo with the lowest seqNo will be displayed first in the album, and the photo with the highest seqNo will be displayed last in the album. When a member moves a photo up or down in the album, the seqNo values of the affected photos will be updated accordingly to maintain the correct order.
+    - The member will create an album (in galleryAlbum) by giving the album a name providing a short description, declaring it as shared or not, and then adding the member's photos to it.
+      - The member should have the ability to move an album up or down in the list. The seqNo field in the galleryAlbum table will be used to determine the order of the albums in the list. The album with the lowest seqNo will be displayed first in the list, and the album with the highest seqNo will be displayed last in the list. When a member moves an album up or down in the list, the seqNo values of the affected albums will be updated accordingly to maintain the correct order. 
+      - The member will also have an Edit Album button that allows photos be added or removed from the album, the album name and description to be edited, and the shared status to be changed. The Edit Album button will take the member to a new page where they can make these changes. This page is not yet created, but it will be located at "src/app/(features)/(galleries)/member-gallery/edit-album/page.tsx".    
+    - Only albums that are marked as shared will be visible on the Family Gallery home page. Albums that are not shared will only be visible on the Member Gallery home page.
+

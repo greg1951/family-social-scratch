@@ -188,6 +188,50 @@ export async function archiveGameStateRecord(
   };
 }
 
+/* ------------------ deleteGameStateRecord ------------------ */
+export async function deleteGameStateRecord(
+  gameId: number,
+  familyId: number
+): Promise<{ success: true; message: string } | { success: false; message: string }> {
+  const [existingGame] = await db
+    .select({ id: gameState.id })
+    .from(gameState)
+    .where(and(eq(gameState.id, gameId), eq(gameState.familyId, familyId)));
+
+  if (!existingGame) {
+    return {
+      success: false,
+      message: 'Game not found or you do not have permission to delete it.',
+    };
+  }
+
+  const playerRows = await db
+    .select({ id: gamePlayerState.id })
+    .from(gamePlayerRound)
+    .innerJoin(gamePlayerState, eq(gamePlayerState.id, gamePlayerRound.gamePlayerId))
+    .where(eq(gamePlayerRound.gameId, gameId));
+
+  await db
+    .delete(gamePlayerRound)
+    .where(eq(gamePlayerRound.gameId, gameId));
+
+  const uniqueGamePlayerIds = Array.from(new Set(playerRows.map((row) => row.id)));
+  for (const gamePlayerId of uniqueGamePlayerIds) {
+    await db
+      .delete(gamePlayerState)
+      .where(eq(gamePlayerState.id, gamePlayerId));
+  }
+
+  await db
+    .delete(gameState)
+    .where(and(eq(gameState.id, gameId), eq(gameState.familyId, familyId)));
+
+  return {
+    success: true,
+    message: 'Game deleted successfully.',
+  };
+}
+
 /* ------------------ getSelectableGamePlayersByFamilyId ------------------ */
 export async function getSelectableGamePlayersByFamilyId(familyId: number): Promise<SelectableGamePlayer[]> {
   const rows = await db
