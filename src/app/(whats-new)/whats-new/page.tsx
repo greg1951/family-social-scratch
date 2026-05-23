@@ -2,9 +2,21 @@ import Link from "next/link";
 
 const updates = [
   {
+    title: "New Games in Game Scoreboards!",
+    summary: "We've added the darts Cricket game and for our Canadian family members (eh?) we've added Crokinole! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
+    category: "Game Scoreboards",
+    date: "May 22, 2026",
+  },
+  {
+    title: "Show off your best pics in Photo Galleries! ",
+    summary: "Photo Galleries is now live in My Family Social! You can upload pics to your private gallery, compose albums from them and then share with the family.",
+    category: "Photo Galleries",
+    date: "May 20, 2026",
+  },
+  {
     title: "Discussion Threads were added to all of the features",
     summary: "You can now start a discussion thread on any post in the family social experience! This is a great way to have a conversation about a specific post and keep all of the related comments and reactions in one place. Try it out and let us know what you think!",
-    category: "Features",
+    category: "All Features",
     date: "May 11, 2026",
   },
   {
@@ -16,43 +28,43 @@ const updates = [
   {
     title: "Family Dashboard is Up and Running!",
     summary: "There are some informative charts in the Family Dashboard that show you the activity across your family channels. Check it out and let us know what you think!",
-    category: "Features",
+    category: "Dashboards",
     date: "April 24, 2026",
   },
   {
     title: "Music Lovers will love this!",
     summary: "Music stirs the soul and brings people together 💘. The Music Lovers feature is up and running! You can share your favorite songs and albums, write reviews, and see what music other family members are enjoying. Start sharing your music love today!",
-    category: "Features",
+    category: "Music Lovers",
     date: "April 22, 2026",
   },
   {
     title: "Family Threads is Live!",
     summary: "It's the My Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
-    category: "Features",
+    category: "Family Threads",
     date: "April 22, 2026",
   },
   {
     title: "Movie Maniacs Go Crazy!",
     summary: "Add your favorite movies to Movie Maniacs! See what movies other family members like.",
-    category: "Features",
+    category: "Movie Maniacs",
     date: "April 21, 2026",
   },
   {
     title: "TV Junkies Unite!",
     summary: "TV Junkies is now live in My Family Social! Check it out and start adding your favorite shows.",
-    category: "Features",
+    category: "TV Junkies",
     date: "April 21, 2026",
   },
   {
     title: "It's alive! See Family Foodies in action.",
     summary: "Family Foodies is now live in the family social experience! You can access it from the main navigation and start sharing your favorite recipes with your family. It comes with a recipe template but you can create your own recipe template, if you hate ours 😒 ",
-    category: "Features",
+    category: "Family Foodies",
     date: "April 20, 2026",
   },
   {
     title: "It's Family Picture Day!",
     summary: "Upload your favority mugshot (of yourself) to be featured across the family social experience. Your image will be used in your profile and across various features to help your family members recognize you and feel more connected. To upload your image, go to the My Account page and click on the Upload Image button. We can't wait to see your smiling face!",
-    category: "Features",
+    category: "Account Profile",
     date: "April 16, 2026",
   },
   {
@@ -64,14 +76,8 @@ const updates = [
   {
     title: "Game Scoreboards Supports Mexican Train and Acquire!",
     summary: "The Game Scoreboards feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
-    category: "Features",
+    category: "Game Scoreboards",
     date: "April 13, 2026",
-  },
-  {
-    title: "Photo Galleries Coming Soon!",
-    summary: "The Photo Galleries feature is currently in development! You'll soon be able to create albums, upload photos, and share them with your family. Stay tuned for more updates!",
-    category: "In Development",
-    date: "",
   },
 ];
 
