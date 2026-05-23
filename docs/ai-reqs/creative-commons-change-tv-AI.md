@@ -1,4 +1,4 @@
-General Requirements
+# General Requirements
 
 I have to make a fairly dramatic change in the way that tv shows and movies (but not in this pass) are rendered in the scroll strips. 
 I am trying to get past licensing issues on image uploads so I want to give them another option other than uploading an image.
@@ -10,9 +10,9 @@ If they elect to use this option then what I would like to do is to render the s
 
 Wrapped around the show text tile would be a link that when clicked would open a small-medium size modal dialog that references the show site URL. Clicking on the background would close this dialog. 
 
-Detailed Requirements
+# Detailed Requirements
 
-- Database changes
+## Database changes
  - The showSiteUrl has been added to the show table. 
  - The movieSiteUrl has been added to the movie table.  
  - The movieCaption field in the movie table has been renamed to movieImageCredit. 
@@ -21,6 +21,7 @@ Detailed Requirements
 - Showing Option 1 and Option 2 in the Add Show
   - A radio button to enable and disable the entry fields
   - The options should be side-by-side if possible. If not, then one above the other so it is clear that one or the other must be entered.
+  
 - If Option 1 then 
   - disable the show site URL fields
   - An image upload is required

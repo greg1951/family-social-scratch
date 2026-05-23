@@ -1,4 +1,4 @@
-BOOK BACKGROUND
+# BOOK BACKGROUND
 
 - There are six poem tables (book, book_comment, book_term, book_tag_reference, book_tag, book_like) defined in the "src/components/db/schema/family-social-schema-tables.ts" file. 
 - Database queries for book and book_term have been written and reside in the "src/components/db/sql/queries-book-besties.ts" file.
@@ -9,7 +9,7 @@ BOOK BACKGROUND
 - There is currently no data in the book table. 
 - The "bookTermsPage" component placeholder resides in the "src/features/book/components/book-terms-home-page.tsx" file.
 
-OBJECTIVE
+# OBJECTIVE
 
 - The purpose of this request is to generate React and TipTap code for the "BookHomePage" as described below. 
 - The "BookHomePage" is nearly identical functionally as what was implemented in the "PoetryHomePage" that resides in "src/features/poetry/components/poetry-home-page.tsx".  

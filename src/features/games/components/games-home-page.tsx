@@ -1,8 +1,8 @@
 "use client";
 
-import { startTransition, useState, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ArrowLeft, Play, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,20 +24,23 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
-import {
-  addGuestMemberAction,
-  archiveGameAction,
-  deleteGameAction,
-  loadGameScoreboardAction,
-  saveGameScoreboardAction,
-  startGameAction,
-} from "@/app/(features)/(games)/games/actions";
-import type {
-  GamesPageData,
-  GameHistoryRow,
-  GameState,
-} from "@/components/db/types/game-scoreboard";
+import type { GamesPageData } from "@/components/db/types/game-scoreboard";
 import Link from "next/link";
+import { useGameBoardSession } from "@/features/games/hooks/use-game-board-session";
+import { useCricketScoreboard } from "@/features/games/hooks/use-cricket-scoreboard";
+import { useCrokinoleScoreboard } from "@/features/games/hooks/use-crokinole-scoreboard";
+import { useGameLifecycleActions } from "@/features/games/hooks/use-game-lifecycle-actions";
+import { useGameHistoryInsights } from "@/features/games/hooks/use-game-history-insights";
+import type { SelectedPlayer } from "@/features/games/types/scoreboard-ui";
+import { GamesScoreboardToolbar } from "@/features/games/components/games-scoreboard-toolbar";
+import { GamesCricketPanel } from "@/features/games/components/games-cricket-panel";
+import { GamesCrokinoleSetup } from "@/features/games/components/games-crokinole-setup";
+import {
+  formatGameScore,
+  getDisplayedScores,
+  getScoreStyleClass,
+  updateRoundScoresMap,
+} from "@/features/games/utils/scoreboard-ui-helpers";
 
 interface GamesHomePageProps {
   gamesData: GamesPageData;
@@ -46,228 +49,10 @@ interface GamesHomePageProps {
   firstName: string;
 }
 
-interface SelectedPlayer {
-  id: number;
-  firstName: string;
-  lastName: string;
-  isGuest: boolean;
-}
-
-type CrokinoleFormat = "singles" | "doubles";
-
 const NEW_GAME_OPTION_VALUE = "new_game";
 const ADD_GUEST_OPTION_VALUE = "add_guest";
 const CLEAR_PLAYER_OPTION_VALUE = "clear_player";
 const CROKINOLE_WIN_SCORE = 100;
-const CRICKET_TARGETS = [
-  { roundKey: 20, roundNo: 20, label: "20", scoreValue: 20 },
-  { roundKey: 19, roundNo: 19, label: "19", scoreValue: 19 },
-  { roundKey: 18, roundNo: 18, label: "18", scoreValue: 18 },
-  { roundKey: 17, roundNo: 17, label: "17", scoreValue: 17 },
-  { roundKey: 16, roundNo: 16, label: "16", scoreValue: 16 },
-  { roundKey: 15, roundNo: 15, label: "15", scoreValue: 15 },
-  { roundKey: 25, roundNo: 25, label: "B", scoreValue: 25 },
-] as const;
-
-const CRICKET_TARGET_KEYS = CRICKET_TARGETS.map((target) => target.roundKey);
-const CRICKET_TARGET_INDEX = new Map<number, number>(CRICKET_TARGETS.map((target, index) => [target.roundKey, index]));
-
-type CricketSideIndex = 0 | 1;
-
-interface CricketBoardState {
-  marksByTarget: Map<number, [number, number]>;
-  bonusByTarget: Map<number, [number, number]>;
-  scores: [number, number];
-}
-
-interface CricketTurnLedgerEntry {
-  turnNo: number;
-  sideIndex: CricketSideIndex;
-  darts: string[];
-  encodedValue: number;
-  scoreDelta: number;
-  boardAfter: CricketBoardState;
-}
-
-function createEmptyCricketBoardState(): CricketBoardState {
-  return {
-    marksByTarget: new Map(CRICKET_TARGET_KEYS.map((targetKey) => [targetKey, [0, 0] as [number, number]])),
-    bonusByTarget: new Map(CRICKET_TARGET_KEYS.map((targetKey) => [targetKey, [0, 0] as [number, number]])),
-    scores: [0, 0],
-  };
-}
-
-function cloneCricketBoardState(board: CricketBoardState): CricketBoardState {
-  return {
-    marksByTarget: new Map(
-      Array.from(board.marksByTarget.entries()).map(([targetKey, marks]) => [targetKey, [marks[0], marks[1]] as [number, number]])
-    ),
-    bonusByTarget: new Map(
-      Array.from(board.bonusByTarget.entries()).map(([targetKey, bonus]) => [targetKey, [bonus[0], bonus[1]] as [number, number]])
-    ),
-    scores: [board.scores[0], board.scores[1]],
-  };
-}
-
-function parseCricketDartNotation(input: string): { targetKey: number | null; multiplier: 0 | 1 | 2 | 3 } {
-  const trimmed = input.trim().toLowerCase();
-
-  if (!trimmed || trimmed === "0" || trimmed === "miss" || trimmed === "m") {
-    return { targetKey: null, multiplier: 0 };
-  }
-
-  if (trimmed === "b" || trimmed === "bull" || trimmed === "bullseye" || trimmed === "25") {
-    return { targetKey: 25, multiplier: 1 };
-  }
-
-  const match = trimmed.match(/^([sdt])?(\d{1,2})$/);
-  if (!match) {
-    return { targetKey: null, multiplier: 0 };
-  }
-
-  const prefix = match[1] ?? "s";
-  const number = Number(match[2]);
-  if (!Number.isFinite(number)) {
-    return { targetKey: null, multiplier: 0 };
-  }
-
-  if (!CRICKET_TARGET_INDEX.has(number)) {
-    return { targetKey: null, multiplier: 0 };
-  }
-
-  const multiplier = prefix === "d" ? 2 : prefix === "t" ? 3 : 1;
-  return { targetKey: number, multiplier: multiplier as 0 | 1 | 2 | 3 };
-}
-
-function encodeCricketDartNotation(input: string): number {
-  const parsed = parseCricketDartNotation(input);
-  if (!parsed.targetKey || parsed.multiplier === 0) {
-    return 0;
-  }
-
-  const targetIndex = CRICKET_TARGET_INDEX.get(parsed.targetKey);
-  if (targetIndex === undefined) {
-    return 0;
-  }
-
-  return 1 + targetIndex * 3 + (parsed.multiplier - 1);
-}
-
-function decodeCricketDartCode(code: number): string {
-  if (code <= 0) {
-    return "";
-  }
-
-  const normalized = code - 1;
-  const targetIndex = Math.floor(normalized / 3);
-  const multiplier = (normalized % 3) + 1;
-  const target = CRICKET_TARGETS[targetIndex];
-
-  if (!target) {
-    return "";
-  }
-
-  const prefix = multiplier === 2 ? "D" : multiplier === 3 ? "T" : "S";
-  return `${ prefix }${ target.roundKey === 25 ? 25 : target.roundKey }`;
-}
-
-function encodeCricketTurn(darts: string[], sideIndex: CricketSideIndex): number {
-  const [first, second, third] = [darts[0] ?? "", darts[1] ?? "", darts[2] ?? ""];
-  const firstCode = encodeCricketDartNotation(first);
-  const secondCode = encodeCricketDartNotation(second);
-  const thirdCode = encodeCricketDartNotation(third);
-  return 1 + (sideIndex * 32768) + firstCode + (secondCode * 32) + (thirdCode * 1024);
-}
-
-function decodeCricketTurn(encodedValue: number): { sideIndex: CricketSideIndex; darts: string[] } {
-  const normalized = Math.max(0, encodedValue - 1);
-  const sideIndex = normalized >= 32768 ? 1 : 0;
-  const payload = normalized % 32768;
-  const firstCode = payload % 32;
-  const secondCode = Math.floor(payload / 32) % 32;
-  const thirdCode = Math.floor(payload / 1024) % 32;
-
-  return {
-    sideIndex: sideIndex as CricketSideIndex,
-    darts: [
-      decodeCricketDartCode(firstCode),
-      decodeCricketDartCode(secondCode),
-      decodeCricketDartCode(thirdCode),
-    ],
-  };
-}
-
-function applyCricketTurn(
-  board: CricketBoardState,
-  sideIndex: CricketSideIndex,
-  darts: string[]
-): { boardAfter: CricketBoardState; scoreDelta: number } {
-  const nextBoard = cloneCricketBoardState(board);
-  const opponentIndex: CricketSideIndex = sideIndex === 0 ? 1 : 0;
-  let scoreDelta = 0;
-
-  for (const dart of darts) {
-    const parsed = parseCricketDartNotation(dart);
-
-    if (!parsed.targetKey || parsed.multiplier === 0) {
-      continue;
-    }
-
-    const targetValue = parsed.targetKey === 25 ? 25 : parsed.targetKey;
-    const marks = nextBoard.marksByTarget.get(parsed.targetKey) ?? [0, 0];
-    const ownMarksBefore = marks[sideIndex];
-    const opponentMarks = marks[opponentIndex];
-    const hits = parsed.multiplier;
-    const marksAdded = Math.min(hits, Math.max(0, 3 - ownMarksBefore));
-
-    marks[sideIndex] = Math.min(3, ownMarksBefore + marksAdded);
-    nextBoard.marksByTarget.set(parsed.targetKey, marks);
-
-    if (opponentMarks < 3) {
-      const scoringHits = Math.max(0, hits - marksAdded);
-      if (scoringHits > 0) {
-        const dartScore = scoringHits * targetValue;
-        const bonuses = nextBoard.bonusByTarget.get(parsed.targetKey) ?? [0, 0];
-        bonuses[sideIndex] += dartScore;
-        nextBoard.bonusByTarget.set(parsed.targetKey, bonuses);
-        nextBoard.scores[sideIndex] += dartScore;
-        scoreDelta += dartScore;
-      }
-    }
-  }
-
-  return {
-    boardAfter: nextBoard,
-    scoreDelta,
-  };
-}
-
-function buildCricketBoardFromLedger(turns: CricketTurnLedgerEntry[]): CricketBoardState {
-  let board = createEmptyCricketBoardState();
-
-  for (const turn of turns) {
-    board = cloneCricketBoardState(turn.boardAfter);
-  }
-
-  return board;
-}
-
-function determineCricketWinner(board: CricketBoardState): CricketSideIndex | null {
-  const isClosed = (sideIndex: CricketSideIndex) => CRICKET_TARGET_KEYS.every((targetKey) => {
-    const marks = board.marksByTarget.get(targetKey) ?? [0, 0];
-    return marks[sideIndex] >= 3;
-  });
-
-  if (isClosed(0) && board.scores[0] >= board.scores[1]) {
-    return 0;
-  }
-
-  if (isClosed(1) && board.scores[1] >= board.scores[0]) {
-    return 1;
-  }
-
-  return null;
-}
 
 export function GamesHomePage({
   gamesData,
@@ -278,249 +63,66 @@ export function GamesHomePage({
   const scoreboardGridRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
 
-  const emptySelectedPlayers = useMemo(
-    () => Array(8).fill(null) as (SelectedPlayer | null)[],
-    []
-  );
-
-  // State management
-  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
-  const [selectedGameState, setSelectedGameState] = useState<GameState | null>(
-    null
-  );
-  const [selectedPlayers, setSelectedPlayers] = useState<(SelectedPlayer | null)[]>(
-    emptySelectedPlayers
-  );
-  const [roundScores, setRoundScores] = useState<
-    Map<number, Map<number, number>>
-  >(new Map());
-  const [persistedCumulativeScores, setPersistedCumulativeScores] = useState<
-    Map<number, number> | null
-  >(null);
-  const [hasRoundScoreEdits, setHasRoundScoreEdits] = useState(false);
-  const [gameTitleInput, setGameTitleInput] = useState("");
-  const [isStartDialogOpen, setIsStartDialogOpen] = useState(false);
-  const [isStartingGame, setIsStartingGame] = useState(false);
-  const [isSavingGame, setIsSavingGame] = useState(false);
-  const [isLoadingSavedGame, setIsLoadingSavedGame] = useState(false);
-  const [isArchivingGame, setIsArchivingGame] = useState(false);
-  const [isDeletingGame, setIsDeletingGame] = useState(false);
-  const [localSelectablePlayers, setLocalSelectablePlayers] = useState(
-    gamesData.selectablePlayers
-  );
-  const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
-  const [guestDialogColIndex, setGuestDialogColIndex] = useState<number | null>(null);
-  const [guestFirstName, setGuestFirstName] = useState("");
-  const [guestLastName, setGuestLastName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [isAddingGuest, setIsAddingGuest] = useState(false);
-  const [isContinueGameHidden, setIsContinueGameHidden] = useState(false);
-  const [gameStatusFilter, setGameStatusFilter] = useState<string>("all");
-  const [gameDateFilter, setGameDateFilter] = useState<string>("all");
-  const [gameTitle, setGameTitle] = useState<string>("all");
-  const [selectedGameTitleOption, setSelectedGameTitleOption] = useState<string>(
-    NEW_GAME_OPTION_VALUE
-  );
-  const [requestedVisiblePlayerColumns, setRequestedVisiblePlayerColumns] = useState(1);
-  const [cricketTurnLedger, setCricketTurnLedger] = useState<CricketTurnLedgerEntry[]>([]);
-  const [cricketTurnDarts, setCricketTurnDarts] = useState(["", "", ""]);
-  const [isSubmittingCricketTurn, setIsSubmittingCricketTurn] = useState(false);
-  const [crokinoleFormat, setCrokinoleFormat] = useState<CrokinoleFormat>("singles");
-  const [crokinoleTeamNames, setCrokinoleTeamNames] = useState<[string, string]>(["Team 1", "Team 2"]);
-
-  // Computed values
-  const selectedGame = useMemo(
-    () =>
-      selectedGameId
-        ? gamesData.availableGames.find((g) => g.id === selectedGameId)
-        : null,
-    [selectedGameId, gamesData.availableGames]
-  );
-  const isCricketGame = selectedGame?.name.trim().toLowerCase() === "cricket";
-  const isCrokinoleGame = selectedGame?.name.trim().toLowerCase() === "crokinole";
-  const cricketBoardState = useMemo(
-    () => buildCricketBoardFromLedger(cricketTurnLedger),
-    [cricketTurnLedger]
-  );
-  const cricketWinnerSideIndex = useMemo(
-    () => determineCricketWinner(cricketBoardState),
-    [cricketBoardState]
-  );
-  const cricketActiveSideIndex = (cricketTurnLedger.length % 2) as CricketSideIndex;
-  const cricketActiveSidePlayer = selectedPlayers[cricketActiveSideIndex];
-
-  const getPlayerOptionLabel = (player: { firstName: string; lastName: string; isGuest?: boolean }) =>
-    `${ player.firstName } ${ player.lastName }${ player.isGuest ? " (guest)" : "" }`;
-
-  const orderedSelectablePlayers = useMemo(() => {
-    return [...localSelectablePlayers].sort((a, b) => {
-      if (a.isGuest !== b.isGuest) {
-        return a.isGuest ? 1 : -1;
-      }
-
-      const firstCmp = a.firstName.localeCompare(b.firstName);
-      if (firstCmp !== 0) {
-        return firstCmp;
-      }
-
-      return a.lastName.localeCompare(b.lastName);
-    });
-  }, [localSelectablePlayers]);
-
-  const isAcquireGame = selectedGame?.name.trim().toLowerCase() === "acquire";
-  const isMexicanTrainGame = selectedGame?.name.trim().toLowerCase() === "mexican train";
-
-  const gameStatesForSelectedMetadata = useMemo(() => {
-    if (!selectedGameId) {
-      return [];
-    }
-
-    return gamesData.activeGameStates
-      .filter((state) => state.status !== "archived")
-      .filter((state) => state.gameMetaId === selectedGameId)
-      .sort((a, b) => a.gameTitle.localeCompare(b.gameTitle));
-  }, [gamesData.activeGameStates, selectedGameId]);
-
-  const roundEntries = useMemo(() => {
-    if (isCricketGame) {
-      return CRICKET_TARGETS.map((target) => ({
-        roundKey: target.roundKey,
-        roundNo: target.roundNo,
-        label: target.label,
-      }));
-    }
-
-    if (isCrokinoleGame) {
-      const maxRounds = Math.max(1, selectedGame?.maxRounds || 20);
-      return Array.from({ length: maxRounds }, (_, index) => ({
-        roundKey: index + 1,
-        roundNo: index + 1,
-        label: String(index + 1),
-      }));
-    }
-
-    const scoreUomLabel = selectedGame?.scoreUom
-      ? `${ selectedGame.scoreUom.charAt(0).toUpperCase() }${ selectedGame.scoreUom.slice(1) }`
-      : "Score";
-
-    if (selectedGame && !selectedGame.isRoundBased) {
-      return [
-        {
-          roundKey: 1,
-          roundNo: 1,
-          label: `Final ${ scoreUomLabel }`,
-        },
-      ];
-    }
-
-    const maxRounds = selectedGame?.maxRounds || 12;
-    const numberedRounds = Array.from(
-      { length: maxRounds },
-      (_, index) => maxRounds - index
-    );
-
-    return [
-      ...numberedRounds.map((roundNo) => ({
-        roundKey: roundNo,
-        roundNo,
-        label: String(roundNo),
-      })),
-      {
-        roundKey: 0,
-        roundNo: 0,
-        label: "Blank",
-      },
-    ];
-  }, [isCricketGame, isCrokinoleGame, selectedGame]);
-
-  const visiblePlayerColumnIndices = useMemo(() => {
-    if (isCricketGame) {
-      return [0, 1];
-    }
-
-    if (isCrokinoleGame) {
-      return [0, 1];
-    }
-
-    if (isMexicanTrainGame) {
-      return Array.from({ length: 8 }, (_, idx) => idx);
-    }
-
-    const visible = selectedPlayers
-      .map((player, idx) => {
-        const hasPlayer = Boolean(player);
-        const hasRoundValue = roundEntries.some((roundEntry) =>
-          roundScores.get(roundEntry.roundKey)?.has(idx)
-        );
-        return hasPlayer || hasRoundValue ? idx : null;
-      })
-      .filter((idx): idx is number => idx !== null);
-
-    const highestForcedIndex = Math.min(requestedVisiblePlayerColumns, 8) - 1;
-    for (let idx = 0; idx <= highestForcedIndex; idx += 1) {
-      if (!visible.includes(idx)) {
-        visible.push(idx);
-      }
-    }
-
-    if (visible.length === 0) {
-      visible.push(0);
-    }
-
-    return visible.sort((a, b) => a - b);
-  }, [isCricketGame, isCrokinoleGame, isMexicanTrainGame, requestedVisiblePlayerColumns, roundEntries, roundScores, selectedPlayers]);
-
-  // Filter game history
-  const filteredGameHistory = useMemo(() => {
-    return gamesData.gameHistory.filter((game) => {
-      if (selectedGameId && game.gameMetaId !== selectedGameId) {
-        return false;
-      }
-      if (gameStatusFilter !== "all" && game.gameStatus !== gameStatusFilter) {
-        return false;
-      }
-      if (gameDateFilter !== "all" && game.gameStartDate !== gameDateFilter) {
-        return false;
-      }
-      if (gameTitle !== "all" && game.gameTitle !== gameTitle) {
-        return false;
-      }
-      return true;
-    });
-  }, [
-    gamesData.gameHistory,
+  const {
+    emptySelectedPlayers,
     selectedGameId,
-    gameStatusFilter,
-    gameDateFilter,
-    gameTitle,
-  ]);
+    setSelectedGameId,
+    selectedGameState,
+    setSelectedGameState,
+    selectedPlayers,
+    setSelectedPlayers,
+    roundScores,
+    setRoundScores,
+    persistedCumulativeScores,
+    setPersistedCumulativeScores,
+    hasRoundScoreEdits,
+    setHasRoundScoreEdits,
+    localSelectablePlayers,
+    setLocalSelectablePlayers,
+    selectedGameTitleOption,
+    setSelectedGameTitleOption,
+    requestedVisiblePlayerColumns,
+    setRequestedVisiblePlayerColumns,
+    selectedGame,
+    isCricketGame,
+    isCrokinoleGame,
+    isAcquireGame,
+    orderedSelectablePlayers,
+    gameStatesForSelectedMetadata,
+    roundEntries,
+    visiblePlayerColumnIndices,
+    getPlayerOptionLabel,
+    addPlayerColumn: handleAddPlayerColumn,
+    clearPlayerColumn: handleClearPlayerColumn,
+    resetSharedBoardState,
+  } = useGameBoardSession({
+    gamesData,
+    newGameOptionValue: NEW_GAME_OPTION_VALUE,
+  });
 
-  // Group game history by date, then by game
-  const groupedGameHistory = useMemo(() => {
-    const groups = new Map<string, Map<number, GameHistoryRow[]>>();
-    filteredGameHistory.forEach((game) => {
-      const date = game.gameStartDate;
-      const gameId = game.gameId;
-      if (!groups.has(date)) {
-        groups.set(date, new Map());
-      }
-      const dateMap = groups.get(date)!;
-      if (!dateMap.has(gameId)) {
-        dateMap.set(gameId, []);
-      }
-      const gameRows = dateMap.get(gameId)!;
-      gameRows.push(game);
-      // Sort players by score based on winner direction for selected metadata.
-      gameRows.sort((a, b) =>
-        selectedGame?.highOrLo === "high"
-          ? b.gameScore - a.gameScore
-          : a.gameScore - b.gameScore
-      );
-    });
-    return groups;
-  }, [filteredGameHistory, selectedGame?.highOrLo]);
+  const handleOpenGuestDialog = (slotIndex: number) => {
+    lifecycle.openGuestDialog(slotIndex);
+  };
 
-  // Calculate cumulative scores from current round entries.
+  const cricket = useCricketScoreboard({
+    enabled: isCricketGame,
+    selectedPlayers,
+    setSelectedPlayers,
+    selectablePlayers: localSelectablePlayers,
+    addGuestOptionValue: ADD_GUEST_OPTION_VALUE,
+    clearPlayerOptionValue: CLEAR_PLAYER_OPTION_VALUE,
+    onOpenGuestDialog: handleOpenGuestDialog,
+    onClearPlayerColumn: handleClearPlayerColumn,
+    onBoardEdited: () => setHasRoundScoreEdits(true),
+    onPersistedScoresCleared: () => setPersistedCumulativeScores(null),
+  });
+  const cricketTurnLedger = cricket.cricketTurnLedger;
+  const cricketTurnDarts = cricket.cricketTurnDarts;
+  const isSubmittingCricketTurn = cricket.isSubmittingCricketTurn;
+  const cricketBoardState = cricket.cricketBoardState;
+  const cricketWinnerSideIndex = cricket.cricketWinnerSideIndex;
+  const cricketActiveSideIndex = cricket.cricketActiveSideIndex;
+
   const computedCumulativeScores = useMemo(() => {
     if (isCricketGame) {
       const scores = new Map<number, number>();
@@ -531,7 +133,6 @@ export function GamesHomePage({
     }
 
     if (isCrokinoleGame) {
-      // Crokinole totals only advance after both teams have entered the round.
       const scores = new Map<number, number>([[0, 0], [1, 0]]);
       for (const roundEntry of roundEntries) {
         const roundMap = roundScores.get(roundEntry.roundKey);
@@ -564,6 +165,21 @@ export function GamesHomePage({
     return scores;
   }, [cricketBoardState.scores, isCricketGame, isCrokinoleGame, roundEntries, roundScores, selectedPlayers]);
 
+  const crokinole = useCrokinoleScoreboard({
+    enabled: isCrokinoleGame,
+    selectedPlayers,
+    setSelectedPlayers,
+    roundEntries,
+    roundScores,
+    cumulativeScores: persistedCumulativeScores && !hasRoundScoreEdits ? persistedCumulativeScores : computedCumulativeScores,
+    winScore: CROKINOLE_WIN_SCORE,
+    addGuestOptionValue: ADD_GUEST_OPTION_VALUE,
+    clearPlayerOptionValue: CLEAR_PLAYER_OPTION_VALUE,
+    selectablePlayers: localSelectablePlayers,
+    onOpenGuestDialog: handleOpenGuestDialog,
+    onClearPlayerColumn: handleClearPlayerColumn,
+  });
+
   const cumulativeScores = useMemo(() => {
     if (persistedCumulativeScores && !hasRoundScoreEdits) {
       return persistedCumulativeScores;
@@ -573,359 +189,105 @@ export function GamesHomePage({
   }, [computedCumulativeScores, hasRoundScoreEdits, persistedCumulativeScores]);
 
   const displayedScores = useMemo(
-    () => selectedPlayers
-      .map((player, colIndex) => player ? cumulativeScores.get(colIndex) ?? 0 : null)
-      .filter((score): score is number => score !== null),
+    () => getDisplayedScores(selectedPlayers, cumulativeScores),
     [cumulativeScores, selectedPlayers]
   );
 
-  // Get score styling based on winner direction.
-  const getScoreStyle = (colIndex: number) => {
-    const score = cumulativeScores.get(colIndex) ?? 0;
-    if (displayedScores.length === 0) return "";
+  const scoreStyleByColumn = useMemo(() => {
+    const styleMap = new Map<number, string>();
 
-    const lowestScore = Math.min(...displayedScores);
-    const highestScore = Math.max(...displayedScores);
-
-    if (score === lowestScore && score === highestScore) return ""; // Only one non-zero
-    if (selectedGame?.highOrLo === "high") {
-      if (score === highestScore) return "!bg-emerald-100 !text-emerald-800";
-      if (score === lowestScore) return "!bg-rose-100 !text-rose-700";
-      return "";
-    }
-
-    if (score === lowestScore) return "!bg-emerald-100 !text-emerald-800";
-    if (score === highestScore) return "!bg-rose-100 !text-rose-700";
-    return "";
-  };
-
-  const getRoundWinnerStyle = (roundKey: number, colIndex: number) => {
-    if (!isCrokinoleGame) {
-      return "";
-    }
-
-    const leftScore = roundScores.get(roundKey)?.get(0);
-    const rightScore = roundScores.get(roundKey)?.get(1);
-    if (leftScore === undefined || rightScore === undefined || leftScore === rightScore) {
-      return "";
-    }
-
-    const winnerColIndex = leftScore > rightScore ? 0 : 1;
-    return colIndex === winnerColIndex ? "!bg-emerald-100 !text-emerald-800" : "";
-  };
-
-  const crokinoleWinnerTeamIndex = useMemo(() => {
-    if (!isCrokinoleGame) {
-      return null;
-    }
-
-    const teamOneScore = cumulativeScores.get(0) ?? 0;
-    const teamTwoScore = cumulativeScores.get(1) ?? 0;
-    const teamOneReached = teamOneScore >= CROKINOLE_WIN_SCORE;
-    const teamTwoReached = teamTwoScore >= CROKINOLE_WIN_SCORE;
-
-    if (!teamOneReached && !teamTwoReached) {
-      return null;
-    }
-
-    if (teamOneScore === teamTwoScore) {
-      return null;
-    }
-
-    return teamOneScore > teamTwoScore ? 0 : 1;
-  }, [cumulativeScores, isCrokinoleGame]);
-
-  const crokinoleFinalRoundNo = useMemo(() => {
-    if (!isCrokinoleGame) {
-      return null;
-    }
-
-    let lastRoundNo: number | null = null;
-    for (const roundEntry of roundEntries) {
-      const roundMap = roundScores.get(roundEntry.roundKey);
-      const hasTeamOneScore = roundMap?.has(0) ?? false;
-      const hasTeamTwoScore = roundMap?.has(1) ?? false;
-      if (hasTeamOneScore && hasTeamTwoScore) {
-        lastRoundNo = roundEntry.roundNo;
-      }
-    }
-
-    return lastRoundNo;
-  }, [isCrokinoleGame, roundEntries, roundScores]);
-
-  const displayedRoundEntries = useMemo(() => {
-    if (!isCrokinoleGame || crokinoleWinnerTeamIndex === null || crokinoleFinalRoundNo === null) {
-      return roundEntries;
-    }
-
-    return roundEntries.filter((roundEntry) => roundEntry.roundNo <= crokinoleFinalRoundNo);
-  }, [crokinoleFinalRoundNo, crokinoleWinnerTeamIndex, isCrokinoleGame, roundEntries]);
-
-  const isCrokinoleTeamReady = (teamIndex: 0 | 1) => {
-    const primarySelected = Boolean(selectedPlayers[teamIndex]);
-    if (!primarySelected) {
-      return false;
-    }
-
-    if (crokinoleFormat === "singles") {
-      return true;
-    }
-
-    return Boolean(selectedPlayers[teamIndex + 2]);
-  };
-
-  const isCrokinoleScoringEnabled = !isCrokinoleGame
-    || (isCrokinoleTeamReady(0) && isCrokinoleTeamReady(1) && crokinoleWinnerTeamIndex === null);
-
-  const handleSetNewGameMode = () => {
-    setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
-    setSelectedGameState(null);
-    setGameTitleInput("");
-    setSelectedPlayers(emptySelectedPlayers);
-    setRoundScores(new Map());
-    setPersistedCumulativeScores(null);
-    setCricketTurnLedger([]);
-    setCricketTurnDarts(["", "", ""]);
-    setCrokinoleFormat("singles");
-    setCrokinoleTeamNames(["Team 1", "Team 2"]);
-    setHasRoundScoreEdits(false);
-    setRequestedVisiblePlayerColumns(1);
-  };
-
-  const handleAddPlayerColumn = () => {
-    setRequestedVisiblePlayerColumns((prev) => Math.min(prev + 1, 8));
-  };
-
-  const formatGameTitleWithDate = (title: string): string => {
-    const now = new Date();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const yy = String(now.getFullYear()).slice(-2);
-    return `${ title }: ${ mm }/${ dd }/${ yy }`;
-  };
-
-  const handleOpenStartGame = () => {
-    if (!selectedGame) {
-      return;
-    }
-
-    if (!gameTitleInput.trim()) {
-      setGameTitleInput(selectedGame.name);
-    }
-    setIsStartDialogOpen(true);
-  };
-
-  const handleStartOrContinueGame = () => {
-    if (!selectedGame) {
-      return;
-    }
-
-    if (selectedGameState) {
-      setIsContinueGameHidden(true);
-      toast.success(`Continuing game \"${ selectedGameState.gameTitle }\".`);
-      scoreboardGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      scoreboardGridRef.current?.focus();
-      return;
-    }
-
-    handleOpenStartGame();
-  };
-
-  const handleConfirmStartGame = () => {
-    if (!selectedGame) {
-      return;
-    }
-
-    const trimmedTitle = gameTitleInput.trim();
-    if (!trimmedTitle) {
-      toast.error("Enter a game title before starting the game.");
-      return;
-    }
-
-    const titledWithDate = formatGameTitleWithDate(trimmedTitle);
-
-    setIsStartingGame(true);
-    startTransition(async () => {
-      const result = await startGameAction({
-        familyId,
-        gameMetaId: selectedGame.id,
-        gameTitle: titledWithDate,
-        memberId,
-      });
-
-      setIsStartingGame(false);
-
-      if (!result.success || !result.gameState) {
-        toast.error(!result.success ? result.message : "Unable to start the game.");
+    selectedPlayers.forEach((player, colIndex) => {
+      if (!player) {
         return;
       }
 
-      setSelectedGameState(result.gameState);
-      setSelectedGameTitleOption(String(result.gameState.id));
-      setGameTitleInput(result.gameState.gameTitle);
-      setSelectedPlayers(emptySelectedPlayers);
-      setRoundScores(new Map());
-      setPersistedCumulativeScores(null);
-      setCricketTurnLedger([]);
-      setCricketTurnDarts(["", "", ""]);
-      setCrokinoleFormat("singles");
-      setCrokinoleTeamNames(["Team 1", "Team 2"]);
-      setHasRoundScoreEdits(false);
-      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 8);
-      setIsStartDialogOpen(false);
-      toast.success(`Started game \"${ result.gameState.gameTitle }\".`);
-    });
-  };
-
-  const handleSaveGame = () => {
-    if (!selectedGame || !selectedGameState) {
-      toast.error("Start a game before saving it.");
-      return;
-    }
-
-    const activePlayers = (isCricketGame || isCrokinoleGame)
-      ? selectedPlayers
-        .slice(0, isCrokinoleGame && crokinoleFormat === "doubles" ? 4 : 2)
-        .map((player, index) => player ? { ...player, playPosition: index + 1 } : null)
-        .filter((player): player is SelectedPlayer & { playPosition: number } => player !== null)
-      : selectedPlayers
-        .map((player, index) => player ? { ...player, playPosition: index + 1 } : null)
-        .filter((player): player is SelectedPlayer & { playPosition: number } => player !== null);
-
-    if (activePlayers.length === 0) {
-      toast.error("Select at least one player before saving the game.");
-      return;
-    }
-
-    if (isCrokinoleGame && activePlayers.length < 2) {
-      toast.error("Select both Crokinole teams before saving the game.");
-      return;
-    }
-
-    if (isCrokinoleGame && crokinoleFormat === "doubles") {
-      const requiredSlots = [0, 1, 2, 3];
-      const hasMissingTeamMember = requiredSlots.some((slotIndex) => !selectedPlayers[slotIndex]);
-      if (hasMissingTeamMember) {
-        toast.error("Select two players per team for Crokinole doubles before saving.");
-        return;
-      }
-    }
-
-    const rowsToPersist = isCrokinoleGame && crokinoleWinnerTeamIndex !== null && crokinoleFinalRoundNo !== null
-      ? roundEntries.filter((roundEntry) => roundEntry.roundNo <= crokinoleFinalRoundNo)
-      : roundEntries;
-
-    const scoreboardRows = isCricketGame
-      ? cricketTurnLedger.map((turnEntry) => ({
-        roundNo: turnEntry.turnNo,
-        roundLabel: `Turn ${ turnEntry.turnNo }`,
-        scores: activePlayers.map((player) => ({
-          memberId: player.id,
-          playPosition: player.playPosition,
-          roundScore: player.playPosition - 1 === turnEntry.sideIndex ? turnEntry.encodedValue : 0,
-          cumulativeScore: turnEntry.boardAfter.scores[player.playPosition - 1],
-        })),
-      }))
-      : rowsToPersist.map((roundEntry) => ({
-        roundNo: roundEntry.roundNo,
-        roundLabel: roundEntry.label,
-        scores: activePlayers.map((player) => {
-          const teamColumnIndex = isCrokinoleGame && player.playPosition > 2
-            ? player.playPosition - 3
-            : player.playPosition - 1;
-
-          return {
-            memberId: player.id,
-            playPosition: player.playPosition,
-            roundScore: roundScores.get(roundEntry.roundKey)?.get(teamColumnIndex) ?? 0,
-            cumulativeScore: cumulativeScores.get(teamColumnIndex) ?? 0,
-          };
-        }),
-      }));
-
-    const activeColIndices = activePlayers.map((p) => p.playPosition - 1);
-    let saveStatus: "active" | "in_progress" | "completed" | "archived" = selectedGameState.status;
-
-    if (isCricketGame) {
-      saveStatus = cricketWinnerSideIndex !== null ? "completed" : "in_progress";
-    }
-    else if (isCrokinoleGame) {
-      saveStatus = crokinoleWinnerTeamIndex !== null ? "completed" : "in_progress";
-    }
-    else {
-      // Determine if all numbered round scores have been entered for all active players.
-      const numberedRoundKeys = roundEntries
-        .filter((re) => re.roundKey > 0)
-        .map((re) => re.roundKey);
-      const isAllScoresEntered = selectedGame.isRoundBased
-        ? (
-          numberedRoundKeys.length > 0 &&
-          activeColIndices.length > 0 &&
-          numberedRoundKeys.every((roundKey) =>
-            activeColIndices.every((colIndex) => {
-              const score = roundScores.get(roundKey)?.get(colIndex);
-              return score !== undefined && score !== 0;
-            })
-          )
-        )
-        : (
-          activeColIndices.length > 0 &&
-          activeColIndices.every((colIndex) =>
-            roundScores.get(1)?.get(colIndex) !== undefined
-          )
-        );
-      saveStatus = isAllScoresEntered ? "completed" : selectedGameState.status;
-    }
-
-    setIsSavingGame(true);
-    startTransition(async () => {
-      const result = await saveGameScoreboardAction({
-        familyId,
-        gameId: selectedGameState.id > 0 ? selectedGameState.id : undefined,
-        gameMetaId: selectedGameState.gameMetaId,
-        gameTitle: gameTitleInput.trim() || selectedGameState.gameTitle,
-        status: saveStatus,
-        gamePlayerStates: activePlayers.map((player) => ({
-          memberId: player.id,
-          playPosition: player.playPosition,
-          status: "active",
-        })),
-        gamePlayerRounds: scoreboardRows,
-      });
-
-      setIsSavingGame(false);
-
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-
-      setSelectedGameState(result.gameState);
-      setSelectedGameTitleOption(String(result.gameState.id));
-      setGameTitleInput(result.gameState.gameTitle);
-
-      if (result.gameState.status === 'completed') {
-        router.refresh();
-      }
-
-      toast.success(
-        result.gameState.status === 'completed'
-          ? `Game "${ result.gameState.gameTitle }" completed!`
-          : result.message,
-        {
-          description: result.gameState.status === 'completed'
-            ? (isCrokinoleGame && crokinoleWinnerTeamIndex !== null
-              ? `${ crokinoleTeamNames[crokinoleWinnerTeamIndex] || `Team ${ crokinoleWinnerTeamIndex + 1 }` } reached ${ CROKINOLE_WIN_SCORE }+ and has been declared the winner.`
-              : 'All scores entered. Game marked as completed and leaderboard updated.')
-            : `${ activePlayers.length } players and ${ scoreboardRows.length } scoreboard rows prepared for persistence.`,
-        }
+      styleMap.set(
+        colIndex,
+        getScoreStyleClass({
+          colIndex,
+          cumulativeScores,
+          displayedScores,
+          winnerDirection: selectedGame?.highOrLo,
+        })
       );
     });
-  };
 
-  // Handle round score change
+    return styleMap;
+  }, [cumulativeScores, displayedScores, selectedGame?.highOrLo, selectedPlayers]);
+
+  const crokinoleFormat = crokinole.crokinoleFormat;
+  const crokinoleTeamNames = crokinole.crokinoleTeamNames;
+  const crokinoleWinnerTeamIndex = crokinole.crokinoleWinnerTeamIndex;
+  const crokinoleFinalRoundNo = crokinole.crokinoleFinalRoundNo;
+  const displayedRoundEntries = crokinole.displayedRoundEntries;
+  const isCrokinoleScoringEnabled = crokinole.isCrokinoleScoringEnabled;
+
+  const lifecycle = useGameLifecycleActions({
+    familyId,
+    memberId,
+    router,
+    scoreboardGridRef,
+    newGameOptionValue: NEW_GAME_OPTION_VALUE,
+    crokinoleWinScore: CROKINOLE_WIN_SCORE,
+    selectedGame,
+    selectedGameState,
+    selectedPlayers,
+    roundScores,
+    roundEntries,
+    cumulativeScores,
+    hasRoundScoreEdits,
+    isCricketGame,
+    isCrokinoleGame,
+    selectedGameTitleOption,
+    crokinoleFormat,
+    crokinoleTeamNames,
+    crokinoleWinnerTeamIndex: crokinoleWinnerTeamIndex as 0 | 1 | null,
+    crokinoleFinalRoundNo,
+    cricketTurnLedger,
+    cricketWinnerSideIndex,
+    setSelectedGameId,
+    setSelectedGameState,
+    setSelectedGameTitleOption,
+    setSelectedPlayers,
+    setRoundScores,
+    setPersistedCumulativeScores,
+    setHasRoundScoreEdits,
+    setRequestedVisiblePlayerColumns,
+    setLocalSelectablePlayers,
+    resetSharedBoardState,
+    resetCricketState: cricket.resetCricketState,
+    setCricketTurnLedger: cricket.setCricketTurnLedger,
+    setCricketTurnDarts: cricket.setCricketTurnDarts,
+    loadCricketFromRounds: cricket.loadCricketFromRounds,
+    resetCrokinoleState: crokinole.resetCrokinoleState,
+    setCrokinoleFormat: crokinole.setCrokinoleFormat,
+    inferCrokinoleFormatFromPlayers: crokinole.inferFormatFromPlayers,
+  });
+
+  const gameTitleInput = lifecycle.gameTitleInput;
+  const setGameTitleInput = lifecycle.setGameTitleInput;
+  const isStartDialogOpen = lifecycle.isStartDialogOpen;
+  const setIsStartDialogOpen = lifecycle.setIsStartDialogOpen;
+  const isStartingGame = lifecycle.isStartingGame;
+  const isSavingGame = lifecycle.isSavingGame;
+  const isLoadingSavedGame = lifecycle.isLoadingSavedGame;
+  const isArchivingGame = lifecycle.isArchivingGame;
+  const isDeletingGame = lifecycle.isDeletingGame;
+  const isGuestDialogOpen = lifecycle.isGuestDialogOpen;
+  const guestFirstName = lifecycle.guestFirstName;
+  const setGuestFirstName = lifecycle.setGuestFirstName;
+  const guestLastName = lifecycle.guestLastName;
+  const setGuestLastName = lifecycle.setGuestLastName;
+  const guestEmail = lifecycle.guestEmail;
+  const setGuestEmail = lifecycle.setGuestEmail;
+  const isAddingGuest = lifecycle.isAddingGuest;
+  const isContinueGameHidden = lifecycle.isContinueGameHidden;
+  const setIsContinueGameHidden = lifecycle.setIsContinueGameHidden;
+
+  const formatGameTitleWithDate = lifecycle.formatGameTitleWithDate;
+
   const handleRoundScoreChange = (
-    roundNo: number,
+    roundKey: number,
     colIndex: number,
     value: string
   ) => {
@@ -933,260 +295,62 @@ export function GamesHomePage({
       return;
     }
 
-    const parsed = value === "" ? 0 : parseInt(value, 10) || 0;
-    const numValue = isCricketGame
-      ? Math.max(0, Math.min(3, parsed))
-      : Math.max(0, parsed);
-    const roundMap = roundScores.get(roundNo) || new Map();
-    roundMap.set(colIndex, numValue);
-    setRoundScores(new Map(roundScores).set(roundNo, roundMap));
+    setRoundScores(updateRoundScoresMap({
+      roundScores,
+      roundKey,
+      colIndex,
+      value,
+      isCricketGame,
+    }));
     setHasRoundScoreEdits(true);
     setPersistedCumulativeScores(null);
     // TODO: Trigger event to save to game_player_round table
   };
 
-  const handleCricketBonusChange = (
-    roundNo: number,
-    colIndex: number,
-    value: string
-  ) => {
-    setHasRoundScoreEdits(true);
+  const handleLoadPersistedGame = lifecycle.loadPersistedGame;
+
+  const handleSelectedGameChange = (value: string) => {
+    const id = Number.parseInt(value, 10);
+    setSelectedGameId(id);
+    const game = gamesData.availableGames.find((entry) => entry.id === id);
+    const isSelectedCricket = game?.name.trim().toLowerCase() === "cricket";
+    const isSelectedCrokinole = game?.name.trim().toLowerCase() === "crokinole";
+
+    if (game) {
+      setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
+      setSelectedGameState(null);
+      setGameTitleInput("");
+    }
+
+    setSelectedPlayers(emptySelectedPlayers);
+    setRoundScores(new Map());
+    cricket.resetCricketState();
+    crokinole.resetCrokinoleState();
     setPersistedCumulativeScores(null);
-  };
-
-  const handleSetCrokinolePlayerSlot = (slotIndex: number, value: string) => {
-    if (value === ADD_GUEST_OPTION_VALUE) {
-      setGuestDialogColIndex(slotIndex);
-      setIsGuestDialogOpen(true);
-      return;
-    }
-
-    if (value === CLEAR_PLAYER_OPTION_VALUE) {
-      handleClearPlayerColumn(slotIndex);
-      return;
-    }
-
-    const selectedMemberId = Number(value);
-    const selectedInAnotherSlot = selectedPlayers.some(
-      (existingPlayer, existingIdx) => existingIdx !== slotIndex && existingPlayer?.id === selectedMemberId
-    );
-
-    if (selectedInAnotherSlot) {
-      return;
-    }
-
-    const selectedMember = localSelectablePlayers.find((member) => member.id === selectedMemberId);
-    if (!selectedMember) {
-      return;
-    }
-
-    const nextPlayers = [...selectedPlayers];
-    nextPlayers[slotIndex] = {
-      id: selectedMember.id,
-      firstName: selectedMember.firstName,
-      lastName: selectedMember.lastName,
-      isGuest: selectedMember.isGuest,
-    };
-    setSelectedPlayers(nextPlayers);
-  };
-
-  const handleSetCricketSidePlayer = (sideIndex: CricketSideIndex, value: string) => {
-    if (value === ADD_GUEST_OPTION_VALUE) {
-      setGuestDialogColIndex(sideIndex);
-      setIsGuestDialogOpen(true);
-      return;
-    }
-
-    if (value === CLEAR_PLAYER_OPTION_VALUE) {
-      handleClearPlayerColumn(sideIndex);
-      return;
-    }
-
-    const selectedMemberId = Number(value);
-    const otherSideIndex = sideIndex === 0 ? 1 : 0;
-    if (selectedPlayers[otherSideIndex]?.id === selectedMemberId) {
-      return;
-    }
-
-    const selectedMember = localSelectablePlayers.find((member) => member.id === selectedMemberId);
-    if (!selectedMember) {
-      return;
-    }
-
-    const nextPlayers = [...selectedPlayers];
-    nextPlayers[sideIndex] = {
-      id: selectedMember.id,
-      firstName: selectedMember.firstName,
-      lastName: selectedMember.lastName,
-      isGuest: selectedMember.isGuest,
-    };
-    setSelectedPlayers(nextPlayers);
-  };
-
-  const handleClearPlayerColumn = (colIndex: number) => {
-    const nextPlayers = [...selectedPlayers];
-    nextPlayers[colIndex] = null;
-    setSelectedPlayers(nextPlayers);
-
-    const updatedRoundScores = new Map<number, Map<number, number>>();
-    roundScores.forEach((roundMap, roundKey) => {
-      const nextRoundMap = new Map(roundMap);
-      nextRoundMap.delete(colIndex);
-      if (nextRoundMap.size > 0) {
-        updatedRoundScores.set(roundKey, nextRoundMap);
-      }
-    });
-
-    setRoundScores(updatedRoundScores);
-    setPersistedCumulativeScores(null);
-    setHasRoundScoreEdits(true);
-  };
-
-  const handleLoadPersistedGame = async (gameId: number) => {
-    const matchedGameState = gamesData.activeGameStates.find(
-      (state) => state.id === gameId
-    );
-
-    if (!matchedGameState) {
-      toast.error("Unable to load this game into the scoreboard.");
-      return;
-    }
-
-    setIsLoadingSavedGame(true);
-
-    const result = await loadGameScoreboardAction({
-      familyId,
-      gameId,
-    });
-
-    setIsLoadingSavedGame(false);
-
-    if (!result.success) {
-      toast.error(result.message);
-      return;
-    }
-
-    const loadedPlayers = Array(8).fill(null) as (SelectedPlayer | null)[];
-    for (const player of result.scoreboard.players) {
-      const positionIndex = player.playPosition - 1;
-      if (positionIndex < 0 || positionIndex > 7) {
-        continue;
-      }
-
-      loadedPlayers[positionIndex] = {
-        id: player.memberId,
-        firstName: player.firstName,
-        lastName: player.lastName,
-        isGuest: player.isGuest,
-      };
-    }
-
-    const loadedGameMeta = gamesData.availableGames.find((game) => game.id === result.scoreboard.gameState.gameMetaId);
-    const isLoadedCricketGame = loadedGameMeta?.name.trim().toLowerCase() === "cricket";
-
-    if (isLoadedCricketGame) {
-      const loadedLedger: CricketTurnLedgerEntry[] = [];
-      const roundGroups = new Map<number, typeof result.scoreboard.rounds>();
-
-      for (const roundRow of result.scoreboard.rounds) {
-        const rows = roundGroups.get(roundRow.roundNo) ?? [];
-        rows.push(roundRow);
-        roundGroups.set(roundRow.roundNo, rows);
-      }
-
-      let board = createEmptyCricketBoardState();
-
-      for (const turnNo of Array.from(roundGroups.keys()).sort((left, right) => left - right)) {
-        const rows = roundGroups.get(turnNo) ?? [];
-        const activeRow = rows.find((row) => row.roundScore > 0) ?? rows[0];
-
-        if (!activeRow) {
-          continue;
-        }
-
-        const decodedTurn = decodeCricketTurn(activeRow.roundScore);
-        const applied = applyCricketTurn(board, decodedTurn.sideIndex, decodedTurn.darts);
-        board = applied.boardAfter;
-        loadedLedger.push({
-          turnNo,
-          sideIndex: decodedTurn.sideIndex,
-          darts: decodedTurn.darts,
-          encodedValue: activeRow.roundScore,
-          scoreDelta: applied.scoreDelta,
-          boardAfter: cloneCricketBoardState(board),
-        });
-      }
-
-      setSelectedGameId(result.scoreboard.gameState.gameMetaId);
-      setSelectedGameTitleOption(String(result.scoreboard.gameState.id));
-      setSelectedGameState(result.scoreboard.gameState);
-      setGameTitleInput(result.scoreboard.gameState.gameTitle);
-      setSelectedPlayers(loadedPlayers);
-      setRequestedVisiblePlayerColumns(2);
-      setLocalSelectablePlayers((prev) => {
-        const existingIds = new Set(prev.map((p) => p.id));
-        const missing = loadedPlayers
-          .filter((p): p is SelectedPlayer => p !== null && !existingIds.has(p.id));
-        return missing.length > 0 ? [...prev, ...missing] : prev;
-      });
-      setRoundScores(new Map());
-      setCricketTurnLedger(loadedLedger);
-      setCricketTurnDarts(["", "", ""]);
-      setPersistedCumulativeScores(new Map([[0, board.scores[0]], [1, board.scores[1]]]));
-      setHasRoundScoreEdits(false);
-      return;
-    }
-
-    const loadedRoundScores = new Map<number, Map<number, number>>();
-    const loadedCumulativeScoresByPosition = new Map<number, {
-      roundNo: number;
-      cumulativeScore: number;
-    }>();
-
-    for (const roundRow of result.scoreboard.rounds) {
-      const positionIndex = roundRow.playPosition - 1;
-      if (positionIndex < 0 || positionIndex > 7) {
-        continue;
-      }
-
-      const scoreRow = loadedRoundScores.get(roundRow.roundNo) ?? new Map<number, number>();
-      scoreRow.set(positionIndex, roundRow.roundScore);
-      loadedRoundScores.set(roundRow.roundNo, scoreRow);
-
-      const existingCumulative = loadedCumulativeScoresByPosition.get(positionIndex);
-      if (!existingCumulative || roundRow.roundNo >= existingCumulative.roundNo) {
-        loadedCumulativeScoresByPosition.set(positionIndex, {
-          roundNo: roundRow.roundNo,
-          cumulativeScore: roundRow.cumulativeScore,
-        });
-      }
-    }
-
-    const loadedCumulativeScores = new Map<number, number>();
-    for (const [positionIndex, value] of loadedCumulativeScoresByPosition.entries()) {
-      loadedCumulativeScores.set(positionIndex, value.cumulativeScore);
-    }
-
-    setSelectedGameId(result.scoreboard.gameState.gameMetaId);
-    setSelectedGameTitleOption(String(result.scoreboard.gameState.id));
-    setSelectedGameState(result.scoreboard.gameState);
-    setGameTitleInput(result.scoreboard.gameState.gameTitle);
-    setSelectedPlayers(loadedPlayers);
-    const loadedPlayerCount = loadedPlayers.filter((player) => player !== null).length;
-    setRequestedVisiblePlayerColumns(isLoadedCricketGame || loadedGameMeta?.name.trim().toLowerCase() === "crokinole" ? 2 : Math.max(1, loadedPlayerCount));
-    setLocalSelectablePlayers((prev) => {
-      const existingIds = new Set(prev.map((p) => p.id));
-      const missing = loadedPlayers
-        .filter((p): p is SelectedPlayer => p !== null && !existingIds.has(p.id));
-      return missing.length > 0 ? [...prev, ...missing] : prev;
-    });
-    setRoundScores(loadedRoundScores);
-    setPersistedCumulativeScores(loadedCumulativeScores);
     setHasRoundScoreEdits(false);
-    if (loadedGameMeta?.name.trim().toLowerCase() === "crokinole") {
-      setCrokinoleFormat(loadedPlayers[2] || loadedPlayers[3] ? "doubles" : "singles");
-      setCrokinoleTeamNames(["Team 1", "Team 2"]);
+    setIsContinueGameHidden(false);
+    setRequestedVisiblePlayerColumns(isSelectedCricket || isSelectedCrokinole ? 2 : 1);
+    router.refresh();
+  };
+
+  const handleSelectedGameTitleChange = (value: string) => {
+    setSelectedGameTitleOption(value);
+
+    if (value === NEW_GAME_OPTION_VALUE) {
+      setSelectedGameState(null);
+      setGameTitleInput("");
+      setSelectedPlayers(emptySelectedPlayers);
+      setRoundScores(new Map());
+      cricket.resetCricketState();
+      crokinole.resetCrokinoleState();
+      setPersistedCumulativeScores(null);
+      setHasRoundScoreEdits(false);
+      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 1);
+      return;
     }
+
+    const stateId = Number(value);
+    void handleLoadPersistedGame(stateId);
   };
 
   const handleResetGameBoard = () => {
@@ -1195,299 +359,41 @@ export function GamesHomePage({
     }
 
     setRoundScores(new Map());
-    setCricketTurnLedger([]);
-    setCricketTurnDarts(["", "", ""]);
+    cricket.resetCricketState();
     if (isCrokinoleGame) {
       setSelectedPlayers(emptySelectedPlayers);
-      setCrokinoleFormat("singles");
-      setCrokinoleTeamNames(["Team 1", "Team 2"]);
+      crokinole.resetCrokinoleState();
     }
     setPersistedCumulativeScores(null);
     setHasRoundScoreEdits(true);
     toast.success("Game board reset. Save to persist changes.");
   };
 
-  const handleSubmitCricketTurn = () => {
-    if (!isCricketGame) {
-      return;
-    }
+  const handleAddGuest = lifecycle.addGuest;
+  const handleArchiveSelectedGame = lifecycle.archiveSelectedGame;
+  const handleDeleteSelectedGame = lifecycle.deleteSelectedGame;
 
-    if (!selectedPlayers[0] || !selectedPlayers[1]) {
-      toast.error("Select both Cricket sides before submitting a turn.");
-      return;
-    }
-
-    if (cricketWinnerSideIndex !== null) {
-      toast.error("This Cricket game is already complete. Start a new game to continue.");
-      return;
-    }
-
-    setIsSubmittingCricketTurn(true);
-    startTransition(() => {
-      const sanitizedDarts = cricketTurnDarts.map((dart) => dart.trim()).slice(0, 3);
-      const applied = applyCricketTurn(cricketBoardState, cricketActiveSideIndex, sanitizedDarts);
-      const encodedValue = encodeCricketTurn(sanitizedDarts, cricketActiveSideIndex);
-      const nextTurn: CricketTurnLedgerEntry = {
-        turnNo: cricketTurnLedger.length + 1,
-        sideIndex: cricketActiveSideIndex,
-        darts: sanitizedDarts,
-        encodedValue,
-        scoreDelta: applied.scoreDelta,
-        boardAfter: applied.boardAfter,
-      };
-
-      setCricketTurnLedger((prev) => [...prev, nextTurn]);
-      setCricketTurnDarts(["", "", ""]);
-      setHasRoundScoreEdits(true);
-      setPersistedCumulativeScores(null);
-      setIsSubmittingCricketTurn(false);
-
-      const winner = determineCricketWinner(applied.boardAfter);
-      if (winner !== null) {
-        toast.success(`Side ${ winner + 1 } has won Cricket.`);
-      }
-      else {
-        toast.success(`Turn submitted for Side ${ cricketActiveSideIndex + 1 }.`);
-      }
-    });
-  };
-
-  const handleAddGuest = () => {
-    if (guestDialogColIndex === null) return;
-
-    const trimmedFirst = guestFirstName.trim();
-    const trimmedLast = guestLastName.trim();
-    const trimmedEmail = guestEmail.trim();
-
-    if (!trimmedFirst || !trimmedLast || !trimmedEmail) {
-      toast.error("First name, last name, and email are required.");
-      return;
-    }
-
-    setIsAddingGuest(true);
-    startTransition(async () => {
-      const result = await addGuestMemberAction({
-        familyId,
-        firstName: trimmedFirst,
-        lastName: trimmedLast,
-        email: trimmedEmail,
-      });
-
-      setIsAddingGuest(false);
-
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-
-      setLocalSelectablePlayers((prev) => [...prev, result.guestMember]);
-
-      const newPlayers = [...selectedPlayers];
-      newPlayers[guestDialogColIndex] = {
-        id: result.guestMember.id,
-        firstName: result.guestMember.firstName,
-        lastName: result.guestMember.lastName,
-        isGuest: result.guestMember.isGuest,
-      };
-      setSelectedPlayers(newPlayers);
-
-      setIsGuestDialogOpen(false);
-      setGuestFirstName("");
-      setGuestLastName("");
-      setGuestEmail("");
-      setGuestDialogColIndex(null);
-      toast.success(`Guest ${ trimmedFirst } ${ trimmedLast } added.`);
-    });
-  };
-
-  const handleArchiveSelectedGame = () => {
-    if (!selectedGameState || selectedGameState.status !== "completed") {
-      return;
-    }
-
-    setIsArchivingGame(true);
-    startTransition(async () => {
-      const result = await archiveGameAction({
-        familyId,
-        gameId: selectedGameState.id,
-      });
-
-      setIsArchivingGame(false);
-
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-
-      const archivedTitle = result.gameState.gameTitle;
-      handleSetNewGameMode();
-      setIsContinueGameHidden(false);
-      router.refresh();
-      toast.success(`Game "${ archivedTitle }" archived.`);
-    });
-  };
-
-  const handleDeleteSelectedGame = () => {
-    if (!selectedGameState) {
-      return;
-    }
-
-    setIsDeletingGame(true);
-    startTransition(async () => {
-      const result = await deleteGameAction({
-        familyId,
-        gameId: selectedGameState.id,
-      });
-
-      setIsDeletingGame(false);
-
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-
-      handleSetNewGameMode();
-      setIsContinueGameHidden(false);
-      router.refresh();
-      toast.success(result.message);
-    });
-  };
-
-  // Get unique game statuses and dates for filters
-  const uniqueStatuses = useMemo(
-    () => Array.from(new Set(gamesData.gameHistory.map((g) => g.gameStatus))),
-    [gamesData.gameHistory]
-  );
-
-  const uniqueDates = useMemo(
-    () => Array.from(new Set(gamesData.gameHistory.map((g) => g.gameStartDate))),
-    [gamesData.gameHistory]
-  );
-
-  const uniqueTitles = useMemo(
-    () => Array.from(new Set(gamesData.gameHistory.map((g) => g.gameTitle))),
-    [gamesData.gameHistory]
-  );
-
-  // Recalculate leaderboards based on selected game type
-  const gameLeaderboards = useMemo(() => {
-    if (!selectedGameId) {
-      return gamesData.leaderboards;
-    }
-
-    const completedGamesByType = filteredGameHistory.filter(
-      (row) => row.gameStatus === 'completed' && row.gameScore !== 0
-    );
-
-    if (completedGamesByType.length === 0) {
-      return {
-        lowScore: null,
-        highScore: null,
-        playerStats: [],
-      };
-    }
-
-    const playerStatsMap = new Map<number, {
-      playerId: number;
-      playerFirstName: string;
-      playerLastName: string;
-      gamesPlayed: number;
-      gamesWon: number;
-    }>();
-
-    // Calculate player stats
-    const uniqueGameIds = new Set<number>();
-    for (const game of completedGamesByType) {
-      uniqueGameIds.add(game.gameId);
-      const current = playerStatsMap.get(game.playerId) ?? {
-        playerId: game.playerId,
-        playerFirstName: game.playerFirstName,
-        playerLastName: game.playerLastName,
-        gamesPlayed: 0,
-        gamesWon: 0,
-      };
-
-      const isWin = selectedGame?.highOrLo === "high" ? game.isHighest : game.isLowest;
-      if (isWin) {
-        current.gamesWon += 1;
-      }
-
-      playerStatsMap.set(game.playerId, current);
-    }
-
-    // Set games played based on unique games
-    for (const [playerId, stats] of playerStatsMap) {
-      const playerGames = new Set(
-        completedGamesByType
-          .filter((g) => g.playerId === playerId)
-          .map((g) => g.gameId)
-      );
-      stats.gamesPlayed = playerGames.size;
-    }
-
-    const playerStatsArray = Array.from(playerStatsMap.values())
-      .map((row) => ({
-        playerFirstName: row.playerFirstName,
-        playerLastName: row.playerLastName,
-        gamesPlayed: row.gamesPlayed,
-        gamesWon: row.gamesWon,
-        gamesLost: row.gamesPlayed - row.gamesWon,
-      }))
-      .sort((a, b) => {
-        if (a.gamesWon === b.gamesWon) {
-          return a.playerFirstName.localeCompare(b.playerFirstName);
-        }
-        return b.gamesWon - a.gamesWon;
-      });
-
-    const lowScore = completedGamesByType.length > 0
-      ? {
-        playerFirstName: completedGamesByType.reduce((acc, row) =>
-          row.gameScore < acc.gameScore ? row : acc
-        ).playerFirstName,
-        playerLastName: completedGamesByType.reduce((acc, row) =>
-          row.gameScore < acc.gameScore ? row : acc
-        ).playerLastName,
-        gameScore: completedGamesByType.reduce((acc, row) =>
-          row.gameScore < acc.gameScore ? row : acc
-        ).gameScore,
-        gameStartDate: completedGamesByType.reduce((acc, row) =>
-          row.gameScore < acc.gameScore ? row : acc
-        ).gameStartDate,
-      }
-      : null;
-
-    const highScore = completedGamesByType.length > 0
-      ? {
-        playerFirstName: completedGamesByType.reduce((acc, row) =>
-          row.gameScore > acc.gameScore ? row : acc
-        ).playerFirstName,
-        playerLastName: completedGamesByType.reduce((acc, row) =>
-          row.gameScore > acc.gameScore ? row : acc
-        ).playerLastName,
-        gameScore: completedGamesByType.reduce((acc, row) =>
-          row.gameScore > acc.gameScore ? row : acc
-        ).gameScore,
-        gameStartDate: completedGamesByType.reduce((acc, row) =>
-          row.gameScore > acc.gameScore ? row : acc
-        ).gameStartDate,
-      }
-      : null;
-
-    return {
-      lowScore,
-      highScore,
-      playerStats: playerStatsArray,
-    };
-  }, [selectedGameId, filteredGameHistory]);
+  const {
+    gameStatusFilter,
+    setGameStatusFilter,
+    gameDateFilter,
+    setGameDateFilter,
+    gameTitleFilter,
+    setGameTitleFilter,
+    groupedGameHistory,
+    uniqueStatuses,
+    uniqueDates,
+    uniqueTitles,
+    gameLeaderboards,
+  } = useGameHistoryInsights({
+    gamesData,
+    selectedGameId,
+    winnerDirection: selectedGame?.highOrLo,
+  });
 
   const isHighWins = selectedGame?.highOrLo === "high";
   const scoreUom = selectedGame?.scoreUom || "points";
-  const isDollarScore = scoreUom.toLowerCase() === "dollars";
-  const formatScore = (value: number) => {
-    const formatted = new Intl.NumberFormat("en-US").format(value);
-    return isDollarScore ? `$${ formatted }` : `${ formatted } ${ scoreUom }`;
-  };
+  const formatScore = (value: number) => formatGameScore(value, scoreUom);
   const lowestScore = gameLeaderboards.lowScore;
   const highestScore = gameLeaderboards.highScore;
   const playerStats = gameLeaderboards.playerStats;
@@ -1534,175 +440,34 @@ export function GamesHomePage({
                 />
               </div>
 
-              {/* Game Selection, Title, and Action Buttons */ }
-              <div className="mb-6 flex flex-wrap items-end gap-4">
-                <Select
-                  value={ selectedGameId ? String(selectedGameId) : "" }
-                  onValueChange={ (val) => {
-                    const id = parseInt(val);
-                    setSelectedGameId(id);
-                    const game = gamesData.availableGames.find((g) => g.id === id);
-                    const isSelectedCricket = game?.name.trim().toLowerCase() === "cricket";
-                    const isSelectedCrokinole = game?.name.trim().toLowerCase() === "crokinole";
-                    if (game) {
-                      setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
-                      setSelectedGameState(null);
-                      setGameTitleInput("");
-                    }
-                    setSelectedPlayers(emptySelectedPlayers);
-                    setRoundScores(new Map());
-                    setCricketTurnLedger([]);
-                    setCricketTurnDarts(["", "", ""]);
-                    setCrokinoleFormat("singles");
-                    setCrokinoleTeamNames(["Team 1", "Team 2"]);
-                    setPersistedCumulativeScores(null);
-                    setHasRoundScoreEdits(false);
-                    setRequestedVisiblePlayerColumns(isSelectedCricket || isSelectedCrokinole ? 2 : 1);
-                    router.refresh();
-                  } }
-                >
-                  <SelectTrigger className="w-64 border-[#e8c4a0] bg-[#fffaf5] text-[#5c2e1a]">
-                    <SelectValue placeholder="Select a game..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    { gamesData.availableGames.map((game) => (
-                      <SelectItem key={ game.id } value={ String(game.id) }>
-                        { game.name }
-                      </SelectItem>
-                    )) }
-                  </SelectContent>
-                </Select>
-
-                <Select
-                  value={ selectedGameTitleOption }
-                  onValueChange={ (val) => {
-                    setSelectedGameTitleOption(val);
-
-                    if (val === NEW_GAME_OPTION_VALUE) {
-                      setSelectedGameState(null);
-                      setGameTitleInput("");
-                      setSelectedPlayers(emptySelectedPlayers);
-                      setRoundScores(new Map());
-                      setCricketTurnLedger([]);
-                      setCricketTurnDarts(["", "", ""]);
-                      setCrokinoleFormat("singles");
-                      setCrokinoleTeamNames(["Team 1", "Team 2"]);
-                      setPersistedCumulativeScores(null);
-                      setHasRoundScoreEdits(false);
-                      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 1);
-                      return;
-                    }
-
-                    const stateId = Number(val);
-                    void handleLoadPersistedGame(stateId);
-                  } }
-                  disabled={ !selectedGameId }
-                >
-                  <SelectTrigger className="w-72 border-[#e8c4a0] bg-[#fffaf5] text-[#5c2e1a]">
-                    <SelectValue placeholder="Select game title..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ NEW_GAME_OPTION_VALUE }>New Game</SelectItem>
-                    { gameStatesForSelectedMetadata.map((state) => (
-                      <SelectItem key={ state.id } value={ String(state.id) }>
-                        { state.gameTitle }
-                      </SelectItem>
-                    )) }
-                  </SelectContent>
-                </Select>
-
-                { !selectedGameState && (
-                  <Button
-                    onClick={ handleStartOrContinueGame }
-                    disabled={ !selectedGame || isStartingGame || isLoadingSavedGame }
-                    className="bg-[linear-gradient(135deg,#b76428,#df8a42)] text-white hover:bg-[linear-gradient(135deg,#9f5721,#c87934)]"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    { isStartingGame ? "Starting..." : "Start New Game" }
-                  </Button>
-                ) }
-
-                { selectedGameState?.status === "in_progress" && !isContinueGameHidden && (
-                  <Button
-                    onClick={ handleStartOrContinueGame }
-                    disabled={ isLoadingSavedGame }
-                    className="bg-[linear-gradient(135deg,#b76428,#df8a42)] text-white hover:bg-[linear-gradient(135deg,#9f5721,#c87934)]"
-                  >
-                    <Play className="w-4 h-4 mr-2" />
-                    Continue Game
-                  </Button>
-                ) }
-
-                { !isCricketGame
-                  && isAcquireGame
-                  && selectedGameState?.status === "in_progress"
-                  && !isContinueGameHidden
-                  && requestedVisiblePlayerColumns < 8 && (
-                    <Button
-                      onClick={ handleAddPlayerColumn }
-                      disabled={ isLoadingSavedGame }
-                      variant="outline"
-                      className="border-[#d8ab7f] bg-[#fff6ef] text-[#7b3306] hover:bg-[#ffefdf]"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Player
-                    </Button>
-                  ) }
-
-                { selectedGameState?.status === "completed" && (
-                  <Button
-                    onClick={ handleArchiveSelectedGame }
-                    disabled={ isArchivingGame }
-                    variant="outline"
-                    className="border-[#d8ab7f] bg-[#fff6ef] text-[#7b3306] hover:bg-[#ffefdf]"
-                  >
-                    <Archive className="w-4 h-4 mr-2" />
-                    { isArchivingGame ? "Archiving..." : "Archive Game" }
-                  </Button>
-                ) }
-
-                { hasRoundScoreEdits && (
-                  <Button
-                    onClick={ handleSaveGame }
-                    disabled={ !selectedGameState || isSavingGame }
-                    variant="outline"
-                    className="border-[#d8ab7f] bg-[#fff6ef] text-[#7b3306] hover:bg-[#ffefdf]"
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    { isSavingGame ? "Saving..." : "Save Game" }
-                  </Button>
-                ) }
-
-                { selectedGameState?.status === "in_progress" && (
-                  <Button
-                    onClick={ handleResetGameBoard }
-                    disabled={ isSavingGame || isLoadingSavedGame }
-                    variant="outline"
-                    className="border-[#d8ab7f] bg-[#fff6ef] text-[#7b3306] hover:bg-[#ffefdf]"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    Reset Board
-                  </Button>
-                ) }
-
-                { selectedGameState && (
-                  <Button
-                    onClick={ handleDeleteSelectedGame }
-                    disabled={ isDeletingGame || isSavingGame }
-                    variant="outline"
-                    className="border-[#e5b4b4] bg-[#fff5f5] text-[#9a2e2e] hover:bg-[#ffecec]"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    { isDeletingGame ? "Deleting..." : "Delete Game" }
-                  </Button>
-                ) }
-
-                { selectedGameState && persistedCumulativeScores && !hasRoundScoreEdits && (
-                  <span className="inline-flex items-center rounded-full border border-[#d8ab7f] bg-[#fff2e5] px-3 py-1 text-xs font-semibold text-[#8b5a3c]">
-                    Loaded from Saved Game
-                  </span>
-                ) }
-              </div>
+              <GamesScoreboardToolbar
+                availableGames={ gamesData.availableGames }
+                selectedGameId={ selectedGameId }
+                onSelectedGameChange={ handleSelectedGameChange }
+                selectedGameTitleOption={ selectedGameTitleOption }
+                onSelectedGameTitleChange={ handleSelectedGameTitleChange }
+                newGameOptionValue={ NEW_GAME_OPTION_VALUE }
+                gameStatesForSelectedMetadata={ gameStatesForSelectedMetadata }
+                hasSelectedGame={ Boolean(selectedGame) }
+                selectedGameState={ selectedGameState }
+                isStartingGame={ isStartingGame }
+                isLoadingSavedGame={ isLoadingSavedGame }
+                isContinueGameHidden={ isContinueGameHidden }
+                isCricketGame={ isCricketGame }
+                isAcquireGame={ isAcquireGame }
+                requestedVisiblePlayerColumns={ requestedVisiblePlayerColumns }
+                isArchivingGame={ isArchivingGame }
+                hasRoundScoreEdits={ hasRoundScoreEdits }
+                isSavingGame={ isSavingGame }
+                isDeletingGame={ isDeletingGame }
+                hasLoadedSavedGame={ Boolean(selectedGameState && persistedCumulativeScores && !hasRoundScoreEdits) }
+                onStartOrContinueGame={ lifecycle.startOrContinueGame }
+                onAddPlayerColumn={ handleAddPlayerColumn }
+                onArchiveSelectedGame={ handleArchiveSelectedGame }
+                onSaveGame={ lifecycle.saveGame }
+                onResetGameBoard={ handleResetGameBoard }
+                onDeleteSelectedGame={ handleDeleteSelectedGame }
+              />
 
               {/* Scoreboard Table */ }
               { selectedGameState ? (
@@ -1712,293 +477,41 @@ export function GamesHomePage({
                   className="overflow-x-auto rounded-[1.35rem] border border-[#f0d9c4]"
                 >
                   { isCricketGame ? (
-                    <div className="space-y-5">
-                      <div className="rounded-[1.6rem] border border-[#f0d9c4] bg-[#fffaf5] p-5 shadow-[0_16px_45px_-32px_rgba(96,52,20,0.55)]">
-                        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                          <div>
-                            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Cricket Turn Ledger</p>
-                            <h3 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">{ cricketWinnerSideIndex !== null ? `Side ${ cricketWinnerSideIndex + 1 } wins` : `Side ${ cricketActiveSideIndex + 1 } to throw` }</h3>
-                            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">
-                              Enter the 3 darts for the current turn. The board, closure marks, and scoring totals update automatically.
-                            </p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="rounded-full border border-[#e8c4a0] bg-white px-3 py-1 text-xs font-semibold text-[#8b5a3c]">Side 1: { cricketBoardState.scores[0] }</span>
-                            <span className="rounded-full border border-[#e8c4a0] bg-white px-3 py-1 text-xs font-semibold text-[#8b5a3c]">Side 2: { cricketBoardState.scores[1] }</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-5 grid gap-3 md:grid-cols-2">
-                          { [0, 1].map((sideIndex) => {
-                            const player = selectedPlayers[sideIndex];
-
-                            return (
-                              <div key={ `cricket-side-${ sideIndex }` } className="space-y-1">
-                                <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Side { sideIndex + 1 }</Label>
-                                <Select
-                                  value={ player ? String(player.id) : "" }
-                                  onValueChange={ (value) => handleSetCricketSidePlayer(sideIndex as CricketSideIndex, value) }
-                                >
-                                  <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
-                                    <SelectValue placeholder={ `Select Side ${ sideIndex + 1 } Player` } />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value={ CLEAR_PLAYER_OPTION_VALUE } disabled={ !player }>
-                                      Unselect player
-                                    </SelectItem>
-                                    <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
-                                      + Add a guest
-                                    </SelectItem>
-                                    { orderedSelectablePlayers.map((member) => {
-                                      const otherSideIndex = sideIndex === 0 ? 1 : 0;
-                                      const selectedInOtherSide = selectedPlayers[otherSideIndex]?.id === member.id;
-
-                                      return (
-                                        <SelectItem
-                                          key={ member.id }
-                                          value={ String(member.id) }
-                                          disabled={ selectedInOtherSide }
-                                        >
-                                          { getPlayerOptionLabel(member) }
-                                        </SelectItem>
-                                      );
-                                    }) }
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            );
-                          }) }
-                        </div>
-
-                        <div className="mt-5 grid gap-3 md:grid-cols-3">
-                          { cricketTurnDarts.map((dart, index) => (
-                            <div key={ `cricket-dart-${ index }` } className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Dart { index + 1 }</Label>
-                              <Input
-                                value={ dart }
-                                onChange={ (event) => {
-                                  const next = [...cricketTurnDarts];
-                                  next[index] = event.target.value;
-                                  setCricketTurnDarts(next);
-                                  setHasRoundScoreEdits(true);
-                                } }
-                                placeholder="S20, D18, T20, miss"
-                                className="border-[#e8c4a0] bg-white text-[#5c2e1a]"
-                                disabled={ cricketWinnerSideIndex !== null }
-                              />
-                            </div>
-                          )) }
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          <Button
-                            type="button"
-                            onClick={ handleSubmitCricketTurn }
-                            disabled={ cricketWinnerSideIndex !== null || isSubmittingCricketTurn }
-                            className="bg-[linear-gradient(135deg,#b76428,#df8a42)] text-white hover:bg-[linear-gradient(135deg,#9f5721,#c87934)]"
-                          >
-                            { isSubmittingCricketTurn ? "Submitting..." : "Submit Turn" }
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={ handleResetGameBoard }
-                            disabled={ isSubmittingCricketTurn }
-                            variant="outline"
-                            className="border-[#d8ab7f] bg-[#fff6ef] text-[#7b3306] hover:bg-[#ffefdf]"
-                          >
-                            <RotateCcw className="mr-2 size-4" />
-                            Reset Board
-                          </Button>
-                        </div>
-                      </div>
-
-                      <table className="w-full min-w-208 table-fixed border-collapse text-sm">
-                        <thead>
-                          <tr>
-                            <th className="w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]">Side 1 Bonus</th>
-                            <th className="w-40 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]">Side 1 Marks</th>
-                            <th className="w-24 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-center font-black text-[#5c2e1a]">Target</th>
-                            <th className="w-40 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]">Side 2 Marks</th>
-                            <th className="w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]">Side 2 Bonus</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          { CRICKET_TARGETS.map((target) => {
-                            const marks = cricketBoardState.marksByTarget.get(target.roundKey) ?? [0, 0];
-                            const bonuses = cricketBoardState.bonusByTarget.get(target.roundKey) ?? [0, 0];
-                            const side1MarkDisplay = marks[0] === 0 ? "" : marks[0] === 1 ? "/" : marks[0] === 2 ? "X" : "O";
-                            const side2MarkDisplay = marks[1] === 0 ? "" : marks[1] === 1 ? "/" : marks[1] === 2 ? "X" : "O";
-
-                            return (
-                              <tr key={ `cricket-board-${ target.roundKey }` }>
-                                <td className="border border-[#f0d9c4] bg-white p-2 text-center font-semibold text-[#8b5a3c]">{ bonuses[0] || "-" }</td>
-                                <td className="border border-[#f0d9c4] bg-white p-2 text-center">
-                                  <span className="inline-flex min-w-8 justify-center rounded-full bg-[#fff6ef] px-2 py-1 text-sm font-black text-[#7b3306]">{ side1MarkDisplay || "-" }</span>
-                                </td>
-                                <td className="border border-[#f0d9c4] bg-[#fff8f2] p-2 text-center font-black text-[#8b5a3c]">{ target.label }</td>
-                                <td className="border border-[#f0d9c4] bg-white p-2 text-center">
-                                  <span className="inline-flex min-w-8 justify-center rounded-full bg-[#fff6ef] px-2 py-1 text-sm font-black text-[#7b3306]">{ side2MarkDisplay || "-" }</span>
-                                </td>
-                                <td className="border border-[#f0d9c4] bg-white p-2 text-center font-semibold text-[#8b5a3c]">{ bonuses[1] || "-" }</td>
-                              </tr>
-                            );
-                          }) }
-                          <tr>
-                            <td className={ `border border-[#f0d9c4] bg-[#fff6ef] p-2 text-center font-bold text-[#5c2e1a] ${ getScoreStyle(0) }` } colSpan={ 2 }>
-                              Side 1 Total: { cricketBoardState.scores[0] }
-                            </td>
-                            <td className="border border-[#f0d9c4] bg-[#fff6ef] p-2 text-center text-xs font-semibold text-[#a85a3a]">Totals</td>
-                            <td className={ `border border-[#f0d9c4] bg-[#fff6ef] p-2 text-center font-bold text-[#5c2e1a] ${ getScoreStyle(1) }` } colSpan={ 2 }>
-                              Side 2 Total: { cricketBoardState.scores[1] }
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-
-                      <div className="rounded-[1.6rem] border border-[#f0d9c4] bg-white p-4">
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Turn History</p>
-                        <div className="mt-3 space-y-2">
-                          { cricketTurnLedger.length > 0 ? cricketTurnLedger.slice().reverse().map((turn) => (
-                            <div key={ `cricket-turn-${ turn.turnNo }` } className="rounded-xl border border-[#f0d9c4] bg-[#fffaf5] p-3 text-sm text-[#5c2e1a]">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="font-semibold">Turn { turn.turnNo } - Side { turn.sideIndex + 1 }</span>
-                                <span className="text-[#8b5a3c]">+{ turn.scoreDelta } points</span>
-                              </div>
-                              <p className="mt-1 text-[#8b5a3c]">{ turn.darts.map((dart) => dart || "miss").join(", ") }</p>
-                            </div>
-                          )) : (
-                            <p className="text-sm text-[#8b5a3c]">No turns entered yet.</p>
-                          ) }
-                        </div>
-                      </div>
-                    </div>
+                    <GamesCricketPanel
+                      selectedPlayers={ selectedPlayers }
+                      orderedSelectablePlayers={ orderedSelectablePlayers }
+                      getPlayerOptionLabel={ getPlayerOptionLabel }
+                      clearPlayerOptionValue={ CLEAR_PLAYER_OPTION_VALUE }
+                      addGuestOptionValue={ ADD_GUEST_OPTION_VALUE }
+                      cricketTurnDarts={ cricketTurnDarts }
+                      cricketTurnLedger={ cricketTurnLedger }
+                      cricketBoardState={ cricketBoardState }
+                      cricketWinnerSideIndex={ cricketWinnerSideIndex }
+                      cricketActiveSideIndex={ cricketActiveSideIndex }
+                      isSubmittingCricketTurn={ isSubmittingCricketTurn }
+                      scoreStyleByColumn={ scoreStyleByColumn }
+                      onSetCricketSidePlayer={ cricket.setCricketSidePlayer }
+                      onSetCricketTurnDart={ cricket.setCricketTurnDart }
+                      onSubmitCricketTurn={ cricket.submitCricketTurn }
+                      onResetBoard={ handleResetGameBoard }
+                    />
                   ) : (
                     <>
-                      { isCrokinoleGame && (
-                        <div className="mb-5 rounded-[1.2rem] border border-[#f0d9c4] bg-[#fffaf5] p-4">
-                          { crokinoleWinnerTeamIndex !== null && (
-                            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
-                              Winner declared: { crokinoleTeamNames[crokinoleWinnerTeamIndex] || `Team ${ crokinoleWinnerTeamIndex + 1 }` } reached { CROKINOLE_WIN_SCORE }+.
-                            </div>
-                          ) }
-                          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-                            <div className="space-y-1">
-                              <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Format</Label>
-                              <Select
-                                value={ crokinoleFormat }
-                                onValueChange={ (value) => {
-                                  const nextFormat = value as CrokinoleFormat;
-                                  setCrokinoleFormat(nextFormat);
-                                  if (nextFormat === "singles") {
-                                    const nextPlayers = [...selectedPlayers];
-                                    nextPlayers[2] = null;
-                                    nextPlayers[3] = null;
-                                    setSelectedPlayers(nextPlayers);
-                                  }
-                                } }
-                              >
-                                <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
-                                  <SelectValue placeholder="Select format" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="singles">Singles</SelectItem>
-                                  <SelectItem value="doubles">Doubles</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className="grid gap-4 md:grid-cols-2">
-                              { [0, 1].map((teamIndex) => (
-                                <div key={ `crokinole-team-${ teamIndex }` } className="space-y-2 rounded-xl border border-[#f0d9c4] bg-white p-3">
-                                  <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Team { teamIndex + 1 } Name</Label>
-                                  <Input
-                                    value={ crokinoleTeamNames[teamIndex] }
-                                    onChange={ (event) => {
-                                      const nextNames: [string, string] = [...crokinoleTeamNames] as [string, string];
-                                      nextNames[teamIndex] = event.target.value;
-                                      setCrokinoleTeamNames(nextNames);
-                                    } }
-                                    className="border-[#e8c4a0] bg-[#fffaf5] text-[#5c2e1a]"
-                                    placeholder={ `Team ${ teamIndex + 1 }` }
-                                  />
-
-                                  <div className="space-y-1">
-                                    <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Primary Player</Label>
-                                    <Select
-                                      value={ selectedPlayers[teamIndex] ? String(selectedPlayers[teamIndex]?.id) : "" }
-                                      onValueChange={ (value) => handleSetCrokinolePlayerSlot(teamIndex, value) }
-                                    >
-                                      <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
-                                        <SelectValue placeholder="Select player" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value={ CLEAR_PLAYER_OPTION_VALUE } disabled={ !selectedPlayers[teamIndex] }>
-                                          Unselect player
-                                        </SelectItem>
-                                        <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
-                                          + Add a guest
-                                        </SelectItem>
-                                        { orderedSelectablePlayers.map((member) => {
-                                          const selectedInOtherSlot = selectedPlayers.some(
-                                            (existingPlayer, existingIdx) => existingIdx !== teamIndex && existingPlayer?.id === member.id
-                                          );
-
-                                          return (
-                                            <SelectItem
-                                              key={ `crokinole-primary-${ teamIndex }-${ member.id }` }
-                                              value={ String(member.id) }
-                                              disabled={ selectedInOtherSlot }
-                                            >
-                                              { getPlayerOptionLabel(member) }
-                                            </SelectItem>
-                                          );
-                                        }) }
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-
-                                  { crokinoleFormat === "doubles" && (
-                                    <div className="space-y-1">
-                                      <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Partner</Label>
-                                      <Select
-                                        value={ selectedPlayers[teamIndex + 2] ? String(selectedPlayers[teamIndex + 2]?.id) : "" }
-                                        onValueChange={ (value) => handleSetCrokinolePlayerSlot(teamIndex + 2, value) }
-                                      >
-                                        <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
-                                          <SelectValue placeholder="Select partner" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value={ CLEAR_PLAYER_OPTION_VALUE } disabled={ !selectedPlayers[teamIndex + 2] }>
-                                            Unselect player
-                                          </SelectItem>
-                                          <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
-                                            + Add a guest
-                                          </SelectItem>
-                                          { orderedSelectablePlayers.map((member) => {
-                                            const selectedInOtherSlot = selectedPlayers.some(
-                                              (existingPlayer, existingIdx) => existingIdx !== teamIndex + 2 && existingPlayer?.id === member.id
-                                            );
-
-                                            return (
-                                              <SelectItem
-                                                key={ `crokinole-partner-${ teamIndex }-${ member.id }` }
-                                                value={ String(member.id) }
-                                                disabled={ selectedInOtherSlot }
-                                              >
-                                                { getPlayerOptionLabel(member) }
-                                              </SelectItem>
-                                            );
-                                          }) }
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  ) }
-                                </div>
-                              )) }
-                            </div>
-                          </div>
-                        </div>
-                      ) }
+                      <GamesCrokinoleSetup
+                        isVisible={ isCrokinoleGame }
+                        crokinoleFormat={ crokinoleFormat }
+                        crokinoleTeamNames={ crokinoleTeamNames }
+                        crokinoleWinnerTeamIndex={ crokinoleWinnerTeamIndex as 0 | 1 | null }
+                        crokinoleWinScore={ CROKINOLE_WIN_SCORE }
+                        selectedPlayers={ selectedPlayers }
+                        orderedSelectablePlayers={ orderedSelectablePlayers }
+                        clearPlayerOptionValue={ CLEAR_PLAYER_OPTION_VALUE }
+                        addGuestOptionValue={ ADD_GUEST_OPTION_VALUE }
+                        getPlayerOptionLabel={ getPlayerOptionLabel }
+                        onSetFormat={ crokinole.setCrokinoleFormat }
+                        onSetTeamName={ crokinole.setCrokinoleTeamName }
+                        onSetPlayerSlot={ crokinole.setCrokinolePlayerSlot }
+                      />
 
                       <table className="w-full max-w-245 table-fixed text-sm border-collapse">
                         <thead>
@@ -2041,8 +554,7 @@ export function GamesHomePage({
                                     value={ player ? String(player.id) : "" }
                                     onValueChange={ (val) => {
                                       if (val === ADD_GUEST_OPTION_VALUE) {
-                                        setGuestDialogColIndex(idx);
-                                        setIsGuestDialogOpen(true);
+                                        lifecycle.openGuestDialog(idx);
                                         return;
                                       }
 
@@ -2126,7 +638,7 @@ export function GamesHomePage({
                                 return (
                                   <th
                                     key={ `score-total-${ idx }` }
-                                    className={ `w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 font-bold text-[#5c2e1a] ${ getScoreStyle(idx) }` }
+                                    className={ `w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 font-bold text-[#5c2e1a] ${ scoreStyleByColumn.get(idx) ?? "" }` }
                                   >
                                     { score || "-" }
                                   </th>
@@ -2139,7 +651,6 @@ export function GamesHomePage({
                         {/* Round Scores */ }
                         <tbody>
                           { displayedRoundEntries.map((roundEntry) => {
-                            const roundNo = roundEntry.roundNo;
                             return (
                               <tr key={ `round-${ roundEntry.label }` }>
                                 <td className="w-16 border border-[#f0d9c4] bg-[#fff8f2] p-2 text-center font-semibold text-[#8b5a3c]">
@@ -2150,7 +661,7 @@ export function GamesHomePage({
                                   return (
                                     <td
                                       key={ `round-score-${ roundEntry.label }-${ colIdx }` }
-                                      className={ `w-32 border border-[#f0d9c4] bg-white p-2 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" } ${ getRoundWinnerStyle(roundEntry.roundKey, colIdx) }` }
+                                      className={ `w-32 border border-[#f0d9c4] bg-white p-2 ${ isFinalOnlyRow ? scoreStyleByColumn.get(colIdx) ?? "" : "" } ${ crokinole.getRoundWinnerStyle(roundEntry.roundKey, colIdx) }` }
                                     >
                                       <Input
                                         type="number"
@@ -2304,7 +815,7 @@ export function GamesHomePage({
                     </SelectContent>
                   </Select>
 
-                  <Select value={ gameTitle } onValueChange={ setGameTitle }>
+                  <Select value={ gameTitleFilter } onValueChange={ setGameTitleFilter }>
                     <SelectTrigger className="w-full border-[#e8c4a0] bg-[#fffaf5] text-xs text-[#5c2e1a]">
                       <SelectValue placeholder="Game Title" />
                     </SelectTrigger>
@@ -2416,7 +927,7 @@ export function GamesHomePage({
             className="border-[#e8c4a0] bg-white text-[#5c2e1a]"
             onKeyDown={ (e) => {
               if (e.key === "Enter") {
-                handleConfirmStartGame();
+                lifecycle.confirmStartGame();
               }
             } }
           />
@@ -2431,7 +942,7 @@ export function GamesHomePage({
               Cancel
             </Button>
             <Button
-              onClick={ handleConfirmStartGame }
+              onClick={ lifecycle.confirmStartGame }
               disabled={ isStartingGame }
               className="bg-[linear-gradient(135deg,#b76428,#df8a42)] text-white hover:bg-[linear-gradient(135deg,#9f5721,#c87934)]"
             >
@@ -2445,11 +956,7 @@ export function GamesHomePage({
         open={ isGuestDialogOpen }
         onOpenChange={ (open) => {
           if (!open) {
-            setIsGuestDialogOpen(false);
-            setGuestFirstName("");
-            setGuestLastName("");
-            setGuestEmail("");
-            setGuestDialogColIndex(null);
+            lifecycle.closeGuestDialog();
           }
         } }
       >
@@ -2504,13 +1011,7 @@ export function GamesHomePage({
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={ () => {
-                setIsGuestDialogOpen(false);
-                setGuestFirstName("");
-                setGuestLastName("");
-                setGuestEmail("");
-                setGuestDialogColIndex(null);
-              } }
+              onClick={ lifecycle.closeGuestDialog }
             >
               Cancel
             </Button>
