@@ -53,9 +53,12 @@ interface SelectedPlayer {
   isGuest: boolean;
 }
 
+type CrokinoleFormat = "singles" | "doubles";
+
 const NEW_GAME_OPTION_VALUE = "new_game";
 const ADD_GUEST_OPTION_VALUE = "add_guest";
 const CLEAR_PLAYER_OPTION_VALUE = "clear_player";
+const CROKINOLE_WIN_SCORE = 100;
 const CRICKET_TARGETS = [
   { roundKey: 20, roundNo: 20, label: "20", scoreValue: 20 },
   { roundKey: 19, roundNo: 19, label: "19", scoreValue: 19 },
@@ -322,6 +325,8 @@ export function GamesHomePage({
   const [cricketTurnLedger, setCricketTurnLedger] = useState<CricketTurnLedgerEntry[]>([]);
   const [cricketTurnDarts, setCricketTurnDarts] = useState(["", "", ""]);
   const [isSubmittingCricketTurn, setIsSubmittingCricketTurn] = useState(false);
+  const [crokinoleFormat, setCrokinoleFormat] = useState<CrokinoleFormat>("singles");
+  const [crokinoleTeamNames, setCrokinoleTeamNames] = useState<[string, string]>(["Team 1", "Team 2"]);
 
   // Computed values
   const selectedGame = useMemo(
@@ -332,6 +337,7 @@ export function GamesHomePage({
     [selectedGameId, gamesData.availableGames]
   );
   const isCricketGame = selectedGame?.name.trim().toLowerCase() === "cricket";
+  const isCrokinoleGame = selectedGame?.name.trim().toLowerCase() === "crokinole";
   const cricketBoardState = useMemo(
     () => buildCricketBoardFromLedger(cricketTurnLedger),
     [cricketTurnLedger]
@@ -384,6 +390,15 @@ export function GamesHomePage({
       }));
     }
 
+    if (isCrokinoleGame) {
+      const maxRounds = Math.max(1, selectedGame?.maxRounds || 20);
+      return Array.from({ length: maxRounds }, (_, index) => ({
+        roundKey: index + 1,
+        roundNo: index + 1,
+        label: String(index + 1),
+      }));
+    }
+
     const scoreUomLabel = selectedGame?.scoreUom
       ? `${ selectedGame.scoreUom.charAt(0).toUpperCase() }${ selectedGame.scoreUom.slice(1) }`
       : "Score";
@@ -416,10 +431,14 @@ export function GamesHomePage({
         label: "Blank",
       },
     ];
-  }, [isCricketGame, selectedGame]);
+  }, [isCricketGame, isCrokinoleGame, selectedGame]);
 
   const visiblePlayerColumnIndices = useMemo(() => {
     if (isCricketGame) {
+      return [0, 1];
+    }
+
+    if (isCrokinoleGame) {
       return [0, 1];
     }
 
@@ -449,7 +468,7 @@ export function GamesHomePage({
     }
 
     return visible.sort((a, b) => a - b);
-  }, [isCricketGame, isMexicanTrainGame, requestedVisiblePlayerColumns, roundEntries, roundScores, selectedPlayers]);
+  }, [isCricketGame, isCrokinoleGame, isMexicanTrainGame, requestedVisiblePlayerColumns, roundEntries, roundScores, selectedPlayers]);
 
   // Filter game history
   const filteredGameHistory = useMemo(() => {
@@ -511,6 +530,25 @@ export function GamesHomePage({
       return scores;
     }
 
+    if (isCrokinoleGame) {
+      // Crokinole totals only advance after both teams have entered the round.
+      const scores = new Map<number, number>([[0, 0], [1, 0]]);
+      for (const roundEntry of roundEntries) {
+        const roundMap = roundScores.get(roundEntry.roundKey);
+        const hasTeamOneScore = roundMap?.has(0) ?? false;
+        const hasTeamTwoScore = roundMap?.has(1) ?? false;
+
+        if (!hasTeamOneScore || !hasTeamTwoScore) {
+          continue;
+        }
+
+        scores.set(0, (scores.get(0) ?? 0) + (roundMap?.get(0) ?? 0));
+        scores.set(1, (scores.get(1) ?? 0) + (roundMap?.get(1) ?? 0));
+      }
+
+      return scores;
+    }
+
     const scores = new Map<number, number>();
     selectedPlayers.forEach((player, colIndex) => {
       if (!player) return;
@@ -524,7 +562,7 @@ export function GamesHomePage({
       scores.set(colIndex, total);
     });
     return scores;
-  }, [cricketBoardState.scores, isCricketGame, roundEntries, roundScores, selectedPlayers]);
+  }, [cricketBoardState.scores, isCricketGame, isCrokinoleGame, roundEntries, roundScores, selectedPlayers]);
 
   const cumulativeScores = useMemo(() => {
     if (persistedCumulativeScores && !hasRoundScoreEdits) {
@@ -561,6 +599,84 @@ export function GamesHomePage({
     return "";
   };
 
+  const getRoundWinnerStyle = (roundKey: number, colIndex: number) => {
+    if (!isCrokinoleGame) {
+      return "";
+    }
+
+    const leftScore = roundScores.get(roundKey)?.get(0);
+    const rightScore = roundScores.get(roundKey)?.get(1);
+    if (leftScore === undefined || rightScore === undefined || leftScore === rightScore) {
+      return "";
+    }
+
+    const winnerColIndex = leftScore > rightScore ? 0 : 1;
+    return colIndex === winnerColIndex ? "!bg-emerald-100 !text-emerald-800" : "";
+  };
+
+  const crokinoleWinnerTeamIndex = useMemo(() => {
+    if (!isCrokinoleGame) {
+      return null;
+    }
+
+    const teamOneScore = cumulativeScores.get(0) ?? 0;
+    const teamTwoScore = cumulativeScores.get(1) ?? 0;
+    const teamOneReached = teamOneScore >= CROKINOLE_WIN_SCORE;
+    const teamTwoReached = teamTwoScore >= CROKINOLE_WIN_SCORE;
+
+    if (!teamOneReached && !teamTwoReached) {
+      return null;
+    }
+
+    if (teamOneScore === teamTwoScore) {
+      return null;
+    }
+
+    return teamOneScore > teamTwoScore ? 0 : 1;
+  }, [cumulativeScores, isCrokinoleGame]);
+
+  const crokinoleFinalRoundNo = useMemo(() => {
+    if (!isCrokinoleGame) {
+      return null;
+    }
+
+    let lastRoundNo: number | null = null;
+    for (const roundEntry of roundEntries) {
+      const roundMap = roundScores.get(roundEntry.roundKey);
+      const hasTeamOneScore = roundMap?.has(0) ?? false;
+      const hasTeamTwoScore = roundMap?.has(1) ?? false;
+      if (hasTeamOneScore && hasTeamTwoScore) {
+        lastRoundNo = roundEntry.roundNo;
+      }
+    }
+
+    return lastRoundNo;
+  }, [isCrokinoleGame, roundEntries, roundScores]);
+
+  const displayedRoundEntries = useMemo(() => {
+    if (!isCrokinoleGame || crokinoleWinnerTeamIndex === null || crokinoleFinalRoundNo === null) {
+      return roundEntries;
+    }
+
+    return roundEntries.filter((roundEntry) => roundEntry.roundNo <= crokinoleFinalRoundNo);
+  }, [crokinoleFinalRoundNo, crokinoleWinnerTeamIndex, isCrokinoleGame, roundEntries]);
+
+  const isCrokinoleTeamReady = (teamIndex: 0 | 1) => {
+    const primarySelected = Boolean(selectedPlayers[teamIndex]);
+    if (!primarySelected) {
+      return false;
+    }
+
+    if (crokinoleFormat === "singles") {
+      return true;
+    }
+
+    return Boolean(selectedPlayers[teamIndex + 2]);
+  };
+
+  const isCrokinoleScoringEnabled = !isCrokinoleGame
+    || (isCrokinoleTeamReady(0) && isCrokinoleTeamReady(1) && crokinoleWinnerTeamIndex === null);
+
   const handleSetNewGameMode = () => {
     setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
     setSelectedGameState(null);
@@ -570,6 +686,8 @@ export function GamesHomePage({
     setPersistedCumulativeScores(null);
     setCricketTurnLedger([]);
     setCricketTurnDarts(["", "", ""]);
+    setCrokinoleFormat("singles");
+    setCrokinoleTeamNames(["Team 1", "Team 2"]);
     setHasRoundScoreEdits(false);
     setRequestedVisiblePlayerColumns(1);
   };
@@ -650,8 +768,10 @@ export function GamesHomePage({
       setPersistedCumulativeScores(null);
       setCricketTurnLedger([]);
       setCricketTurnDarts(["", "", ""]);
+      setCrokinoleFormat("singles");
+      setCrokinoleTeamNames(["Team 1", "Team 2"]);
       setHasRoundScoreEdits(false);
-      setRequestedVisiblePlayerColumns(isCricketGame ? 2 : 8);
+      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 8);
       setIsStartDialogOpen(false);
       toast.success(`Started game \"${ result.gameState.gameTitle }\".`);
     });
@@ -663,9 +783,9 @@ export function GamesHomePage({
       return;
     }
 
-    const activePlayers = isCricketGame
+    const activePlayers = (isCricketGame || isCrokinoleGame)
       ? selectedPlayers
-        .slice(0, 2)
+        .slice(0, isCrokinoleGame && crokinoleFormat === "doubles" ? 4 : 2)
         .map((player, index) => player ? { ...player, playPosition: index + 1 } : null)
         .filter((player): player is SelectedPlayer & { playPosition: number } => player !== null)
       : selectedPlayers
@@ -676,6 +796,24 @@ export function GamesHomePage({
       toast.error("Select at least one player before saving the game.");
       return;
     }
+
+    if (isCrokinoleGame && activePlayers.length < 2) {
+      toast.error("Select both Crokinole teams before saving the game.");
+      return;
+    }
+
+    if (isCrokinoleGame && crokinoleFormat === "doubles") {
+      const requiredSlots = [0, 1, 2, 3];
+      const hasMissingTeamMember = requiredSlots.some((slotIndex) => !selectedPlayers[slotIndex]);
+      if (hasMissingTeamMember) {
+        toast.error("Select two players per team for Crokinole doubles before saving.");
+        return;
+      }
+    }
+
+    const rowsToPersist = isCrokinoleGame && crokinoleWinnerTeamIndex !== null && crokinoleFinalRoundNo !== null
+      ? roundEntries.filter((roundEntry) => roundEntry.roundNo <= crokinoleFinalRoundNo)
+      : roundEntries;
 
     const scoreboardRows = isCricketGame
       ? cricketTurnLedger.map((turnEntry) => ({
@@ -688,15 +826,21 @@ export function GamesHomePage({
           cumulativeScore: turnEntry.boardAfter.scores[player.playPosition - 1],
         })),
       }))
-      : roundEntries.map((roundEntry) => ({
+      : rowsToPersist.map((roundEntry) => ({
         roundNo: roundEntry.roundNo,
         roundLabel: roundEntry.label,
-        scores: activePlayers.map((player) => ({
-          memberId: player.id,
-          playPosition: player.playPosition,
-          roundScore: roundScores.get(roundEntry.roundKey)?.get(player.playPosition - 1) ?? 0,
-          cumulativeScore: cumulativeScores.get(player.playPosition - 1) ?? 0,
-        })),
+        scores: activePlayers.map((player) => {
+          const teamColumnIndex = isCrokinoleGame && player.playPosition > 2
+            ? player.playPosition - 3
+            : player.playPosition - 1;
+
+          return {
+            memberId: player.id,
+            playPosition: player.playPosition,
+            roundScore: roundScores.get(roundEntry.roundKey)?.get(teamColumnIndex) ?? 0,
+            cumulativeScore: cumulativeScores.get(teamColumnIndex) ?? 0,
+          };
+        }),
       }));
 
     const activeColIndices = activePlayers.map((p) => p.playPosition - 1);
@@ -704,6 +848,9 @@ export function GamesHomePage({
 
     if (isCricketGame) {
       saveStatus = cricketWinnerSideIndex !== null ? "completed" : "in_progress";
+    }
+    else if (isCrokinoleGame) {
+      saveStatus = crokinoleWinnerTeamIndex !== null ? "completed" : "in_progress";
     }
     else {
       // Determine if all numbered round scores have been entered for all active players.
@@ -767,7 +914,9 @@ export function GamesHomePage({
           : result.message,
         {
           description: result.gameState.status === 'completed'
-            ? 'All scores entered. Game marked as completed and leaderboard updated.'
+            ? (isCrokinoleGame && crokinoleWinnerTeamIndex !== null
+              ? `${ crokinoleTeamNames[crokinoleWinnerTeamIndex] || `Team ${ crokinoleWinnerTeamIndex + 1 }` } reached ${ CROKINOLE_WIN_SCORE }+ and has been declared the winner.`
+              : 'All scores entered. Game marked as completed and leaderboard updated.')
             : `${ activePlayers.length } players and ${ scoreboardRows.length } scoreboard rows prepared for persistence.`,
         }
       );
@@ -780,6 +929,10 @@ export function GamesHomePage({
     colIndex: number,
     value: string
   ) => {
+    if (isCrokinoleGame && !isCrokinoleScoringEnabled) {
+      return;
+    }
+
     const parsed = value === "" ? 0 : parseInt(value, 10) || 0;
     const numValue = isCricketGame
       ? Math.max(0, Math.min(3, parsed))
@@ -799,6 +952,42 @@ export function GamesHomePage({
   ) => {
     setHasRoundScoreEdits(true);
     setPersistedCumulativeScores(null);
+  };
+
+  const handleSetCrokinolePlayerSlot = (slotIndex: number, value: string) => {
+    if (value === ADD_GUEST_OPTION_VALUE) {
+      setGuestDialogColIndex(slotIndex);
+      setIsGuestDialogOpen(true);
+      return;
+    }
+
+    if (value === CLEAR_PLAYER_OPTION_VALUE) {
+      handleClearPlayerColumn(slotIndex);
+      return;
+    }
+
+    const selectedMemberId = Number(value);
+    const selectedInAnotherSlot = selectedPlayers.some(
+      (existingPlayer, existingIdx) => existingIdx !== slotIndex && existingPlayer?.id === selectedMemberId
+    );
+
+    if (selectedInAnotherSlot) {
+      return;
+    }
+
+    const selectedMember = localSelectablePlayers.find((member) => member.id === selectedMemberId);
+    if (!selectedMember) {
+      return;
+    }
+
+    const nextPlayers = [...selectedPlayers];
+    nextPlayers[slotIndex] = {
+      id: selectedMember.id,
+      firstName: selectedMember.firstName,
+      lastName: selectedMember.lastName,
+      isGuest: selectedMember.isGuest,
+    };
+    setSelectedPlayers(nextPlayers);
   };
 
   const handleSetCricketSidePlayer = (sideIndex: CricketSideIndex, value: string) => {
@@ -984,7 +1173,7 @@ export function GamesHomePage({
     setGameTitleInput(result.scoreboard.gameState.gameTitle);
     setSelectedPlayers(loadedPlayers);
     const loadedPlayerCount = loadedPlayers.filter((player) => player !== null).length;
-    setRequestedVisiblePlayerColumns(isLoadedCricketGame ? 2 : Math.max(1, loadedPlayerCount));
+    setRequestedVisiblePlayerColumns(isLoadedCricketGame || loadedGameMeta?.name.trim().toLowerCase() === "crokinole" ? 2 : Math.max(1, loadedPlayerCount));
     setLocalSelectablePlayers((prev) => {
       const existingIds = new Set(prev.map((p) => p.id));
       const missing = loadedPlayers
@@ -994,6 +1183,10 @@ export function GamesHomePage({
     setRoundScores(loadedRoundScores);
     setPersistedCumulativeScores(loadedCumulativeScores);
     setHasRoundScoreEdits(false);
+    if (loadedGameMeta?.name.trim().toLowerCase() === "crokinole") {
+      setCrokinoleFormat(loadedPlayers[2] || loadedPlayers[3] ? "doubles" : "singles");
+      setCrokinoleTeamNames(["Team 1", "Team 2"]);
+    }
   };
 
   const handleResetGameBoard = () => {
@@ -1004,6 +1197,11 @@ export function GamesHomePage({
     setRoundScores(new Map());
     setCricketTurnLedger([]);
     setCricketTurnDarts(["", "", ""]);
+    if (isCrokinoleGame) {
+      setSelectedPlayers(emptySelectedPlayers);
+      setCrokinoleFormat("singles");
+      setCrokinoleTeamNames(["Team 1", "Team 2"]);
+    }
     setPersistedCumulativeScores(null);
     setHasRoundScoreEdits(true);
     toast.success("Game board reset. Save to persist changes.");
@@ -1345,6 +1543,7 @@ export function GamesHomePage({
                     setSelectedGameId(id);
                     const game = gamesData.availableGames.find((g) => g.id === id);
                     const isSelectedCricket = game?.name.trim().toLowerCase() === "cricket";
+                    const isSelectedCrokinole = game?.name.trim().toLowerCase() === "crokinole";
                     if (game) {
                       setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
                       setSelectedGameState(null);
@@ -1354,9 +1553,11 @@ export function GamesHomePage({
                     setRoundScores(new Map());
                     setCricketTurnLedger([]);
                     setCricketTurnDarts(["", "", ""]);
+                    setCrokinoleFormat("singles");
+                    setCrokinoleTeamNames(["Team 1", "Team 2"]);
                     setPersistedCumulativeScores(null);
                     setHasRoundScoreEdits(false);
-                    setRequestedVisiblePlayerColumns(isSelectedCricket ? 2 : 1);
+                    setRequestedVisiblePlayerColumns(isSelectedCricket || isSelectedCrokinole ? 2 : 1);
                     router.refresh();
                   } }
                 >
@@ -1384,9 +1585,11 @@ export function GamesHomePage({
                       setRoundScores(new Map());
                       setCricketTurnLedger([]);
                       setCricketTurnDarts(["", "", ""]);
+                      setCrokinoleFormat("singles");
+                      setCrokinoleTeamNames(["Team 1", "Team 2"]);
                       setPersistedCumulativeScores(null);
                       setHasRoundScoreEdits(false);
-                      setRequestedVisiblePlayerColumns(isCricketGame ? 2 : 1);
+                      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 1);
                       return;
                     }
 
@@ -1670,158 +1873,310 @@ export function GamesHomePage({
                       </div>
                     </div>
                   ) : (
-                    <table className="w-full max-w-245 table-fixed text-sm border-collapse">
-                      <thead>
-                        {/* Header Row 1: Column Headers with Player Selection */ }
-                        <tr>
-                          <th className="w-16 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-left text-[#a85a3a]">
-                            Round
-                          </th>
-                          { visiblePlayerColumnIndices.map((idx, visibleIdx) => {
-                            const player = selectedPlayers[idx];
-                            return (
-                              <th
-                                key={ `player-header-${ idx }` }
-                                className="w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]"
+                    <>
+                      { isCrokinoleGame && (
+                        <div className="mb-5 rounded-[1.2rem] border border-[#f0d9c4] bg-[#fffaf5] p-4">
+                          { crokinoleWinnerTeamIndex !== null && (
+                            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                              Winner declared: { crokinoleTeamNames[crokinoleWinnerTeamIndex] || `Team ${ crokinoleWinnerTeamIndex + 1 }` } reached { CROKINOLE_WIN_SCORE }+.
+                            </div>
+                          ) }
+                          <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
+                            <div className="space-y-1">
+                              <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Format</Label>
+                              <Select
+                                value={ crokinoleFormat }
+                                onValueChange={ (value) => {
+                                  const nextFormat = value as CrokinoleFormat;
+                                  setCrokinoleFormat(nextFormat);
+                                  if (nextFormat === "singles") {
+                                    const nextPlayers = [...selectedPlayers];
+                                    nextPlayers[2] = null;
+                                    nextPlayers[3] = null;
+                                    setSelectedPlayers(nextPlayers);
+                                  }
+                                } }
                               >
-                                <Select
-                                  value={ player ? String(player.id) : "" }
-                                  onValueChange={ (val) => {
-                                    if (val === ADD_GUEST_OPTION_VALUE) {
-                                      setGuestDialogColIndex(idx);
-                                      setIsGuestDialogOpen(true);
-                                      return;
-                                    }
+                                <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
+                                  <SelectValue placeholder="Select format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="singles">Singles</SelectItem>
+                                  <SelectItem value="doubles">Doubles</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                                    if (val === CLEAR_PLAYER_OPTION_VALUE) {
-                                      handleClearPlayerColumn(idx);
-                                      return;
-                                    }
+                            <div className="grid gap-4 md:grid-cols-2">
+                              { [0, 1].map((teamIndex) => (
+                                <div key={ `crokinole-team-${ teamIndex }` } className="space-y-2 rounded-xl border border-[#f0d9c4] bg-white p-3">
+                                  <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Team { teamIndex + 1 } Name</Label>
+                                  <Input
+                                    value={ crokinoleTeamNames[teamIndex] }
+                                    onChange={ (event) => {
+                                      const nextNames: [string, string] = [...crokinoleTeamNames] as [string, string];
+                                      nextNames[teamIndex] = event.target.value;
+                                      setCrokinoleTeamNames(nextNames);
+                                    } }
+                                    className="border-[#e8c4a0] bg-[#fffaf5] text-[#5c2e1a]"
+                                    placeholder={ `Team ${ teamIndex + 1 }` }
+                                  />
 
-                                    const selectedMemberId = Number(val);
-                                    const selectedInOtherColumn = selectedPlayers.some(
-                                      (existingPlayer, existingIdx) =>
-                                        existingIdx !== idx && existingPlayer?.id === selectedMemberId
-                                    );
-
-                                    if (selectedInOtherColumn) {
-                                      return;
-                                    }
-
-                                    const selectedMember = localSelectablePlayers.find(
-                                      (member) => member.id === selectedMemberId
-                                    );
-
-                                    if (!selectedMember) {
-                                      return;
-                                    }
-
-                                    const newPlayers = [...selectedPlayers];
-                                    newPlayers[idx] = {
-                                      id: selectedMember.id,
-                                      firstName: selectedMember.firstName,
-                                      lastName: selectedMember.lastName,
-                                      isGuest: selectedMember.isGuest,
-                                    };
-                                    setSelectedPlayers(newPlayers);
-                                  } }
-                                >
-                                  <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
-                                    <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem
-                                      value={ CLEAR_PLAYER_OPTION_VALUE }
-                                      disabled={ !player }
+                                  <div className="space-y-1">
+                                    <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Primary Player</Label>
+                                    <Select
+                                      value={ selectedPlayers[teamIndex] ? String(selectedPlayers[teamIndex]?.id) : "" }
+                                      onValueChange={ (value) => handleSetCrokinolePlayerSlot(teamIndex, value) }
                                     >
-                                      Unselect player
-                                    </SelectItem>
-                                    <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
-                                      + Add a guest
-                                    </SelectItem>
-                                    { orderedSelectablePlayers.map((member) => {
-                                      const selectedInOtherColumn = selectedPlayers.some(
-                                        (existingPlayer, existingIdx) =>
-                                          existingIdx !== idx && existingPlayer?.id === member.id
-                                      );
-
-                                      return (
-                                        <SelectItem
-                                          key={ member.id }
-                                          value={ String(member.id) }
-                                          disabled={ selectedInOtherColumn }
-                                        >
-                                          { getPlayerOptionLabel(member) }
+                                      <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
+                                        <SelectValue placeholder="Select player" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value={ CLEAR_PLAYER_OPTION_VALUE } disabled={ !selectedPlayers[teamIndex] }>
+                                          Unselect player
                                         </SelectItem>
-                                      );
-                                    }) }
-                                  </SelectContent>
-                                </Select>
-                              </th>
-                            );
-                          }) }
-                        </tr>
+                                        <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
+                                          + Add a guest
+                                        </SelectItem>
+                                        { orderedSelectablePlayers.map((member) => {
+                                          const selectedInOtherSlot = selectedPlayers.some(
+                                            (existingPlayer, existingIdx) => existingIdx !== teamIndex && existingPlayer?.id === member.id
+                                          );
 
-                        {/* Header Row 2: Cumulative Scores */ }
-                        { selectedGame?.isRoundBased !== false && (
+                                          return (
+                                            <SelectItem
+                                              key={ `crokinole-primary-${ teamIndex }-${ member.id }` }
+                                              value={ String(member.id) }
+                                              disabled={ selectedInOtherSlot }
+                                            >
+                                              { getPlayerOptionLabel(member) }
+                                            </SelectItem>
+                                          );
+                                        }) }
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+
+                                  { crokinoleFormat === "doubles" && (
+                                    <div className="space-y-1">
+                                      <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Partner</Label>
+                                      <Select
+                                        value={ selectedPlayers[teamIndex + 2] ? String(selectedPlayers[teamIndex + 2]?.id) : "" }
+                                        onValueChange={ (value) => handleSetCrokinolePlayerSlot(teamIndex + 2, value) }
+                                      >
+                                        <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
+                                          <SelectValue placeholder="Select partner" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value={ CLEAR_PLAYER_OPTION_VALUE } disabled={ !selectedPlayers[teamIndex + 2] }>
+                                            Unselect player
+                                          </SelectItem>
+                                          <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
+                                            + Add a guest
+                                          </SelectItem>
+                                          { orderedSelectablePlayers.map((member) => {
+                                            const selectedInOtherSlot = selectedPlayers.some(
+                                              (existingPlayer, existingIdx) => existingIdx !== teamIndex + 2 && existingPlayer?.id === member.id
+                                            );
+
+                                            return (
+                                              <SelectItem
+                                                key={ `crokinole-partner-${ teamIndex }-${ member.id }` }
+                                                value={ String(member.id) }
+                                                disabled={ selectedInOtherSlot }
+                                              >
+                                                { getPlayerOptionLabel(member) }
+                                              </SelectItem>
+                                            );
+                                          }) }
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                  ) }
+                                </div>
+                              )) }
+                            </div>
+                          </div>
+                        </div>
+                      ) }
+
+                      <table className="w-full max-w-245 table-fixed text-sm border-collapse">
+                        <thead>
+                          {/* Header Row 1: Column Headers with Player Selection */ }
                           <tr>
                             <th className="w-16 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-left text-[#a85a3a]">
-                              Total
+                              Round
                             </th>
-                            { visiblePlayerColumnIndices.map((idx) => {
-                              const score = cumulativeScores.get(idx) ?? 0;
+                            { visiblePlayerColumnIndices.map((idx, visibleIdx) => {
+                              const player = selectedPlayers[idx];
+                              const crokinoleTeamLabel = idx === 0 ? crokinoleTeamNames[0] : crokinoleTeamNames[1];
+                              const crokinoleTeamMembers = idx === 0
+                                ? [selectedPlayers[0], selectedPlayers[2]].filter((entry): entry is SelectedPlayer => entry !== null)
+                                : [selectedPlayers[1], selectedPlayers[3]].filter((entry): entry is SelectedPlayer => entry !== null);
+
+                              if (isCrokinoleGame) {
+                                return (
+                                  <th
+                                    key={ `player-header-${ idx }` }
+                                    className="w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]"
+                                  >
+                                    <div className="text-left">
+                                      <p className="text-xs font-bold text-[#7b3306]">{ crokinoleTeamLabel || `Team ${ visibleIdx + 1 }` }</p>
+                                      <p className="mt-1 text-[11px] font-medium text-[#8b5a3c]">
+                                        { crokinoleTeamMembers.length > 0
+                                          ? crokinoleTeamMembers.map((member) => `${ member.firstName } ${ member.lastName }`).join(" + ")
+                                          : "No players selected" }
+                                      </p>
+                                    </div>
+                                  </th>
+                                );
+                              }
+
                               return (
                                 <th
-                                  key={ `score-total-${ idx }` }
-                                  className={ `w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 font-bold text-[#5c2e1a] ${ getScoreStyle(idx) }` }
+                                  key={ `player-header-${ idx }` }
+                                  className="w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-[#a85a3a]"
                                 >
-                                  { score || "-" }
+                                  <Select
+                                    value={ player ? String(player.id) : "" }
+                                    onValueChange={ (val) => {
+                                      if (val === ADD_GUEST_OPTION_VALUE) {
+                                        setGuestDialogColIndex(idx);
+                                        setIsGuestDialogOpen(true);
+                                        return;
+                                      }
+
+                                      if (val === CLEAR_PLAYER_OPTION_VALUE) {
+                                        handleClearPlayerColumn(idx);
+                                        return;
+                                      }
+
+                                      const selectedMemberId = Number(val);
+                                      const selectedInOtherColumn = selectedPlayers.some(
+                                        (existingPlayer, existingIdx) =>
+                                          existingIdx !== idx && existingPlayer?.id === selectedMemberId
+                                      );
+
+                                      if (selectedInOtherColumn) {
+                                        return;
+                                      }
+
+                                      const selectedMember = localSelectablePlayers.find(
+                                        (member) => member.id === selectedMemberId
+                                      );
+
+                                      if (!selectedMember) {
+                                        return;
+                                      }
+
+                                      const newPlayers = [...selectedPlayers];
+                                      newPlayers[idx] = {
+                                        id: selectedMember.id,
+                                        firstName: selectedMember.firstName,
+                                        lastName: selectedMember.lastName,
+                                        isGuest: selectedMember.isGuest,
+                                      };
+                                      setSelectedPlayers(newPlayers);
+                                    } }
+                                  >
+                                    <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
+                                      <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem
+                                        value={ CLEAR_PLAYER_OPTION_VALUE }
+                                        disabled={ !player }
+                                      >
+                                        Unselect player
+                                      </SelectItem>
+                                      <SelectItem value={ ADD_GUEST_OPTION_VALUE }>
+                                        + Add a guest
+                                      </SelectItem>
+                                      { orderedSelectablePlayers.map((member) => {
+                                        const selectedInOtherColumn = selectedPlayers.some(
+                                          (existingPlayer, existingIdx) =>
+                                            existingIdx !== idx && existingPlayer?.id === member.id
+                                        );
+
+                                        return (
+                                          <SelectItem
+                                            key={ member.id }
+                                            value={ String(member.id) }
+                                            disabled={ selectedInOtherColumn }
+                                          >
+                                            { getPlayerOptionLabel(member) }
+                                          </SelectItem>
+                                        );
+                                      }) }
+                                    </SelectContent>
+                                  </Select>
                                 </th>
                               );
                             }) }
                           </tr>
-                        ) }
-                      </thead>
 
-                      {/* Round Scores */ }
-                      <tbody>
-                        { roundEntries.map((roundEntry) => {
-                          const roundNo = roundEntry.roundNo;
-                          return (
-                            <tr key={ `round-${ roundEntry.label }` }>
-                              <td className="w-16 border border-[#f0d9c4] bg-[#fff8f2] p-2 text-center font-semibold text-[#8b5a3c]">
-                                { roundEntry.label }
-                              </td>
-                              { visiblePlayerColumnIndices.map((colIdx) => {
-                                const isFinalOnlyRow = selectedGame?.isRoundBased === false && roundEntry.roundNo === 1;
+                          {/* Header Row 2: Cumulative Scores */ }
+                          { selectedGame?.isRoundBased !== false && (
+                            <tr>
+                              <th className="w-16 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-left text-[#a85a3a]">
+                                Total
+                              </th>
+                              { visiblePlayerColumnIndices.map((idx) => {
+                                const score = cumulativeScores.get(idx) ?? 0;
                                 return (
-                                  <td
-                                    key={ `round-score-${ roundEntry.label }-${ colIdx }` }
-                                    className={ `w-32 border border-[#f0d9c4] bg-white p-2 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" }` }
+                                  <th
+                                    key={ `score-total-${ idx }` }
+                                    className={ `w-32 border border-[#f0d9c4] bg-[#fff6ef] p-2 font-bold text-[#5c2e1a] ${ getScoreStyle(idx) }` }
                                   >
-                                    <Input
-                                      type="number"
-                                      className="w-full border-[#e8c4a0] bg-[#fffaf5] text-center text-[#5c2e1a]"
-                                      placeholder="0"
-                                      value={
-                                        roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
-                                      }
-                                      onChange={ (e) =>
-                                        handleRoundScoreChange(
-                                          roundEntry.roundKey,
-                                          colIdx,
-                                          e.target.value
-                                        )
-                                      }
-                                    />
-                                  </td>
+                                    { score || "-" }
+                                  </th>
                                 );
                               }) }
                             </tr>
-                          );
-                        }) }
-                      </tbody>
-                    </table>
+                          ) }
+                        </thead>
+
+                        {/* Round Scores */ }
+                        <tbody>
+                          { displayedRoundEntries.map((roundEntry) => {
+                            const roundNo = roundEntry.roundNo;
+                            return (
+                              <tr key={ `round-${ roundEntry.label }` }>
+                                <td className="w-16 border border-[#f0d9c4] bg-[#fff8f2] p-2 text-center font-semibold text-[#8b5a3c]">
+                                  { roundEntry.label }
+                                </td>
+                                { visiblePlayerColumnIndices.map((colIdx) => {
+                                  const isFinalOnlyRow = selectedGame?.isRoundBased === false && roundEntry.roundNo === 1;
+                                  return (
+                                    <td
+                                      key={ `round-score-${ roundEntry.label }-${ colIdx }` }
+                                      className={ `w-32 border border-[#f0d9c4] bg-white p-2 ${ isFinalOnlyRow ? getScoreStyle(colIdx) : "" } ${ getRoundWinnerStyle(roundEntry.roundKey, colIdx) }` }
+                                    >
+                                      <Input
+                                        type="number"
+                                        className="w-full border-[#e8c4a0] bg-[#fffaf5] text-center text-[#5c2e1a]"
+                                        placeholder="0"
+                                        disabled={ isCrokinoleGame && !isCrokinoleScoringEnabled }
+                                        value={
+                                          roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
+                                        }
+                                        onChange={ (e) =>
+                                          handleRoundScoreChange(
+                                            roundEntry.roundKey,
+                                            colIdx,
+                                            e.target.value
+                                          )
+                                        }
+                                      />
+                                    </td>
+                                  );
+                                }) }
+                              </tr>
+                            );
+                          }) }
+                        </tbody>
+                      </table>
+                    </>
                   ) }
                 </div>
               ) : (

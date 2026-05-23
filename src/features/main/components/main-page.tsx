@@ -5,9 +5,46 @@ import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 import { Goal } from "lucide-react";
+import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
+import { FamilyFeatureKey, getFeatureKeyFromReferenceName } from "@/features/family/services/family-feature-flags";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
+  let enabledFeatureKeys: FamilyFeatureKey[] | null = null;
+  let threadsColSpan = true;
+
+  if (memberKeyDetails.isLoggedIn) {
+    const featureConfigResult = await getFamilyFeatureConfig(memberKeyDetails.familyId);
+    if (featureConfigResult.success) {
+      enabledFeatureKeys = featureConfigResult.features
+        .filter((f) => f.isSelected)
+        .map((f) => getFeatureKeyFromReferenceName(f.featureName))
+        .filter((k): k is FamilyFeatureKey => k !== null);
+
+      const activeCount = featureConfigResult.features.length;
+      const selectedCount = featureConfigResult.features.filter((f) => f.isSelected).length;
+      const activeOdd = activeCount % 2 !== 0;
+      const selectedOdd = selectedCount % 2 !== 0;
+      // odd active + odd selected   → span 2
+      // odd active + even selected  → span 1
+      // even active + odd selected  → span 2
+      // even active + even selected → span 1
+      threadsColSpan = (activeOdd && selectedOdd) || (!activeOdd && selectedOdd);
+    }
+  }
+
+  const isFeatureEnabled = (featureKey: FamilyFeatureKey): boolean => {
+    if (!memberKeyDetails.isLoggedIn) {
+      return true;
+    }
+
+    if (!enabledFeatureKeys) {
+      return true;
+    }
+
+    return enabledFeatureKeys.includes(featureKey);
+  };
+
   const whatsNewItems = [
     "Customer support is here to help! Check out our informative Frequently Asked Questions (FAQ) page.",
     "All My Family Social features are live! Check them out and start sharing your favorites with your family.",
@@ -30,7 +67,12 @@ export default async function MainPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 to-white">
-      <MainHeader isLoggedIn={ memberKeyDetails.isLoggedIn } isFounder={ memberKeyDetails.isFounder } firstName={ memberKeyDetails.firstName } />
+      <MainHeader
+        isLoggedIn={ memberKeyDetails.isLoggedIn }
+        isFounder={ memberKeyDetails.isFounder }
+        firstName={ memberKeyDetails.firstName }
+        enabledFeatureKeys={ enabledFeatureKeys }
+      />
 
       <section className="font-app px-2 pb-3 md:px-4 md:pb-4">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-2 sm:grid-cols-2 md:gap-3">
@@ -56,7 +98,7 @@ export default async function MainPage() {
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What's New in  My Family Social?
+                      What&apos;s New in  My Family Social?
                     </Link>
                     {/* <Link
                       href="/help-subscribe"
@@ -78,7 +120,7 @@ export default async function MainPage() {
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What's New in  My Family Social?
+                      What&apos;s New in  My Family Social?
                     </Link>
                   </>
                 ) }
@@ -108,17 +150,39 @@ export default async function MainPage() {
             </Card>
           ) } */}
 
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/music" src="/images/music-lovers-tablet.png" title="Music Lovers" tw="rounded-xl border border-pink-300 bg-pink-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry" src="/images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <div className="sm:col-span-2">
+          { isFeatureEnabled("tv") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("movies") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("books") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("foodies") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("music") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/music" src="/images/music-lovers-tablet.png" title="Music Lovers" tw="rounded-xl border border-[#2C5EAD]/45 bg-linear-to-br from-[#2C5EAD] via-[#2C5EAD] to-[#244B8A] p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#2C5EAD]/70 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("poetry") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry" src="/images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("games") ? (
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("gallery") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-gallery" src="/images/photo-galleries-wide.png" title="Photo Galleries" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          </div>
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
-          <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-tablet.png" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+          ) : null }
+          { isFeatureEnabled("threads") ? (
+            threadsColSpan ? (
+              <div className="sm:col-span-2">
+                <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-wide.jpg" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+              </div>
+            ) : (
+              <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-wide.jpg" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            )
+          ) : null }
         </div>
       </section>
     </div>

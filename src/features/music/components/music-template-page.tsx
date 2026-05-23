@@ -228,13 +228,13 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Music Lovers</p>
-              <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Music Home</Link>
+              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Lovers</p>
+              <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Music Home</Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#ffe8d1]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p>
             </div>
 
             <div className="flex flex-wrap gap-3">
@@ -245,14 +245,14 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-[1.6rem] border border-[#f0d9c4] bg-white/92">
-            <div className="border-b border-[#f0d9c4] px-5 py-4">
-              <h2 className="text-lg font-black tracking-tight text-[#5c2e1a]">Available Templates</h2>
-              <p className="mt-1 text-xs text-[#8b5a3c]">Select a template to preview.</p>
+          <aside className="overflow-hidden rounded-[1.6rem] border border-[#c8d9f3] bg-white/92">
+            <div className="border-b border-[#c8d9f3] px-5 py-4">
+              <h2 className="text-lg font-black tracking-tight text-[#203b66]">Available Templates</h2>
+              <p className="mt-1 text-xs text-[#4a6fae]">Select a template to preview.</p>
             </div>
             <div className="max-h-128 overflow-y-auto p-3">
               { templates.length === 0 ? (
-                <p className="rounded-xl border border-[#f0d9c4] bg-[#fff8f2] px-3 py-4 text-sm text-[#8b5a3c]">No templates found for this family.</p>
+                <p className="rounded-xl border border-[#c8d9f3] bg-[#edf4ff] px-3 py-4 text-sm text-[#4a6fae]">No templates found for this family.</p>
               ) : (
                 <div className="space-y-2">
                   { templates.map((template) => {

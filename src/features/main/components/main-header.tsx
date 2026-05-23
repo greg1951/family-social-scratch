@@ -2,12 +2,35 @@ import NavBar from "@/components/common/nav-bar";
 import MainDropMenu from "../../../components/common/main-dropmenu";
 import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
 import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
+import { FamilyFeatureKey } from "@/features/family/services/family-feature-flags";
 
-export default async function MainHeader({ isLoggedIn, isFounder, firstName }: { isLoggedIn: boolean; isFounder: boolean; firstName: string }) {
+export default async function MainHeader({
+  isLoggedIn,
+  isFounder,
+  firstName,
+  enabledFeatureKeys,
+}: {
+  isLoggedIn: boolean;
+  isFounder: boolean;
+  firstName: string;
+  enabledFeatureKeys?: FamilyFeatureKey[] | null;
+}) {
   const memberAvatarDetails = await getCurrentMemberAvatarDetails();
   const unreadThreadCount = memberAvatarDetails.isLoggedIn
     ? await getUnreadThreadCountForRecipient(memberAvatarDetails.memberId)
     : 0;
+
+  const isFeatureEnabled = (featureKey: FamilyFeatureKey): boolean => {
+    if (!isLoggedIn) {
+      return true;
+    }
+
+    if (!enabledFeatureKeys) {
+      return true;
+    }
+
+    return enabledFeatureKeys.includes(featureKey);
+  };
 
   const menuFirstName = memberAvatarDetails.firstName || firstName;
   const menuEmail = memberAvatarDetails.email;
@@ -22,15 +45,15 @@ export default async function MainHeader({ isLoggedIn, isFounder, firstName }: {
           <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
             <nav className="rounded-[1.5rem] border border-white/30 bg-white/12 px-3 py-3 backdrop-blur md:px-4">
               <ul className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Lovers" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Photo Galleries" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Scoreboards" />
-                <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" />
+                { isFeatureEnabled("tv") ? <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" /> : null }
+                { isFeatureEnabled("movies") ? <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" /> : null }
+                { isFeatureEnabled("music") ? <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Lovers" /> : null }
+                { isFeatureEnabled("books") ? <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" /> : null }
+                { isFeatureEnabled("poetry") ? <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" /> : null }
+                { isFeatureEnabled("foodies") ? <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" /> : null }
+                { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Photo Galleries" /> : null }
+                { isFeatureEnabled("games") ? <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Scoreboards" /> : null }
+                { isFeatureEnabled("threads") ? <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" /> : null }
                 <MainDropMenu
                   firstName={ menuFirstName }
                   email={ menuEmail }

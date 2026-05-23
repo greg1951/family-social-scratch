@@ -11,7 +11,7 @@ export const optionReferenceCategory = pgEnum('category', [
   'feature', 'notification', 'admin', 'other'
 ]);
 
-
+/*------------------------------- Essential Family Schema ------------------------------ */
 export const user = pgTable("user", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
@@ -37,7 +37,7 @@ export const family = pgTable("family", {
   id: serial("id").primaryKey(),
   name: text("family_name").notNull().unique(),
   status: text("status").notNull().default("trial"),
-  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '14 days'`),
+  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '28 days'`),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -57,6 +57,25 @@ export const familyInvitation = pgTable("family_invitation", {
 }, (table) => [
   index('invite_email_idx').on(table.email),
   index('invite_token_idx').on(table.inviteToken),
+]);
+
+export const featureReference = pgTable("feature_reference", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  status: text("status").notNull().default("active"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const familyFeatureConfig = pgTable("family_feature_config", {
+  id: serial("id").primaryKey(),
+  isSelected: boolean("is_selected").notNull().default(false),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  featureId: integer("fk_feature_id").notNull().references(() => featureReference.id, {onDelete: 'cascade'}),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index('family_feature_config_family_id_idx').on(table.familyId),
+  index('family_feature_config_feature_id_idx').on(table.featureId),
 ]);
 
 export const familyActivity = pgTable("family_activity", {
@@ -106,7 +125,6 @@ export const member = pgTable("member", {
 }, (table) => [
   index('member_email_idx').on(table.email),
 ]);
-
 
 export const memberOption = pgTable("member_option", {
   id: serial("id").primaryKey(),

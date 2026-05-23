@@ -8,6 +8,8 @@ export {
   optionReference, 
   familyInvitation,
   familyActivity,
+  featureReference,
+  familyFeatureConfig,
   book,
   bookLike,
   bookComment,

@@ -193,6 +193,27 @@ export type GetMemberNotificationsReturn =
       }[];
     };
 
+export type GetFamilyFeatureConfigReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      familyStatus: string;
+      features: {
+        familyFeatureConfigId: number;
+        featureId: number;
+        featureName: string;
+        featureDescription: string;
+        isSelected: boolean;
+      }[];
+    };
+
+export type GetEnabledFamilyFeaturesReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      enabledFeatureKeys: string[];
+    };
+
 export type MemberRegistrationReturn =
   | { error: true; message: string }
   | {

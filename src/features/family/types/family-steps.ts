@@ -32,6 +32,21 @@ export type NotificationsFormValues = {
   }[];
 }
 
+export type FeatureConfigDirtyFields = {
+  features?: {
+    isSelected?: boolean;
+  }[];
+};
+
+export type FeatureConfigFormValues = {
+  features: {
+    familyFeatureConfigId: number;
+    featureId: number;
+    featureName: string;
+    isSelected: boolean;
+  }[];
+};
+
 export type RegistrationMemberDetails = {
   email: string;
   firstName: string;

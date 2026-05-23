@@ -16,6 +16,7 @@ import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-fam
 import MemberAvatar from "@/components/common/member-avatar";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 import FounderFaqHelp from "@/components/common/founder-faq-help";
+import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
 
 export default async function FamilyMyAccountPage() {
   const session = await auth();
@@ -36,11 +37,13 @@ export default async function FamilyMyAccountPage() {
 
   const [
     memberNotificationsResult,
+    featureConfigResult,
     currentMembersResult,
     memberImageResult,
     joinedMembersResult,
   ] = await Promise.all([
     getMemberNotifications(memberKeyDetails.memberId),
+    getFamilyFeatureConfig(memberKeyDetails.familyId),
     getAllFamilyMembers(memberKeyDetails.familyId),
     getMemberImageDetailsByMemberId(memberKeyDetails.memberId),
     getJoinedFamilyMembersForRemoval(memberKeyDetails.familyId),
@@ -52,6 +55,16 @@ export default async function FamilyMyAccountPage() {
   const notifications = memberNotificationsResult.success
     ? memberNotificationsResult.notifications
     : [];
+
+  const featureConfig = featureConfigResult.success
+    ? {
+      familyStatus: featureConfigResult.familyStatus,
+      features: featureConfigResult.features,
+    }
+    : {
+      familyStatus: "active",
+      features: [],
+    };
 
   const newFamilyMembers: NewFamilyInvite[] = [];
   let currentFamilyMembers: CurrentFamilyMember[] = [];
@@ -131,6 +144,7 @@ export default async function FamilyMyAccountPage() {
             <FounderAccountTabs
               founderDetails={ founderDetails }
               notifications={ notifications }
+              featureConfig={ featureConfig }
               currentFamilyMembers={ currentFamilyMembers }
               joinedFamilyMembers={ joinedFamilyMembers }
             />

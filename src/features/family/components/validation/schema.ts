@@ -66,6 +66,20 @@ export const NotificationsFormSchema = z.object({
   notifications: MemberNotificationsSchema,
 });
 
+/*------------ FamilyFeatureConfigSchema definitions below -------------- */
+
+const FamilyFeatureConfigSchema = z.object({
+  familyFeatureConfigId: z.number(),
+  featureId: z.number(),
+  featureName: z.string(),
+  isSelected: z.boolean(),
+});
+const FamilyFeatureConfigsSchema = z.array(FamilyFeatureConfigSchema);
+
+export const FeatureConfigFormSchema = z.object({
+  features: FamilyFeatureConfigsSchema,
+});
+
 /*------------ MemberRegistrationSchema definitions below -------------- */
 
 export const MemberRegistrationSchema = z.object({

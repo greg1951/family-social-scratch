@@ -352,24 +352,24 @@ export function MusicAddPage({
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
           <div className="max-w-3xl">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Music Lovers</p>
-            <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Lovers</p>
+            <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               <ArrowLeft className="mr-1 size-4" />
               Back to Music Home Page
             </Link>
             <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{ isEditing ? "Edit Music Details" : "Add a Music Review" }</h1>
-            <p className="mt-2 text-sm text-[#ffe8d1]">Write a review of your favorite music song or album. There&apos;s a nice template to help you out.</p>
+            <p className="mt-2 text-sm text-[#eff5ff]">Write a review of your favorite music song or album. There&apos;s a nice template to help you out.</p>
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
-          <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.86))] px-5 py-5 sm:px-6">
+        <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)] backdrop-blur">
+          <div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Music Editor</p>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">{ isEditing ? "Update Music" : "New Music Details" }</h2>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Editor</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-[#203b66]">{ isEditing ? "Update Music" : "New Music Details" }</h2>
               </div>
               <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
                 <Save className="size-4" />

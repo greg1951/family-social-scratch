@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { MessageCircleMore, UserPenIcon, UserPlus, Users } from "lucide-react";
+import { MessageCircleMore, SlidersHorizontal, UserPenIcon, UserPlus, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CurrentFamilyMember, FounderDetails, RemovableFamilyMember } from "@/features/family/types/family-members";
@@ -10,10 +10,11 @@ import FamilyNotificationsForm from "../family-notifications";
 import NewMembersAccountForm from "../(family-members)/family-new-members/index-new";
 import CurrentMembersAccountForm from "../(family-members)/family-current-members/index-current";
 import FounderDetailsForm from "./index";
+import FounderFeaturesForm from "./features-form";
 
-type TabValue = "profile" | "notifications" | "current-family" | "new-family";
+type TabValue = "profile" | "notifications" | "features" | "current-family" | "new-family";
 
-const VALID_TABS: TabValue[] = ["profile", "notifications", "current-family", "new-family"];
+const VALID_TABS: TabValue[] = ["profile", "notifications", "features", "current-family", "new-family"];
 
 function getValidTab(tab: string | null): TabValue {
   if (tab && VALID_TABS.includes(tab as TabValue)) {
@@ -26,12 +27,23 @@ function getValidTab(tab: string | null): TabValue {
 export default function FounderAccountTabs({
   founderDetails,
   notifications,
+  featureConfig,
   currentFamilyMembers,
   joinedFamilyMembers,
 }: {
   // accountDetails: AccountDetails | null;
   founderDetails: FounderDetails;
   notifications: Extract<GetMemberNotificationsReturn, { success: true }>["notifications"];
+  featureConfig: {
+    familyStatus: string;
+    features: {
+      familyFeatureConfigId: number;
+      featureId: number;
+      featureName: string;
+      featureDescription: string;
+      isSelected: boolean;
+    }[];
+  };
   currentFamilyMembers: CurrentFamilyMember[];
   joinedFamilyMembers: RemovableFamilyMember[];
 }) {
@@ -50,7 +62,7 @@ export default function FounderAccountTabs({
 
   return (
     <Tabs value={ activeTab } onValueChange={ onTabChange } className=" gap-y-25 md:gap-y-2">
-      <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 md:grid-cols-4 mb-10 md:mb-1">
+      <TabsList className="grid h-auto w-full grid-cols-1 gap-2 bg-transparent p-0 md:grid-cols-5 mb-10 md:mb-1">
         <TabsTrigger value="profile" className="border bg-slate-100 data-[state=active]:bg-white">
           <UserPenIcon className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
           Your Profile
@@ -58,6 +70,10 @@ export default function FounderAccountTabs({
         <TabsTrigger value="notifications" className="border bg-slate-100 data-[state=active]:bg-white">
           <MessageCircleMore className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
           Your Settings
+        </TabsTrigger>
+        <TabsTrigger value="features" className="border bg-slate-100 data-[state=active]:bg-white">
+          <SlidersHorizontal className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
+          Features
         </TabsTrigger>
         <TabsTrigger value="current-family" className="border bg-slate-100 data-[state=active]:bg-white">
           <Users className="inline h-3 w-3 mr-1 text-[#59cdf7]" />
@@ -77,6 +93,13 @@ export default function FounderAccountTabs({
 
       <TabsContent value="notifications" className="mt-4 rounded-lg border p-4">
         <FamilyNotificationsForm notifications={ notifications } />
+      </TabsContent>
+
+      <TabsContent value="features" className="mt-4 rounded-lg border p-4">
+        <FounderFeaturesForm
+          features={ featureConfig.features }
+          familyStatus={ featureConfig.familyStatus }
+        />
       </TabsContent>
 
       <TabsContent value="new-family" className="mt-4 rounded-lg border">
