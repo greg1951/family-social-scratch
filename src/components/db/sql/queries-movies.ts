@@ -247,9 +247,10 @@ async function loadMovieTemplateManagementRecords(
     await ensureGlobalMovieTemplate(familyId, actorMemberId);
   }
 
-  const whereCondition = actorIsAdmin
-    ? eq(movieTemplate.familyId, familyId)
-    : and(eq(movieTemplate.familyId, familyId), eq(movieTemplate.isGlobalTemplate, false));
+  const whereCondition = or(
+    eq(movieTemplate.familyId, familyId),
+    and(eq(movieTemplate.isGlobalTemplate, true), isNull(movieTemplate.familyId))
+  );
 
   const templateRows = await db
     .select({

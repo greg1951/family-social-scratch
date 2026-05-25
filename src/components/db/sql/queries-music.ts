@@ -314,9 +314,10 @@ async function loadMusicTemplateManagementRecords(
     await ensureGlobalMusicTemplate(familyId, actorMemberId);
   }
 
-  const whereCondition = actorIsAdmin
-    ? eq(musicTemplate.familyId, familyId)
-    : and(eq(musicTemplate.familyId, familyId), eq(musicTemplate.isGlobalTemplate, false));
+  const whereCondition = or(
+    eq(musicTemplate.familyId, familyId),
+    and(eq(musicTemplate.isGlobalTemplate, true), isNull(musicTemplate.familyId))
+  );
 
   const templateRows = await db
     .select({

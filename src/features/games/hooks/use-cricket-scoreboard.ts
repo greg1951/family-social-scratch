@@ -1,7 +1,7 @@
 import { startTransition, useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import type { SelectedPlayer } from "@/features/games/types/scoreboard-ui";
+import type { CricketFormat, SelectedPlayer } from "@/features/games/types/scoreboard-ui";
 import {
   applyCricketTurn,
   buildCricketBoardFromLedger,
@@ -40,6 +40,7 @@ export function useCricketScoreboard({
   const [cricketTurnLedger, setCricketTurnLedger] = useState<CricketTurnLedgerEntry[]>([]);
   const [cricketTurnDarts, setCricketTurnDarts] = useState(["", "", ""]);
   const [isSubmittingCricketTurn, setIsSubmittingCricketTurn] = useState(false);
+  const [cricketFormat, setCricketFormat] = useState<CricketFormat>("singles");
 
   const cricketBoardState = useMemo(
     () => buildCricketBoardFromLedger(cricketTurnLedger),
@@ -52,6 +53,31 @@ export function useCricketScoreboard({
   const cricketActiveSideIndex = (cricketTurnLedger.length % 2) as CricketSideIndex;
   const cricketActiveSidePlayer = selectedPlayers[cricketActiveSideIndex];
 
+  function inferCricketFormatFromPlayers(players: (SelectedPlayer | null)[]): CricketFormat {
+    return players[2] || players[3] ? "doubles" : "singles";
+  }
+
+  function getCricketSideIndexForSlot(slotIndex: number): CricketSideIndex {
+    return slotIndex === 1 || slotIndex === 3 ? 1 : 0;
+  }
+
+  function isCricketSlotPrimary(slotIndex: number) {
+    return slotIndex === 0 || slotIndex === 1;
+  }
+
+  function setCricketFormatValue(value: CricketFormat) {
+    setCricketFormat(value);
+
+    if (value === "singles") {
+      setSelectedPlayers((current) => {
+        const next = [...current];
+        next[2] = null;
+        next[3] = null;
+        return next;
+      });
+    }
+  }
+
   function setCricketTurnDart(index: number, value: string) {
     setCricketTurnDarts((current) => {
       const next = [...current];
@@ -62,19 +88,25 @@ export function useCricketScoreboard({
   }
 
   function setCricketSidePlayer(sideIndex: CricketSideIndex, value: string) {
+    setCricketPlayerSlot(sideIndex, value);
+  }
+
+  function setCricketPlayerSlot(slotIndex: number, value: string) {
     if (value === addGuestOptionValue) {
-      onOpenGuestDialog(sideIndex);
+      onOpenGuestDialog(slotIndex);
       return;
     }
 
     if (value === clearPlayerOptionValue) {
-      onClearPlayerColumn(sideIndex);
+      onClearPlayerColumn(slotIndex);
       return;
     }
 
     const selectedMemberId = Number(value);
-    const otherSideIndex = sideIndex === 0 ? 1 : 0;
-    if (selectedPlayers[otherSideIndex]?.id === selectedMemberId) {
+    const selectedInAnotherSlot = selectedPlayers.some(
+      (existingPlayer, existingIdx) => existingIdx !== slotIndex && existingPlayer?.id === selectedMemberId
+    );
+    if (selectedInAnotherSlot) {
       return;
     }
 
@@ -84,7 +116,7 @@ export function useCricketScoreboard({
     }
 
     const nextPlayers = [...selectedPlayers];
-    nextPlayers[sideIndex] = {
+    nextPlayers[slotIndex] = {
       id: selectedMember.id,
       firstName: selectedMember.firstName,
       lastName: selectedMember.lastName,
@@ -98,7 +130,10 @@ export function useCricketScoreboard({
       return;
     }
 
-    if (!selectedPlayers[0] || !selectedPlayers[1]) {
+    const sideOneReady = Boolean(selectedPlayers[0]) && (cricketFormat === "singles" || Boolean(selectedPlayers[2]));
+    const sideTwoReady = Boolean(selectedPlayers[1]) && (cricketFormat === "singles" || Boolean(selectedPlayers[3]));
+
+    if (!sideOneReady || !sideTwoReady) {
       toast.error("Select both Cricket sides before submitting a turn.");
       return;
     }
@@ -140,6 +175,7 @@ export function useCricketScoreboard({
   function resetCricketState() {
     setCricketTurnLedger([]);
     setCricketTurnDarts(["", "", ""]);
+    setCricketFormat("singles");
   }
 
   function loadCricketFromRounds(rounds: Array<{ roundNo: number; roundScore: number }>) {
@@ -152,14 +188,20 @@ export function useCricketScoreboard({
     cricketTurnDarts,
     setCricketTurnDarts,
     isSubmittingCricketTurn,
+    cricketFormat,
     cricketBoardState,
     cricketWinnerSideIndex,
     cricketActiveSideIndex,
     cricketActiveSidePlayer,
+    setCricketFormat: setCricketFormatValue,
+    setCricketPlayerSlot,
     setCricketTurnDart,
     setCricketSidePlayer,
     submitCricketTurn,
     resetCricketState,
     loadCricketFromRounds,
+    inferCricketFormatFromPlayers,
+    getCricketSideIndexForSlot,
+    isCricketSlotPrimary,
   };
 }

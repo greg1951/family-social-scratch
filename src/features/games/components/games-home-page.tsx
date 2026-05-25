@@ -119,6 +119,7 @@ export function GamesHomePage({
   const cricketTurnLedger = cricket.cricketTurnLedger;
   const cricketTurnDarts = cricket.cricketTurnDarts;
   const isSubmittingCricketTurn = cricket.isSubmittingCricketTurn;
+  const cricketFormat = cricket.cricketFormat;
   const cricketBoardState = cricket.cricketBoardState;
   const cricketWinnerSideIndex = cricket.cricketWinnerSideIndex;
   const cricketActiveSideIndex = cricket.cricketActiveSideIndex;
@@ -238,6 +239,7 @@ export function GamesHomePage({
     hasRoundScoreEdits,
     isCricketGame,
     isCrokinoleGame,
+    cricketFormat,
     selectedGameTitleOption,
     crokinoleFormat,
     crokinoleTeamNames,
@@ -259,6 +261,8 @@ export function GamesHomePage({
     setCricketTurnLedger: cricket.setCricketTurnLedger,
     setCricketTurnDarts: cricket.setCricketTurnDarts,
     loadCricketFromRounds: cricket.loadCricketFromRounds,
+    setCricketFormat: cricket.setCricketFormat,
+    inferCricketFormatFromPlayers: cricket.inferCricketFormatFromPlayers,
     resetCrokinoleState: crokinole.resetCrokinoleState,
     setCrokinoleFormat: crokinole.setCrokinoleFormat,
     inferCrokinoleFormatFromPlayers: crokinole.inferFormatFromPlayers,
@@ -402,8 +406,8 @@ export function GamesHomePage({
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(70,36,8,0.95),rgba(124,63,16,0.86)_56%,rgba(181,115,44,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(70,36,8,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5">
-            <div className="max-w-4xl">
+          <div className="flex flex-col gap-1">
+            <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffe0bc]">
                 Family Game Scoreboards
               </p>
@@ -416,9 +420,14 @@ export function GamesHomePage({
                   Back to Main Page
                 </Link>
               </div>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Welcome back { firstName }! Track family game history, compare leaderboards, and start a new scorecard.
-              </h1>
+              <div className="flex flex-col gap-1">
+                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+                  Track family game history, compare leaderboards, and start a new scorecard.
+                </h1>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#ffe0bc] sm:text-base">
+                  Welcome back { firstName }! Start or continue a game. Remember, you can add guests to a game.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -479,6 +488,7 @@ export function GamesHomePage({
                   { isCricketGame ? (
                     <GamesCricketPanel
                       selectedPlayers={ selectedPlayers }
+                      cricketFormat={ cricketFormat }
                       orderedSelectablePlayers={ orderedSelectablePlayers }
                       getPlayerOptionLabel={ getPlayerOptionLabel }
                       clearPlayerOptionValue={ CLEAR_PLAYER_OPTION_VALUE }
@@ -490,7 +500,8 @@ export function GamesHomePage({
                       cricketActiveSideIndex={ cricketActiveSideIndex }
                       isSubmittingCricketTurn={ isSubmittingCricketTurn }
                       scoreStyleByColumn={ scoreStyleByColumn }
-                      onSetCricketSidePlayer={ cricket.setCricketSidePlayer }
+                      onSetCricketFormat={ cricket.setCricketFormat }
+                      onSetCricketPlayerSlot={ cricket.setCricketPlayerSlot }
                       onSetCricketTurnDart={ cricket.setCricketTurnDart }
                       onSubmitCricketTurn={ cricket.submitCricketTurn }
                       onResetBoard={ handleResetGameBoard }

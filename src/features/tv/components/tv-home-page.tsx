@@ -393,6 +393,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 See what TV shows your family&apos;s watching.
               </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b9f1ff] sm:text-base">
+                Comment on their favorites, add your own reviews, and find your next binge together.
+              </p>
+
             </div>
           </div>
         </div>

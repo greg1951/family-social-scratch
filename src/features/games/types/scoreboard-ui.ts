@@ -12,3 +12,5 @@ export interface RoundEntry {
 }
 
 export type CrokinoleFormat = "singles" | "doubles";
+
+export type CricketFormat = "singles" | "doubles";

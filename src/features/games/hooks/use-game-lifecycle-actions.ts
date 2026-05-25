@@ -10,7 +10,7 @@ import {
   startGameAction,
 } from "@/app/(features)/(games)/games/actions";
 import type { GameState } from "@/components/db/types/game-scoreboard";
-import type { CrokinoleFormat, RoundEntry, SelectedPlayer } from "@/features/games/types/scoreboard-ui";
+import type { CricketFormat, CrokinoleFormat, RoundEntry, SelectedPlayer } from "@/features/games/types/scoreboard-ui";
 import type { CricketTurnLedgerEntry } from "@/features/games/utils/cricket-rules";
 
 type LifecycleSelectablePlayer = {
@@ -59,6 +59,7 @@ type UseGameLifecycleActionsArgs = {
   hasRoundScoreEdits: boolean;
   isCricketGame: boolean;
   isCrokinoleGame: boolean;
+  cricketFormat: CricketFormat;
   selectedGameTitleOption: string;
   crokinoleFormat: CrokinoleFormat;
   crokinoleTeamNames: [string, string];
@@ -85,6 +86,8 @@ type UseGameLifecycleActionsArgs = {
     ledger: CricketTurnLedgerEntry[];
     board: { scores: [number, number] };
   };
+  setCricketFormat: (value: CricketFormat) => void;
+  inferCricketFormatFromPlayers: (players: (SelectedPlayer | null)[]) => CricketFormat;
 
   resetCrokinoleState: () => void;
   setCrokinoleFormat: (value: CrokinoleFormat) => void;
@@ -114,6 +117,7 @@ export function useGameLifecycleActions({
   cumulativeScores,
   isCricketGame,
   isCrokinoleGame,
+  cricketFormat,
   crokinoleFormat,
   crokinoleTeamNames,
   crokinoleWinnerTeamIndex,
@@ -134,6 +138,8 @@ export function useGameLifecycleActions({
   setCricketTurnLedger,
   setCricketTurnDarts,
   loadCricketFromRounds,
+  setCricketFormat,
+  inferCricketFormatFromPlayers,
   resetCrokinoleState,
   setCrokinoleFormat,
   inferCrokinoleFormatFromPlayers,
@@ -247,7 +253,12 @@ export function useGameLifecycleActions({
 
     const activePlayers = (isCricketGame || isCrokinoleGame)
       ? selectedPlayers
-        .slice(0, isCrokinoleGame && crokinoleFormat === "doubles" ? 4 : 2)
+        .slice(0,
+          isCricketGame && cricketFormat === "doubles"
+            ? 4
+            : isCrokinoleGame && crokinoleFormat === "doubles"
+              ? 4
+              : 2)
         .map((player, index) => player ? { ...player, playPosition: index + 1 } : null)
         .filter((player): player is SelectedPlayer & { playPosition: number } => player !== null)
       : selectedPlayers
@@ -262,6 +273,20 @@ export function useGameLifecycleActions({
     if (isCrokinoleGame && activePlayers.length < 2) {
       toast.error("Select both Crokinole teams before saving the game.");
       return;
+    }
+
+    if (isCricketGame && activePlayers.length < 2) {
+      toast.error("Select both Cricket sides before saving the game.");
+      return;
+    }
+
+    if (isCricketGame && cricketFormat === "doubles") {
+      const requiredSlots = [0, 1, 2, 3];
+      const hasMissingTeamMember = requiredSlots.some((slotIndex) => !selectedPlayers[slotIndex]);
+      if (hasMissingTeamMember) {
+        toast.error("Select two players per Cricket side before saving.");
+        return;
+      }
     }
 
     if (isCrokinoleGame && crokinoleFormat === "doubles") {
@@ -281,12 +306,21 @@ export function useGameLifecycleActions({
       ? cricketTurnLedger.map((turnEntry) => ({
         roundNo: turnEntry.turnNo,
         roundLabel: `Turn ${ turnEntry.turnNo }`,
-        scores: activePlayers.map((player) => ({
-          memberId: player.id,
-          playPosition: player.playPosition,
-          roundScore: player.playPosition - 1 === turnEntry.sideIndex ? turnEntry.encodedValue : 0,
-          cumulativeScore: turnEntry.boardAfter.scores[player.playPosition - 1],
-        })),
+        scores: activePlayers.map((player) => {
+          const cricketSideIndex = cricketFormat === "doubles" && player.playPosition > 2
+            ? player.playPosition - 3
+            : player.playPosition - 1;
+          const isPrimarySideSlot = cricketSideIndex === 0
+            ? player.playPosition === 1
+            : player.playPosition === 2;
+
+          return {
+            memberId: player.id,
+            playPosition: player.playPosition,
+            roundScore: isPrimarySideSlot && cricketSideIndex === turnEntry.sideIndex ? turnEntry.encodedValue : 0,
+            cumulativeScore: turnEntry.boardAfter.scores[cricketSideIndex],
+          };
+        }),
       }))
       : rowsToPersist.map((roundEntry) => ({
         roundNo: roundEntry.roundNo,
@@ -428,6 +462,7 @@ export function useGameLifecycleActions({
       setGameTitleInput(scoreboard.gameState.gameTitle);
       setSelectedPlayers(loadedPlayers);
       setRequestedVisiblePlayerColumns(2);
+      setCricketFormat(inferCricketFormatFromPlayers(loadedPlayers));
       setLocalSelectablePlayers((current) => {
         const existingIds = new Set(current.map((player) => player.id));
         const missing = loadedPlayers

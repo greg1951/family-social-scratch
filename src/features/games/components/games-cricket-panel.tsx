@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { SelectedPlayer } from "@/features/games/types/scoreboard-ui";
+import type { CricketFormat, SelectedPlayer } from "@/features/games/types/scoreboard-ui";
 import {
   CRICKET_TARGETS,
   type CricketBoardState,
@@ -27,6 +27,7 @@ type CricketSelectablePlayer = {
 
 interface GamesCricketPanelProps {
   selectedPlayers: Array<SelectedPlayer | null>;
+  cricketFormat: CricketFormat;
   orderedSelectablePlayers: CricketSelectablePlayer[];
   getPlayerOptionLabel: (player: CricketSelectablePlayer) => string;
   clearPlayerOptionValue: string;
@@ -38,7 +39,8 @@ interface GamesCricketPanelProps {
   cricketActiveSideIndex: CricketSideIndex;
   isSubmittingCricketTurn: boolean;
   scoreStyleByColumn: Map<number, string>;
-  onSetCricketSidePlayer: (sideIndex: CricketSideIndex, value: string) => void;
+  onSetCricketFormat: (value: CricketFormat) => void;
+  onSetCricketPlayerSlot: (slotIndex: number, value: string) => void;
   onSetCricketTurnDart: (index: number, value: string) => void;
   onSubmitCricketTurn: () => void;
   onResetBoard: () => void;
@@ -46,6 +48,7 @@ interface GamesCricketPanelProps {
 
 export function GamesCricketPanel({
   selectedPlayers,
+  cricketFormat,
   orderedSelectablePlayers,
   getPlayerOptionLabel,
   clearPlayerOptionValue,
@@ -57,7 +60,8 @@ export function GamesCricketPanel({
   cricketActiveSideIndex,
   isSubmittingCricketTurn,
   scoreStyleByColumn,
-  onSetCricketSidePlayer,
+  onSetCricketFormat,
+  onSetCricketPlayerSlot,
   onSetCricketTurnDart,
   onSubmitCricketTurn,
   onResetBoard,
@@ -79,46 +83,104 @@ export function GamesCricketPanel({
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
-          { [0, 1].map((sideIndex) => {
-            const player = selectedPlayers[sideIndex];
+        <div className="mt-5 space-y-4 rounded-xl border border-[#f0d9c4] bg-white p-4">
+          <div className="space-y-1 md:max-w-56">
+            <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Format</Label>
+            <Select value={ cricketFormat } onValueChange={ (value) => onSetCricketFormat(value as CricketFormat) }>
+              <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
+                <SelectValue placeholder="Select format" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="singles">Singles</SelectItem>
+                <SelectItem value="doubles">Doubles</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            return (
-              <div key={ `cricket-side-${ sideIndex }` } className="space-y-1">
-                <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Side { sideIndex + 1 }</Label>
-                <Select
-                  value={ player ? String(player.id) : "" }
-                  onValueChange={ (value) => onSetCricketSidePlayer(sideIndex as CricketSideIndex, value) }
-                >
-                  <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
-                    <SelectValue placeholder={ `Select Side ${ sideIndex + 1 } Player` } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ clearPlayerOptionValue } disabled={ !player }>
-                      Unselect player
-                    </SelectItem>
-                    <SelectItem value={ addGuestOptionValue }>
-                      + Add a guest
-                    </SelectItem>
-                    { orderedSelectablePlayers.map((member) => {
-                      const otherSideIndex = sideIndex === 0 ? 1 : 0;
-                      const selectedInOtherSide = selectedPlayers[otherSideIndex]?.id === member.id;
+          <div className="grid gap-4 md:grid-cols-2">
+            { [0, 1].map((sideIndex) => {
+              const player = selectedPlayers[sideIndex];
+              const partner = selectedPlayers[sideIndex + 2];
 
-                      return (
-                        <SelectItem
-                          key={ member.id }
-                          value={ String(member.id) }
-                          disabled={ selectedInOtherSide }
-                        >
-                          { getPlayerOptionLabel(member) }
+              return (
+                <div key={ `cricket-side-team-${ sideIndex }` } className="space-y-3 rounded-xl border border-[#f0d9c4] bg-[#fffaf5] p-3">
+                  <Label className="text-xs font-semibold uppercase tracking-[0.22em] text-[#a85a3a]">Side { sideIndex + 1 } Team</Label>
+
+                  <div className="space-y-1">
+                    <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Primary Player</Label>
+                    <Select
+                      value={ player ? String(player.id) : "" }
+                      onValueChange={ (value) => onSetCricketPlayerSlot(sideIndex, value) }
+                    >
+                      <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
+                        <SelectValue placeholder={ `Select Side ${ sideIndex + 1 } Player` } />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ clearPlayerOptionValue } disabled={ !player }>
+                          Unselect player
                         </SelectItem>
-                      );
-                    }) }
-                  </SelectContent>
-                </Select>
-              </div>
-            );
-          }) }
+                        <SelectItem value={ addGuestOptionValue }>
+                          + Add a guest
+                        </SelectItem>
+                        { orderedSelectablePlayers.map((member) => {
+                          const selectedInOtherSlot = selectedPlayers.some(
+                            (existingPlayer, existingIdx) => existingIdx !== sideIndex && existingPlayer?.id === member.id
+                          );
+
+                          return (
+                            <SelectItem
+                              key={ `cricket-primary-${ sideIndex }-${ member.id }` }
+                              value={ String(member.id) }
+                              disabled={ selectedInOtherSlot }
+                            >
+                              { getPlayerOptionLabel(member) }
+                            </SelectItem>
+                          );
+                        }) }
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  { cricketFormat === "doubles" && (
+                    <div className="space-y-1">
+                      <Label className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#a85a3a]">Partner</Label>
+                      <Select
+                        value={ partner ? String(partner.id) : "" }
+                        onValueChange={ (value) => onSetCricketPlayerSlot(sideIndex + 2, value) }
+                      >
+                        <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-[#5c2e1a]">
+                          <SelectValue placeholder={ `Select Side ${ sideIndex + 1 } Partner` } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={ clearPlayerOptionValue } disabled={ !partner }>
+                            Unselect player
+                          </SelectItem>
+                          <SelectItem value={ addGuestOptionValue }>
+                            + Add a guest
+                          </SelectItem>
+                          { orderedSelectablePlayers.map((member) => {
+                            const selectedInOtherSlot = selectedPlayers.some(
+                              (existingPlayer, existingIdx) => existingIdx !== sideIndex + 2 && existingPlayer?.id === member.id
+                            );
+
+                            return (
+                              <SelectItem
+                                key={ `cricket-partner-${ sideIndex }-${ member.id }` }
+                                value={ String(member.id) }
+                                disabled={ selectedInOtherSlot }
+                              >
+                                { getPlayerOptionLabel(member) }
+                              </SelectItem>
+                            );
+                          }) }
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) }
+                </div>
+              );
+            }) }
+          </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-3">

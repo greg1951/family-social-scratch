@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 const updates = [
   {
@@ -88,15 +89,16 @@ export default function WhatsNewPage() {
         <div className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(52,44,98,0.95),rgba(93,73,164,0.86)_56%,rgba(170,144,238,0.8))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(35,27,73,0.92)] sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#e5dcff]">My Family Social</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">What&apos;s New in My Family Social</h1>
-          <p className="mt-3 max-w-3xl text-sm text-[#efe8ff] sm:text-base">
-            A simple timeline of the newest activity across your family channels.
-          </p>
 
-          <div className="mt-5">
+          {/* <p className="mt-3 max-w-3xl text-sm text-[#efe8ff] sm:text-base">
+            A simple timeline of the newest activity across your family channels.
+          </p> */}
+          <div className="mt-3 flex flex-wrap gap-3">
             <Link
               href="/"
               className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#efe8ff] transition hover:bg-white/25"
             >
+              <ArrowLeft className="font-app mr-2 size-4" />
               Back to Main Page
             </Link>
           </div>
