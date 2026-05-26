@@ -80,8 +80,13 @@ export default async function MainPage() {
             <div className="flex flex-col items-center justify-between gap-3 md:flex-row md:items-start">
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
-                  <p className="text-base text-slate-600 md:text-base">Choose a channel below or learn more first.</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
+                    { !memberKeyDetails.isLoggedIn && (
+                      <PublicHelpMenu href="/faq" />
+                    ) }
+                  </div>
+                  <p className="text-sm text-slate-600 md:text-base">Choose a channel below or learn more first.</p>
                 </div>
               </div>
 
@@ -124,9 +129,6 @@ export default async function MainPage() {
                     </Link>
                   </>
                 ) }
-              </div>
-              <div className="flex items-start justify-end md:pt-1 md:self-start">
-                <PublicHelpMenu href="/faq" />
               </div>
             </div>
           </Card>

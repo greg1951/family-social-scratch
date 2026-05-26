@@ -9,7 +9,7 @@ import {
 
 import { generalFaqItems } from "../types/constants";
 import { useState, useMemo } from "react";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, ArrowLeft } from "lucide-react";
 
 
 // --- State for category selection ---
@@ -44,10 +44,11 @@ export function GeneralFaqHomePage() {
             Browse the most common questions and answers for account access, family setup, and support workflow.
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <div className="inline-flex rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold">
+            {/* <div className="inline-flex rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold">
               { filteredFaqItems.length } Published FAQ{ filteredFaqItems.length === 1 ? "" : "s" }
-            </div>
+            </div> */}
             <a href="/" className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#edfcff] transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <ArrowLeft className="mr-2 size-4" />
               Return to Main Page
             </a>
           </div>

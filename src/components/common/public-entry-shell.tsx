@@ -5,43 +5,43 @@ import type { ReactNode } from 'react';
 import PublicHelpMenu from '@/components/common/public-help-menu';
 import { ArrowLeft } from 'lucide-react';
 
-const featureImages = [
-  {
-    src: '/images/family-foodies-tablet.png',
-    alt: 'Family Foodies community preview',
-    title: 'Swap recipes and table stories',
-    className: 'left-3 top-2 hidden w-24 rotate-[0deg] md:block md:w-30 lg:left-6 lg:top-9 lg:w-34',
-    accent: 'from-[#fff2d8] to-[#ffd68a]',
-  },
-  {
-    src: '/images/family-threads-tablet.png',
-    alt: 'Family Threads community preview',
-    title: 'Keep family conversations alive',
-    className: 'left-1/2 top-2 z-10 w-34 -translate-x-1/2 rotate-[0deg] md:top-1 md:w-38 lg:w-40',
-    accent: 'from-[#dff6ff] to-[#8fdcff]',
-  },
-  {
-    src: '/images/movies-maniacs-tablet.png',
-    alt: 'Movies Maniacs community preview',
-    title: 'Share watchlists and reactions',
-    className: 'right-3 top-15 hidden w-24 rotate-[0deg] md:block md:w-30 lg:right-6 lg:top-10 lg:w-34',
-    accent: 'from-[#ffe3ee] to-[#ffb0cd]',
-  },
-  {
-    src: '/images/poetry-cafe-tablet.png',
-    alt: 'Poetry Cafe community preview',
-    title: 'Celebrate creative family voices',
-    className: 'left-42 top-15 hidden w-26 rotate-[0deg] xl:block',
-    accent: 'from-[#efe5ff] to-[#cab5ff]',
-  },
-  {
-    src: '/images/tv-junkies-tablet.png',
-    alt: 'TV Junkies community preview',
-    title: 'Turn favorites into family traditions',
-    className: 'right-42 top-15 hidden w-26 rotate-[0deg] xl:block',
-    accent: 'from-[#e7ffd9] to-[#b9f57e]',
-  },
-];
+// const featureImages = [
+//   {
+//     src: '/images/family-foodies-tablet.png',
+//     alt: 'Family Foodies community preview',
+//     title: 'Swap recipes and table stories',
+//     className: 'left-3 top-2 hidden w-24 rotate-[0deg] md:block md:w-30 lg:left-6 lg:top-9 lg:w-34',
+//     accent: 'from-[#fff2d8] to-[#ffd68a]',
+//   },
+//   {
+//     src: '/images/family-threads-tablet.png',
+//     alt: 'Family Threads community preview',
+//     title: 'Keep family conversations alive',
+//     className: 'left-1/2 top-2 z-10 w-34 -translate-x-1/2 rotate-[0deg] md:top-1 md:w-38 lg:w-40',
+//     accent: 'from-[#dff6ff] to-[#8fdcff]',
+//   },
+//   {
+//     src: '/images/movies-maniacs-tablet.png',
+//     alt: 'Movies Maniacs community preview',
+//     title: 'Share watchlists and reactions',
+//     className: 'right-3 top-15 hidden w-24 rotate-[0deg] md:block md:w-30 lg:right-6 lg:top-10 lg:w-34',
+//     accent: 'from-[#ffe3ee] to-[#ffb0cd]',
+//   },
+//   {
+//     src: '/images/poetry-cafe-tablet.png',
+//     alt: 'Poetry Cafe community preview',
+//     title: 'Celebrate creative family voices',
+//     className: 'left-42 top-15 hidden w-26 rotate-[0deg] xl:block',
+//     accent: 'from-[#efe5ff] to-[#cab5ff]',
+//   },
+//   {
+//     src: '/images/tv-junkies-tablet.png',
+//     alt: 'TV Junkies community preview',
+//     title: 'Turn favorites into family traditions',
+//     className: 'right-42 top-15 hidden w-26 rotate-[0deg] xl:block',
+//     accent: 'from-[#e7ffd9] to-[#b9f57e]',
+//   },
+// ];
 
 export default function PublicEntryShell({ children }: { children: ReactNode }) {
   return (
@@ -60,14 +60,14 @@ export default function PublicEntryShell({ children }: { children: ReactNode }) 
               </Link>
             </div>
 
-            <div className="relative min-h-36 overflow-hidden rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.58))] px-3 py-3 shadow-inner md:min-h-40 md:px-4 lg:min-h-44">
+            {/* <div className="relative min-h-36 overflow-hidden rounded-[1.75rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(255,255,255,0.58))] px-3 py-3 shadow-inner md:min-h-40 md:px-4 lg:min-h-44">
               <div className="pointer-events-none absolute inset-x-8 top-4 h-20 rounded-full bg-[radial-gradient(circle,rgba(255,222,170,0.7)_0%,rgba(255,255,255,0)_72%)] blur-2xl" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.2))]" />
               <div className="absolute inset-x-0 bottom-2 flex justify-center px-6 md:hidden">
                 <div className="rounded-full bg-white/78 px-3 py-1 text-sm font-semibold tracking-[0.14em] text-[#315363] shadow-sm backdrop-blur">
                   A few circles your family could create
                 </div>
-              </div>
+              </div> 
               { featureImages.map((image) => (
                 <div
                   key={ image.src }
@@ -89,11 +89,11 @@ export default function PublicEntryShell({ children }: { children: ReactNode }) 
                   </div>
                 </div>
               )) }
-            </div>
+            </div> */}
 
-            <div className="flex items-start justify-end md:pt-1 md:self-start">
+            {/* <div className="flex justify-end pt-1 self-start">
               <PublicHelpMenu href="/faq" />
-            </div>
+            </div> */}
           </div>
         </header>
 

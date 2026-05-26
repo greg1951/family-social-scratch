@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
 const iconTileClasses = [
-  "relative grid place-items-center h-8 w-8 md:h-14 md:w-14  rounded-2xl border",
+  "relative grid place-items-center h-4 w-4 md:h-8 md:w-8 rounded-2xl border",
   "bg-gradient-to-b from-white/90 to-sky-100/70 shadow-[0_6px_14px_rgba(1,98,151,0.2)]",
   "transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_20px_rgba(1,98,151,0.28)]"].join(" ");
 const tooltipClasses = [

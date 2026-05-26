@@ -106,16 +106,13 @@ export default function LoginForm() {
       { step === 1 &&
         <Card className="w-full max-w-md gap-y-3 overflow-hidden border-white/70 bg-white/82 pt-0 shadow-[0_28px_90px_-50px_rgba(16,54,74,0.75)] backdrop-blur">
           <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 text-center shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
+            {/* <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
               <Sparkles className="h-3.5 w-3.5" />
               Welcome Back
-            </div>
-            <CardTitle className="mt-3 text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
+            </div> */}
+            <CardTitle className="mt-3 font-extrabold tracking-[0.02em] text-[#10364a] text-[1rem]">
               My Family Social Login
             </CardTitle>
-            {/* <CardDescription className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#315363]">
-              Step back into your family circles with your email, password, and family name.
-            </CardDescription> */}
           </CardHeader>
           <CardContent className="px-5 pb-2 pt-1 md:px-6">
             <Form { ...form }>
@@ -202,7 +199,7 @@ export default function LoginForm() {
                     </FormMessage>
                   }
                   <Button
-                    className="mt-2 h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
+                    className="mt-2 h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-sm font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
                     type="submit"
                   >
                     <LogIn className="h-4 w-4" />

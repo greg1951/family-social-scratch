@@ -35,7 +35,7 @@ export default async function TrialLayout({
                   <Link
                     href="/change-password"
                     prefetch={ false }
-                    className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                    className="flex flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
                   >
                     <span className="flex items-center gap-2">
                       <KeyRound className="h-4 w-4 text-[#005472]" />
@@ -46,7 +46,7 @@ export default async function TrialLayout({
                   <Link
                     href="/two-factor-auth-form"
                     prefetch={ false }
-                    className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                    className="flex flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
                   >
                     <span className="flex items-center gap-2">
                       <ShieldCheck className="h-4 w-4 text-[#005472]" />
@@ -57,11 +57,11 @@ export default async function TrialLayout({
                   <Link
                     href="/family-image-upload"
                     prefetch={ false }
-                    className="flex min-w-52 flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                    className="flex flex-1 items-center justify-between rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
                   >
                     <span className="flex items-center gap-2">
                       <ImagePlus className="h-4 w-4 text-[#005472]" />
-                      Upload Profile Image
+                      Upload Avatar
                     </span>
                   </Link>
                 </div>
