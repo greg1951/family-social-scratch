@@ -153,7 +153,7 @@ function PhotoScrollStrip({
         </div>
       ) : isUnallocatedStrip ? (
         <div className="max-h-[54vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             { photos.map((photo) => {
               const imageUrl = photo.photoImageUrl;
               const caption = photo.caption;
@@ -161,6 +161,7 @@ function PhotoScrollStrip({
                 <div
                   key={ photo.id }
                   className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
+                  title={ caption ?? "Photo" }
                 >
                   <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
                     <GalleryImage
@@ -170,8 +171,8 @@ function PhotoScrollStrip({
                     />
                   </div>
                   { caption && (
-                    <div className="px-2.5 py-2">
-                      <p className="truncate text-xs text-[#567145]">{ caption }</p>
+                    <div className="px-1.5 py-1">
+                      <p className="truncate text-[10px] text-[#567145]">{ caption }</p>
                     </div>
                   ) }
                 </div>
@@ -181,7 +182,7 @@ function PhotoScrollStrip({
         </div>
       ) : (
         <div className="max-h-[54vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             { photos.map((photo) => {
               const albumPhoto = photo as GalleryPhotoItem;
               const imageUrl = albumPhoto.photoImageUrl;
@@ -205,8 +206,8 @@ function PhotoScrollStrip({
                     />
                   </div>
                   { caption && (
-                    <div className="px-2.5 py-2">
-                      <p className="truncate text-xs text-[#567145]">{ caption }</p>
+                    <div className="px-1.5 py-1">
+                      <p className="truncate text-[10px] text-[#567145]">{ caption }</p>
                     </div>
                   ) }
                 </div>
@@ -244,17 +245,21 @@ function AlbumListItem({
 }) {
   return (
     <div
+      title={ [
+        album.albumDescription?.trim() ? album.albumDescription.trim() : "",
+        `Updated ${ new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).format(new Date(album.updatedAt)) }`,
+      ].filter(Boolean).join("\n") }
       className={ [
-        "rounded-2xl border p-3 transition-all duration-200",
+        "rounded-xl border p-2 transition-all duration-200",
         isSelected
           ? "border-[#a7cc84] bg-[#f2fae8] shadow-[0_16px_34px_-24px_rgba(74,96,55,0.85)]"
           : "border-[#dbe9cf] bg-white",
       ].join(" ") }
     >
       <button type="button" className="w-full text-left" onClick={ onSelect }>
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2">
           { album.coverPhotoUrl ? (
-            <div className="size-12 flex-none overflow-hidden rounded-lg border border-[#deebd3] bg-[#eff7e6]">
+            <div className="size-9 flex-none overflow-hidden rounded-md border border-[#deebd3] bg-[#eff7e6]">
               <GalleryImage
                 src={ album.coverPhotoUrl }
                 alt={ album.albumName }
@@ -262,62 +267,59 @@ function AlbumListItem({
               />
             </div>
           ) : (
-            <div className="flex size-12 flex-none items-center justify-center rounded-lg border border-[#deebd3] bg-[#eff7e6]">
-              <Images className="size-5 text-[#9cb88a]" />
+            <div className="flex size-9 flex-none items-center justify-center rounded-md border border-[#deebd3] bg-[#eff7e6]">
+              <Images className="size-4 text-[#9cb88a]" />
             </div>
           ) }
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5">
-              <p className="truncate text-sm font-semibold text-[#355427]">{ album.albumName }</p>
+              <p className="truncate text-[13px] font-semibold text-[#355427]">{ album.albumName }</p>
               { album.isShared && (
                 <Share2 className="size-3 shrink-0 text-[#6f9960]" aria-label="Shared" />
               ) }
             </div>
-            { album.albumDescription && (
-              <p className="mt-0.5 line-clamp-1 text-xs text-[#6d8b58]">{ album.albumDescription }</p>
-            ) }
-            <p className="mt-1 text-[11px] text-[#88a272]">{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</p>
+            <p className="mt-0.5 text-[10px] text-[#88a272]">{ album.photoCount }p</p>
           </div>
         </div>
       </button>
 
-      <div className="mt-2 flex items-center justify-between gap-1">
+      <div className="mt-1.5 flex items-center justify-between gap-1">
         <div className="flex gap-1">
           <button
             type="button"
             onClick={ onMoveUp }
             disabled={ isFirst }
-            className="rounded p-1 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a] disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded p-0.5 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a] disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Move album up"
           >
-            <ChevronUp className="size-3.5" />
+            <ChevronUp className="size-3" />
           </button>
           <button
             type="button"
             onClick={ onMoveDown }
             disabled={ isLast }
-            className="rounded p-1 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a] disabled:cursor-not-allowed disabled:opacity-30"
+            className="rounded p-0.5 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a] disabled:cursor-not-allowed disabled:opacity-30"
             aria-label="Move album down"
           >
-            <ChevronDown className="size-3.5" />
+            <ChevronDown className="size-3" />
           </button>
         </div>
         <div className="flex gap-1">
           <button
             type="button"
             onClick={ onEdit }
-            className="rounded p-1 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a]"
+            className="rounded p-0.5 text-[#8aa174] hover:bg-[#edf7e2] hover:text-[#4d6d3a]"
             aria-label="Edit album"
           >
-            <Edit3 className="size-3.5" />
+            <Edit3 className="size-3" />
           </button>
           <button
             type="button"
             onClick={ onDelete }
-            className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"
+            className="rounded p-0.5 text-slate-400 hover:bg-red-50 hover:text-red-600"
             aria-label="Delete album"
           >
-            <Trash2 className="size-3.5" />
+            <Trash2 className="size-3" />
           </button>
         </div>
       </div>
@@ -1446,15 +1448,15 @@ export default function MemberGalleryHomePage({
         </div>
 
         <main>
-          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:gap-6">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)] md:gap-6">
             <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur">
               <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
                   Photo Workspace
                 </p>
                 <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">Photo Scroll Strip</h2>
-                <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
-                  Uploads appear here. Select an album from the right pane to preview its sequence.
+                <p className="mt-2 text-xs leading-5 text-[#6f8f5d]">
+                  Upload here. Select an album to preview sequence.
                 </p>
               </div>
 
@@ -1484,8 +1486,8 @@ export default function MemberGalleryHomePage({
                       Album Manager
                     </p>
                     <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">My Albums</h2>
-                    <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
-                      Build albums, reorder them locally, and choose what gets shared.
+                    <p className="mt-2 text-xs leading-5 text-[#6f8f5d]">
+                      Build, reorder, and share albums.
                     </p>
                   </div>
                 </div>
@@ -1516,26 +1518,28 @@ export default function MemberGalleryHomePage({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
-                    { albums.map((album, index) => (
-                      <AlbumListItem
-                        key={ album.id }
-                        album={ album }
-                        isSelected={ selectedAlbum?.id === album.id }
-                        isFirst={ index === 0 }
-                        isLast={ index === albums.length - 1 }
-                        onSelect={ () => handleSelectAlbum(album) }
-                        onMoveUp={ () => swapAlbums(index, index - 1) }
-                        onMoveDown={ () => swapAlbums(index, index + 1) }
-                        onEdit={ () => {
-                          setEditTarget(album);
-                          setIsEditAlbumOpen(true);
-                          setEditAlbumPhotos([]);
-                          refreshEditAlbumPhotos(album.id);
-                        } }
-                        onDelete={ () => setDeleteTarget(album) }
-                      />
-                    )) }
+                  <div className="flex-1 overflow-y-auto pr-0.5">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 md:grid-cols-3">
+                      { albums.map((album, index) => (
+                        <AlbumListItem
+                          key={ album.id }
+                          album={ album }
+                          isSelected={ selectedAlbum?.id === album.id }
+                          isFirst={ index === 0 }
+                          isLast={ index === albums.length - 1 }
+                          onSelect={ () => handleSelectAlbum(album) }
+                          onMoveUp={ () => swapAlbums(index, index - 1) }
+                          onMoveDown={ () => swapAlbums(index, index + 1) }
+                          onEdit={ () => {
+                            setEditTarget(album);
+                            setIsEditAlbumOpen(true);
+                            setEditAlbumPhotos([]);
+                            refreshEditAlbumPhotos(album.id);
+                          } }
+                          onDelete={ () => setDeleteTarget(album) }
+                        />
+                      )) }
+                    </div>
                   </div>
                 ) }
               </div>

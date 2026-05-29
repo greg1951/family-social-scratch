@@ -20,7 +20,6 @@ import type { MemberKeyDetails } from "@/features/family/types/family-steps";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
   DialogFooter
 } from "@/components/ui/dialog";
@@ -141,8 +140,8 @@ function PhotoScrollStrip({
             </div>
           </div>
         ) : (
-          <div className="max-h-[54vh] overflow-y-auto pr-1">
-            <div className="grid grid-cols-3 gap-3">
+          <div className="max-h-[50vh] overflow-y-auto pr-1">
+            <div className="grid grid-cols-3 gap-2.5 xl:grid-cols-4">
               { photos.map((photo) => {
                 // Tooltip: show description if present, else fallback
                 const tooltip = photo.albumPhotoDescription?.trim()
@@ -181,29 +180,27 @@ function PhotoScrollStrip({
       {/* View-only dialog for photo details */ }
       { viewPhoto && (
         <Dialog open={ true } onOpenChange={ (open) => !open && setViewPhoto(null) }>
-          <DialogContent showCloseButton>
-            <DialogHeader>
-              <DialogTitle>Photo Details</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col items-center gap-4">
-              <GalleryImage
-                src={ viewPhoto.photoImageUrl }
-                alt={ viewPhoto.caption ?? "Gallery photo" }
-                className="max-h-[40vh] w-auto rounded-xl border"
-              />
+          <DialogContent showCloseButton className="w-[min(96vw,78rem)] max-w-none max-h-[86vh] overflow-y-auto">
+            <DialogTitle className="sr-only">
+              { viewPhoto.caption?.trim() ? `Photo preview: ${ viewPhoto.caption }` : "Photo preview" }
+            </DialogTitle>
+            <div className="space-y-3">
               { viewPhoto.caption && (
                 <p className="text-base font-semibold text-[#355427]">{ viewPhoto.caption }</p>
               ) }
+              <div className="flex justify-center rounded-xl border border-[#dcebd0] bg-[#f4faee] p-2">
+                <GalleryImage
+                  src={ viewPhoto.photoImageUrl }
+                  alt={ viewPhoto.caption ?? "Gallery photo" }
+                  className="max-h-[66vh] w-auto max-w-full rounded-lg object-contain"
+                />
+              </div>
               { viewPhoto.albumPhotoDescription && (
                 <p className="text-sm text-[#567145]">{ viewPhoto.albumPhotoDescription }</p>
               ) }
-              <div className="flex items-center gap-2 text-xs text-[#7f9a69]">
-                <User className="size-3 shrink-0" />
-                <span>{ viewPhoto.memberName }</span>
-              </div>
               {/* Only show reaction buttons if not owner */ }
               { viewPhoto.memberId !== member.memberId && (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
                     variant={ viewPhoto.viewerReaction === "like" ? "default" : "outline" }
@@ -245,6 +242,21 @@ function formatUpdatedAt(date: Date) {
   }).format(new Date(date));
 }
 
+function formatUpdatedAtShort(date: Date) {
+  const parsed = new Date(date);
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const yy = String(parsed.getFullYear()).slice(-2);
+  return `${ mm }-${ dd }-${ yy }`;
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
 function AlbumFinder({
   albums,
   selectedAlbumId,
@@ -255,8 +267,28 @@ function AlbumFinder({
   onSelectAlbum: (album: SharedAlbumListItem) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
 
   const filtered = albums.filter((album) => {
+    const updatedAt = new Date(album.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
     if (!query.trim()) return true;
     const q = query.toLowerCase();
     return (
@@ -287,62 +319,92 @@ function AlbumFinder({
         ) }
       </div>
 
-      <div className="flex-1 overflow-y-auto space-y-2 pr-0.5">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
+            Start Date
+          </label>
+          <Input
+            type="date"
+            value={ startDate }
+            max={ endDate || undefined }
+            onChange={ (e) => setStartDate(e.target.value) }
+            className="h-9 rounded-xl border-[#cee1bc] bg-white px-2 text-xs text-[#355427]"
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
+            End Date
+          </label>
+          <Input
+            type="date"
+            value={ endDate }
+            min={ startDate || undefined }
+            onChange={ (e) => setEndDate(e.target.value) }
+            className="h-9 rounded-xl border-[#cee1bc] bg-white px-2 text-xs text-[#355427]"
+          />
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto pr-0.5">
         { filtered.length === 0 ? (
           <div className="flex items-center justify-center rounded-2xl border border-dashed border-[#d6e8c4] bg-[#f8fdf3] py-9">
             <p className="text-sm text-[#86a072]">No shared albums found</p>
           </div>
         ) : (
-          filtered.map((album) => (
-            <button
-              key={ album.id }
-              type="button"
-              onClick={ () => onSelectAlbum(album) }
-              className={ [
-                "w-full rounded-2xl border p-3 text-left transition-all duration-200",
-                "hover:border-[#b9d89a] hover:shadow-[0_12px_30px_-26px_rgba(74,96,55,0.8)]",
-                selectedAlbumId === album.id
-                  ? "border-[#a7cc84] bg-[#f2fae8] shadow-[0_16px_34px_-24px_rgba(74,96,55,0.85)]"
-                  : "border-[#dbe9cf] bg-white",
-              ].join(" ") }
-            >
-              <div className="flex items-start gap-3">
-                { album.coverPhotoUrl ? (
-                  <div className="size-12 flex-none overflow-hidden rounded-lg border border-[#deebd3] bg-[#eff7e6]">
-                    <GalleryImage
-                      src={ album.coverPhotoUrl }
-                      alt={ album.albumName }
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex size-12 flex-none items-center justify-center rounded-lg border border-[#deebd3] bg-[#eff7e6]">
-                    <Images className="size-5 text-[#9cb88a]" />
-                  </div>
-                ) }
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#355427]">{ album.albumName }</p>
-                  <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-[#6d8b58]">
-                    <User className="size-3 shrink-0" />
-                    <span className="truncate">{ album.memberName }</span>
-                  </div>
-                  { album.albumDescription && (
-                    <p className="mt-1 line-clamp-1 text-xs text-[#6d8b58]">{ album.albumDescription }</p>
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+            { filtered.map((album) => (
+              <button
+                key={ album.id }
+                type="button"
+                onClick={ () => onSelectAlbum(album) }
+                title={ [
+                  `Updated ${ formatUpdatedAt(album.updatedAt) }`,
+                  album.albumDescription?.trim() ? album.albumDescription.trim() : "",
+                ].filter(Boolean).join("\n") }
+                className={ [
+                  "w-full rounded-2xl border p-2 text-left transition-all duration-200",
+                  "hover:border-[#b9d89a] hover:shadow-[0_12px_30px_-26px_rgba(74,96,55,0.8)]",
+                  selectedAlbumId === album.id
+                    ? "border-[#a7cc84] bg-[#f2fae8] shadow-[0_16px_34px_-24px_rgba(74,96,55,0.85)]"
+                    : "border-[#dbe9cf] bg-white",
+                ].join(" ") }
+              >
+                <div className="flex items-start gap-2">
+                  { album.coverPhotoUrl ? (
+                    <div className="size-9 flex-none overflow-hidden rounded-md border border-[#deebd3] bg-[#eff7e6]">
+                      <GalleryImage
+                        src={ album.coverPhotoUrl }
+                        alt={ album.albumName }
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex size-9 flex-none items-center justify-center rounded-md border border-[#deebd3] bg-[#eff7e6]">
+                      <Images className="size-4.5 text-[#9cb88a]" />
+                    </div>
                   ) }
-                  <div className="mt-1 flex items-center gap-2 text-[11px] text-[#88a272]">
-                    <span>{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</span>
-                    <span>·</span>
-                    <span className="inline-flex items-center gap-1">
-                      <MessageSquareText className="size-3" />
-                      { album.commentCount } comment{ album.commentCount !== 1 ? "s" : "" }
-                    </span>
-                    <span>·</span>
-                    <span>{ formatUpdatedAt(album.updatedAt) }</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold text-[#355427]">{ album.albumName }</p>
+                    <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#6d8b58]">
+                      <User className="size-3 shrink-0" />
+                      <span className="truncate">{ album.memberName }</span>
+                    </div>
+                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#88a272]">
+                      <span>{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</span>
+                      <span>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <MessageSquareText className="size-3" />
+                        { album.commentCount }
+                      </span>
+                      <span>·</span>
+                      <span>{ formatUpdatedAtShort(album.updatedAt) }</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </button>
-          ))
+              </button>
+            )) }
+          </div>
         ) }
       </div>
     </div>
@@ -482,9 +544,9 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Explore albums shared by your family and friends.
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-base">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-sm">
                 Browse photo albums shared by family members. Then select an album to view the shared photos in the Photo Scroll Strip.
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
@@ -502,7 +564,8 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:gap-6">
+            <>
+              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
               <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur">
                 <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -533,8 +596,8 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                 </div>
               </div>
 
-              <div className="min-w-0 space-y-4">
-                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:max-h-[50vh] xl:max-h-[58vh]">
+              <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:max-h-[68vh] xl:max-h-[76vh]">
                   <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
                       Family Directory
@@ -548,12 +611,12 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                         tooltipClassName="bg-[#355427] text-[#f4fee9]"
                       />
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
+                    {/* <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
                       Search all shared albums by caption, album details, or family member name.
-                    </p>
+                    </p> */}
                   </div>
 
-                  <div className="px-4 py-4 sm:px-6 sm:py-5 md:h-[calc(50vh-7.5rem)] xl:h-[calc(58vh-7.5rem)]">
+                  <div className="px-4 py-4 sm:px-6 sm:py-5 md:h-[calc(68vh-7.5rem)] xl:h-[calc(76vh-7.5rem)]">
                     <AlbumFinder
                       albums={ localAlbums }
                       selectedAlbumId={ selectedAlbum?.id ?? null }
@@ -561,66 +624,68 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                     />
                   </div>
                 </div>
-
-                { selectedAlbumRecord && (
-                  <div className="rounded-[1.3rem] border border-white/70 bg-white/85 p-4 shadow-[0_18px_44px_-36px_rgba(63,93,42,0.75)] backdrop-blur">
-                    <div className="space-y-3">
-                      <div className="rounded-xl border border-[#dbe9cf] bg-white p-3">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
-                          <MessageSquareText className="size-3.5" />
-                          Family Comments { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
-                        </div>
-                        { selectedAlbumRecord.comments.length === 0 ? (
-                          <p className="text-xs text-[#7f9a69]">No comments yet.</p>
-                        ) : (
-                          <div className="max-h-36 space-y-2 overflow-y-auto pr-1">
-                            { selectedAlbumRecord.comments.map((comment) => (
-                              <div key={ comment.id } className="rounded-lg border border-[#e2efda] bg-[#f9fdf5] px-2.5 py-2">
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="truncate text-[11px] font-semibold text-[#557044]">{ comment.memberName }</p>
-                                  <p className="shrink-0 text-[10px] text-[#86a072]">{ formatUpdatedAt(comment.createdAt) }</p>
-                                </div>
-                                <p className="mt-1 text-xs text-[#5f7b4d]">{ comment.commentText }</p>
-                              </div>
-                            )) }
-                          </div>
-                        ) }
-                      </div>
-
-                      <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-3">
-                        <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
-                          <MessageSquareText className="size-3.5" />
-                          Add Comment { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
-                        </div>
-                        <Textarea
-                          value={ commentText }
-                          onChange={ (e) => setCommentText(e.target.value) }
-                          placeholder="Add a comment for this album"
-                          disabled={ !canCommentOnSelectedAlbum || isSavingComment }
-                          className="min-h-20 border-[#cfe2bc] bg-white text-sm text-[#355427]"
-                        />
-                        { !canCommentOnSelectedAlbum && (
-                          <p className="mt-2 text-xs text-[#7f9a69]">
-                            You cannot comment on your own album.
-                          </p>
-                        ) }
-                        <div className="mt-2 flex justify-end">
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="rounded-full bg-[#5e8a39] text-white hover:bg-[#4e7430]"
-                            disabled={ !canCommentOnSelectedAlbum || isSavingComment || !commentText.trim() }
-                            onClick={ handleSaveComment }
-                          >
-                            { isSavingComment ? "Posting..." : "Post Comment" }
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) }
               </div>
             </div>
+
+              { selectedAlbumRecord && (
+                <div className="mt-4 rounded-[1.3rem] border border-white/70 bg-white/85 p-4 shadow-[0_18px_44px_-36px_rgba(63,93,42,0.75)] backdrop-blur">
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                  <div className="rounded-xl border border-[#dbe9cf] bg-white p-3">
+                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
+                      <MessageSquareText className="size-3.5" />
+                      Family Comments { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
+                    </div>
+                    { selectedAlbumRecord.comments.length === 0 ? (
+                      <p className="text-xs text-[#7f9a69]">No comments yet.</p>
+                    ) : (
+                      <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                        { selectedAlbumRecord.comments.map((comment) => (
+                          <div key={ comment.id } className="rounded-lg border border-[#e2efda] bg-[#f9fdf5] px-2.5 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-[11px] font-semibold text-[#557044]">{ comment.memberName }</p>
+                              <p className="shrink-0 text-[10px] text-[#86a072]">{ formatUpdatedAt(comment.createdAt) }</p>
+                            </div>
+                            <p className="mt-1 text-xs text-[#5f7b4d]">{ comment.commentText }</p>
+                          </div>
+                        )) }
+                      </div>
+                    ) }
+                  </div>
+
+                  <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-3">
+                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
+                      <MessageSquareText className="size-3.5" />
+                      Add Comment { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
+                    </div>
+                    <Textarea
+                      value={ commentText }
+                      onChange={ (e) => setCommentText(e.target.value) }
+                      placeholder="Add a comment for this album"
+                      disabled={ !canCommentOnSelectedAlbum || isSavingComment }
+                      className="min-h-20 border-[#cfe2bc] bg-white text-sm text-[#355427]"
+                    />
+                    { !canCommentOnSelectedAlbum && (
+                      <p className="mt-2 text-xs text-[#7f9a69]">
+                        You cannot comment on your own album.
+                      </p>
+                    ) }
+                    <div className="mt-2 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        className="rounded-full bg-[#5e8a39] text-white hover:bg-[#4e7430]"
+                        disabled={ !canCommentOnSelectedAlbum || isSavingComment || !commentText.trim() }
+                        onClick={ handleSaveComment }
+                      >
+                        { isSavingComment ? "Posting..." : "Post Comment" }
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                </div>
+              ) }
+
+            </>
           ) }
         </main>
       </div>

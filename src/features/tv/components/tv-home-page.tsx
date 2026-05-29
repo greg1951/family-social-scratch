@@ -53,6 +53,21 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
+function formatShortDate(value: Date) {
+  const parsed = new Date(value);
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const yy = String(parsed.getFullYear()).slice(-2);
+  return `${ mm }-${ dd }-${ yy }`;
+}
+
 function getShowDocument(showJson?: string): JSONContent {
   if (!showJson) {
     return createEmptyTipTapDocument();
@@ -229,6 +244,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const showFinderRows = shows.map((show) => ({
     id: show.id,
     name: show.showTitle,
+    updatedAt: show.updatedAt,
     genre: show.tagNamesByType.genre?.[0] ?? "-",
     adjective: show.tagNamesByType.adjective?.[0] ?? "-",
     channel: show.tagNamesByType.channel?.[0] ?? "Unknown",
@@ -240,11 +256,31 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   }));
 
   const [searchValue, setSearchValue] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const [selectedShow, setSelectedShow] = useState(showFinderRows[0]?.id ?? 0);
   const [showSelectionRevision, setShowSelectionRevision] = useState(0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
   const filteredShows = showFinderRows.filter((show) => {
+    const updatedAt = new Date(show.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
     const query = deferredSearchValue.trim().toLowerCase();
 
     if (!query) {
@@ -393,21 +429,21 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 See what TV shows your family&apos;s watching.
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b9f1ff] sm:text-base">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#b9f1ff] sm:text-base">
                 Comment on their favorites, add your own reviews, and find your next binge together.
-              </p>
+              </p> */}
 
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-          <div className="min-w-0 space-y-6">
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(9,44,62,0.8)] backdrop-blur sm:px-6">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] md:gap-6">
+          <div className="min-w-0 space-y-4">
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-3 backdrop-blur sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
                 Show Type
               </p>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-2.5">
                 <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
                   <input
                     type="radio"
@@ -464,9 +500,9 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a]"><Link href="/tv/add-show"><Plus className="size-3.5" />Add Show</Link></Button>
                       <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Show</Button>
                     </div>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
+                    {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
                       Search by show title, tags, channel, or family member and pick what to watch next.
-                    </p>
+                    </p> */}
                   </div>
 
                   {/* <div className="rounded-full border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm font-semibold text-[#24536a]">
@@ -485,93 +521,109 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                     aria-label="Search TV shows"
                   />
                 </div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
+                      Start Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ startDate }
+                      max={ endDate || undefined }
+                      onChange={ (event) => setStartDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
+                      End Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ endDate }
+                      min={ startDate || undefined }
+                      onChange={ (event) => setEndDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="px-4 py-4 sm:px-6 sm:py-5">
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#eff9fd,#f9fdff)] px-4 py-3 text-sm text-[#376176]">
+                {/* <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#eff9fd,#f9fdff)] px-4 py-3 text-sm text-[#376176]">
                   <Tv className="size-4 text-[#2a819d]" />
                   <span className="font-semibold text-[#17384b]">Selected show:</span>
                   <span>{ selectedShowName || "Choose a show from the list" }</span>
                   <span className="rounded-full bg-[#e8f5fd] px-3 py-1 text-xs text-[#24536a]">Viewing as { member.firstName }</span>
-                </div>
+                </div> */}
 
-                <div className="overflow-hidden rounded-[1.4rem] border border-[#d7ebf3]">
-                  <div className="max-h-232 overflow-auto">
-                    <table className="min-w-280 border-collapse text-left">
-                      <thead className="sticky top-0 z-10 bg-[#eef8fc] text-xs uppercase tracking-[0.18em] text-[#4f7384]">
-                        <tr>
-                          <th className="px-4 py-3 font-bold">Show Name</th>
-                          <th className="px-4 py-3 font-bold">Thumbs Up</th>
-                          <th className="px-4 py-3 font-bold">Love</th>
-                          <th className="px-4 py-3 font-bold"># of Seasons</th>
-                          <th className="px-4 py-3 font-bold">Genre</th>
-                          <th className="px-4 py-3 font-bold">Adjective</th>
-                          <th className="px-4 py-3 font-bold">Channel</th>
-                          <th className="px-4 py-3 font-bold">Added By</th>
-                          <th className="px-4 py-3 font-bold">Comments</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        { filteredShows.map((show) => {
-                          const isSelected = selectedShow === show.id;
-
-                          return (
-                            <tr
-                              key={ show.id }
-                              className="border-t border-[#e4f0f5] bg-white transition hover:bg-[#f8fcff]"
-                            >
-                              <td className="px-2 py-2 sm:px-3">
-                                <button
-                                  type="button"
-                                  onClick={ () => handleSelectShow(show.id) }
-                                  className={ [
-                                    "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#59cdf7]",
-                                    isSelected ? "bg-[#ecf9ff] shadow-sm" : "hover:bg-[#f4fbfe]",
-                                  ].join(" ") }
-                                >
-                                  <span className="font-semibold text-[#17384b]">{ show.name }</span>
-                                  { isSelected ? (
-                                    <span className="rounded-full bg-[#15384a] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">
-                                      Selected
-                                    </span>
-                                  ) : null }
-                                </button>
-                              </td>
-                              <td className="px-4 py-3 text-sm font-semibold text-[#285b73]">
-                                <span className="inline-flex items-center gap-2">
-                                  <ThumbsUp className="size-4 text-[#2d87a8]" />
-                                  { show.thumbsUp }
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">
-                                <span className="inline-flex items-center gap-2 font-semibold text-[#8f2f58]">
-                                  <Heart className="size-4 text-[#cf3f7f]" />
-                                  { show.love }
-                                </span>
-                              </td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">{ show.seasons }</td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">{ show.genre }</td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">{ show.adjective }</td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">{ show.channel }</td>
-                              <td className="px-4 py-3 text-sm text-[#3f6576]">{ show.addedBy }</td>
-                              <td className="px-4 py-3 text-sm font-semibold text-[#285b73]">
-                                <span className="inline-flex items-center gap-2">
-                                  <MessageSquareText className="size-4 text-[#2d87a8]" />
-                                  { show.comments }
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        }) }
-                      </tbody>
-                    </table>
-                  </div>
-
+                <div className="max-h-[68vh] overflow-y-auto pr-0.5">
                   { filteredShows.length === 0 ? (
-                    <div className="border-t border-[#e4f0f5] px-4 py-8 text-center text-sm text-[#5f7987]">
+                    <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-white px-4 py-8 text-center text-sm text-[#5f7987]">
                       No shows match that search yet.
                     </div>
-                  ) : null }
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      { filteredShows.map((show) => {
+                        const isSelected = selectedShow === show.id;
+
+                        return (
+                          <button
+                            key={ show.id }
+                            type="button"
+                            onClick={ () => handleSelectShow(show.id) }
+                            title={ [
+                              `${ show.genre } • ${ show.adjective } • ${ show.channel }`,
+                              `Added by ${ show.addedBy }`,
+                            ].join("\n") }
+                            className={ [
+                              "w-full rounded-xl border p-2 text-left transition-all duration-200",
+                              "hover:border-[#b9d9e7] hover:shadow-[0_12px_30px_-26px_rgba(24,77,103,0.8)]",
+                              isSelected
+                                ? "border-[#8ec6df] bg-[#edf8ff] shadow-[0_16px_34px_-24px_rgba(24,77,103,0.85)]"
+                                : "border-[#d7ebf3] bg-white",
+                            ].join(" ") }
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="min-w-0 truncate text-[13px] font-semibold text-[#17384b]">{ show.name }</p>
+                              { isSelected ? (
+                                <span className="shrink-0 rounded-full bg-[#15384a] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">
+                                  Sel
+                                </span>
+                              ) : null }
+                            </div>
+
+                            <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#5f7987]">
+                              <Tv className="size-3 shrink-0" />
+                              <span className="truncate">{ show.channel }</span>
+                            </div>
+
+                            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#376176]">
+                              <span>S{ show.seasons }</span>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <ThumbsUp className="size-3 text-[#2d87a8]" />
+                                { show.thumbsUp }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Heart className="size-3 text-[#cf3f7f]" />
+                                { show.love }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <MessageSquareText className="size-3 text-[#2d87a8]" />
+                                { show.comments }
+                              </span>
+                            </div>
+
+                            <p className="mt-1 truncate text-[10px] text-[#6d8998]">
+                              { show.addedBy } · { formatShortDate(show.updatedAt) }
+                            </p>
+                          </button>
+                        );
+                      }) }
+                    </div>
+                  ) }
                 </div>
               </div>
             </div>
