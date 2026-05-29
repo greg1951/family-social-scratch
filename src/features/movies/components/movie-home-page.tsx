@@ -51,6 +51,13 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
 function getMovieDocument(movieJson?: string): JSONContent {
   if (!movieJson) {
     return createEmptyTipTapDocument();
@@ -104,6 +111,13 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [isViewMovieOpen, setIsViewMovieOpen] = useState(false);
   const [movieStripMode, setMovieStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const [selectedMovie, setSelectedMovie] = useState(movies[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
@@ -167,6 +181,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const finderRows = movies.map((movie) => ({
     id: movie.id,
     name: movie.movieTitle,
+    updatedAt: movie.updatedAt,
     genre: movie.tagNamesByType.genre?.[0] ?? "-",
     adjective: movie.tagNamesByType.adjective?.[0] ?? "-",
     channel: movie.tagNamesByType.channel?.[0] ?? "Unknown",
@@ -178,7 +193,20 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     comments: movie.commentCount,
   }));
 
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
   const filteredMovies = finderRows.filter((movie) => {
+    const updatedAt = new Date(movie.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
     const query = deferredSearchValue.trim().toLowerCase();
     if (!query) {
       return true;
@@ -272,9 +300,9 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Your family&apos;s favorite movie reviews, in one place
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
                 Browse the latest uploads and top family favorites. , then add your own.
-              </p>
+              </p> */}
 
             </div>
           </div>
@@ -342,16 +370,114 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Movie</Button>
 
                     </span>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p></div>
+                    {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p> */ }
+                  </div>
                   {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div> */ }
                 </div>
 
                 <div className="relative mt-5"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by movie, genre, adjective, channel, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search movies" /></div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
+                      Start Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ startDate }
+                      max={ endDate || undefined }
+                      onChange={ (event) => setStartDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#e8c4a0] bg-white px-2 text-xs text-[#5c2e1a]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
+                      End Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ endDate }
+                      min={ startDate || undefined }
+                      onChange={ (event) => setEndDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#e8c4a0] bg-white px-2 text-xs text-[#5c2e1a]"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="px-4 py-4 sm:px-6 sm:py-5">
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#fff6ef,#fffaf5)] px-4 py-3 text-sm text-[#8b5a3c]"><Film className="size-4 text-[#a85a3a]" /><span className="font-semibold text-[#5c2e1a]">Selected movie:</span><span>{ selectedMovieName || "Choose a movie from the list" }</span><span className="rounded-full bg-[#fdf0e4] px-3 py-1 text-xs text-[#8b5a3c]"></span></div>
-                <div className="overflow-hidden rounded-[1.4rem] border border-[#f0d9c4]"><div className="max-h-232 overflow-auto"><table className="min-w-248 border-collapse text-left"><thead className="sticky top-0 z-10 bg-[#fff6ef] text-xs uppercase tracking-[0.18em] text-[#a85a3a]"><tr><th className="px-4 py-3 font-bold">Movie Name</th><th className="px-4 py-3 font-bold">Thumbs Down</th><th className="px-4 py-3 font-bold">Thumbs Up</th><th className="px-4 py-3 font-bold">Love</th><th className="px-4 py-3 font-bold">Year</th><th className="px-4 py-3 font-bold">Genre</th><th className="px-4 py-3 font-bold">Adjective</th><th className="px-4 py-3 font-bold">Channel</th><th className="px-4 py-3 font-bold">Added By</th><th className="px-4 py-3 font-bold">Comments</th></tr></thead><tbody>{ filteredMovies.map((movie) => { const isSelected = selectedMovie === movie.id; return <tr key={ movie.id } className="border-t border-[#f5e8e0] bg-white transition hover:bg-[#fffaf5]"><td className="px-2 py-2 sm:px-3"><button type="button" onClick={ () => setSelectedMovie(movie.id) } className={ ["flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d4a574]", isSelected ? "bg-[#fdf6ef] shadow-sm" : "hover:bg-[#fffbf7]"].join(" ") }><span className="font-semibold text-[#5c2e1a]">{ movie.name }</span>{ isSelected ? <span className="rounded-full bg-[#b8581a] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">Selected</span> : null }</button></td><td className="px-4 py-3 text-sm font-semibold text-[#6d5c52]"><span className="inline-flex items-center gap-2"><ThumbsDown className="size-4 text-[#6d5c52]" />{ movie.thumbsDown }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8a5a22]"><span className="inline-flex items-center gap-2"><ThumbsUp className="size-4 text-[#b8581a]" />{ movie.thumbsUp }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#8f2f58]"><span className="inline-flex items-center gap-2"><Heart className="size-4 text-[#cf3f7f]" />{ movie.love }</span></td><td className="px-4 py-3 text-sm text-[#734f3a]">{ movie.year }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ movie.genre }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ movie.adjective }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ movie.channel }</td><td className="px-4 py-3 text-sm text-[#734f3a]">{ movie.addedBy }</td><td className="px-4 py-3 text-sm font-semibold text-[#8b5a3c]"><span className="inline-flex items-center gap-2"><MessageSquareText className="size-4 text-[#a85a3a]" />{ movie.comments }</span></td></tr>; }) }</tbody></table></div>{ filteredMovies.length === 0 ? <div className="border-t border-[#f5e8e0] px-4 py-8 text-center text-sm text-[#8b5a3c]">No movies match that search yet.</div> : null }</div>
+                {/* <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#fff6ef,#fffaf5)] px-4 py-3 text-sm text-[#8b5a3c]">
+                  <Film className="size-4 text-[#a85a3a]" />
+                    <span className="font-semibold text-[#5c2e1a]">Selected movie:</span>
+                    <span>{ selectedMovieName || "Choose a movie from the list" }</span>
+                    <span className="rounded-full bg-[#fdf0e4] px-3 py-1 text-xs text-[#8b5a3c]"></span>
+                </div> */}
+                <div className="max-h-[68vh] overflow-y-auto pr-0.5">
+                  { filteredMovies.length === 0 ? (
+                    <div className="rounded-[1.4rem] border border-[#f0d9c4] bg-white px-4 py-8 text-center text-sm text-[#8b5a3c]">
+                      No movies match that search yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      { filteredMovies.map((movie) => {
+                        const isSelected = selectedMovie === movie.id;
+
+                        return (
+                          <button
+                            key={ movie.id }
+                            type="button"
+                            onClick={ () => setSelectedMovie(movie.id) }
+                            title={ [
+                              `${ movie.genre } • ${ movie.adjective } • ${ movie.channel }`,
+                              `Added by ${ movie.addedBy }`,
+                            ].join("\n") }
+                            className={ [
+                              "w-full rounded-xl border p-2 text-left transition-all duration-200",
+                              "hover:border-[#e8c4a0] hover:shadow-[0_12px_30px_-26px_rgba(96,32,0,0.8)]",
+                              isSelected
+                                ? "border-[#e8c4a0] bg-[#fff2e6] shadow-[0_16px_34px_-24px_rgba(96,32,0,0.85)]"
+                                : "border-[#f0d9c4] bg-white",
+                            ].join(" ") }
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="min-w-0 truncate text-[13px] font-semibold text-[#5c2e1a]">{ movie.name }</p>
+                            </div>
+
+                            <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8b5a3c]">
+                              <Film className="size-3 shrink-0" />
+                              <span className="truncate">{ movie.channel }</span>
+                            </div>
+
+                            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#734f3a]">
+                              <span>{ movie.year }</span>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <ThumbsDown className="size-3 text-[#6d5c52]" />
+                                { movie.thumbsDown }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <ThumbsUp className="size-3 text-[#b8581a]" />
+                                { movie.thumbsUp }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Heart className="size-3 text-[#cf3f7f]" />
+                                { movie.love }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <MessageSquareText className="size-3 text-[#b8581a]" />
+                                { movie.comments }
+                              </span>
+                            </div>
+
+                            <p className="mt-1 truncate text-[10px] text-[#8b5a3c]">
+                              { movie.addedBy }
+                            </p>
+                          </button>
+                        );
+                      }) }
+                    </div>
+                  ) }
+                </div>
               </div>
             </div>
 

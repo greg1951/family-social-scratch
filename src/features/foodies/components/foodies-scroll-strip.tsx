@@ -150,7 +150,7 @@ export function FoodiesScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
         <div
-          className="grid max-h-132 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
+          className="grid max-h-132 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2 lg:grid-cols-3"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;
@@ -187,17 +187,12 @@ export function FoodiesScrollStrip({
                           Fan favorite
                         </div>
                       ) : null }
-                      { isSelected ? (
-                        <div className="pointer-events-none absolute right-3 top-3 rounded-full bg-[#15384a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
-                          Selected
-                        </div>
-                      ) : null }
                     </div>
 
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
                         { item.kind === "latest" ? (

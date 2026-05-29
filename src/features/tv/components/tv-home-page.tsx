@@ -564,7 +564,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       No shows match that search yet.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
                       { filteredShows.map((show) => {
                         const isSelected = selectedShow === show.id;
 
@@ -587,11 +587,6 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                           >
                             <div className="flex items-start justify-between gap-2">
                               <p className="min-w-0 truncate text-[13px] font-semibold text-[#17384b]">{ show.name }</p>
-                              { isSelected ? (
-                                <span className="shrink-0 rounded-full bg-[#15384a] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-white">
-                                  Sel
-                                </span>
-                              ) : null }
                             </div>
 
                             <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#5f7987]">

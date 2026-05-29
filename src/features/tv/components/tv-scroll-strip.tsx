@@ -157,7 +157,7 @@ export function TvScrollStrip({
 
       <CardContent className="px-4 py-2 sm:px-5 sm:py-3">
         <div
-          className="grid max-h-800 grid-cols-1 gap-2 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
+          className="grid max-h-800 grid-cols-1 gap-2 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2 lg:grid-cols-3"
         >
           { items.map((item) => {
             const isSelected = selectedShowId === item.id;
@@ -204,18 +204,13 @@ export function TvScrollStrip({
                             <MessageSquare className="size-3.5" aria-label="Discussion thread available" />
                           </div>
                         ) : null }
-                        { isSelected ? (
-                          <div className="rounded-full bg-[#15384a]/90 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-white shadow">
-                            Selected
-                          </div>
-                        ) : null }
                       </div>
                     </div>
 
                     <div className="space-y-2 px-3 py-3">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 line-clamp-1 text-sm font-black tracking-tight text-[#13364a]">
+                          <h3 className="min-w-0 text-sm font-black leading-snug tracking-tight text-[#13364a]">
                             { item.showSiteUrl ? (
                               <a
                                 href={ item.showSiteUrl }

@@ -50,6 +50,21 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function formatShortDate(value: Date) {
+  const parsed = new Date(value);
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  const yy = String(parsed.getFullYear()).slice(-2);
+  return `${ mm }-${ dd }-${ yy }`;
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
 function getMusicDocument(musicJson?: string): JSONContent {
   if (!musicJson) {
     return createEmptyTipTapDocument();
@@ -103,6 +118,13 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const [selectedMusic, setSelectedMusic] = useState(musics[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
@@ -113,7 +135,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "latest" as const,
       id: music.id,
       name: music.musicTitle,
-      date: formatDate(music.updatedAt),
+      date: formatShortDate(music.updatedAt),
       reviewType: music.isSong ? "Song" as const : "Album" as const,
       hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.submitterLikenessDegree,
@@ -162,6 +184,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const finderRows = musics.map((music) => ({
     id: music.id,
     name: music.musicTitle,
+    updatedAt: music.updatedAt,
     genre: music.tagNamesByType.genre?.[0] ?? "-",
     subGenre: music.tagNamesByType.subGenre?.[0] ?? "-",
     reviewType: music.isSong ? "Song" : "Album",
@@ -173,7 +196,20 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     comments: music.commentCount,
   }));
 
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
   const filteredMusics = finderRows.filter((music) => {
+    const updatedAt = new Date(music.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
     const query = deferredSearchValue.trim().toLowerCase();
     if (!query) {
       return true;
@@ -205,7 +241,6 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     };
   }, [selectedMusic]);
 
-  const selectedMusicName = finderRows.find((music) => music.id === selectedMusic)?.name ?? "";
   const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? musics[0] ?? null;
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
   const canEditSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId === member.memberId);
@@ -340,11 +375,102 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                 </div>
 
                 <div className="relative mt-5"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div>
+
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">
+                      Start Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ startDate }
+                      max={ endDate || undefined }
+                      onChange={ (event) => setStartDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#c8d9f3] bg-white px-2 text-xs text-[#203b66]"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">
+                      End Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={ endDate }
+                      min={ startDate || undefined }
+                      onChange={ (event) => setEndDate(event.target.value) }
+                      className="h-9 rounded-xl border-[#c8d9f3] bg-white px-2 text-xs text-[#203b66]"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="px-4 py-4 sm:px-6 sm:py-5">
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#eef4ff,#f7faff)] px-4 py-3 text-sm text-[#4a6fae]"><Music className="size-4 text-[#2C5EAD]" /><span className="font-semibold text-[#203b66]">Selected music:</span><span>{ selectedMusicName || "Choose a music post from the list" }</span><span className="rounded-full bg-[#dbe8ff] px-3 py-1 text-xs text-[#4a6fae]"></span></div>
-                <div className="min-w-0 overflow-hidden rounded-[1.4rem] border border-[#c8d9f3]"><div className="max-h-232 overflow-auto"><table className="min-w-248 border-collapse text-left"><thead className="sticky top-0 z-10 bg-[#eef4ff] text-xs uppercase tracking-[0.18em] text-[#2C5EAD]"><tr><th className="px-4 py-3 font-bold">Music Name</th><th className="px-4 py-3 font-bold">Thumbs Down</th><th className="px-4 py-3 font-bold">Thumbs Up</th><th className="px-4 py-3 font-bold">Love</th><th className="px-4 py-3 font-bold">Year</th><th className="px-4 py-3 font-bold">Genre</th><th className="px-4 py-3 font-bold">Sub Genre</th><th className="px-4 py-3 font-bold">Song/Album</th><th className="px-4 py-3 font-bold">Added By</th><th className="px-4 py-3 font-bold">Comments</th></tr></thead><tbody>{ filteredMusics.map((music) => { const isSelected = selectedMusic === music.id; return <tr key={ music.id } className="border-t border-[#dbe8ff] bg-white transition hover:bg-[#f7fbff]"><td className="px-2 py-2 sm:px-3"><button type="button" onClick={ () => setSelectedMusic(music.id) } className={ ["flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7aa0dd]", isSelected ? "bg-[#edf4ff] shadow-sm" : "hover:bg-[#f9fcff]"].join(" ") }><span className="font-semibold text-[#203b66]">{ music.name }</span>{ isSelected ? <span className="rounded-full bg-[#2C5EAD] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">Selected</span> : null }</button></td><td className="px-4 py-3 text-sm font-semibold text-[#526a8f]"><span className="inline-flex items-center gap-2"><ThumbsDown className="size-4 text-[#526a8f]" />{ music.thumbsDown }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#2C5EAD]"><span className="inline-flex items-center gap-2"><ThumbsUp className="size-4 text-[#2C5EAD]" />{ music.thumbsUp }</span></td><td className="px-4 py-3 text-sm font-semibold text-[#4f6aa1]"><span className="inline-flex items-center gap-2"><Heart className="size-4 text-[#5b7fd0]" />{ music.love }</span></td><td className="px-4 py-3 text-sm text-[#4a5f84]">{ music.year }</td><td className="px-4 py-3 text-sm text-[#4a5f84]">{ music.genre }</td><td className="px-4 py-3 text-sm text-[#4a5f84]">{ music.subGenre }</td><td className="px-4 py-3 text-sm text-[#4a5f84]">{ music.reviewType }</td><td className="px-4 py-3 text-sm text-[#4a5f84]">{ music.addedBy }</td><td className="px-4 py-3 text-sm font-semibold text-[#4a6fae]"><span className="inline-flex items-center gap-2"><MessageSquareText className="size-4 text-[#2C5EAD]" />{ music.comments }</span></td></tr>; }) }</tbody></table></div>{ filteredMusics.length === 0 ? <div className="border-t border-[#dbe8ff] px-4 py-8 text-center text-sm text-[#4a6fae]">No music posts match that search yet.</div> : null }</div>
+                <div className="max-h-[68vh] overflow-y-auto pr-0.5">
+                  { filteredMusics.length === 0 ? (
+                    <div className="rounded-[1.4rem] border border-[#c8d9f3] bg-white px-4 py-8 text-center text-sm text-[#4a6fae]">
+                      No music posts match that search yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      { filteredMusics.map((music) => {
+                        const isSelected = selectedMusic === music.id;
+
+                        return (
+                          <button
+                            key={ music.id }
+                            type="button"
+                            onClick={ () => setSelectedMusic(music.id) }
+                            title={ [
+                              `${ music.genre } • ${ music.subGenre } • ${ music.reviewType }`,
+                              `Added by ${ music.addedBy }`,
+                            ].join("\n") }
+                            className={ [
+                              "w-full rounded-xl border p-2 text-left transition-all duration-200",
+                              "hover:border-[#c8d9f3] hover:shadow-[0_12px_30px_-26px_rgba(15,36,74,0.8)]",
+                              isSelected
+                                ? "border-[#c8d9f3] bg-[#edf4ff] shadow-[0_16px_34px_-24px_rgba(15,36,74,0.85)]"
+                                : "border-[#dbe8ff] bg-white",
+                            ].join(" ") }
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="min-w-0 truncate text-[13px] font-semibold text-[#203b66]">{ music.name }</p>
+                            </div>
+
+                            <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#4a6fae]">
+                              <Music className="size-3 shrink-0" />
+                              <span className="truncate">{ music.reviewType }</span>
+                            </div>
+
+                            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#4a5f84]">
+                              <span>{ music.year }</span>
+                              <span>·</span>
+                              <span className="inline-flex items-center gap-1">
+                                <ThumbsDown className="size-3 text-[#526a8f]" />
+                                { music.thumbsDown }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <ThumbsUp className="size-3 text-[#2C5EAD]" />
+                                { music.thumbsUp }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <Heart className="size-3 text-[#5b7fd0]" />
+                                { music.love }
+                              </span>
+                              <span className="inline-flex items-center gap-1">
+                                <MessageSquareText className="size-3 text-[#2C5EAD]" />
+                                { music.comments }
+                              </span>
+                            </div>
+
+                            <p className="mt-1 truncate text-[10px] text-[#4a6fae]">
+                              { music.addedBy }
+                            </p>
+                          </button>
+                        );
+                      }) }
+                    </div>
+                  ) }
+                </div>
               </div>
             </div>
 

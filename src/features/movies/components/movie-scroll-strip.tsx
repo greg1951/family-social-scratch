@@ -158,7 +158,7 @@ export function MovieScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-4">
         <div
-          className="grid max-h-800 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2"
+          className="grid max-h-800 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2 lg:grid-cols-3"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;
@@ -207,18 +207,13 @@ export function MovieScrollStrip({
                             <MessageSquare className="size-4" aria-label="Discussion thread available" />
                           </div>
                         ) : null }
-                        { isSelected ? (
-                          <div className="rounded-full bg-[#5c2e1a]/90 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white shadow">
-                            Selected
-                          </div>
-                        ) : null }
                       </div>
                     </div>
 
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 line-clamp-2 text-base font-black tracking-tight text-[#13364a]">
+                          <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">
                             { item.movieSiteUrl ? (
                               <a
                                 href={ item.movieSiteUrl }

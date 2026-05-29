@@ -52,6 +52,13 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -238,6 +245,7 @@ export function FoodiesHomePage({
   const recipeFinderRows = recipes.map((recipe) => ({
     id: recipe.id,
     name: recipe.recipeTitle,
+    updatedAt: recipe.updatedAt,
     chef: recipe.submitterName,
     category: createFinderCategory(recipe),
     prepTimeMins: recipe.prepTimeMins,
@@ -246,10 +254,30 @@ export function FoodiesHomePage({
   }));
 
   const [searchValue, setSearchValue] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const [selectedRecipe, setSelectedRecipe] = useState(recipeFinderRows[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
   const filteredRecipes = recipeFinderRows.filter((recipe) => {
+    const updatedAt = new Date(recipe.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
     const query = deferredSearchValue.trim().toLowerCase();
 
     if (!query) {
@@ -289,7 +317,6 @@ export function FoodiesHomePage({
     };
   }, [selectedRecipe]);
 
-  const selectedRecipeName = recipeFinderRows.find((recipe) => recipe.id === selectedRecipe)?.name ?? "";
   const selectedRecipeBasic =
     (selectedRecipeDetail?.id === selectedRecipe
       ? selectedRecipeDetail
@@ -688,9 +715,9 @@ export function FoodiesHomePage({
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Keep your family&apos;s recipes together in one place
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f1ffe4] sm:text-base">
                 Browse the latest uploads and top family favorites. , then add your own.
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
@@ -757,9 +784,9 @@ export function FoodiesHomePage({
                     <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]"><Link href="/foodies/add-recipe"><Sparkles className="size-3.5" />Add Recipe</Link></Button>
                     <Button type="button" variant="outline" asChild disabled={ !canEditSelectedRecipe } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50"><Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit Recipe</Link></Button>
                   </div>
-                  <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
+                  {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
                     Search the recipe list, then select a row to keep one dish highlighted while you browse details.
-                  </p>
+                  </p> */}
                 </div>
 
                 {/* <div className="rounded-full border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm font-semibold text-[#415d2c]">
@@ -778,83 +805,93 @@ export function FoodiesHomePage({
                   aria-label="Search recipes"
                 />
               </div>
+
+              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">
+                    Start Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={ startDate }
+                    max={ endDate || undefined }
+                    onChange={ (event) => setStartDate(event.target.value) }
+                    className="h-9 rounded-xl border-[#ccdfb9] bg-white px-2 text-xs text-[#2f4820]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">
+                    End Date
+                  </label>
+                  <Input
+                    type="date"
+                    value={ endDate }
+                    min={ startDate || undefined }
+                    onChange={ (event) => setEndDate(event.target.value) }
+                    className="h-9 rounded-xl border-[#ccdfb9] bg-white px-2 text-xs text-[#2f4820]"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="px-4 py-4 sm:px-6 sm:py-5">
-              <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#f4fae7,#fbfff3)] px-4 py-3 text-sm text-[#4f6f36]">
-                <Utensils className="size-4 text-[#5e8a2f]" />
-                <span className="font-semibold text-[#2f4820]">Selected recipe:</span>
-                <span>{ selectedRecipeName || "Choose a recipe from the list" }</span>
-              </div>
-
-              <div className="overflow-hidden rounded-[1.4rem] border border-[#dbeacc]">
-                <div className="max-h-232 overflow-auto">
-                  <table className="min-w-4xl border-collapse text-left">
-                    <thead className="sticky top-0 z-10 bg-[#f1f8df] text-xs uppercase tracking-[0.18em] text-[#5b7544]">
-                      <tr>
-                        <th className="px-4 py-3 font-bold">Recipe Name</th>
-                        <th className="px-4 py-3 font-bold">Chef</th>
-                        <th className="px-4 py-3 font-bold">Category</th>
-                        <th className="px-4 py-3 font-bold">Prep Time</th>
-                        <th className="px-4 py-3 font-bold">Cook Time</th>
-                        <th className="px-4 py-3 font-bold">Comments</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      { filteredRecipes.map((recipe) => {
-                        const isSelected = selectedRecipe === recipe.id;
-
-                        return (
-                          <tr
-                            key={ recipe.id }
-                            className="border-t border-[#e7f0d9] bg-white transition hover:bg-[#fbfff3]"
-                          >
-                            <td className="px-2 py-2 sm:px-3">
-                              <button
-                                type="button"
-                                onClick={ () => handleSelectRecipe(recipe.id) }
-                                className={ [
-                                  "flex w-full items-center justify-between gap-3 rounded-xl px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9fd46a]",
-                                  isSelected ? "bg-[#f3fce7] shadow-sm" : "hover:bg-[#f7fde9]",
-                                ].join(" ") }
-                              >
-                                <span className="font-semibold text-[#2f4820]">{ recipe.name }</span>
-                                { isSelected ? (
-                                  <span className="rounded-full bg-[#425c2d] px-2 py-1 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-white">
-                                    Selected
-                                  </span>
-                                ) : null }
-                              </button>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-[#4e6640]">{ recipe.chef }</td>
-                            <td className="px-4 py-3 text-sm text-[#4e6640]">{ recipe.category }</td>
-                            <td className="px-4 py-3 text-sm text-[#4e6640]">
-                              <span className="inline-flex items-center gap-2 font-semibold text-[#476232]">
-                                <Clock3 className="size-4 text-[#5d7f3f]" />
-                                { recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins } min` : "-" }
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 text-sm text-[#4e6640]">
-                              { recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins } min` : "-" }
-                            </td>
-                            <td className="px-4 py-3 text-sm font-semibold text-[#476232]">
-                              <span className="inline-flex items-center gap-2">
-                                <MessageSquareText className="size-4 text-[#5d7f3f]" />
-                                { recipe.comments }
-                              </span>
-                            </td>
-                          </tr>
-                        );
-                      }) }
-                    </tbody>
-                  </table>
-                </div>
-
+              <div className="max-h-[68vh] overflow-y-auto pr-0.5">
                 { filteredRecipes.length === 0 ? (
-                  <div className="border-t border-[#e7f0d9] px-4 py-8 text-center text-sm text-[#647a50]">
+                  <div className="rounded-[1.4rem] border border-[#dbeacc] bg-white px-4 py-8 text-center text-sm text-[#647a50]">
                     No recipes match that search yet.
                   </div>
-                ) : null }
+                ) : (
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    { filteredRecipes.map((recipe) => {
+                      const isSelected = selectedRecipe === recipe.id;
+
+                      return (
+                        <button
+                          key={ recipe.id }
+                          type="button"
+                          onClick={ () => handleSelectRecipe(recipe.id) }
+                          title={ [
+                            `${ recipe.category } • ${ recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins } min prep` : "No prep time" } • ${ recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins } min cook` : "No cook time" }`,
+                            `Added by ${ recipe.chef }`,
+                          ].join("\n") }
+                          className={ [
+                            "w-full rounded-xl border p-2 text-left transition-all duration-200",
+                            "hover:border-[#cfe8b2] hover:shadow-[0_12px_30px_-26px_rgba(38,54,26,0.8)]",
+                            isSelected
+                              ? "border-[#cfe8b2] bg-[#f3fce7] shadow-[0_16px_34px_-24px_rgba(38,54,26,0.85)]"
+                              : "border-[#dbeacc] bg-white",
+                          ].join(" ") }
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="min-w-0 truncate text-[13px] font-semibold text-[#2f4820]">{ recipe.name }</p>
+                          </div>
+
+                          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#4f6f36]">
+                            <Utensils className="size-3 shrink-0" />
+                            <span className="truncate">{ recipe.category }</span>
+                          </div>
+
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#4e6640]">
+                            <span className="inline-flex items-center gap-1">
+                              <Clock3 className="size-3 text-[#5d7f3f]" />
+                              { recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins }m` : "-" }
+                            </span>
+                            <span>·</span>
+                            <span>{ recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins }m` : "-" }</span>
+                            <span className="inline-flex items-center gap-1">
+                              <MessageSquareText className="size-3 text-[#5d7f3f]" />
+                              { recipe.comments }
+                            </span>
+                          </div>
+
+                          <p className="mt-1 truncate text-[10px] text-[#647a50]">
+                            { recipe.chef }
+                          </p>
+                        </button>
+                      );
+                    }) }
+                  </div>
+                ) }
               </div>
             </div>
 
