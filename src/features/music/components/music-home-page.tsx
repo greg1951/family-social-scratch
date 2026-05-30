@@ -304,13 +304,13 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                 </Link>
                 <Link href="/music/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Music Templates</Link>
               </div>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your family&apos;s favorite song and album reviews and lyrics in one place.</h1>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Your family&apos;s favorite songs and lyrics in one place.</h1>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-          <div className="min-w-0 space-y-6">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
+          <div className="min-w-0 space-y-6 md:order-2">
             <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(15,36,74,0.8)] backdrop-blur sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">
                 Music Type
@@ -352,7 +352,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
             />
           </div>
 
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-6 md:order-1">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)] backdrop-blur">
               <div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -369,8 +369,10 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                         <Edit3 className="size-3.5" />Edit Lyrics
                       </Button>
                     </div>
-                    <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4a6fae]">
-                      Search by title, genre, song or album, and family member.</p></div>
+                    {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4a6fae]">
+                      Search by title, genre, song or album, and family member.
+                    </p> */}
+                  </div>
                   {/* <div className="rounded-full border border-[#c8d9f3] bg-[#edf4ff] px-4 py-2 text-sm font-semibold text-[#4a6fae]">{ filteredMusics.length } music posts found</div> */ }
                 </div>
 
@@ -487,7 +489,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                         tooltipClassName="bg-[#203b66] text-[#eff5ff]"
                       />
                     </div>
-                    <p className="mt-1 text-sm text-[#4a6fae]">Follow the conversation that belongs to this music.</p>
+                    {/* <p className="mt-1 text-sm text-[#4a6fae]">Follow the conversation that belongs to this music.</p> */ }
                   </div>
                   <StartDiscussionDialog
                     targetType="music"

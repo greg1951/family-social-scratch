@@ -144,7 +144,7 @@ export function FoodiesScrollStrip({
           <CardTitle className="mt-2 text-2xl font-black tracking-tight text-[#15384a]">
             { title }
           </CardTitle>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">{ description }</p>
+          {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">{ description }</p> */ }
         </div>
       </CardHeader>
 
@@ -178,57 +178,47 @@ export function FoodiesScrollStrip({
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      { item.kind === "latest" ? (
-                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                          Fresh recipe
-                        </div>
-                      ) : item.thumbsUp + item.love > 0 ? (
-                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                          Fan favorite
-                        </div>
-                      ) : null }
+                      { null }
                     </div>
 
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 text-sm font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
                         { item.kind === "latest" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-[#607887]">
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
                             <span>{ item.date }</span>
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                              <ThumbsUp className="size-4 text-[#2d87a8]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
+                              <ThumbsUp className="size-3 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }
                             </span>
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
-                              <Heart className="size-4 text-[#cf3f7f]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
+                              <Heart className="size-3 text-[#cf3f7f]" />
                               { item.love.toLocaleString() }
                             </span>
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                              <MessageSquareText className="size-4 text-[#2d87a8]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
+                              <MessageSquareText className="size-3 text-[#2d87a8]" />
                               { item.commentsCount.toLocaleString() }
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-2 grid gap-2 text-sm text-[#607887]">
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#425e6d]">
-                                <ThumbsDown className="size-4 text-[#7e99a7]" />
-                                { item.noRating.toLocaleString() }
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                                <ThumbsUp className="size-4 text-[#2d87a8]" />
-                                { item.thumbsUp.toLocaleString() }
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
-                                <Heart className="size-4 text-[#cf3f7f]" />
-                                { item.love.toLocaleString() }
-                              </span>
-                            </div>
-                            <span className="inline-flex items-center gap-1.5 font-semibold text-[#21536a]">
-                              <MessageSquareText className="size-4 text-[#2d87a8]" />
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#425e6d]">
+                              <ThumbsDown className="size-3 text-[#7e99a7]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
+                              <ThumbsUp className="size-3 text-[#2d87a8]" />
+                              { item.thumbsUp.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
+                              <Heart className="size-3 text-[#cf3f7f]" />
+                              { item.love.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
+                              <MessageSquareText className="size-3 text-[#2d87a8]" />
                               { item.commentsCount.toLocaleString() }
                             </span>
                           </div>

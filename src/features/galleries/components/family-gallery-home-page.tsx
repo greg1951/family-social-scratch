@@ -565,123 +565,123 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-              <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur">
-                <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
-                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
-                        Album Preview
-                      </p>
-                      <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">Photo Scroll Strip</h2>
-                      {/* <p className="mt-2 max-w-xl text-sm leading-6 text-[#6f8f5d]">
+              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
+                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:order-2">
+                  <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
+                          Album Preview
+                        </p>
+                        <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">Photo Scroll Strip</h2>
+                        {/* <p className="mt-2 max-w-xl text-sm leading-6 text-[#6f8f5d]">
                         Photos are shown in the saved album sequence, with newest album updates visible first.
                       </p> */}
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="px-4 py-4 sm:px-6 sm:py-5">
+                    { isLoadingPhotos ? (
+                      <div className="flex items-center justify-center py-16">
+                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#89b364] border-t-transparent" />
+                      </div>
+                    ) : (
+                      <PhotoScrollStrip
+                        photos={ albumPhotos }
+                        selectedAlbumName={ selectedAlbumRecord?.albumName ?? selectedAlbum?.albumName ?? null }
+                        member={ _member }
+                      />
+                    ) }
                   </div>
                 </div>
 
-                <div className="px-4 py-4 sm:px-6 sm:py-5">
-                  { isLoadingPhotos ? (
-                    <div className="flex items-center justify-center py-16">
-                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#89b364] border-t-transparent" />
-                    </div>
-                  ) : (
-                    <PhotoScrollStrip
-                      photos={ albumPhotos }
-                      selectedAlbumName={ selectedAlbumRecord?.albumName ?? selectedAlbum?.albumName ?? null }
-                      member={ _member }
-                    />
-                  ) }
-                </div>
-              </div>
-
-              <div className="min-w-0">
-                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:max-h-[68vh] xl:max-h-[76vh]">
-                  <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
-                      Family Directory
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <h2 className="text-2xl font-black tracking-tight text-[#355427]">Album Finder</h2>
-                      <FeatureFaqHelp
-                        href="/feature-faq?category=Photo%20Galleries"
-                        buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c5dbb4] bg-gradient-to-b from-[#f8fdf3] to-[#e7f3db] text-[#4e7430] shadow-[0_8px_18px_rgba(78,116,48,0.18)] group-hover:shadow-[0_12px_26px_rgba(78,116,48,0.26)]"
-                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4e7430]"
-                        tooltipClassName="bg-[#355427] text-[#f4fee9]"
-                      />
-                    </div>
-                    {/* <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
+                <div className="min-w-0 md:order-1">
+                  <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:max-h-[68vh] xl:max-h-[76vh]">
+                    <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
+                        Family Directory
+                      </p>
+                      <div className="mt-2 flex items-center gap-2">
+                        <h2 className="text-2xl font-black tracking-tight text-[#355427]">Album Finder</h2>
+                        <FeatureFaqHelp
+                          href="/feature-faq?category=Photo%20Galleries"
+                          buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c5dbb4] bg-gradient-to-b from-[#f8fdf3] to-[#e7f3db] text-[#4e7430] shadow-[0_8px_18px_rgba(78,116,48,0.18)] group-hover:shadow-[0_12px_26px_rgba(78,116,48,0.26)]"
+                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4e7430]"
+                          tooltipClassName="bg-[#355427] text-[#f4fee9]"
+                        />
+                      </div>
+                      {/* <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
                       Search all shared albums by caption, album details, or family member name.
                     </p> */}
-                  </div>
+                    </div>
 
-                  <div className="px-4 py-4 sm:px-6 sm:py-5 md:h-[calc(68vh-7.5rem)] xl:h-[calc(76vh-7.5rem)]">
-                    <AlbumFinder
-                      albums={ localAlbums }
-                      selectedAlbumId={ selectedAlbum?.id ?? null }
-                      onSelectAlbum={ handleSelectAlbum }
-                    />
+                    <div className="px-4 py-4 sm:px-6 sm:py-5 md:h-[calc(68vh-7.5rem)] xl:h-[calc(76vh-7.5rem)]">
+                      <AlbumFinder
+                        albums={ localAlbums }
+                        selectedAlbumId={ selectedAlbum?.id ?? null }
+                        onSelectAlbum={ handleSelectAlbum }
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
               { selectedAlbumRecord && (
                 <div className="mt-4 rounded-[1.3rem] border border-white/70 bg-white/85 p-4 shadow-[0_18px_44px_-36px_rgba(63,93,42,0.75)] backdrop-blur">
-                <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-                  <div className="rounded-xl border border-[#dbe9cf] bg-white p-3">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
-                      <MessageSquareText className="size-3.5" />
-                      Family Comments { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
-                    </div>
-                    { selectedAlbumRecord.comments.length === 0 ? (
-                      <p className="text-xs text-[#7f9a69]">No comments yet.</p>
-                    ) : (
-                      <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
-                        { selectedAlbumRecord.comments.map((comment) => (
-                          <div key={ comment.id } className="rounded-lg border border-[#e2efda] bg-[#f9fdf5] px-2.5 py-2">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="truncate text-[11px] font-semibold text-[#557044]">{ comment.memberName }</p>
-                              <p className="shrink-0 text-[10px] text-[#86a072]">{ formatUpdatedAt(comment.createdAt) }</p>
-                            </div>
-                            <p className="mt-1 text-xs text-[#5f7b4d]">{ comment.commentText }</p>
-                          </div>
-                        )) }
+                  <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                    <div className="rounded-xl border border-[#dbe9cf] bg-white p-3">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
+                        <MessageSquareText className="size-3.5" />
+                        Family Comments { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
                       </div>
-                    ) }
-                  </div>
+                      { selectedAlbumRecord.comments.length === 0 ? (
+                        <p className="text-xs text-[#7f9a69]">No comments yet.</p>
+                      ) : (
+                        <div className="max-h-44 space-y-2 overflow-y-auto pr-1">
+                          { selectedAlbumRecord.comments.map((comment) => (
+                            <div key={ comment.id } className="rounded-lg border border-[#e2efda] bg-[#f9fdf5] px-2.5 py-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="truncate text-[11px] font-semibold text-[#557044]">{ comment.memberName }</p>
+                                <p className="shrink-0 text-[10px] text-[#86a072]">{ formatUpdatedAt(comment.createdAt) }</p>
+                              </div>
+                              <p className="mt-1 text-xs text-[#5f7b4d]">{ comment.commentText }</p>
+                            </div>
+                          )) }
+                        </div>
+                      ) }
+                    </div>
 
-                  <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-3">
-                    <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
-                      <MessageSquareText className="size-3.5" />
-                      Add Comment { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
-                    </div>
-                    <Textarea
-                      value={ commentText }
-                      onChange={ (e) => setCommentText(e.target.value) }
-                      placeholder="Add a comment for this album"
-                      disabled={ !canCommentOnSelectedAlbum || isSavingComment }
-                      className="min-h-20 border-[#cfe2bc] bg-white text-sm text-[#355427]"
-                    />
-                    { !canCommentOnSelectedAlbum && (
-                      <p className="mt-2 text-xs text-[#7f9a69]">
-                        You cannot comment on your own album.
-                      </p>
-                    ) }
-                    <div className="mt-2 flex justify-end">
-                      <Button
-                        type="button"
-                        size="sm"
-                        className="rounded-full bg-[#5e8a39] text-white hover:bg-[#4e7430]"
-                        disabled={ !canCommentOnSelectedAlbum || isSavingComment || !commentText.trim() }
-                        onClick={ handleSaveComment }
-                      >
-                        { isSavingComment ? "Posting..." : "Post Comment" }
-                      </Button>
+                    <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-3">
+                      <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#6f8f5d]">
+                        <MessageSquareText className="size-3.5" />
+                        Add Comment { selectedAlbumRecord.albumName ? `- ${ selectedAlbumRecord.albumName }` : "" }
+                      </div>
+                      <Textarea
+                        value={ commentText }
+                        onChange={ (e) => setCommentText(e.target.value) }
+                        placeholder="Add a comment for this album"
+                        disabled={ !canCommentOnSelectedAlbum || isSavingComment }
+                        className="min-h-20 border-[#cfe2bc] bg-white text-sm text-[#355427]"
+                      />
+                      { !canCommentOnSelectedAlbum && (
+                        <p className="mt-2 text-xs text-[#7f9a69]">
+                          You cannot comment on your own album.
+                        </p>
+                      ) }
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          className="rounded-full bg-[#5e8a39] text-white hover:bg-[#4e7430]"
+                          disabled={ !canCommentOnSelectedAlbum || isSavingComment || !commentText.trim() }
+                          onClick={ handleSaveComment }
+                        >
+                          { isSavingComment ? "Posting..." : "Post Comment" }
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
                 </div>
               ) }
 

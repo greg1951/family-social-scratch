@@ -43,6 +43,14 @@ function formatDate(value: Date) {
   }).format(new Date(value));
 }
 
+function formatStripDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "2-digit",
+  }).format(new Date(value));
+}
+
 function formatCreatedAt(createdAt: Date) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -128,7 +136,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       kind: "latest" as const,
       id: movie.id,
       name: movie.movieTitle,
-      date: formatDate(movie.updatedAt),
+      date: formatStripDate(movie.updatedAt),
       submitterLikenessDegree: movie.submitterLikenessDegree,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
@@ -308,8 +316,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-6">
-          <div className="min-w-0 space-y-6">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
+          <div className="min-w-0 space-y-6 md:order-2">
             <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(96,32,0,0.8)] backdrop-blur sm:px-6">
               <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
                 Movie Type
@@ -351,7 +359,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
             />
           </div>
 
-          <div className="min-w-0 space-y-6">
+          <div className="min-w-0 space-y-6 md:order-1">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
               <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.85))] px-5 py-5 sm:px-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

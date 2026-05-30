@@ -294,7 +294,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
         <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
           <DialogHeader>
             <DialogTitle className="text-[#5c2e1a]">{ dialogMode === "create" ? "Create Movie Template" : "Update Movie Template" }</DialogTitle>
-            <DialogDescription className="text-[#8b5a3c]">Use TipTap content and choose draft or published status.</DialogDescription>
+            <DialogDescription className="text-[#8b5a3c]">Use the rich editor to create an engaging movie template.</DialogDescription>
           </DialogHeader>
 
           <div className="font-app space-y-4 overflow-y-auto pr-1">
@@ -313,7 +313,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-[#5c2e1a]">Template content (TipTap)</p>
+              <p className="text-sm font-bold text-[#5c2e1a]">Template Content</p>
               <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
                 <div className="rounded-2xl border border-[#e8c4a0] bg-[#fff1e8] px-1.5 py-2">
                   <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">

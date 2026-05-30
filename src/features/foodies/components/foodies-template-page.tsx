@@ -358,7 +358,7 @@ export function FoodiesTemplatePage({
               { dialogMode === "create" ? "Create Recipe Template" : "Update Recipe Template" }
             </DialogTitle>
             <DialogDescription className="text-[#5f7a40]">
-              Use TipTap content and choose draft or published status.
+              Use the rich editor to create an engaging recipe template.
             </DialogDescription>
           </DialogHeader>
 
@@ -390,7 +390,7 @@ export function FoodiesTemplatePage({
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-[#2f4820]">Template content (TipTap)</p>
+              <p className="text-sm font-bold text-[#2f4820]">Template Content</p>
               <div className="space-y-2">
                 <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-1.5 py-2">
                   <div className="flex flex-wrap gap-2">

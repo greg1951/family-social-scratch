@@ -595,124 +595,126 @@ function EditAlbumDialog({
           <DialogTitle>Edit Album</DialogTitle>
           <DialogDescription>Update album details and manage album photos.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={ handleSubmit } className="space-y-4 pt-1">
-          <div className="space-y-1.5">
-            <Label htmlFor="editAlbumName">Album Name *</Label>
-            <Input
-              id="editAlbumName"
-              value={ albumName }
-              onChange={ (e) => setAlbumName(e.target.value) }
-              placeholder="e.g. Summer Vacation 2024"
-              maxLength={ 120 }
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="editAlbumDescription">Description</Label>
-            <Textarea
-              id="editAlbumDescription"
-              value={ albumDescription }
-              onChange={ (e) => setAlbumDescription(e.target.value) }
-              placeholder="Optional description…"
-              rows={ 2 }
-              maxLength={ 300 }
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              id="editAlbumIsShared"
-              type="checkbox"
-              checked={ isShared }
-              onChange={ (e) => setIsShared(e.target.checked) }
-              className="h-4 w-4 rounded border-slate-300 accent-indigo-600"
-            />
-            <Label htmlFor="editAlbumIsShared" className="cursor-pointer font-normal">
-              Share this album with the family
-            </Label>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3">
-            <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-2">
-              <p className="mb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.28em] text-[#6f8f5d]">
-                Current Album Scroll Strip
-              </p>
-              { isLoadingAlbumPhotos ? (
-                <div className="flex h-40 items-center justify-center">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#89b364] border-t-transparent" />
-                </div>
-              ) : albumPhotos.length === 0 ? (
-                <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
-                  No photos in this album yet.
-                </div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto pr-1">
-                  <div className="grid grid-cols-3 gap-2">
-                    { albumPhotos.map((photo) => (
-                      <div key={ photo.id } className="overflow-hidden rounded-lg border border-[#dcebd0] bg-white p-1">
-                        <div className="h-24 w-full overflow-hidden rounded-md bg-[#edf6e4]">
-                          <GalleryImage
-                            src={ photo.photoImageUrl }
-                            alt={ photo.caption ?? "Album photo" }
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <p className="mt-0.5 truncate text-[11px] font-semibold text-[#456533]">{ photo.caption ?? "Untitled photo" }</p>
-                        <p className="truncate text-[10px] text-[#6d8b58]">Seq { photo.seqNo }</p>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          className="mt-0.5 h-5 w-full rounded-full border-[#d9bcbc] bg-[#fff8f8] px-1.5 text-[10px] text-[#8f3a3a] hover:bg-[#ffeaea]"
-                          disabled={ isBusy }
-                          onClick={ () => onRemovePhoto(photo) }
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    )) }
-                  </div>
-                </div>
-              ) }
+        <form onSubmit={ handleSubmit } className="flex max-h-[80vh] flex-col">
+          <div className="flex-1 space-y-4 overflow-y-auto px-1 pb-2 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="editAlbumName">Album Name *</Label>
+              <Input
+                id="editAlbumName"
+                value={ albumName }
+                onChange={ (e) => setAlbumName(e.target.value) }
+                placeholder="e.g. Summer Vacation 2024"
+                maxLength={ 120 }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="editAlbumDescription">Description</Label>
+              <Textarea
+                id="editAlbumDescription"
+                value={ albumDescription }
+                onChange={ (e) => setAlbumDescription(e.target.value) }
+                placeholder="Optional description…"
+                rows={ 2 }
+                maxLength={ 300 }
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="editAlbumIsShared"
+                type="checkbox"
+                checked={ isShared }
+                onChange={ (e) => setIsShared(e.target.checked) }
+                className="h-4 w-4 rounded border-slate-300 accent-indigo-600"
+              />
+              <Label htmlFor="editAlbumIsShared" className="cursor-pointer font-normal">
+                Share this album with the family
+              </Label>
             </div>
 
-            <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-2">
-              <p className="mb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.28em] text-[#6f8f5d]">
-                Unallocated Photos Scroll Strip
-              </p>
-              { unallocatedPhotos.length === 0 ? (
-                <div className="flex h-40 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
-                  No unallocated photos available.
-                </div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto pr-1">
-                  <div className="grid grid-cols-3 gap-2">
-                    { unallocatedPhotos.map((photo) => (
-                      <div key={ photo.id } className="overflow-hidden rounded-lg border border-[#dcebd0] bg-white p-1">
-                        <div className="h-24 w-full overflow-hidden rounded-md bg-[#edf6e4]">
-                          <GalleryImage
-                            src={ photo.photoImageUrl }
-                            alt={ photo.caption ?? "Unallocated photo" }
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <p className="mt-0.5 truncate text-[11px] font-semibold text-[#456533]">{ photo.caption ?? photo.fileName ?? "Untitled photo" }</p>
-                        <Button
-                          type="button"
-                          size="sm"
-                          className="mt-0.5 h-5 w-full rounded-full bg-[#5e8a39] px-1.5 text-[10px] text-white hover:bg-[#4e7430]"
-                          disabled={ isBusy }
-                          onClick={ () => onAddPhoto(photo) }
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    )) }
+            <div className="grid grid-cols-1 gap-3">
+              <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-2">
+                <p className="mb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.28em] text-[#6f8f5d]">
+                  Current Album Scroll Strip
+                </p>
+                { isLoadingAlbumPhotos ? (
+                  <div className="flex h-32 items-center justify-center">
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#89b364] border-t-transparent" />
                   </div>
-                </div>
-              ) }
-            </div>
-          </div>
+                ) : albumPhotos.length === 0 ? (
+                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
+                    No photos in this album yet.
+                  </div>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      { albumPhotos.map((photo) => (
+                        <div key={ photo.id } className="overflow-hidden rounded-lg border border-[#dcebd0] bg-white p-1">
+                          <div className="h-24 w-full overflow-hidden rounded-md bg-[#edf6e4]">
+                            <GalleryImage
+                              src={ photo.photoImageUrl }
+                              alt={ photo.caption ?? "Album photo" }
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <p className="mt-0.5 truncate text-[11px] font-semibold text-[#456533]">{ photo.caption ?? "Untitled photo" }</p>
+                          <p className="truncate text-[10px] text-[#6d8b58]">Seq { photo.seqNo }</p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="mt-0.5 h-5 w-full rounded-full border-[#d9bcbc] bg-[#fff8f8] px-1.5 text-[10px] text-[#8f3a3a] hover:bg-[#ffeaea]"
+                            disabled={ isBusy }
+                            onClick={ () => onRemovePhoto(photo) }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      )) }
+                    </div>
+                  </div>
+                ) }
+              </div>
 
-          <DialogFooter>
+              <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-2">
+                <p className="mb-1.5 text-[0.68rem] font-bold uppercase tracking-[0.28em] text-[#6f8f5d]">
+                  Unallocated Photos Scroll Strip
+                </p>
+                { unallocatedPhotos.length === 0 ? (
+                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
+                    No unallocated photos available.
+                  </div>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto pr-1">
+                    <div className="grid grid-cols-3 gap-2">
+                      { unallocatedPhotos.map((photo) => (
+                        <div key={ photo.id } className="overflow-hidden rounded-lg border border-[#dcebd0] bg-white p-1">
+                          <div className="h-24 w-full overflow-hidden rounded-md bg-[#edf6e4]">
+                            <GalleryImage
+                              src={ photo.photoImageUrl }
+                              alt={ photo.caption ?? "Unallocated photo" }
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <p className="mt-0.5 truncate text-[11px] font-semibold text-[#456533]">{ photo.caption ?? photo.fileName ?? "Untitled photo" }</p>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="mt-0.5 h-5 w-full rounded-full bg-[#5e8a39] px-1.5 text-[10px] text-white hover:bg-[#4e7430]"
+                            disabled={ isBusy }
+                            onClick={ () => onAddPhoto(photo) }
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      )) }
+                    </div>
+                  </div>
+                ) }
+              </div>
+            </div>
+
+          </div>
+          <DialogFooter className="shrink-0 border-t border-[#dbe9cf] pt-3">
             <Button type="button" variant="outline" onClick={ onClose }>
               Cancel
             </Button>
@@ -1440,9 +1442,9 @@ export default function MemberGalleryHomePage({
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 { member.firstName }&apos;s Private Photo and Album Workspace
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-base">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-base">
                 Upload photos, create albums, and prepare albums to share with your family. When you're ready, share them!
-              </p>
+              </p> */}
             </div>
           </div>
         </div>

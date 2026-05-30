@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleHelp } from 'lucide-react';
+import { CircleHelp, Video } from 'lucide-react';
 import Link from 'next/link';
 const iconTileClasses = [
   "relative grid place-items-center h-5 w-5 md:h-8 md:w-8 rounded-2xl border",
@@ -17,7 +17,7 @@ export default function PublicHelpMenu({ href }: { href: string }) {
     <div className="group relative">
       <div className={ iconTileClasses }>
         <Link href={ href }>
-          <CircleHelp className="h-6 w-6 transition group-hover:scale-105" />
+          <Video className="h-6 w-6 transition group-hover:scale-105" />
         </Link>
       </div>
       <span className={ tooltipClasses }>

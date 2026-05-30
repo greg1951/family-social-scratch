@@ -60,9 +60,11 @@ export default async function MainPage() {
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/70"
   ].join(" ");
 
-  let title: string = "Welcome to My Family Social!";
+  let title: string = "Welcome to My Family Social! ";
+  let cta: string = "If you want to know more, take a video tour.";
   if (memberKeyDetails.isLoggedIn) {
     title = `Welcome back, ${ memberKeyDetails.firstName }!`;
+    cta = "Select  a feature and share with the family.";
   }
 
   return (
@@ -86,7 +88,7 @@ export default async function MainPage() {
                       <PublicHelpMenu href="/faq" />
                     ) }
                   </div>
-                  <p className="text-sm text-slate-600 md:text-base">Choose a channel below or learn more first.</p>
+                  <p className="text-sm text-slate-600 md:text-base">{ cta }</p>
                 </div>
               </div>
 
@@ -97,13 +99,13 @@ export default async function MainPage() {
                       href="/family-dashboard"
                       className={ ctaCardClasses }
                     >
-                      Family Dashboard
+                      Activity Dashboard
                     </Link>
                     <Link
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What&apos;s New in  My Family Social?
+                      What&apos;s New?
                     </Link>
                     {/* <Link
                       href="/help-subscribe"
@@ -119,13 +121,13 @@ export default async function MainPage() {
                       href="/family-dashboard"
                       className={ ctaCardClasses }
                     >
-                      Family Dashboard
+                      Activity Dashboard
                     </Link>
                     <Link
                       href="/whats-new"
                       className={ ctaCardClasses }
                     >
-                      What&apos;s New in  My Family Social?
+                      What&apos;s New?
                     </Link>
                   </>
                 ) }
@@ -156,7 +158,7 @@ export default async function MainPage() {
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("movies") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movies-maniacs-tablet.png" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movie-maniacs-wide.jpg" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("books") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
@@ -174,7 +176,7 @@ export default async function MainPage() {
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("gallery") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-gallery" src="/images/photo-galleries-wide.png" title="Photo Galleries" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-gallery" src="/images/photo-galleries-wide.jpg" title="Photo Galleries" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("threads") ? (
             threadsColSpan ? (

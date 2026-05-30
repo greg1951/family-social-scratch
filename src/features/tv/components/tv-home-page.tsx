@@ -191,7 +191,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     kind: "latest" as const,
     id: show.id,
     name: show.showTitle,
-    date: formatDate(show.updatedAt),
+    date: formatShortDate(show.updatedAt),
     submitterLikenessDegree: show.submitterLikenessDegree,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
@@ -437,49 +437,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] md:gap-6">
-          <div className="min-w-0 space-y-4">
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-3 backdrop-blur sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
-                Show Type
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2.5">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
-                  <input
-                    type="radio"
-                    name="tv-show-strip-mode"
-                    value="latest"
-                    checked={ showStripMode === "latest" }
-                    onChange={ () => setShowStripMode("latest") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
-                  />
-                  Latest TV Shows
-                </label>
-
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
-                  <input
-                    type="radio"
-                    name="tv-show-strip-mode"
-                    value="top-rated"
-                    checked={ showStripMode === "top-rated" }
-                    onChange={ () => setShowStripMode("top-rated") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
-                  />
-                  Top Rated TV Shows
-                </label>
-              </div>
-            </div>
-
-            <TvScrollStrip
-              title={ stripTitle }
-              description={ stripDescription }
-              items={ stripItems }
-              accentClassName={ stripAccentClassName }
-              selectedShowId={ selectedShow }
-              onSelectShow={ handleSelectShow }
-            />
-          </div>
-
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[1.05fr_0.95fr] md:gap-6">
           <div className="min-w-0 space-y-6">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
               <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-5 py-5 sm:px-6">
@@ -829,6 +787,47 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                 ) }
               </div>
             </div>
+          </div>
+          <div className="min-w-0 space-y-4">
+            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-3 backdrop-blur sm:px-6">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
+                Show Type
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2.5">
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-strip-mode"
+                    value="latest"
+                    checked={ showStripMode === "latest" }
+                    onChange={ () => setShowStripMode("latest") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Latest TV Shows
+                </label>
+
+                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-strip-mode"
+                    value="top-rated"
+                    checked={ showStripMode === "top-rated" }
+                    onChange={ () => setShowStripMode("top-rated") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Top Rated TV Shows
+                </label>
+              </div>
+            </div>
+
+            <TvScrollStrip
+              title={ stripTitle }
+              description={ stripDescription }
+              items={ stripItems }
+              accentClassName={ stripAccentClassName }
+              selectedShowId={ selectedShow }
+              onSelectShow={ handleSelectShow }
+            />
           </div>
         </div>
       </div>

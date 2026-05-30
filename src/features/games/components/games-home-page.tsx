@@ -422,11 +422,11 @@ export function GamesHomePage({
               </div>
               <div className="flex flex-col gap-1">
                 <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                  Track family game history, compare leaderboards, and start a new scorecard.
+                  Review Leaderboard or start a new scorecard.
                 </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-[#ffe0bc] sm:text-base">
+                {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#ffe0bc] sm:text-base">
                   Welcome back { firstName }! Start or continue a game. Remember, you can add guests to a game.
-                </p>
+                </p> */}
               </div>
             </div>
           </div>

@@ -195,9 +195,11 @@ export function TvScrollStrip({
                         </div>
                       ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white/92 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#275f75] shadow-sm">
-                        { item.kind === "latest" ? "Recently added" : "Fan favorite" }
-                      </div>
+                      { item.kind === "top-rated" ? (
+                        <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white/92 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#275f75] shadow-sm">
+                          Fan favorite
+                        </div>
+                      ) : null }
                       <div className="pointer-events-none absolute right-2 top-2 flex flex-col items-end gap-1.5">
                         { item.hasDiscussionThread ? (
                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
@@ -245,21 +247,19 @@ export function TvScrollStrip({
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 space-y-1 text-[11px] text-[#607887]">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
-                                <ThumbsDown className="size-3.5 text-[#5c6c76]" />
-                                { item.noRating.toLocaleString() }
-                              </span>
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
-                                <ThumbsUp className="size-3.5 text-[#2d87a8]" />
-                                { item.thumbsUp.toLocaleString() }
-                              </span>
-                              <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
-                                <Heart className="size-3.5 text-[#cf3f7f]" />
-                                { item.love.toLocaleString() }
-                              </span>
-                            </div>
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#607887]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
+                              <ThumbsDown className="size-3.5 text-[#5c6c76]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
+                              <ThumbsUp className="size-3.5 text-[#2d87a8]" />
+                              { item.thumbsUp.toLocaleString() }
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
+                              <Heart className="size-3.5 text-[#cf3f7f]" />
+                              { item.love.toLocaleString() }
+                            </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
                               <MessageSquareText className="size-3.5 text-[#2d87a8]" />
                               { item.commentsCount.toLocaleString() }

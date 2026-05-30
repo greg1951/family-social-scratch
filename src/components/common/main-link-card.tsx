@@ -7,13 +7,13 @@ export default function MainLinkCard({ isLoggedIn, href, title, src, tw }
     (isLoggedIn ? (
       <Link href={ href } >
         <Card className={ tw }>
-          <img src={ src } alt={ title } className="aspect-auto object-cover h-45.75 md:h-53.75 w-full " />
+          <img src={ src } alt={ title } className="aspect-auto object-cover h-25 md:h-35 w-full " />
         </Card>
       </Link>
 
     ) : (
       <Card className={ tw }>
-        <img src={ src } alt={ title } className="aspect-auto object-cover h-45.75 md:h-53.75 w-full" />
+        <img src={ src } alt={ title } className="aspect-auto object-cover h-25 md:h-35 w-full" />
       </Card>
     )
     ));
