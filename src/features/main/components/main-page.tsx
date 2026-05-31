@@ -161,10 +161,10 @@ export default async function MainPage() {
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movie-maniacs-wide.jpg" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("books") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-tablet.png" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-wide.jpg" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("foodies") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-tablet.png" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-wide.jpg" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("music") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/music" src="/images/music-lovers-tablet.png" title="Music Lovers" tw="rounded-xl border border-[#2C5EAD]/45 bg-linear-to-br from-[#2C5EAD] via-[#2C5EAD] to-[#244B8A] p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-[#2C5EAD]/70 hover:shadow-lg relative overflow-hidden" />
@@ -173,7 +173,7 @@ export default async function MainPage() {
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/poetry" src="/images/poetry-cafe-tablet.png" title="Poetry Cafe" tw="rounded-xl border border-cyan-300 bg-cyan-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("games") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-tablet.png" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/games" src="/images/game-scoreboards-wide.jpg" title="Games Scoreboard" tw="rounded-xl border border-amber-300 bg-amber-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("gallery") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/family-gallery" src="/images/photo-galleries-wide.jpg" title="Photo Galleries" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
@@ -181,7 +181,7 @@ export default async function MainPage() {
           { isFeatureEnabled("threads") ? (
             threadsColSpan ? (
               <div className="sm:col-span-2">
-                <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-wide.jpg" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+                <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-widest.jpg" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
               </div>
             ) : (
               <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/threads" src="/images/family-threads-wide.jpg" title="Family Threads" tw="rounded-xl border border-fuchsia-300 bg-fuchsia-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
