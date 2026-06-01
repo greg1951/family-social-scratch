@@ -8,6 +8,7 @@ import {
   getAlbumPhotos,
   getMemberGalleryData,
   saveGalleryPhoto,
+  clearUnallocatedGalleryPhotos,
   createGalleryAlbum,
   updateGalleryAlbum,
   deleteGalleryAlbum,
@@ -105,6 +106,25 @@ export async function saveGalleryPhotoAction(input: SaveGalleryPhotoInput) {
   }
 
   const result = await saveGalleryPhoto(input, {
+    memberId: memberDetails.memberId,
+    familyId: memberDetails.familyId,
+  });
+
+  if (result.success) {
+    revalidatePath('/member-gallery');
+  }
+
+  return result;
+}
+
+export async function clearUnallocatedGalleryPhotosAction() {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return { success: false as const, message: 'You must be signed in to clear photos.' };
+  }
+
+  const result = await clearUnallocatedGalleryPhotos({
     memberId: memberDetails.memberId,
     familyId: memberDetails.familyId,
   });

@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -23,6 +23,7 @@ import {
   deleteGalleryAlbumAction,
   getAlbumPhotosAction,
   saveGalleryPhotoAction,
+  clearUnallocatedGalleryPhotosAction,
   updateGalleryAlbumPhotoAction,
   updateGalleryAlbumAction,
   removePhotoFromAlbumAction,
@@ -91,43 +92,103 @@ function GalleryImage({
   return <img src={ resolvedSrc } alt={ alt } className={ className } />;
 }
 
+function uploadFileToSignedUrl(
+  signedUrl: string,
+  file: File,
+  onProgress: (percent: number) => void
+) {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open("PUT", signedUrl);
+    xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) {
+        return;
+      }
+
+      const percent = Math.min(100, Math.round((event.loaded / event.total) * 100));
+      onProgress(percent);
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        onProgress(100);
+        resolve();
+        return;
+      }
+
+      reject(new Error("Failed to upload image to S3."));
+    };
+
+    xhr.onerror = () => reject(new Error("Network error while uploading to S3."));
+    xhr.send(file);
+  });
+}
+
 // ── Photo strip ───────────────────────────────────────────────────────────────
 
 function PhotoScrollStrip({
   photos,
   label,
   isUnallocatedStrip,
+  selectedAlbumName,
+  unallocatedPhotos,
   onPhotoDoubleClick,
+  onClearUnallocatedPhotos,
   onUpload,
   isUploading,
+  isBusy,
+  uploadStatus,
 }: {
   photos: Array<MemberPhotoItem | GalleryPhotoItem>;
   label: string;
   isUnallocatedStrip: boolean;
+  selectedAlbumName?: string;
+  unallocatedPhotos: MemberPhotoItem[];
   onPhotoDoubleClick?: (photo: GalleryPhotoItem) => void;
+  onClearUnallocatedPhotos?: () => void;
   onUpload: (files: File[]) => void;
   isUploading: boolean;
+  isBusy: boolean;
+  uploadStatus: {
+    totalFiles: number;
+    processedFiles: number;
+    failedFiles: number;
+    currentFileIndex: number;
+    currentFileName: string | null;
+    currentFilePercent: number;
+  };
 }) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const overallPercent = uploadStatus.totalFiles > 0
+    ? Math.min(
+      100,
+      Math.round(((uploadStatus.processedFiles + (uploadStatus.currentFilePercent / 100)) / uploadStatus.totalFiles) * 100)
+    )
+    : 0;
 
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-[0.68rem] font-bold uppercase tracking-[0.3em] text-[#6f8f5d]">{ label }</p>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 gap-1.5 rounded-full border-[#cfe2bc] bg-[#f7fdf0] px-3 text-xs font-semibold text-[#456533] hover:bg-[#ecf8e0]"
-          disabled={ isUploading }
-          onClick={ () => fileInputRef.current?.click() }
-        >
-          { isUploading ? (
-            <span className="h-3 w-3 animate-spin rounded-full border border-[#7ea263] border-t-transparent" />
-          ) : (
-            <Upload className="size-3" />
-          ) }
-          Upload Photos
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 rounded-full border-[#cfe2bc] bg-[#f7fdf0] px-3 text-xs font-semibold text-[#456533] hover:bg-[#ecf8e0]"
+            disabled={ isUploading }
+            onClick={ () => fileInputRef.current?.click() }
+          >
+            { isUploading ? (
+              <span className="h-3 w-3 animate-spin rounded-full border border-[#7ea263] border-t-transparent" />
+            ) : (
+              <Upload className="size-3" />
+            ) }
+            Upload Photos
+          </Button>
+        </div>
         <input
           ref={ fileInputRef }
           type="file"
@@ -143,6 +204,31 @@ function PhotoScrollStrip({
           } }
         />
       </div>
+
+      { isUploading && uploadStatus.totalFiles > 0 ? (
+        <div className="space-y-2 rounded-xl border border-[#d6e8c4] bg-[#f8fdf3] px-3 py-2">
+          <p className="text-xs font-semibold text-[#456533]">
+            Selected { uploadStatus.totalFiles } photo{ uploadStatus.totalFiles === 1 ? "" : "s" } - Uploading { uploadStatus.currentFileIndex } of { uploadStatus.totalFiles }
+          </p>
+          <div>
+            <div className="mb-1 h-2 overflow-hidden rounded-full bg-[#e6f2d9]">
+              <div className="h-full rounded-full bg-[#76a653] transition-all" style={ { width: `${ overallPercent }%` } } />
+            </div>
+            <p className="text-[11px] text-[#5c7a48]">Overall progress: { overallPercent }%</p>
+          </div>
+          <div>
+            <p className="truncate text-[11px] text-[#5c7a48]">
+              Current file: { uploadStatus.currentFileName ?? "Preparing upload..." }
+            </p>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#e6f2d9]">
+              <div className="h-full rounded-full bg-[#8fbc6f] transition-all" style={ { width: `${ uploadStatus.currentFilePercent }%` } } />
+            </div>
+          </div>
+          { uploadStatus.failedFiles > 0 ? (
+            <p className="text-[11px] text-[#9a5d2d]">Failed so far: { uploadStatus.failedFiles }</p>
+          ) : null }
+        </div>
+      ) : null }
 
       { photos.length === 0 ? (
         <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[#d6e8c4] bg-[#f8fdf3] py-12">
@@ -181,38 +267,93 @@ function PhotoScrollStrip({
           </div>
         </div>
       ) : (
-        <div className="max-h-[54vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            { photos.map((photo) => {
-              const albumPhoto = photo as GalleryPhotoItem;
-              const imageUrl = albumPhoto.photoImageUrl;
-              const caption = albumPhoto.caption;
-              // Tooltip: show description if present, else fallback
-              const tooltip = albumPhoto.albumPhotoDescription?.trim()
-                ? albumPhoto.albumPhotoDescription
-                : "Double-click to edit photo details";
-              return (
-                <div
-                  key={ albumPhoto.id }
-                  className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)] cursor-pointer"
-                  onDoubleClick={ () => onPhotoDoubleClick?.(albumPhoto) }
-                  title={ tooltip }
-                >
-                  <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
-                    <GalleryImage
-                      src={ imageUrl }
-                      alt={ caption ?? "Gallery photo" }
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                  { caption && (
-                    <div className="px-1.5 py-1">
-                      <p className="truncate text-[10px] text-[#567145]">{ caption }</p>
+        <div className="max-h-[54vh] space-y-3 overflow-y-auto pr-1">
+          <div className="rounded-xl border border-[#d6e8c4] bg-[#f8fdf3] p-2">
+            <p className="mb-2 text-[0.64rem] font-bold uppercase tracking-[0.24em] text-[#6f8f5d]">
+              { selectedAlbumName ? `${ selectedAlbumName } Photos` : "Selected Album Photos" }
+            </p>
+            { photos.length === 0 ? (
+              <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
+                No photos in this album yet.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                { photos.map((photo) => {
+                  const albumPhoto = photo as GalleryPhotoItem;
+                  const imageUrl = albumPhoto.photoImageUrl;
+                  const caption = albumPhoto.caption;
+                  const tooltip = albumPhoto.albumPhotoDescription?.trim()
+                    ? albumPhoto.albumPhotoDescription
+                    : "Double-click to edit photo details";
+                  return (
+                    <div
+                      key={ albumPhoto.id }
+                      className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
+                      title={ tooltip }
+                    >
+                      <button
+                        type="button"
+                        className="block w-full"
+                        onDoubleClick={ () => onPhotoDoubleClick?.(albumPhoto) }
+                        title={ tooltip }
+                      >
+                        <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
+                          <GalleryImage
+                            src={ imageUrl }
+                            alt={ caption ?? "Gallery photo" }
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                      </button>
+                      { caption && (
+                        <div className="px-1.5 py-1">
+                          <p className="truncate text-[10px] text-[#567145]">{ caption }</p>
+                        </div>
+                      ) }
                     </div>
-                  ) }
-                </div>
-              );
-            }) }
+                  );
+                }) }
+              </div>
+            ) }
+          </div>
+
+          <div className="rounded-xl border border-[#d6e8c4] bg-[#f8fdf3] p-2">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-[0.64rem] font-bold uppercase tracking-[0.24em] text-[#6f8f5d]">
+                Unallocated Photos
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-[#cfe2bc] bg-[#fff7e9] px-2.5 text-[10px] font-semibold text-[#7d562a] hover:bg-[#ffefd5]"
+                disabled={ isBusy || isUploading || unallocatedPhotos.length === 0 }
+                onClick={ () => onClearUnallocatedPhotos?.() }
+              >
+                Clear Unallocated
+              </Button>
+            </div>
+            { unallocatedPhotos.length === 0 ? (
+              <div className="flex h-28 items-center justify-center rounded-lg border border-dashed border-[#d6e8c4] bg-white px-3 text-center text-sm text-[#6d8b58]">
+                No unallocated photos available.
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                { unallocatedPhotos.map((photo) => (
+                  <div key={ photo.id } className="overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]">
+                    <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
+                      <GalleryImage
+                        src={ photo.photoImageUrl }
+                        alt={ photo.caption ?? "Unallocated photo" }
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="px-1.5 py-1">
+                      <p className="truncate text-[10px] text-[#567145]">{ photo.caption ?? photo.fileName ?? "Photo" }</p>
+                    </div>
+                  </div>
+                )) }
+              </div>
+            ) }
           </div>
         </div>
       ) }
@@ -907,6 +1048,12 @@ export default function MemberGalleryHomePage({
   const [selectedAlbumPhoto, setSelectedAlbumPhoto] = useState<GalleryPhotoItem | null>(null);
 
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadTotalFiles, setUploadTotalFiles] = useState(0);
+  const [uploadProcessedFiles, setUploadProcessedFiles] = useState(0);
+  const [uploadFailedFiles, setUploadFailedFiles] = useState(0);
+  const [currentUploadFileName, setCurrentUploadFileName] = useState<string | null>(null);
+  const [currentUploadFileIndex, setCurrentUploadFileIndex] = useState(0);
+  const [currentUploadFilePercent, setCurrentUploadFilePercent] = useState(0);
   const [isAddAlbumOpen, setIsAddAlbumOpen] = useState(false);
   const [isEditAlbumOpen, setIsEditAlbumOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<MemberAlbumItem | null>(null);
@@ -915,17 +1062,115 @@ export default function MemberGalleryHomePage({
   const [isEditAlbumPhotoOpen, setIsEditAlbumPhotoOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MemberAlbumItem | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [pendingAddPhotos, setPendingAddPhotos] = useState<MemberPhotoItem[]>([]);
+  const [pendingRemoveAlbumPhotos, setPendingRemoveAlbumPhotos] = useState<GalleryPhotoItem[]>([]);
+  const [isSavingAlbumChanges, setIsSavingAlbumChanges] = useState(false);
+
+  const hasPendingSelectedAlbumChanges = Boolean(selectedAlbum)
+    && (pendingAddPhotos.length > 0 || pendingRemoveAlbumPhotos.length > 0);
+
+  function resetPendingSelectedAlbumChanges() {
+    setPendingAddPhotos([]);
+    setPendingRemoveAlbumPhotos([]);
+  }
 
   // When an album is selected, load its photos
-  function handleSelectAlbum(album: MemberAlbumItem) {
+  async function saveSelectedAlbumChanges() {
+    if (!selectedAlbum || !hasPendingSelectedAlbumChanges) {
+      return true;
+    }
+
+    setIsSavingAlbumChanges(true);
+    setIsBusy(true);
+
+    let addedCount = 0;
+    let removedCount = 0;
+    const failedAdds: MemberPhotoItem[] = [];
+    const failedRemovals: GalleryPhotoItem[] = [];
+    const addedPhotoIds = new Set<number>();
+    const removedPhotoIds = new Set<number>();
+
+    try {
+      for (const photo of pendingAddPhotos) {
+        const addResult = await addPhotoToAlbumAction({
+          albumId: selectedAlbum.id,
+          photoId: photo.id,
+          caption: photo.caption,
+        });
+
+        if (addResult.success) {
+          addedCount += 1;
+          addedPhotoIds.add(photo.id);
+        } else {
+          failedAdds.push(photo);
+        }
+      }
+
+      for (const albumPhoto of pendingRemoveAlbumPhotos) {
+        const removeResult = await removePhotoFromAlbumAction(albumPhoto.id);
+
+        if (removeResult.success) {
+          removedCount += 1;
+          removedPhotoIds.add(albumPhoto.photoId);
+        } else {
+          failedRemovals.push(albumPhoto);
+        }
+      }
+
+      if (addedCount > 0 || removedCount > 0) {
+        setUnallocatedPhotos((currentPhotos) => currentPhotos.map((photo) => {
+          if (addedPhotoIds.has(photo.id)) {
+            return { ...photo, isInAlbum: true };
+          }
+
+          if (removedPhotoIds.has(photo.id)) {
+            return { ...photo, isInAlbum: false };
+          }
+
+          return photo;
+        }));
+
+        adjustAlbumPhotoCount(selectedAlbum.id, addedCount - removedCount);
+        refreshSelectedAlbumPhotos(selectedAlbum.id);
+      }
+
+      setPendingAddPhotos(failedAdds);
+      setPendingRemoveAlbumPhotos(failedRemovals);
+
+      if (failedAdds.length > 0 || failedRemovals.length > 0) {
+        toast.error("Some album changes failed to save. Please try again.");
+        return false;
+      }
+
+      if (addedCount > 0 || removedCount > 0) {
+        toast.success("Album changes saved.");
+      }
+
+      return true;
+    } finally {
+      setIsBusy(false);
+      setIsSavingAlbumChanges(false);
+    }
+  }
+
+  async function handleSelectAlbum(album: MemberAlbumItem) {
+    if (hasPendingSelectedAlbumChanges) {
+      const didSave = await saveSelectedAlbumChanges();
+      if (!didSave) {
+        return;
+      }
+    }
+
     if (selectedAlbum?.id === album.id) {
       setSelectedAlbum(null);
       setAlbumPhotos([]);
+      resetPendingSelectedAlbumChanges();
       return;
     }
 
     setSelectedAlbum(album);
     setAlbumPhotos([]);
+    resetPendingSelectedAlbumChanges();
     setIsLoadingAlbumPhotos(true);
 
     startTransition(async () => {
@@ -938,6 +1183,41 @@ export default function MemberGalleryHomePage({
         toast.error(result.message);
       }
     });
+  }
+
+  async function handleClearUnallocatedPhotos() {
+    if (visibleUnallocatedPhotos.length === 0) {
+      toast.message("No unallocated photos to clear.");
+      return;
+    }
+
+    if (selectedAlbum && hasPendingSelectedAlbumChanges) {
+      const didSave = await saveSelectedAlbumChanges();
+      if (!didSave) {
+        return;
+      }
+    }
+
+    setIsBusy(true);
+
+    try {
+      const result = await clearUnallocatedGalleryPhotosAction();
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setUnallocatedPhotos((currentPhotos) => currentPhotos.filter((photo) => photo.isInAlbum));
+
+      if (result.removedCount > 0) {
+        toast.success(`Cleared ${ result.removedCount } unallocated photo${ result.removedCount === 1 ? "" : "s" }.`);
+      } else {
+        toast.message("No unallocated photos were removed.");
+      }
+    } finally {
+      setIsBusy(false);
+    }
   }
 
   function refreshSelectedAlbumPhotos(albumId?: number) {
@@ -976,11 +1256,18 @@ export default function MemberGalleryHomePage({
     }
 
     setIsUploading(true);
+    setUploadTotalFiles(files.length);
+    setUploadProcessedFiles(0);
+    setUploadFailedFiles(0);
+    setCurrentUploadFileName(files[0]?.name ?? null);
+    setCurrentUploadFileIndex(files.length > 0 ? 1 : 0);
+    setCurrentUploadFilePercent(0);
 
     try {
       const uploadedPhotos: MemberPhotoItem[] = [];
       let successCount = 0;
       let failureCount = 0;
+      let processedCount = 0;
 
       const createShortPrefix = () => {
         if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -997,6 +1284,10 @@ export default function MemberGalleryHomePage({
       };
 
       for (const [index, file] of files.entries()) {
+        setCurrentUploadFileName(file.name);
+        setCurrentUploadFileIndex(index + 1);
+        setCurrentUploadFilePercent(0);
+
         // 1. Get a pre-signed URL from the API
         const safeBaseName = file.name.replace(/[^A-Za-z0-9._-]/g, "-") || `photo-${ index + 1 }`;
         const safeName = `${ createShortPrefix() }-${ safeBaseName }`;
@@ -1015,20 +1306,24 @@ export default function MemberGalleryHomePage({
 
         if (!signRes.ok) {
           failureCount += 1;
+          processedCount += 1;
+          setUploadFailedFiles(failureCount);
+          setUploadProcessedFiles(processedCount);
           continue;
         }
 
         const { url: signedUrl, s3Key, s3Uri, fileUrl } = await signRes.json();
 
         // 2. Upload directly to S3
-        const uploadRes = await fetch(signedUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
-
-        if (!uploadRes.ok) {
+        try {
+          await uploadFileToSignedUrl(signedUrl, file, (percent) => {
+            setCurrentUploadFilePercent(percent);
+          });
+        } catch {
           failureCount += 1;
+          processedCount += 1;
+          setUploadFailedFiles(failureCount);
+          setUploadProcessedFiles(processedCount);
           continue;
         }
 
@@ -1057,6 +1352,10 @@ export default function MemberGalleryHomePage({
         } else {
           failureCount += 1;
         }
+
+        processedCount += 1;
+        setUploadFailedFiles(failureCount);
+        setUploadProcessedFiles(processedCount);
       }
 
       if (uploadedPhotos.length > 0) {
@@ -1074,6 +1373,12 @@ export default function MemberGalleryHomePage({
       toast.error("An unexpected error occurred during upload.");
     } finally {
       setIsUploading(false);
+      setCurrentUploadFilePercent(0);
+      setCurrentUploadFileName(null);
+      setCurrentUploadFileIndex(0);
+      setUploadTotalFiles(0);
+      setUploadProcessedFiles(0);
+      setUploadFailedFiles(0);
     }
   }
 
@@ -1184,9 +1489,63 @@ export default function MemberGalleryHomePage({
   }
 
   // Display photos: when album selected show album photos; otherwise unallocated
-  const displayPhotos: Array<MemberPhotoItem | GalleryPhotoItem> = selectedAlbum
-    ? albumPhotos
-    : unallocatedPhotos.filter((p) => !p.isInAlbum);
+  const displayPhotos: Array<MemberPhotoItem | GalleryPhotoItem> = useMemo(() => {
+    if (!selectedAlbum) {
+      return unallocatedPhotos.filter((photo) => !photo.isInAlbum);
+    }
+
+    const pendingRemovedIds = new Set(pendingRemoveAlbumPhotos.map((photo) => photo.id));
+    const currentAlbumPhotos = albumPhotos.filter((photo) => !pendingRemovedIds.has(photo.id));
+    const pendingAddedAlbumPhotos: GalleryPhotoItem[] = pendingAddPhotos.map((photo, index) => ({
+      id: -photo.id,
+      photoId: photo.id,
+      albumId: selectedAlbum.id,
+      caption: photo.caption,
+      albumPhotoDescription: null,
+      photoImageUrl: photo.photoImageUrl,
+      seqNo: currentAlbumPhotos.length + index + 1,
+      memberId: member.memberId,
+      memberName: `${ member.firstName } ${ member.lastName }`,
+      likeCount: 0,
+      loveCount: 0,
+      viewerReaction: null,
+    }));
+
+    return [...currentAlbumPhotos, ...pendingAddedAlbumPhotos];
+  }, [albumPhotos, member.firstName, member.lastName, member.memberId, pendingAddPhotos, pendingRemoveAlbumPhotos, selectedAlbum]);
+
+  const visibleUnallocatedPhotos = useMemo(() => {
+    const basePhotos = unallocatedPhotos.filter((photo) => !photo.isInAlbum);
+
+    if (!selectedAlbum) {
+      return basePhotos;
+    }
+
+    const byId = new Map<number, MemberPhotoItem>();
+
+    for (const photo of basePhotos) {
+      byId.set(photo.id, photo);
+    }
+
+    for (const removedAlbumPhoto of pendingRemoveAlbumPhotos) {
+      const existing = unallocatedPhotos.find((photo) => photo.id === removedAlbumPhoto.photoId);
+      byId.set(removedAlbumPhoto.photoId, {
+        id: removedAlbumPhoto.photoId,
+        caption: removedAlbumPhoto.caption,
+        photoYear: existing?.photoYear ?? new Date().getFullYear(),
+        photoImageUrl: removedAlbumPhoto.photoImageUrl,
+        fileName: existing?.fileName ?? null,
+        createdAt: existing?.createdAt ?? new Date(),
+        isInAlbum: false,
+      });
+    }
+
+    for (const pendingAddedPhoto of pendingAddPhotos) {
+      byId.delete(pendingAddedPhoto.id);
+    }
+
+    return Array.from(byId.values());
+  }, [pendingAddPhotos, pendingRemoveAlbumPhotos, selectedAlbum, unallocatedPhotos]);
 
   const stripLabel = selectedAlbum
     ? `Photos — ${ selectedAlbum.albumName }`
@@ -1382,6 +1741,47 @@ export default function MemberGalleryHomePage({
     });
   }
 
+  function handleAddPhotoToSelectedAlbum(photo: MemberPhotoItem) {
+    if (!selectedAlbum) {
+      return;
+    }
+
+    setPendingRemoveAlbumPhotos((currentRemovals) => {
+      if (currentRemovals.some((albumPhoto) => albumPhoto.photoId === photo.id)) {
+        return currentRemovals.filter((albumPhoto) => albumPhoto.photoId !== photo.id);
+      }
+
+      return currentRemovals;
+    });
+
+    setPendingAddPhotos((currentAdds) => {
+      if (currentAdds.some((addedPhoto) => addedPhoto.id === photo.id)) {
+        return currentAdds;
+      }
+
+      return [...currentAdds, photo];
+    });
+  }
+
+  function handleRemovePhotoFromSelectedAlbum(photo: GalleryPhotoItem) {
+    if (!selectedAlbum) {
+      return;
+    }
+
+    if (photo.id < 0) {
+      setPendingAddPhotos((currentAdds) => currentAdds.filter((addedPhoto) => addedPhoto.id !== photo.photoId));
+      return;
+    }
+
+    setPendingRemoveAlbumPhotos((currentRemovals) => {
+      if (currentRemovals.some((albumPhoto) => albumPhoto.id === photo.id)) {
+        return currentRemovals.filter((albumPhoto) => albumPhoto.id !== photo.id);
+      }
+
+      return [...currentRemovals, photo];
+    });
+  }
+
   function handleRemovePhotoFromEditAlbum(photo: GalleryPhotoItem) {
     if (!editTarget) {
       return;
@@ -1472,9 +1872,21 @@ export default function MemberGalleryHomePage({
                     photos={ displayPhotos }
                     label={ stripLabel }
                     isUnallocatedStrip={ selectedAlbum === null }
+                    selectedAlbumName={ selectedAlbum?.albumName }
+                    unallocatedPhotos={ visibleUnallocatedPhotos }
                     onPhotoDoubleClick={ selectedAlbum ? handleOpenAlbumPhotoEditor : undefined }
+                    onClearUnallocatedPhotos={ handleClearUnallocatedPhotos }
                     onUpload={ handleUpload }
                     isUploading={ isUploading }
+                    isBusy={ isBusy }
+                    uploadStatus={ {
+                      totalFiles: uploadTotalFiles,
+                      processedFiles: uploadProcessedFiles,
+                      failedFiles: uploadFailedFiles,
+                      currentFileIndex: currentUploadFileIndex,
+                      currentFileName: currentUploadFileName,
+                      currentFilePercent: currentUploadFilePercent,
+                    } }
                   />
                 ) }
               </div>

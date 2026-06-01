@@ -461,6 +461,51 @@ export async function saveGalleryPhoto(
   }
 }
 
+export async function clearUnallocatedGalleryPhotos(
+  ctx: MemberContext
+): Promise<{ success: true; removedCount: number } | { success: false; message: string }> {
+  try {
+    const photoRows = await db
+      .select({ id: galleryPhoto.id })
+      .from(galleryPhoto)
+      .where(eq(galleryPhoto.memberId, ctx.memberId));
+
+    if (photoRows.length === 0) {
+      return { success: true, removedCount: 0 };
+    }
+
+    const albumPhotoRows = await db
+      .select({ photoId: galleryAlbumPhoto.photoId })
+      .from(galleryAlbumPhoto)
+      .where(eq(galleryAlbumPhoto.memberId, ctx.memberId));
+
+    const inAlbumIds = new Set(albumPhotoRows.map((row) => row.photoId));
+    const removablePhotoIds = photoRows
+      .map((row) => row.id)
+      .filter((photoId) => !inAlbumIds.has(photoId));
+
+    if (removablePhotoIds.length === 0) {
+      return { success: true, removedCount: 0 };
+    }
+
+    await db
+      .delete(galleryPhoto)
+      .where(
+        and(
+          eq(galleryPhoto.memberId, ctx.memberId),
+          inArray(galleryPhoto.id, removablePhotoIds)
+        )
+      );
+
+    return { success: true, removedCount: removablePhotoIds.length };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to clear unallocated photos",
+    };
+  }
+}
+
 // ── Album mutations ───────────────────────────────────────────────────────────
 
 export async function createGalleryAlbum(
