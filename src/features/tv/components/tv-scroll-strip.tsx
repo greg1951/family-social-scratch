@@ -49,6 +49,7 @@ type TvScrollStripProps = {
   accentClassName: string;
   selectedShowId?: number;
   onSelectShow?: (id: number) => void;
+  onOpenShow?: (id: number) => void;
 };
 
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
@@ -140,6 +141,7 @@ export function TvScrollStrip({
   accentClassName,
   selectedShowId,
   onSelectShow,
+  onOpenShow,
 }: TvScrollStripProps) {
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
@@ -172,6 +174,7 @@ export function TvScrollStrip({
                     role={ onSelectShow ? "button" : undefined }
                     tabIndex={ onSelectShow ? 0 : undefined }
                     onClick={ onSelectShow ? () => onSelectShow(item.id) : undefined }
+                    onDoubleClick={ onOpenShow ? () => onOpenShow(item.id) : undefined }
                     onKeyDown={ onSelectShow ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectShow(item.id); } } : undefined }
                     aria-label={ onSelectShow ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
                     aria-pressed={ onSelectShow ? isSelected : undefined }

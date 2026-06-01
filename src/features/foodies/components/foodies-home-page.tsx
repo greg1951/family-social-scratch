@@ -207,7 +207,7 @@ export function FoodiesHomePage({
       id: recipe.id,
       name: recipe.recipeTitle,
       date: formatStripDate(recipe.updatedAt),
-      submitterLikenessDegree: recipe.submitterLikenessDegree,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -232,7 +232,7 @@ export function FoodiesHomePage({
       kind: "top-rated" as const,
       id: recipe.id,
       name: recipe.recipeTitle,
-      submitterLikenessDegree: recipe.submitterLikenessDegree,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       noRating: recipe.noRatingCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -331,6 +331,7 @@ export function FoodiesHomePage({
       : recipes.find((recipe) => recipe.id === selectedRecipe))
     ?? selectedRecipeRecord;
   const canEditSelectedRecipe = selectedRecipeBasic?.memberId === member.memberId;
+  const canReactToSelectedRecipe = Boolean(selectedRecipeBasic && selectedRecipeBasic.memberId !== member.memberId);
 
   function handleSelectRecipe(recipeId: number) {
     setCommentText("");
@@ -341,8 +342,18 @@ export function FoodiesHomePage({
     }
   }
 
+  function handleOpenRecipeFromCard(recipeId: number) {
+    handleSelectRecipe(recipeId);
+    setIsViewRecipeOpen(true);
+  }
+
   function handleToggleLike(likenessDegree: number) {
     if (!selectedRecipeBasic) {
+      return;
+    }
+
+    if (selectedRecipeBasic.memberId === member.memberId) {
+      toast.error("You cannot react to your own recipe posting.");
       return;
     }
 
@@ -770,6 +781,7 @@ export function FoodiesHomePage({
               accentClassName={ stripAccentClassName }
               selectedItemId={ selectedRecipe }
               onSelectItem={ handleSelectRecipe }
+              onOpenItem={ handleOpenRecipeFromCard }
             />
           </div>
 
@@ -858,6 +870,7 @@ export function FoodiesHomePage({
                           key={ recipe.id }
                           type="button"
                           onClick={ () => handleSelectRecipe(recipe.id) }
+                          onDoubleClick={ () => handleOpenRecipeFromCard(recipe.id) }
                           title={ [
                             `${ recipe.category } • ${ recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins } min prep` : "No prep time" } • ${ recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins } min cook` : "No cook time" }`,
                             `Added by ${ recipe.chef }`,
@@ -1011,7 +1024,7 @@ export function FoodiesHomePage({
                         <Button
                           type="button"
                           onClick={ () => handleToggleLike(1) }
-                          disabled={ !selectedRecipeBasic || isEngaging }
+                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
                           className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
                           aria-label={ selectedRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
                         >
@@ -1020,13 +1033,18 @@ export function FoodiesHomePage({
                         <Button
                           type="button"
                           onClick={ () => handleToggleLike(2) }
-                          disabled={ !selectedRecipeBasic || isEngaging }
+                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
                           className="rounded-full bg-[#d9842a] text-white hover:bg-[#c5731f]"
                           aria-label={ selectedRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
                         >
                           <Heart className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
                         </Button>
                       </div>
+                      { !canReactToSelectedRecipe ? (
+                        <p className="text-xs text-[#647a50]">
+                          You cannot react to your own recipe. Ask another family member to rate it.
+                        </p>
+                      ) : null }
                       <div className="flex flex-wrap items-center gap-4">
                         <span className="inline-flex items-center gap-1.5 font-semibold text-[#476232]">
                           <ThumbsUp className="size-4 text-[#578c24]" />

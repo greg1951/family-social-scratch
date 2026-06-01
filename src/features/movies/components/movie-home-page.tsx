@@ -137,7 +137,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       id: movie.id,
       name: movie.movieTitle,
       date: formatStripDate(movie.updatedAt),
-      submitterLikenessDegree: movie.submitterLikenessDegree,
+      submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
@@ -165,7 +165,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       kind: "top-rated" as const,
       id: movie.id,
       name: movie.movieTitle,
-      submitterLikenessDegree: movie.submitterLikenessDegree,
+      submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
@@ -251,8 +251,22 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const canReactToSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId !== member.memberId);
   const canEditSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId === member.memberId);
 
+  function handleSelectMovie(movieId: number) {
+    setSelectedMovie(movieId);
+  }
+
+  function handleOpenMovieFromCard(movieId: number) {
+    handleSelectMovie(movieId);
+    setIsViewMovieOpen(true);
+  }
+
   function handleToggleLike(likenessDegree: number) {
     if (!selectedMovieBasic) {
+      return;
+    }
+
+    if (selectedMovieBasic.memberId === member.memberId) {
+      toast.error("You cannot react to your own movie posting.");
       return;
     }
 
@@ -355,7 +369,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
               items={ stripItems }
               accentClassName={ stripAccentClassName }
               selectedItemId={ selectedMovie }
-              onSelectItem={ setSelectedMovie }
+              onSelectItem={ handleSelectMovie }
+              onOpenItem={ handleOpenMovieFromCard }
             />
           </div>
 
@@ -434,7 +449,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                           <button
                             key={ movie.id }
                             type="button"
-                            onClick={ () => setSelectedMovie(movie.id) }
+                            onClick={ () => handleSelectMovie(movie.id) }
+                            onDoubleClick={ () => handleOpenMovieFromCard(movie.id) }
                             title={ [
                               `${ movie.genre } • ${ movie.adjective } • ${ movie.channel }`,
                               `Added by ${ movie.addedBy }`,

@@ -42,6 +42,7 @@ type FoodiesScrollStripProps = {
   accentClassName: string;
   selectedItemId?: number;
   onSelectItem?: (id: number) => void;
+  onOpenItem?: (id: number) => void;
 };
 
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
@@ -133,6 +134,7 @@ export function FoodiesScrollStrip({
   accentClassName,
   selectedItemId,
   onSelectItem,
+  onOpenItem,
 }: FoodiesScrollStripProps) {
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
@@ -165,6 +167,7 @@ export function FoodiesScrollStrip({
                     role={ onSelectItem ? "button" : undefined }
                     tabIndex={ onSelectItem ? 0 : undefined }
                     onClick={ onSelectItem ? () => onSelectItem(item.id) : undefined }
+                    onDoubleClick={ onOpenItem ? () => onOpenItem(item.id) : undefined }
                     onKeyDown={ onSelectItem ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectItem(item.id); } } : undefined }
                     aria-label={ onSelectItem ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
                     aria-pressed={ onSelectItem ? isSelected : undefined }

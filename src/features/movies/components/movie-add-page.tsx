@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Bold,
   Columns2,
-  Heart,
   HelpCircle,
   Heading2,
   Heading3,
@@ -22,7 +21,6 @@ import {
   Rows2,
   Save,
   Table2,
-  ThumbsUp,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
@@ -61,7 +59,6 @@ const TAG_TYPE_LABELS: Array<{ type: MovieTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
-const REACTION_NONE_VALUE = "none";
 
 type MovieSiteBackground = (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"];
 
@@ -174,9 +171,6 @@ export function MovieAddPage({
   );
   const [movieDebutYear, setMovieDebutYear] = useState(String(initialMovie?.movieDebutYear ?? new Date().getFullYear()));
   const [status, setStatus] = useState(initialMovie?.status ?? "draft");
-  const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
-    initialMovie?.likenessDegree ? String(initialMovie.likenessDegree) : REACTION_NONE_VALUE
-  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MovieTagType, string>>>(() => {
     if (!initialMovie) {
       return {};
@@ -373,18 +367,13 @@ export function MovieAddPage({
       return;
     }
 
-    if (!isEditing && submitterLikenessDegree === REACTION_NONE_VALUE) {
-      toast.error("Select Like or Love for your movie post.");
-      return;
-    }
-
     startSaveTransition(async () => {
       const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
 
       const baseInput = {
         id: initialMovie?.id,
         movieTitle: movieTitle.trim(),
-        submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE ? undefined : Number(submitterLikenessDegree),
+        submitterLikenessDegree: undefined,
         movieJson: serializeTipTapDocument(editor.getJSON()),
         status,
         movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(),
@@ -452,10 +441,15 @@ export function MovieAddPage({
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Editor</p>
                 <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">{ isEditing ? "Update Movie" : "New Movie Details" }</h2>
               </div>
-              <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
-                <Save className="size-4" />
-                { isSaving ? "Saving..." : isEditing ? "Update Movie" : "Save Movie" }
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/movies">Cancel</Link>
+                </Button>
+                <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
+                  <Save className="size-4" />
+                  { isSaving ? "Saving..." : isEditing ? "Update Movie" : "Save Movie" }
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -573,43 +567,8 @@ export function MovieAddPage({
                   </Select>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_9rem] sm:items-end">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Your Rating</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={ [
-                        "border-[#e8c4a0] transition-all",
-                        submitterLikenessDegree === "1"
-                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
-                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
-                      ].join(" ") }
-                      onClick={ () => setSubmitterLikenessDegree("1") }
-                      aria-pressed={ submitterLikenessDegree === "1" }
-                    >
-                      <ThumbsUp className="mr-2 size-4" />
-                      Like
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={ [
-                        "border-[#e8c4a0] transition-all",
-                        submitterLikenessDegree === "2"
-                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
-                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
-                      ].join(" ") }
-                      onClick={ () => setSubmitterLikenessDegree("2") }
-                      aria-pressed={ submitterLikenessDegree === "2" }
-                    >
-                      <Heart className="mr-2 size-4" />
-                      Love
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
+              <div className="space-y-2">
+                <div className="max-w-36 space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
                   <Input id="movie-year" type="number" value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } className="max-w-36" />
                 </div>

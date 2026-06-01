@@ -49,6 +49,7 @@ type MovieScrollStripProps = {
   accentClassName: string;
   selectedItemId?: number;
   onSelectItem?: (id: number) => void;
+  onOpenItem?: (id: number) => void;
 };
 
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
@@ -82,6 +83,7 @@ export function MovieScrollStrip({
   accentClassName,
   selectedItemId,
   onSelectItem,
+  onOpenItem,
 }: MovieScrollStripProps) {
 
   function MovieImage({ src, alt }: { src: string; alt: string }) {
@@ -173,6 +175,7 @@ export function MovieScrollStrip({
                     role={ onSelectItem ? "button" : undefined }
                     tabIndex={ onSelectItem ? 0 : undefined }
                     onClick={ onSelectItem ? () => onSelectItem(item.id) : undefined }
+                    onDoubleClick={ onOpenItem ? () => onOpenItem(item.id) : undefined }
                     onKeyDown={ onSelectItem ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelectItem(item.id); } } : undefined }
                     aria-label={ onSelectItem ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
                     aria-pressed={ onSelectItem ? isSelected : undefined }

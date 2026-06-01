@@ -293,6 +293,11 @@ export default function PoetryHomePage({
     setSelectedPoemId(poemId);
   }
 
+  function handleOpenPoemFromCard(poemId: number) {
+    handleSelectPoem(poemId);
+    setIsPoemDialogOpen(true);
+  }
+
   function handleAddPoem() {
     router.push("/poetry/add-poem");
   }
@@ -616,6 +621,7 @@ export default function PoetryHomePage({
                         key={ poemItem.id }
                         type="button"
                         onClick={ () => handleSelectPoem(poemItem.id) }
+                        onDoubleClick={ () => handleOpenPoemFromCard(poemItem.id) }
                         className={ `grid w-full gap-2 rounded-[1.4rem] border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#8c62b5] bg-[linear-gradient(135deg,rgba(244,236,255,0.95),rgba(252,248,255,0.95))] shadow-[0_18px_45px_-35px_rgba(80,40,120,0.7)]"
                           : "border-[#e6deef] bg-white hover:border-[#c7b2db] hover:bg-[#fcfaff]"

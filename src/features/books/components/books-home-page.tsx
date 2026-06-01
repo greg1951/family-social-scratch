@@ -291,6 +291,13 @@ export default function BooksHomePage({
     setSelectedBookId(bookId);
   }
 
+  function handleOpenBookFromCard(bookId: number) {
+    handleSelectBook(bookId);
+    setTimeout(() => {
+      bookDialog.openBookDialog("view");
+    }, 0);
+  }
+
   function applyBookRefresh(updatedBook: BooksHomeBook) {
     const updatedDraft = createDraftFromBook(updatedBook, member);
 
@@ -593,6 +600,7 @@ export default function BooksHomePage({
                         key={ bookItem.id }
                         type="button"
                         onClick={ () => handleSelectBook(bookItem.id) }
+                        onDoubleClick={ () => handleOpenBookFromCard(bookItem.id) }
                         className={ `grid w-full gap-2 rounded-[1.4rem] border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#3d819b] bg-[linear-gradient(135deg,rgba(231,247,255,0.95),rgba(248,252,255,0.95))] shadow-[0_18px_45px_-35px_rgba(9,56,82,0.7)]"
                           : "border-[#deeaef] bg-white hover:border-[#a6c6d3] hover:bg-[#fbfdff]"

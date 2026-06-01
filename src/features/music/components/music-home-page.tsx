@@ -138,7 +138,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       date: formatShortDate(music.updatedAt),
       reviewType: music.isSong ? "Song" as const : "Album" as const,
       hasLyrics: Boolean(music.hasLyrics),
-      submitterLikenessDegree: music.submitterLikenessDegree,
+      submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
       commentsCount: music.commentCount,
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
@@ -163,7 +163,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "top-rated" as const,
       id: music.id,
       name: music.musicTitle,
-      submitterLikenessDegree: music.submitterLikenessDegree,
+      submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
       noRating: music.noRatingCount,
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
@@ -251,8 +251,22 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     && selectedMusicDetail.lyrics,
   );
 
+  function handleSelectMusic(musicId: number) {
+    setSelectedMusic(musicId);
+  }
+
+  function handleOpenMusicFromCard(musicId: number) {
+    handleSelectMusic(musicId);
+    setIsViewMusicOpen(true);
+  }
+
   function handleToggleLike(likenessDegree: number) {
     if (!selectedMusicBasic) {
+      return;
+    }
+
+    if (selectedMusicBasic.memberId === member.memberId) {
+      toast.error("You cannot react to your own music posting.");
       return;
     }
 
@@ -348,7 +362,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
               items={ stripItems }
               accentClassName={ stripAccentClassName }
               selectedItemId={ selectedMusic }
-              onSelectItem={ setSelectedMusic }
+              onSelectItem={ handleSelectMusic }
+              onOpenItem={ handleOpenMusicFromCard }
             />
           </div>
 
@@ -421,7 +436,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                           <button
                             key={ music.id }
                             type="button"
-                            onClick={ () => setSelectedMusic(music.id) }
+                            onClick={ () => handleSelectMusic(music.id) }
+                            onDoubleClick={ () => handleOpenMusicFromCard(music.id) }
                             title={ [
                               `${ music.genre } • ${ music.subGenre } • ${ music.reviewType }`,
                               `Added by ${ music.addedBy }`,

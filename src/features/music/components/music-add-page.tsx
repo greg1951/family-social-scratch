@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Bold,
   Columns2,
-  Heart,
   Heading2,
   Heading3,
   Italic,
@@ -21,7 +20,6 @@ import {
   Rows2,
   Save,
   Table2,
-  ThumbsUp,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
@@ -58,7 +56,6 @@ const TAG_TYPE_LABELS: Array<{ type: MusicTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
-const REACTION_NONE_VALUE = "none";
 
 type ToolbarButtonProps = {
   label: string;
@@ -138,9 +135,6 @@ export function MusicAddPage({
   const [musicDebutYear, setMusicDebutYear] = useState(String(initialMusic?.musicDebutYear ?? new Date().getFullYear()));
   const [isSong, setIsSong] = useState(initialMusic?.isSong ?? true);
   const [status, setStatus] = useState(initialMusic?.status ?? "draft");
-  const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
-    initialMusic?.likenessDegree ? String(initialMusic.likenessDegree) : REACTION_NONE_VALUE
-  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MusicTagType, string>>>(() => {
     if (!initialMusic) {
       return {};
@@ -327,18 +321,13 @@ export function MusicAddPage({
       return;
     }
 
-    if (!isEditing && submitterLikenessDegree === REACTION_NONE_VALUE) {
-      toast.error("Select Like or Love for your music post.");
-      return;
-    }
-
     startSaveTransition(async () => {
       const uploadedImageUrl = await uploadMusicImage();
       if (selectedFile && !uploadedImageUrl) {
         return;
       }
       const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
-      const result = await saveMusicAction({ id: initialMusic?.id, musicTitle: musicTitle.trim(), artistName: artistName.trim(), submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE ? undefined : Number(submitterLikenessDegree), musicJson: serializeTipTapDocument(editor.getJSON()), status, isSong, musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null, musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
+      const result = await saveMusicAction({ id: initialMusic?.id, musicTitle: musicTitle.trim(), artistName: artistName.trim(), submitterLikenessDegree: undefined, musicJson: serializeTipTapDocument(editor.getJSON()), status, isSong, musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null, musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
       if (!result.success) {
         toast.error(result.message);
         return;
@@ -371,10 +360,15 @@ export function MusicAddPage({
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Editor</p>
                 <h2 className="mt-2 text-2xl font-black tracking-tight text-[#203b66]">{ isEditing ? "Update Music" : "New Music Details" }</h2>
               </div>
-              <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
-                <Save className="size-4" />
-                { isSaving ? "Saving..." : isEditing ? "Update Music" : "Save Music" }
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="button" variant="outline" asChild>
+                  <Link href="/music">Cancel</Link>
+                </Button>
+                <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
+                  <Save className="size-4" />
+                  { isSaving ? "Saving..." : isEditing ? "Update Music" : "Save Music" }
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -413,7 +407,7 @@ export function MusicAddPage({
                   </Select>
                 </div>
               </div>
-              <div className="grid gap-1 sm:grid-cols-3 py-2">
+              <div className="grid gap-1 sm:grid-cols-2 py-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Type</label>
                   <Select value={ isSong ? "song" : "album" } onValueChange={ (value) => setIsSong(value === "song") }>
@@ -427,41 +421,6 @@ export function MusicAddPage({
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-year">Debut Year</label>
                   <Input id="music-year" type="number" value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } className="w-30" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Your Rating</label>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={ [
-                        "border-[#e8c4a0] transition-all",
-                        submitterLikenessDegree === "1"
-                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
-                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
-                      ].join(" ") }
-                      onClick={ () => setSubmitterLikenessDegree("1") }
-                      aria-pressed={ submitterLikenessDegree === "1" }
-                    >
-                      <ThumbsUp className="mr-2 size-4" />
-                      Like
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className={ [
-                        "border-[#e8c4a0] transition-all",
-                        submitterLikenessDegree === "2"
-                          ? "border-[#b8581a] bg-[#ffe6d6] text-[#5c2300] shadow-[0_0_0_2px_rgba(184,88,26,0.18)] scale-[1.03]"
-                          : "bg-white text-[#8b5a3c] hover:bg-[#fff7f1]",
-                      ].join(" ") }
-                      onClick={ () => setSubmitterLikenessDegree("2") }
-                      aria-pressed={ submitterLikenessDegree === "2" }
-                    >
-                      <Heart className="mr-2 size-4" />
-                      Love
-                    </Button>
-                  </div>
                 </div>
               </div>
               <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">

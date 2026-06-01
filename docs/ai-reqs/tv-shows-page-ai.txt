@@ -98,3 +98,16 @@ The View Show button currently opens a modal with show details.
 - This currently contains the show details.
 - The change to this modal dialog is to now also include the show image, which is currently not included. 
 
+-----------------------------
+
+It doesn't make any sense for the a member creating a post to have to enter either a like or love reaction. 
+
+Update the src/features/tv/components/tv-add-show-page.tsx component to Remove Like or Love from add show form.
+Update the src/features/tv/components/tv-home-page.tsx 
+- Remove reaction on the scroll strip card to not show the reaction in the image if made by the member posting the show. It's OK to show other member's reaction.
+- Do not allow a member who posted a show to react to their own show posting.
+
+-------------------------------
+
+In the home pages for TV Shows, Movie Maniacs, Music Lovers, and Family Foodies, when a member double-clicks on a card in the photo scroll strip or on a card in the Finder list, open the associated View dialog. 
+This will avoid having to make multiple clicks to read a post.

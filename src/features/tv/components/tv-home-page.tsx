@@ -192,7 +192,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     id: show.id,
     name: show.showTitle,
     date: formatShortDate(show.updatedAt),
-    submitterLikenessDegree: show.submitterLikenessDegree,
+    submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
     love: show.loveCount,
@@ -220,7 +220,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       kind: "top-rated" as const,
       id: show.id,
       name: show.showTitle,
-      submitterLikenessDegree: show.submitterLikenessDegree,
+      submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
       noRating: show.noRatingCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
@@ -351,8 +351,18 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     }
   }
 
+  function handleOpenShowFromCard(showId: number) {
+    handleSelectShow(showId);
+    setIsViewShowOpen(true);
+  }
+
   function handleToggleLike(likenessDegree: number) {
     if (!selectedShowBasic) {
+      return;
+    }
+
+    if (selectedShowBasic.memberId === member.memberId) {
+      toast.error("You cannot react to your own show posting.");
       return;
     }
 
@@ -531,6 +541,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                             key={ show.id }
                             type="button"
                             onClick={ () => handleSelectShow(show.id) }
+                            onDoubleClick={ () => handleOpenShowFromCard(show.id) }
                             title={ [
                               `${ show.genre } • ${ show.adjective } • ${ show.channel }`,
                               `Added by ${ show.addedBy }`,
@@ -827,6 +838,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
               accentClassName={ stripAccentClassName }
               selectedShowId={ selectedShow }
               onSelectShow={ handleSelectShow }
+              onOpenShow={ handleOpenShowFromCard }
             />
           </div>
         </div>

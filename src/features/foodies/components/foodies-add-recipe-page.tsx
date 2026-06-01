@@ -12,7 +12,6 @@ import {
   Columns2,
   Combine,
   Clock3,
-  Heart,
   Heading2,
   Heading3,
   Italic,
@@ -25,7 +24,6 @@ import {
   Soup,
   Sparkles,
   Table2,
-  ThumbsUp,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
@@ -65,7 +63,6 @@ const TAG_TYPE_LABELS: Array<{ type: RecipeTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
-const REACTION_NONE_VALUE = "none";
 
 type ToolbarButtonProps = {
   label: string;
@@ -142,7 +139,6 @@ export function FoodiesAddRecipePage({
   member,
   initialRecipe,
   initialRecipeProTipsJson,
-  initialSubmitterLikenessDegree,
   mode = "add",
 }: {
   recipeTags: RecipeTagOption[];
@@ -171,9 +167,6 @@ export function FoodiesAddRecipePage({
   const [prepTimeMins, setPrepTimeMins] = useState(String(initialRecipe?.prepTimeMins ?? 15));
   const [cookTimeMins, setCookTimeMins] = useState(String(initialRecipe?.cookTimeMins ?? 20));
   const [status, setStatus] = useState(initialRecipe?.status ?? "draft");
-  const [submitterLikenessDegree, setSubmitterLikenessDegree] = useState<string>(
-    initialSubmitterLikenessDegree ? String(initialSubmitterLikenessDegree) : REACTION_NONE_VALUE
-  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<RecipeTagType, string>>>(() => {
     if (!initialRecipe) {
       return {};
@@ -521,11 +514,6 @@ export function FoodiesAddRecipePage({
         return;
       }
 
-      if (!isEditing && submitterLikenessDegree === REACTION_NONE_VALUE) {
-        toast.error("Select Like or Love for your recipe post.");
-        return;
-      }
-
       const selectedTagIds = Object.values(selectedTagsByType)
         .map((value) => Number(value))
         .filter((value) => Number.isInteger(value) && value > 0);
@@ -545,9 +533,7 @@ export function FoodiesAddRecipePage({
         prepTimeMins: Number(prepTimeMins || 0),
         cookTimeMins: Number(cookTimeMins || 0),
         status,
-        submitterLikenessDegree: submitterLikenessDegree === REACTION_NONE_VALUE
-          ? undefined
-          : Number(submitterLikenessDegree),
+        submitterLikenessDegree: undefined,
         recipeImageUrl: uploadedRecipeImageUrl,
         recipeJson: serializeTipTapDocument(editor.getJSON()),
         recipeProTipsJson,
@@ -700,43 +686,6 @@ export function FoodiesAddRecipePage({
                     <SelectItem value="published">Published</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="submitterReaction">Your Rating</label>
-                <div id="submitterReaction" className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={ [
-                      "border-[#cadfbb] transition-all",
-                      submitterLikenessDegree === "1"
-                        ? "border-[#3d7a27] bg-[#dff4d2] text-[#214515] shadow-[0_0_0_2px_rgba(61,122,39,0.18)] scale-[1.03]"
-                        : "bg-white text-[#486532] hover:bg-[#f7fce8]",
-                    ].join(" ") }
-                    onClick={ () => setSubmitterLikenessDegree("1") }
-                    aria-pressed={ submitterLikenessDegree === "1" }
-                  >
-                    <ThumbsUp className="mr-2 size-4" />
-                    Like
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={ [
-                      "border-[#cadfbb] transition-all",
-                      submitterLikenessDegree === "2"
-                        ? "border-[#3d7a27] bg-[#dff4d2] text-[#214515] shadow-[0_0_0_2px_rgba(61,122,39,0.18)] scale-[1.03]"
-                        : "bg-white text-[#486532] hover:bg-[#f7fce8]",
-                    ].join(" ") }
-                    onClick={ () => setSubmitterLikenessDegree("2") }
-                    aria-pressed={ submitterLikenessDegree === "2" }
-                  >
-                    <Heart className="mr-2 size-4" />
-                    Love
-                  </Button>
-                </div>
-                <p className="text-xs text-[#647a50]">Choose Like or Love for your own post.</p>
               </div>
 
               <div className="space-y-2">
@@ -1082,6 +1031,13 @@ export function FoodiesAddRecipePage({
             </div>
 
             <div className="flex flex-wrap gap-3 pt-2">
+              <Button type="button" variant="outline" className="border-[#cadfbb]" asChild>
+                <Link href="/foodies">
+                  <Soup className="mr-2 size-4" />
+                  Cancel
+                </Link>
+              </Button>
+
               <Button
                 type="button"
                 onClick={ handleSubmit }
@@ -1090,13 +1046,6 @@ export function FoodiesAddRecipePage({
               >
                 <Save className="mr-2 size-4" />
                 { isSaving ? "Saving..." : isEditing ? "Update Recipe" : "Save Recipe" }
-              </Button>
-
-              <Button type="button" variant="outline" className="border-[#cadfbb]" asChild>
-                <Link href="/foodies">
-                  <Soup className="mr-2 size-4" />
-                  Cancel
-                </Link>
               </Button>
             </div>
           </div>
