@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ type LatestRecipe = {
   commentsCount: number;
   thumbsUp: number;
   love: number;
+  hasDiscussionThread: boolean;
   imageSrc: string;
   imageAlt: string;
 };
@@ -29,6 +30,7 @@ type TopRatedRecipe = {
   thumbsUp: number;
   love: number;
   commentsCount: number;
+  hasDiscussionThread: boolean;
   imageSrc: string;
   imageAlt: string;
 };
@@ -181,7 +183,11 @@ export function FoodiesScrollStrip({
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      { null }
+                      { item.hasDiscussionThread ? (
+                        <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
+                          <MessageSquare className="size-4" aria-label="Discussion thread available" />
+                        </div>
+                      ) : null }
                     </div>
 
                     <div className="space-y-3 px-4 py-4">

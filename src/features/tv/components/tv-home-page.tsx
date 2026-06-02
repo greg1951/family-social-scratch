@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
+import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
@@ -253,9 +253,11 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     thumbsUp: show.thumbsUpCount,
     love: show.loveCount,
     comments: show.commentCount,
+    hasDiscussionThread: show.hasDiscussionThread,
   }));
 
   const [searchValue, setSearchValue] = useState("");
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -278,6 +280,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     }
 
     if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (filterWithDiscussionThreads && !show.hasDiscussionThread) {
       return false;
     }
 
@@ -478,16 +484,27 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                   </div> */}
                 </div>
 
-                <div className="relative mt-5">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#5f7987]" />
-                  <Input
-                    type="search"
-                    value={ searchValue }
-                    onChange={ (event) => setSearchValue(event.target.value) }
-                    placeholder="Search by show, genre, adjective, channel, or family member"
-                    className="h-12 rounded-full border-[#c9e2ec] bg-white pl-11 pr-4 text-sm text-[#15384a] shadow-sm"
-                    aria-label="Search TV shows"
-                  />
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <div className="relative min-w-[16rem] flex-1">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#5f7987]" />
+                    <Input
+                      type="search"
+                      value={ searchValue }
+                      onChange={ (event) => setSearchValue(event.target.value) }
+                      placeholder="Search by show, genre, adjective, channel, or family member"
+                      className="h-12 rounded-full border-[#c9e2ec] bg-white pl-11 pr-4 text-sm text-[#15384a] shadow-sm"
+                      aria-label="Search TV shows"
+                    />
+                  </div>
+                  <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c9e2ec] bg-white px-3 py-2 text-xs font-semibold text-[#24536a]">
+                    <input
+                      type="checkbox"
+                      checked={ filterWithDiscussionThreads }
+                      onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                      className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                    />
+                    Filter with Discussion Threads
+                  </label>
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -556,6 +573,11 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                           >
                             <div className="flex items-start justify-between gap-2">
                               <p className="min-w-0 truncate text-[13px] font-semibold text-[#17384b]">{ show.name }</p>
+                              { show.hasDiscussionThread ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff2f9] text-[#2d87a8]" title="Discussion thread available">
+                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                                </span>
+                              ) : null }
                             </div>
 
                             <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#5f7987]">

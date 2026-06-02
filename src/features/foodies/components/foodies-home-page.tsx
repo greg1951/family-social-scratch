@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils, X } from "lucide-react";
+import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils, X } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -211,6 +211,7 @@ export function FoodiesHomePage({
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
+      hasDiscussionThread: recipe.hasDiscussionThread,
       imageSrc: recipe.recipeImageUrl ?? "/images/foodies/banana-bread-tablet.png",
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
@@ -237,6 +238,7 @@ export function FoodiesHomePage({
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
       commentsCount: recipe.commentCount,
+      hasDiscussionThread: recipe.hasDiscussionThread,
       imageSrc: recipe.recipeImageUrl ?? "/images/foodies/vegetable-soup-tablet.png",
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
@@ -259,9 +261,11 @@ export function FoodiesHomePage({
     prepTimeMins: recipe.prepTimeMins,
     cookTimeMins: recipe.cookTimeMins,
     comments: recipe.commentCount,
+    hasDiscussionThread: recipe.hasDiscussionThread,
   }));
 
   const [searchValue, setSearchValue] = useState("");
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -283,6 +287,10 @@ export function FoodiesHomePage({
     }
 
     if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (filterWithDiscussionThreads && !recipe.hasDiscussionThread) {
       return false;
     }
 
@@ -814,16 +822,27 @@ export function FoodiesHomePage({
                 </div> */}
               </div>
 
-              <div className="relative mt-5">
-                <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#647a50]" />
-                <Input
-                  type="search"
-                  value={ searchValue }
-                  onChange={ (event) => setSearchValue(event.target.value) }
-                  placeholder="Search by recipe, chef, category, or time"
-                  className="h-12 rounded-full border-[#ccdfb9] bg-white pl-11 pr-4 text-sm text-[#2f4820] shadow-sm"
-                  aria-label="Search recipes"
-                />
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <div className="relative min-w-[16rem] flex-1">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#647a50]" />
+                  <Input
+                    type="search"
+                    value={ searchValue }
+                    onChange={ (event) => setSearchValue(event.target.value) }
+                    placeholder="Search by recipe, chef, category, or time"
+                    className="h-12 rounded-full border-[#ccdfb9] bg-white pl-11 pr-4 text-sm text-[#2f4820] shadow-sm"
+                    aria-label="Search recipes"
+                  />
+                </div>
+                <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#ccdfb9] bg-white px-3 py-2 text-xs font-semibold text-[#4f6f36]">
+                  <input
+                    type="checkbox"
+                    checked={ filterWithDiscussionThreads }
+                    onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                    className="size-4 border-[#9fc487] text-[#578c24]"
+                  />
+                  Filter with Discussion Threads
+                </label>
               </div>
 
               <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -885,6 +904,11 @@ export function FoodiesHomePage({
                         >
                           <div className="flex items-start justify-between gap-2">
                             <p className="min-w-0 truncate text-[13px] font-semibold text-[#2f4820]">{ recipe.name }</p>
+                            { recipe.hasDiscussionThread ? (
+                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#eef9d9] text-[#578c24]" title="Discussion thread available">
+                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                              </span>
+                            ) : null }
                           </div>
 
                           <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#4f6f36]">

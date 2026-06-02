@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, Heart, MessageSquareText, Music, Plus, Search, ThumbsDown, ThumbsUp, ArrowLeft } from "lucide-react";
+import { Edit3, Eye, Heart, MessageSquare, MessageSquareText, Music, Plus, Search, ThumbsDown, ThumbsUp, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
@@ -126,6 +126,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const [selectedMusic, setSelectedMusic] = useState(musics[0]?.id ?? 0);
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
 
   const latestMusics = [...musics]
@@ -142,6 +143,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       commentsCount: music.commentCount,
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
+      hasDiscussionThread: music.hasDiscussionThread,
       imageSrc: music.musicImageUrl ?? "/images/music/princess-bride.png",
       imageAlt: `${ music.musicTitle } music image`,
     }));
@@ -168,6 +170,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
       commentsCount: music.commentCount,
+      hasDiscussionThread: music.hasDiscussionThread,
       imageSrc: music.musicImageUrl ?? "/images/music/robin-hood.png",
       imageAlt: `${ music.musicTitle } music image`,
     }));
@@ -194,6 +197,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     thumbsUp: music.thumbsUpCount,
     love: music.loveCount,
     comments: music.commentCount,
+    hasDiscussionThread: music.hasDiscussionThread,
   }));
 
   const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
@@ -207,6 +211,10 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     }
 
     if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (filterWithDiscussionThreads && !music.hasDiscussionThread) {
       return false;
     }
 
@@ -391,7 +399,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   {/* <div className="rounded-full border border-[#c8d9f3] bg-[#edf4ff] px-4 py-2 text-sm font-semibold text-[#4a6fae]">{ filteredMusics.length } music posts found</div> */ }
                 </div>
 
-                <div className="relative mt-5"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div>
+                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-3 py-2 text-xs font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Filter with Discussion Threads</label></div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div className="space-y-1">
@@ -452,6 +460,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                           >
                             <div className="flex items-start justify-between gap-2">
                               <p className="min-w-0 truncate text-[13px] font-semibold text-[#203b66]">{ music.name }</p>
+                              { music.hasDiscussionThread ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#edf4ff] text-[#2C5EAD]" title="Discussion thread available">
+                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                                </span>
+                              ) : null }
                             </div>
 
                             <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#4a6fae]">

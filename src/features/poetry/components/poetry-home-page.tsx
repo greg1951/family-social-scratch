@@ -155,6 +155,7 @@ export default function PoetryHomePage({
   const [selectedPoemId, setSelectedPoemId] = useState<number | null>(poems[0]?.id ?? null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("latest");
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
   const [verseLineCount, setVerseLineCount] = useState(1);
@@ -255,18 +256,21 @@ export default function PoetryHomePage({
 
   const filteredPoems = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
+    const poemsWithFilter = filterWithDiscussionThreads
+      ? directoryPoems.filter((poemItem) => poemItem.hasDiscussionThread)
+      : directoryPoems;
 
     if (!normalizedQuery) {
-      return directoryPoems;
+      return poemsWithFilter;
     }
 
-    return directoryPoems.filter((poemItem) => (
+    return poemsWithFilter.filter((poemItem) => (
       poemItem.poemTitle.toLowerCase().includes(normalizedQuery)
       || poemItem.poetName.toLowerCase().includes(normalizedQuery)
       || poemItem.poemYear.toLowerCase().includes(normalizedQuery)
       || poemItem.submitterName.toLowerCase().includes(normalizedQuery)
     ));
-  }, [deferredSearchValue, directoryPoems]);
+  }, [deferredSearchValue, directoryPoems, filterWithDiscussionThreads]);
 
   useEffect(() => {
     if (filteredPoems.length === 0) {
@@ -460,6 +464,57 @@ export default function PoetryHomePage({
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                   Select a poem card from the directory, or use search to narrow the list, then open View Poem or Edit Poem details in a separate dialog.
                 </p>
+
+                <div className="mt-4 min-w-0">
+                  <div className="mb-3 flex flex-wrap gap-3">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                      <input
+                        type="radio"
+                        name="poetry-directory-mode"
+                        value="latest"
+                        checked={ directoryMode === "latest" }
+                        onChange={ () => setDirectoryMode("latest") }
+                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                      />
+                      Latest Poems
+                    </label>
+
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                      <input
+                        type="radio"
+                        name="poetry-directory-mode"
+                        value="top-rated"
+                        checked={ directoryMode === "top-rated" }
+                        onChange={ () => setDirectoryMode("top-rated") }
+                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                      />
+                      Top Rated Poems
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                      <input
+                        type="checkbox"
+                        checked={ filterWithDiscussionThreads }
+                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                      />
+                      Filter with Discussion Threads
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-[16rem] flex-1">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
+                      <Input
+                        type="search"
+                        value={ searchValue }
+                        onChange={ (event) => setSearchValue(event.target.value) }
+                        placeholder="Search by poem, poet, year, or family member"
+                        className="h-12 rounded-full border-[#d7d0ea] bg-white pl-11 pr-4 text-sm text-[#43245d] shadow-sm"
+                        aria-label="Search poems"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               { selectedPoem ? (
@@ -553,47 +608,6 @@ export default function PoetryHomePage({
               </div> */}
             </div>
 
-            <div className="mt-5">
-              <div className="min-w-0">
-                <div className="mb-3 flex flex-wrap gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
-                    <input
-                      type="radio"
-                      name="poetry-directory-mode"
-                      value="latest"
-                      checked={ directoryMode === "latest" }
-                      onChange={ () => setDirectoryMode("latest") }
-                      className="size-4 border-[#b79ad1] text-[#6e3f98]"
-                    />
-                    Latest Poems
-                  </label>
-
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
-                    <input
-                      type="radio"
-                      name="poetry-directory-mode"
-                      value="top-rated"
-                      checked={ directoryMode === "top-rated" }
-                      onChange={ () => setDirectoryMode("top-rated") }
-                      className="size-4 border-[#b79ad1] text-[#6e3f98]"
-                    />
-                    Top Rated Poems
-                  </label>
-                </div>
-
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
-                  <Input
-                    type="search"
-                    value={ searchValue }
-                    onChange={ (event) => setSearchValue(event.target.value) }
-                    placeholder="Search by poem, poet, year, or family member"
-                    className="h-12 rounded-full border-[#d7d0ea] bg-white pl-11 pr-4 text-sm text-[#43245d] shadow-sm"
-                    aria-label="Search poems"
-                  />
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="px-5 py-5 sm:px-6">
@@ -629,7 +643,14 @@ export default function PoetryHomePage({
                       >
                         <div>
                           <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poem</p>
-                          <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
+                          <div className="flex items-start gap-2">
+                            <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
+                            { poemItem.hasDiscussionThread ? (
+                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Discussion thread available">
+                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                              </span>
+                            ) : null }
+                          </div>
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
                         </div>
                         <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:gap-x-8 md:items-center md:gap-x-10">

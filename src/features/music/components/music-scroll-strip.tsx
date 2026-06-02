@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ type LatestMusicItem = {
   date: string;
   reviewType: "Song" | "Album";
   hasLyrics: boolean;
+  hasDiscussionThread: boolean;
   submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
@@ -31,6 +32,7 @@ type TopRatedMusicItem = {
   thumbsUp: number;
   love: number;
   commentsCount: number;
+  hasDiscussionThread: boolean;
   imageSrc: string;
   imageAlt: string;
 };
@@ -190,6 +192,11 @@ export function MusicScrollStrip({
                       ) : item.reviewType === "Song" && item.hasLyrics ? (
                         <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
                           Lyrics
+                        </div>
+                      ) : null }
+                      { item.hasDiscussionThread ? (
+                        <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
+                          <MessageSquare className="size-4" aria-label="Discussion thread available" />
                         </div>
                       ) : null }
                     </div>

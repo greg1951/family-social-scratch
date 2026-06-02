@@ -95,6 +95,7 @@ export default function BooksHomePage({
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
   const deferredSearchValue = useDeferredValue(searchValue);
   const initialDraft = useMemo(() => {
@@ -224,12 +225,15 @@ export default function BooksHomePage({
 
   const filteredBooks = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
+    const booksWithFilter = filterWithDiscussionThreads
+      ? directoryBooks.filter((bookItem) => bookItem.hasDiscussionThread)
+      : directoryBooks;
 
     if (!normalizedQuery) {
-      return directoryBooks;
+      return booksWithFilter;
     }
 
-    return directoryBooks.filter((bookItem) => (
+    return booksWithFilter.filter((bookItem) => (
       bookItem.bookTitle.toLowerCase().includes(normalizedQuery)
       || bookItem.authorName.toLowerCase().includes(normalizedQuery)
       || bookItem.bookYear.toLowerCase().includes(normalizedQuery)
@@ -237,7 +241,7 @@ export default function BooksHomePage({
       || (bookItem.bookSeriesName ?? "").toLowerCase().includes(normalizedQuery)
       || bookItem.submitterName.toLowerCase().includes(normalizedQuery)
     ));
-  }, [deferredSearchValue, directoryBooks]);
+  }, [deferredSearchValue, directoryBooks, filterWithDiscussionThreads]);
 
   const activeBookTags = useMemo(() => (
     bookTags.filter((tagOption) => tagOption.status !== "archived")
@@ -439,6 +443,56 @@ export default function BooksHomePage({
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
                   Select a book card from the directory, or use search to narrow the list, then open View Book or Edit Book details in a separate dialog.
                 </p>
+
+                <div className="mt-4 min-w-0">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-[#355161]">
+                    <label className="inline-flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="book-directory-mode"
+                        value="latest"
+                        checked={ directoryMode === "latest" }
+                        onChange={ () => setDirectoryMode("latest") }
+                        className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                      />
+                      <span className="font-semibold">Latest Books</span>
+                    </label>
+                    <label className="inline-flex cursor-pointer items-center gap-2">
+                      <input
+                        type="radio"
+                        name="book-directory-mode"
+                        value="top-rated"
+                        checked={ directoryMode === "top-rated" }
+                        onChange={ () => setDirectoryMode("top-rated") }
+                        className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                      />
+                      <span className="font-semibold">Top Rated Books</span>
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                      <input
+                        type="checkbox"
+                        checked={ filterWithDiscussionThreads }
+                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                      />
+                      Filter with Discussion Threads
+                    </label>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-[16rem] flex-1">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
+                      <Input
+                        type="search"
+                        value={ searchValue }
+                        onChange={ (event) => setSearchValue(event.target.value) }
+                        placeholder="Search by title, author, year, language, series, or family member"
+                        className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
+                        aria-label="Search books"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
               { selectedBook ? (
@@ -532,46 +586,6 @@ export default function BooksHomePage({
               </div> */}
             </div>
 
-            <div className="mt-5">
-              <div className="min-w-0">
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
-                  <Input
-                    type="search"
-                    value={ searchValue }
-                    onChange={ (event) => setSearchValue(event.target.value) }
-                    placeholder="Search by title, author, year, language, series, or family member"
-                    className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
-                    aria-label="Search books"
-                  />
-                </div>
-
-                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[#355161]">
-                  <label className="inline-flex cursor-pointer items-center gap-2">
-                    <input
-                      type="radio"
-                      name="book-directory-mode"
-                      value="latest"
-                      checked={ directoryMode === "latest" }
-                      onChange={ () => setDirectoryMode("latest") }
-                      className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
-                    />
-                    <span className="font-semibold">Latest Books</span>
-                  </label>
-                  <label className="inline-flex cursor-pointer items-center gap-2">
-                    <input
-                      type="radio"
-                      name="book-directory-mode"
-                      value="top-rated"
-                      checked={ directoryMode === "top-rated" }
-                      onChange={ () => setDirectoryMode("top-rated") }
-                      className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
-                    />
-                    <span className="font-semibold">Top Rated Books</span>
-                  </label>
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="px-5 py-5 sm:px-6">
@@ -610,6 +624,11 @@ export default function BooksHomePage({
                           <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Book</p>
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
+                            { bookItem.hasDiscussionThread ? (
+                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Discussion thread available">
+                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                              </span>
+                            ) : null }
                             { isAwaitingServerSync ? (
                               <span className="rounded-full bg-[#dbf1fb] px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#2d667d]">
                                 Syncing
