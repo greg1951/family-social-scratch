@@ -75,4 +75,8 @@ export {
   threadRecipientState,
   threadPostAttachment,
   threadTemplate,
+  video,
+  videoS3Credentials,
+  videoTagReference,
+  videoTag,
 } from './family-social-schema-tables';

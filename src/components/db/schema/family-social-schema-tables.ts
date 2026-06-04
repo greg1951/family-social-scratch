@@ -1101,3 +1101,51 @@ export const supportPersonIssue = pgTable("support_person_issue", {
     index('support_person_issue_person_id_idx').on(table.supportPersonId),
   ]
 );
+
+
+/*------------------------------- Video Schema ------------------------------ */
+export const videoS3Credentials = pgTable("video_s3_credentials", {
+  id: serial("id").primaryKey(),
+  encryptedAccessKey: text("encrypted_access_key").notNull(),
+  encryptedSecretKey: text("encrypted_secret_key").notNull(),
+  bucketName: text("bucket_name").notNull(),
+  region: text("region").notNull().default("us-east-2"),  
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const video = pgTable("video", {
+  id: serial("id").primaryKey(),
+  videoName: text("video_name").notNull().default(""),
+  version: integer("version").notNull().default(1),
+  status: text("status").notNull().default("draft"),
+  link: text("link").notNull().default(""),
+  durationMinutes: integer("duration_seconds").notNull().default(0),
+  videoUrl: text("video_url"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  videoS3Id: integer("fk_video_s3_id").notNull().references(() => videoS3Credentials.id, {onDelete: 'set null'}),
+},
+  (table) => [
+    index('video_s3_id_idx').on(table.videoS3Id),
+  ]
+);
+
+export const videoTagReference = pgTable("video_tag_reference", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull().default("general"),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const videoTag = pgTable("video_tag", {
+  id: serial("id").primaryKey(),
+  videoId: integer("fk_video_id").notNull().references(() => video.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => videoTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('video_tag_video_id_idx').on(table.videoId),
+    index('video_tag_tag_id_idx').on(table.tagId),
+  ]
+);

@@ -1,5 +1,0 @@
-The TV feature now incorporates the ability for family members to create discussion threads on their favorite TV shows.
-Common components were created in the "src/components/discuss" directory to support this feature. 
-
-The purpose of this request is to implement the same functionality in the Movies feature, allowing family members to create discussion threads on their favorite movies.
-When a discussionThread is created for a movie, the targetType column should be set to "movie" and the targetId column should reference the id of the movie being discussed.

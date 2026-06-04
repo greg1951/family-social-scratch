@@ -1,7 +1,0 @@
-In the Family Threads Compose dialog, add an optional selection list that allows a user to select a "thread" category of the threadTemplate table. 
-- The entries in the table should be ordered by a default "Optional Template" as the first entry, then followed by the "thread" entries, ordered by seqNo.
-- When an entry is selected, the templateJson is to be filled into the treadPostReply table contentJson. 
-  - However if there are any delimited variables (e.g. "!!family-founder!!", "!!family-founder-first!!) then replace the  
-      variable with the appropriate value from the family table for the family that the thread is being created in. 
-  - family-founder is the name of the family founder, and family-founder-first is the first name of the family founder.
-- Suggest a good mechanism for the delimited variables to be replaced with values from the family table.

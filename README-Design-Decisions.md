@@ -1,33 +1,37 @@
-1. [Overview](#overview)
-2. [Database Design](#database-design)
-   1. [Family Social Schema](#family-social-schema)
-   2. [Family Social Queries](#family-social-queries)
-3. [State Management](#state-management)
-4. [Typescript](#typescript)
-5. [Discriminated Unions](#discriminated-unions)
-   1. [Checking the Success Condition](#checking-the-success-condition)
-   2. [Passing Argument to Component](#passing-argument-to-component)
-   3. [After Running SQL Query](#after-running-sql-query)
-   4. [Extacting the Type](#extacting-the-type)
-6. [Storing the Family Name in Authentication Cookie](#storing-the-family-name-in-authentication-cookie)
-7. [Page Protection](#page-protection)
-8. [Await All](#await-all)
-9. [Multi-Step Forms](#multi-step-forms)
-10. [Running PSQL Locally to Neon](#running-psql-locally-to-neon)
-    1. [Running MJS Script](#running-mjs-script)
-11. [TipTap Headless](#tiptap-headless)
-    1. [Installation](#installation)
-    2. [Configuration](#configuration)
-    3. [Persistence](#persistence)
-12. [Amazon S3](#amazon-s3)
-    1. [Trial Account Bucket](#trial-account-bucket)
-    2. [Production Account Bucket](#production-account-bucket)
-    3. [The Family S3 Credentials Table](#the-family-s3-credentials-table)
-13. [Lint and Build Cleanup](#lint-and-build-cleanup)
-14. [Videos](#videos)
-15. [Component Code Size](#component-code-size)
-    1. [Hook Extraction](#hook-extraction)
-    2. [Hook Extraction versus Separate Routes](#hook-extraction-versus-separate-routes)
+- [Overview](#overview)
+- [Database Design](#database-design)
+  - [Family Social Schema](#family-social-schema)
+  - [Family Social Queries](#family-social-queries)
+- [State Management](#state-management)
+- [Typescript](#typescript)
+- [Discriminated Unions](#discriminated-unions)
+  - [Checking the Success Condition](#checking-the-success-condition)
+  - [Passing Argument to Component](#passing-argument-to-component)
+  - [After Running SQL Query](#after-running-sql-query)
+  - [Extacting the Type](#extacting-the-type)
+- [Storing the Family Name in Authentication Cookie](#storing-the-family-name-in-authentication-cookie)
+- [Page Protection](#page-protection)
+- [Await All](#await-all)
+- [Multi-Step Forms](#multi-step-forms)
+- [Running PSQL Locally to Neon](#running-psql-locally-to-neon)
+  - [Running MJS Script](#running-mjs-script)
+- [TipTap Headless](#tiptap-headless)
+  - [Installation](#installation)
+  - [Configuration](#configuration)
+  - [Persistence](#persistence)
+- [Amazon S3](#amazon-s3)
+  - [Trial Account Bucket](#trial-account-bucket)
+  - [Production Account Bucket](#production-account-bucket)
+  - [The Family S3 Credentials Table](#the-family-s3-credentials-table)
+- [Setting Up S3 Bucket with IAM User](#setting-up-s3-bucket-with-iam-user)
+  - [Steps 1-3: Create IAM User](#steps-1-3-create-iam-user)
+  - [Step 4: Test IAM User Access](#step-4-test-iam-user-access)
+- [Referencing S3 from the EC2 Application](#referencing-s3-from-the-ec2-application)
+- [Lint and Build Cleanup](#lint-and-build-cleanup)
+- [Videos](#videos)
+- [Component Code Size](#component-code-size)
+  - [Hook Extraction](#hook-extraction)
+  - [Hook Extraction versus Separate Routes](#hook-extraction-versus-separate-routes)
 
 ---
 # Overview
@@ -408,6 +412,56 @@ export const familyS3Credentials = pgTable("family_s3_credentials", {
 ]);
 ```
 
+# Setting Up S3 Bucket with IAM User
+There are four steps, as listed below. The last step assumes you have installed the [AWS CLI interface](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html). In the example below it was a user to access the `family-social-support-bucket` where the My Family Social videos are to stored.
+
+1. Create IAM User. 
+2. Attach IAM policy to provide full specific S3 permissions.
+3. Create user access key and secret
+4. Test IAM user access to the bucket files
+
+## Steps 1-3: Create IAM User
+1. Create IAM user `family-social-s3-user`.
+2. In the **Permissions** tab, attach policy `AmazonS3FullAccess`
+3. In the **Security credentials** tab, create an access key and secret. Be sure to download the CSV file with the key and secret to a secure location. 
+
+## Step 4: Test IAM User Access
+Use aws CLI to test the credential. (In the text below the key and secret are obfuscated).
+1. Run `aws configure` command in a terminal. There will be four prompts, as shown below.
+
+
+2. Run the aws s3 command shown below which lists the contents in the bucket
+
+  ```bash
+  C:\Users\gregh>aws s3 ls s3://family-social-support-bucket/app-help-videos/
+  2026-06-03 11:38:08          0
+  2026-06-03 11:39:39   18204056 PhotoGalleries-Overview.mp4  ``` 
+  ```
+
+# Referencing S3 from the EC2 Application
+There are other IAM configurations needed for EC2 to access S3 using an IAM user. Shown below is the **Security** tab setting for the EC2 instance which reference an IAM role of `SocialServer-EC2-Role`.
+
+![](docs/pngs/ec2-security-for-iam-access.png)
+
+The `SocialServer-EC2-Role` definition below provides two permission policies associated to it: 
+1. `AmazonSSMManagedInstance Core`
+2. `SSM-SecureRead-SocialServer`
+
+![](docs/pngs/iam-role-for-ssm.png)
+
+The 2nd policy shown above is needed as it provides access by the Systems Manager `Parameter Store` which contains encrypted secrets needed in EC2.
+
+![](docs/pngs/iam-ssm-policy-details.png)
+
+
+**Notes**:
+1. /prod/social-server/S3_CREDENTIALS_MASTER_KEY: decryption master key for S3
+2. AUTH_SECRET: used for Auth.js Credentials provider
+3. RESEND_API_KEY: used for Family Social outbound emails
+
+![](docs/pngs/aws-systems-manager-param-store.png)
+
+
 # Lint and Build Cleanup
 There is a concept called `lint debt` which arises from unresolved warning and errors the linter finds. Rather than waiting a long time between reducing the `lint debt` follow the practices below.
 
@@ -428,10 +482,7 @@ The [next-video](https://next-video.dev/) module will be used for the video acce
 
 The support schema tables to support the video appears below. 
 
-![](./docs/pngs/video-support.jpg)
-
-* The `support_category` table provides the organization and the `support_video` contains the name and its location on S3.
-* Also shown in the FAQ the support page will reference. An FAQ may have a video associated with it. 
+![](./docs/pngs/video-schema.png)
 
 # Component Code Size
 I noticed the Book home page had > 1000 lines of code while the Movie was much less. There are two main reasons:
