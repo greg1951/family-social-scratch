@@ -100,6 +100,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                       Edit Templates
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/add-videos">
+                      Add Videos
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) }

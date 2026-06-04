@@ -9,6 +9,7 @@ import {
   videoTag,
   videoTagReference,
 } from "@/components/db/schema/family-social-schema-tables";
+import { serializedTipTapDocumentSchema } from "@/components/db/types/poem-term-validation";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
 
@@ -16,6 +17,7 @@ const createVideoInputSchema = z.object({
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
   status: z.enum(["draft", "published"]),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute.").max(600, "Duration is too large."),
+  descriptionJson: serializedTipTapDocumentSchema,
   videoUrl: z.string().trim().min(3, "Video URL is required."),
   selectedTagIds: z.array(z.number().int().positive()).min(2, "Select at least 2 tags.").max(3, "Select up to 3 tags."),
   videoS3Id: z.number().int().positive(),
@@ -34,6 +36,7 @@ export type VideoListItem = {
   videoName: string;
   status: string;
   durationMinutes: number;
+  videoJson: string;
   videoUrl: string | null;
   updatedAt: Date | null;
   tags: Array<{
@@ -72,6 +75,7 @@ const updateVideoInputSchema = z.object({
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
   status: z.enum(["draft", "published"]),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute.").max(600, "Duration is too large."),
+  descriptionJson: serializedTipTapDocumentSchema,
   selectedTagIds: z.array(z.number().int().positive()).min(2, "Select at least 2 tags.").max(3, "Select up to 3 tags."),
 });
 
@@ -125,6 +129,7 @@ async function loadVideos(): Promise<VideoListItem[]> {
       videoName: video.videoName,
       status: video.status,
       durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
       videoUrl: video.videoUrl,
       updatedAt: video.updatedAt,
     })
@@ -235,6 +240,7 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
       videoName: normalized.videoName,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
+      videoJson: normalized.descriptionJson,
       link: normalized.videoUrl,
       videoUrl: normalized.videoUrl,
       updatedAt: new Date(),
@@ -246,6 +252,7 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
       videoName: video.videoName,
       status: video.status,
       durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
       videoUrl: video.videoUrl,
       updatedAt: video.updatedAt,
     });
@@ -335,6 +342,7 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
       videoName: video.videoName,
       status: video.status,
       durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
       videoUrl: video.videoUrl,
       updatedAt: video.updatedAt,
     })
@@ -355,6 +363,7 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
       videoName: normalized.videoName,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
+      videoJson: normalized.descriptionJson,
       updatedAt: new Date(),
     })
     .where(eq(video.id, normalized.id));
