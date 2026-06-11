@@ -97,6 +97,9 @@ export async function getAllGameNames():(Promise<AllGameMetadataReturn>) {
     scoreUom: meta.scoreUom,
     isRoundBased: meta.isRoundBased,
     maxRounds: meta.maxRounds,
+    roundsOrder: meta.roundsOrder as "asc" | "desc",
+    winningScore: meta.winningScore,
+    supportsTeams: meta.supportsTeams,
   }));
 
   if (gameMetas.length === 0) {
@@ -122,6 +125,9 @@ export async function getGameMetaDataByName(gameName: string):(Promise<GameMetad
     scoreUom: gameMetaData.scoreUom,
     isRoundBased: gameMetaData.isRoundBased,
     maxRounds: gameMetaData.maxRounds,
+    roundsOrder: gameMetaData.roundsOrder as "asc" | "desc",
+    winningScore: gameMetaData.winningScore,
+    supportsTeams: gameMetaData.supportsTeams,
   };
 
   return { success: true, gameMeta: gameMeta };

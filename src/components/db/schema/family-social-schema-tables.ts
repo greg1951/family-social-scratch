@@ -421,6 +421,9 @@ export const gameMetadata = pgTable("game_metadata", {
   scoreUom: text("score_uom").notNull().default("points"),
   isRoundBased: boolean("is_round_based").notNull().default(true),
   maxRounds: integer("max_rounds").notNull().default(12),
+  roundsOrder: text("rounds_order").notNull().default("desc"),
+  winningScore: integer("winning_score").notNull().default(-1),
+  supportsTeams: boolean("supports_teams").notNull().default(false),
 });
 
 export const gameState = pgTable("game_state", {

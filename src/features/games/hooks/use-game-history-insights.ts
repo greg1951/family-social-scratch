@@ -12,12 +12,14 @@ type UseGameHistoryInsightsArgs = {
   gamesData: GamesPageData;
   selectedGameId: number | null;
   winnerDirection: "high" | "low" | undefined;
+  includeZeroScores: boolean;
 };
 
 export function useGameHistoryInsights({
   gamesData,
   selectedGameId,
   winnerDirection,
+  includeZeroScores,
 }: UseGameHistoryInsightsArgs) {
   const [gameStatusFilter, setGameStatusFilter] = useState("all");
   const [gameDateFilter, setGameDateFilter] = useState("all");
@@ -58,9 +60,10 @@ export function useGameHistoryInsights({
       filteredGameHistory,
       selectedGameId,
       winnerDirection,
+      includeZeroScores,
       gamesData.leaderboards
     ),
-    [filteredGameHistory, gamesData.leaderboards, selectedGameId, winnerDirection]
+    [filteredGameHistory, gamesData.leaderboards, includeZeroScores, selectedGameId, winnerDirection]
   );
 
   return {

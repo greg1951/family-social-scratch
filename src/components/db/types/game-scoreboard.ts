@@ -7,6 +7,9 @@ export interface GameMetadata {
   scoreUom: string;
   isRoundBased: boolean;
   maxRounds: number;
+  roundsOrder: "asc" | "desc";
+  winningScore: number;
+  supportsTeams: boolean;
 }
 
 export type AllGameMetadataReturn =

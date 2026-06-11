@@ -100,6 +100,7 @@ export function buildGameLeaderboards(
   filteredGameHistory: GameHistoryRow[],
   selectedGameId: number | null,
   winnerDirection: "high" | "low" | undefined,
+  includeZeroScores: boolean,
   fallbackLeaderboards: GameLeaderboards
 ): GameLeaderboards {
   if (!selectedGameId) {
@@ -107,7 +108,7 @@ export function buildGameLeaderboards(
   }
 
   const completedGamesByType = filteredGameHistory.filter(
-    (row) => row.gameStatus === "completed" && row.gameScore !== 0
+    (row) => row.gameStatus === "completed" && (includeZeroScores || row.gameScore !== 0)
   );
 
   if (completedGamesByType.length === 0) {

@@ -185,11 +185,7 @@ export function MusicScrollStrip({
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      { item.kind === "top-rated" ? (
-                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
-                          Top rated
-                        </div>
-                      ) : item.reviewType === "Song" && item.hasLyrics ? (
+                      { item.kind !== "top-rated" && item.reviewType === "Song" && item.hasLyrics ? (
                         <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#275f75] shadow-sm">
                           Lyrics
                         </div>

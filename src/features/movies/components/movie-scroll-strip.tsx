@@ -199,11 +199,6 @@ export function MovieScrollStrip({
                         </div>
                       ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      { item.kind === "top-rated" ? (
-                        <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/92 px-3 py-1 text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5c2e1a] shadow-sm">
-                          Top rated
-                        </div>
-                      ) : null }
                       <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2">
                         { item.hasDiscussionThread ? (
                           <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#b8581a] shadow-sm">

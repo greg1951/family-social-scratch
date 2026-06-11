@@ -45,13 +45,6 @@ export default async function MainPage() {
     return enabledFeatureKeys.includes(featureKey);
   };
 
-  const whatsNewItems = [
-    "Customer support is here to help! Check out our informative Frequently Asked Questions (FAQ) page.",
-    "All My Family Social features are live! Check them out and start sharing your favorites with your family.",
-    "Visit the Family Dashboard to see charts about your family activity across all channels.",
-    "The My Family Social Dev Team is working on a new Photo Galleries feature. You'll be able to create albums, upload and share them with the rest of the family!",
-    "Personalize your account by uploading a lovely mugshot to your profile.",
-  ];
   const ctaCardClasses = [
     "group relative rounded-xl border border-sky-300/80 bg-linear-to-b from-white via-sky-50 to-cyan-50",
     "px-4 py-2.5 text-center text-[16px] font-bold tracking-[0.01em] text-sky-900",
@@ -134,25 +127,6 @@ export default async function MainPage() {
               </div>
             </div>
           </Card>
-
-          {/* { memberKeyDetails.isLoggedIn && (
-            <Card className="sm:col-span-2 rounded-xl border border-slate-200 bg-linear-to-r from-[#efe9ff] to-[#f7f3ff] p-3 shadow-sm md:p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.26em] text-[#6b5ca8]">Family Snapshot</p>
-                  <h2 className="mt-1 text-lg font-extrabold text-slate-800 md:text-xl">What&apos;s New in the Family?</h2>
-                  <ul className="mt-2 space-y-1 text-xs text-slate-700 md:text-sm">
-                    { whatsNewItems.map((item) => (
-                      <li key={ item } className="flex items-start gap-2">
-                        <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-[#6b5ca8]" />
-                        <span>{ item }</span>
-                      </li>
-                    )) }
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          ) } */}
 
           { isFeatureEnabled("tv") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/tv" src="/images/tv-junkies-tablet.png" title="TV Junkies" tw="rounded-xl border border-red-300 bg-red-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />

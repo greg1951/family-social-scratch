@@ -198,11 +198,6 @@ export function TvScrollStrip({
                         </div>
                       ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
-                      { item.kind === "top-rated" ? (
-                        <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-white/92 px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#275f75] shadow-sm">
-                          Fan favorite
-                        </div>
-                      ) : null }
                       <div className="pointer-events-none absolute right-2 top-2 flex flex-col items-end gap-1.5">
                         { item.hasDiscussionThread ? (
                           <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">

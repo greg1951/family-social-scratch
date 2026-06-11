@@ -50,6 +50,8 @@ type UseGameLifecycleActionsArgs = {
     name: string;
     isRoundBased: boolean;
     scoreUom: string;
+    roundsOrder: "asc" | "desc";
+    winningScore: number;
   } | null;
   selectedGameState: GameState | null;
   selectedPlayers: (SelectedPlayer | null)[];
@@ -347,24 +349,113 @@ export function useGameLifecycleActions({
     } else if (isCrokinoleGame) {
       saveStatus = crokinoleWinnerTeamIndex !== null ? "completed" : "in_progress";
     } else {
+      const isMexicanTrainGame = selectedGame.name.trim().toLowerCase() === "mexican train";
       const numberedRoundKeys = roundEntries
         .filter((roundEntry) => roundEntry.roundKey > 0)
         .map((roundEntry) => roundEntry.roundKey);
-      const isAllScoresEntered = selectedGame.isRoundBased
-        ? (
-          numberedRoundKeys.length > 0
-          && activeColIndices.length > 0
-          && numberedRoundKeys.every((roundKey) =>
-            activeColIndices.every((colIndex) => {
-              const score = roundScores.get(roundKey)?.get(colIndex);
-              return score !== undefined && score !== 0;
+      const requiredRoundKeys = isMexicanTrainGame
+        ? numberedRoundKeys.filter((roundKey) => roundKey >= 1 && roundKey <= 12)
+        : numberedRoundKeys;
+      const hasWinningScoreRule = !isMexicanTrainGame && selectedGame.winningScore > 0;
+      let effectiveRequiredRoundKeys = requiredRoundKeys;
+
+      if (hasWinningScoreRule && activeColIndices.length > 0) {
+        const isAscending = selectedGame.roundsOrder === "asc";
+        const orderedRoundKeys = [...requiredRoundKeys].sort((left, right) =>
+          isAscending ? left - right : right - left
+        );
+
+        const runningTotals = new Map<number, number>(
+          activeColIndices.map((colIndex) => [colIndex, 0])
+        );
+
+        let winningRoundKey: number | null = null;
+
+        for (const roundKey of orderedRoundKeys) {
+          for (const colIndex of activeColIndices) {
+            const score = roundScores.get(roundKey)?.get(colIndex);
+            if (score !== undefined) {
+              runningTotals.set(colIndex, (runningTotals.get(colIndex) ?? 0) + score);
+            }
+          }
+
+          const winnerReachedThreshold = Array.from(runningTotals.values())
+            .some((total) => total >= selectedGame.winningScore);
+
+          if (winnerReachedThreshold) {
+            winningRoundKey = roundKey;
+            break;
+          }
+        }
+
+        if (winningRoundKey !== null) {
+          effectiveRequiredRoundKeys = orderedRoundKeys.filter((roundKey) =>
+            isAscending ? roundKey <= winningRoundKey : roundKey >= winningRoundKey
+          );
+        }
+      }
+      const roundLabelByKey = new Map(
+        roundEntries.map((roundEntry) => [roundEntry.roundKey, roundEntry.label])
+      );
+      const playerLabelByCol = new Map(
+        activePlayers.map((player) => [player.playPosition - 1, `${ player.firstName } ${ player.lastName }`])
+      );
+      const shouldUseRoundBasedCompletion = selectedGame.isRoundBased || isMexicanTrainGame;
+      const missingRequiredScores = shouldUseRoundBasedCompletion
+        ? isMexicanTrainGame
+          ? effectiveRequiredRoundKeys
+            .filter((roundKey) => {
+              const roundMap = roundScores.get(roundKey);
+              return !roundMap || roundMap.size === 0;
             })
+            .map((roundKey) => ({
+              roundLabel: roundLabelByKey.get(roundKey) ?? String(roundKey),
+              playerLabel: "no recorded scores",
+            }))
+          : effectiveRequiredRoundKeys.flatMap((roundKey) =>
+            activeColIndices
+              .filter((colIndex) => {
+                const score = roundScores.get(roundKey)?.get(colIndex);
+                return score === undefined || score === 0;
+              })
+              .map((colIndex) => ({
+                roundLabel: roundLabelByKey.get(roundKey) ?? String(roundKey),
+                playerLabel: playerLabelByCol.get(colIndex) ?? `Player ${ colIndex + 1 }`,
+              }))
           )
+        : activeColIndices
+          .filter((colIndex) => roundScores.get(1)?.get(colIndex) === undefined)
+          .map((colIndex) => ({
+            roundLabel: roundLabelByKey.get(1) ?? "Final",
+            playerLabel: playerLabelByCol.get(colIndex) ?? `Player ${ colIndex + 1 }`,
+          }));
+      const isAllScoresEntered = shouldUseRoundBasedCompletion
+        ? (
+          effectiveRequiredRoundKeys.length > 0
+          && activeColIndices.length > 0
+          && missingRequiredScores.length === 0
         )
         : (
           activeColIndices.length > 0
-          && activeColIndices.every((colIndex) => roundScores.get(1)?.get(colIndex) !== undefined)
+          && missingRequiredScores.length === 0
         );
+
+      if (!isAllScoresEntered && missingRequiredScores.length > 0) {
+        const preview = missingRequiredScores
+          .slice(0, 3)
+          .map((entry) => `${ entry.roundLabel } - ${ entry.playerLabel }`)
+          .join(", ");
+        const scoreRuleNote = shouldUseRoundBasedCompletion
+          ? (isMexicanTrainGame
+            ? "For Mexican Train, score cells left blank in a recorded round are treated as 0."
+            : "Scores of 0 are treated as incomplete for this game.")
+          : "";
+
+        toast.info("Some required scores are still blank.", {
+          description: `Missing ${ missingRequiredScores.length } score${ missingRequiredScores.length === 1 ? "" : "s" }. The game will remain in progress. ${ preview }${ missingRequiredScores.length > 3 ? ", ..." : "" } ${ scoreRuleNote }`,
+        });
+      }
+
       saveStatus = isAllScoresEntered ? "completed" : selectedGameState.status;
     }
 

@@ -82,11 +82,30 @@ export function useGameBoardSession({
 
     if (isCrokinoleGame) {
       const maxRounds = Math.max(1, selectedGame?.maxRounds || 20);
+      const roundsOrder = selectedGame?.roundsOrder === "asc" ? "asc" : "desc";
       return Array.from({ length: maxRounds }, (_, index) => ({
-        roundKey: index + 1,
-        roundNo: index + 1,
-        label: String(index + 1),
+        roundKey: roundsOrder === "asc" ? index + 1 : maxRounds - index,
+        roundNo: roundsOrder === "asc" ? index + 1 : maxRounds - index,
+        label: String(roundsOrder === "asc" ? index + 1 : maxRounds - index),
       }));
+    }
+
+    if (isMexicanTrainGame) {
+      return [
+        ...Array.from({ length: 12 }, (_, index) => {
+          const roundNo = 12 - index;
+          return {
+            roundKey: roundNo,
+            roundNo,
+            label: String(roundNo),
+          };
+        }),
+        {
+          roundKey: 0,
+          roundNo: 0,
+          label: "Blank",
+        },
+      ];
     }
 
     const scoreUomLabel = selectedGame?.scoreUom
@@ -102,7 +121,11 @@ export function useGameBoardSession({
     }
 
     const maxRounds = selectedGame?.maxRounds || 12;
-    const numberedRounds = Array.from({ length: maxRounds }, (_, index) => maxRounds - index);
+    const roundsOrder = selectedGame?.roundsOrder === "asc" ? "asc" : "desc";
+    const numberedRounds = Array.from(
+      { length: maxRounds },
+      (_, index) => (roundsOrder === "asc" ? index + 1 : maxRounds - index)
+    );
 
     return [
       ...numberedRounds.map((roundNo) => ({

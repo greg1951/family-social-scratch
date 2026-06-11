@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import type { SelectedPlayer } from "@/features/games/types/scoreboard-ui";
 import { GamesScoreboardToolbar } from "@/features/games/components/games-scoreboard-toolbar";
 import { GamesCricketPanel } from "@/features/games/components/games-cricket-panel";
 import { GamesCrokinoleSetup } from "@/features/games/components/games-crokinole-setup";
+import { HideNoPlayerColumnsToggle } from "@/features/games/components/hide-no-player-columns-toggle";
 import {
   formatGameScore,
   getDisplayedScores,
@@ -52,7 +53,7 @@ interface GamesHomePageProps {
 const NEW_GAME_OPTION_VALUE = "new_game";
 const ADD_GUEST_OPTION_VALUE = "add_guest";
 const CLEAR_PLAYER_OPTION_VALUE = "clear_player";
-const CROKINOLE_WIN_SCORE = 100;
+const CROKINOLE_DEFAULT_WIN_SCORE = 100;
 
 export function GamesHomePage({
   gamesData,
@@ -62,6 +63,7 @@ export function GamesHomePage({
 }: GamesHomePageProps) {
   const scoreboardGridRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
+  const [hideNoPlayerColumns, setHideNoPlayerColumns] = useState(false);
 
   const {
     emptySelectedPlayers,
@@ -86,6 +88,7 @@ export function GamesHomePage({
     selectedGame,
     isCricketGame,
     isCrokinoleGame,
+    isMexicanTrainGame,
     isAcquireGame,
     orderedSelectablePlayers,
     gameStatesForSelectedMetadata,
@@ -173,7 +176,9 @@ export function GamesHomePage({
     roundEntries,
     roundScores,
     cumulativeScores: persistedCumulativeScores && !hasRoundScoreEdits ? persistedCumulativeScores : computedCumulativeScores,
-    winScore: CROKINOLE_WIN_SCORE,
+    winScore: selectedGame?.winningScore && selectedGame.winningScore > 0
+      ? selectedGame.winningScore
+      : CROKINOLE_DEFAULT_WIN_SCORE,
     addGuestOptionValue: ADD_GUEST_OPTION_VALUE,
     clearPlayerOptionValue: CLEAR_PLAYER_OPTION_VALUE,
     selectablePlayers: localSelectablePlayers,
@@ -193,6 +198,14 @@ export function GamesHomePage({
     () => getDisplayedScores(selectedPlayers, cumulativeScores),
     [cumulativeScores, selectedPlayers]
   );
+
+  const renderedPlayerColumnIndices = useMemo(() => {
+    if (!hideNoPlayerColumns) {
+      return visiblePlayerColumnIndices;
+    }
+
+    return visiblePlayerColumnIndices.filter((colIndex) => Boolean(selectedPlayers[colIndex]));
+  }, [hideNoPlayerColumns, isMexicanTrainGame, selectedPlayers, visiblePlayerColumnIndices]);
 
   const scoreStyleByColumn = useMemo(() => {
     const styleMap = new Map<number, string>();
@@ -222,6 +235,9 @@ export function GamesHomePage({
   const crokinoleFinalRoundNo = crokinole.crokinoleFinalRoundNo;
   const displayedRoundEntries = crokinole.displayedRoundEntries;
   const isCrokinoleScoringEnabled = crokinole.isCrokinoleScoringEnabled;
+  const crokinoleWinScore = selectedGame?.winningScore && selectedGame.winningScore > 0
+    ? selectedGame.winningScore
+    : CROKINOLE_DEFAULT_WIN_SCORE;
 
   const lifecycle = useGameLifecycleActions({
     familyId,
@@ -229,7 +245,7 @@ export function GamesHomePage({
     router,
     scoreboardGridRef,
     newGameOptionValue: NEW_GAME_OPTION_VALUE,
-    crokinoleWinScore: CROKINOLE_WIN_SCORE,
+    crokinoleWinScore,
     selectedGame,
     selectedGameState,
     selectedPlayers,
@@ -393,6 +409,7 @@ export function GamesHomePage({
     gamesData,
     selectedGameId,
     winnerDirection: selectedGame?.highOrLo,
+    includeZeroScores: isMexicanTrainGame,
   });
 
   const isHighWins = selectedGame?.highOrLo === "high";
@@ -480,11 +497,19 @@ export function GamesHomePage({
 
               {/* Scoreboard Table */ }
               { selectedGameState ? (
-                <div
-                  ref={ scoreboardGridRef }
-                  tabIndex={ -1 }
-                  className="overflow-x-auto rounded-[1.35rem] border border-[#f0d9c4]"
-                >
+                <>
+                  { !isCricketGame ? (
+                    <HideNoPlayerColumnsToggle
+                      checked={ hideNoPlayerColumns }
+                      onCheckedChange={ setHideNoPlayerColumns }
+                    />
+                  ) : null }
+
+                  <div
+                    ref={ scoreboardGridRef }
+                    tabIndex={ -1 }
+                    className="overflow-x-auto rounded-[1.35rem] border border-[#f0d9c4]"
+                  >
                   { isCricketGame ? (
                     <GamesCricketPanel
                       selectedPlayers={ selectedPlayers }
@@ -513,7 +538,7 @@ export function GamesHomePage({
                         crokinoleFormat={ crokinoleFormat }
                         crokinoleTeamNames={ crokinoleTeamNames }
                         crokinoleWinnerTeamIndex={ crokinoleWinnerTeamIndex as 0 | 1 | null }
-                        crokinoleWinScore={ CROKINOLE_WIN_SCORE }
+                        crokinoleWinScore={ crokinoleWinScore }
                         selectedPlayers={ selectedPlayers }
                         orderedSelectablePlayers={ orderedSelectablePlayers }
                         clearPlayerOptionValue={ CLEAR_PLAYER_OPTION_VALUE }
@@ -531,7 +556,7 @@ export function GamesHomePage({
                             <th className="w-16 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-left text-[#a85a3a]">
                               Round
                             </th>
-                            { visiblePlayerColumnIndices.map((idx, visibleIdx) => {
+                            { renderedPlayerColumnIndices.map((idx, visibleIdx) => {
                               const player = selectedPlayers[idx];
                               const crokinoleTeamLabel = idx === 0 ? crokinoleTeamNames[0] : crokinoleTeamNames[1];
                               const crokinoleTeamMembers = idx === 0
@@ -644,7 +669,7 @@ export function GamesHomePage({
                               <th className="w-16 border border-[#f0d9c4] bg-[#fff6ef] p-2 text-left text-[#a85a3a]">
                                 Total
                               </th>
-                              { visiblePlayerColumnIndices.map((idx) => {
+                              { renderedPlayerColumnIndices.map((idx) => {
                                 const score = cumulativeScores.get(idx) ?? 0;
                                 return (
                                   <th
@@ -667,8 +692,9 @@ export function GamesHomePage({
                                 <td className="w-16 border border-[#f0d9c4] bg-[#fff8f2] p-2 text-center font-semibold text-[#8b5a3c]">
                                   { roundEntry.label }
                                 </td>
-                                { visiblePlayerColumnIndices.map((colIdx) => {
+                                { renderedPlayerColumnIndices.map((colIdx) => {
                                   const isFinalOnlyRow = selectedGame?.isRoundBased === false && roundEntry.roundNo === 1;
+                                  const hasAssignedPlayer = Boolean(selectedPlayers[colIdx]);
                                   return (
                                     <td
                                       key={ `round-score-${ roundEntry.label }-${ colIdx }` }
@@ -677,10 +703,12 @@ export function GamesHomePage({
                                       <Input
                                         type="number"
                                         className="w-full border-[#e8c4a0] bg-[#fffaf5] text-center text-[#5c2e1a]"
-                                        placeholder="0"
-                                        disabled={ isCrokinoleGame && !isCrokinoleScoringEnabled }
+                                        placeholder={ hasAssignedPlayer ? "0" : "" }
+                                        disabled={ !hasAssignedPlayer || (isCrokinoleGame && !isCrokinoleScoringEnabled) }
                                         value={
-                                          roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? ""
+                                          hasAssignedPlayer
+                                            ? (roundScores.get(roundEntry.roundKey)?.get(colIdx) ?? "")
+                                            : ""
                                         }
                                         onChange={ (e) =>
                                           handleRoundScoreChange(
@@ -700,7 +728,8 @@ export function GamesHomePage({
                       </table>
                     </>
                   ) }
-                </div>
+                  </div>
+                </>
               ) : (
                 <div className="py-12 text-center text-[#8b5a3c]">
                   Select a game and click &quot;Start Game&quot; to begin scoring
@@ -853,8 +882,19 @@ export function GamesHomePage({
                           <div className="space-y-1">
                             { Array.from(gamesByIdMap.entries()).map(([gameId, playersInGame]) => (
                               <div key={ `game-${ gameId }` } className="mb-2">
-                                <div className="rounded bg-[#fff8f2] px-2 py-1 text-xs text-[#8b5a3c]">
-                                  { playersInGame[0]?.gameTitle }
+                                <div className="flex items-center justify-between rounded bg-[#fff8f2] px-2 py-1 text-xs text-[#8b5a3c]">
+                                  <span>{ playersInGame[0]?.gameTitle }</span>
+                                  <span
+                                    className={ `inline-flex items-center rounded-full px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] ${
+                                      playersInGame[0]?.gameStatus === "completed"
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : playersInGame[0]?.gameStatus === "in_progress"
+                                          ? "bg-amber-100 text-amber-800"
+                                          : "bg-slate-100 text-slate-700"
+                                    }` }
+                                  >
+                                    { playersInGame[0]?.gameStatus?.replace("_", " ") }
+                                  </span>
                                 </div>
                                 <div className="space-y-1 ml-2">
                                   { playersInGame.map((game, playerIdx) => {

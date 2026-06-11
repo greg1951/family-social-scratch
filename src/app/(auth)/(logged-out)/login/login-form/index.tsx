@@ -110,7 +110,7 @@ export default function LoginForm() {
               <Sparkles className="h-3.5 w-3.5" />
               Welcome Back
             </div> */}
-            <CardTitle className="mt-3 font-extrabold tracking-[0.02em] text-[#10364a] text-[1rem]">
+            <CardTitle className="mt-3 font-extrabold tracking-[0.02em] text-[#10364a] text-2xl">
               My Family Social Login
             </CardTitle>
           </CardHeader>

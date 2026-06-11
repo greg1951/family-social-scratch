@@ -5,7 +5,10 @@
     "high_or_lo": "low",
     "is_round_based": true,
     "max_rounds": 12,
-    "score_uom": "points"
+    "score_uom": "points",
+    "rounds_order": "desc",
+    "winning_score": -1,
+    "supports_teams": false
   },
   {
     "id": 2,
@@ -13,6 +16,9 @@
     "high_or_lo": "high",
     "is_round_based": false,
     "max_rounds": 12,
-    "score_uom": "dollars"
+    "score_uom": "dollars",
+    "rounds_order": "desc",
+    "winning_score": -1,
+    "supports_teams": false
   }
 ]
