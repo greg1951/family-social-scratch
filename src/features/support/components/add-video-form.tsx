@@ -33,6 +33,8 @@ const HARD_MAX_SIZE_BYTES = 60 * 1024 * 1024;
 
 type FormState = {
     videoName: string;
+    seqNo: string;
+    caption: string;
     durationMinutes: string;
     descriptionJson: string;
     status: "draft" | "published";
@@ -139,6 +141,8 @@ function createSafeFileName(originalName: string) {
 function createDefaultFormState(): FormState {
     return {
         videoName: "",
+        seqNo: "1",
+        caption: "",
         durationMinutes: "",
         descriptionJson: DEFAULT_DESCRIPTION_JSON,
         status: "draft",
@@ -153,6 +157,21 @@ function buildPlaybackUrl(value: string | null) {
     }
 
     return `/api/video-s3-upload?key=${encodeURIComponent(value)}`;
+}
+
+function sortVideosByNameThenSeqNo(items: VideoListItem[]) {
+    return [...items].sort((left, right) => {
+        const nameCompare = left.videoName.localeCompare(right.videoName, undefined, { sensitivity: "base" });
+        if (nameCompare !== 0) {
+            return nameCompare;
+        }
+
+        if (left.seqNo !== right.seqNo) {
+            return left.seqNo - right.seqNo;
+        }
+
+        return left.id - right.id;
+    });
 }
 
 export default function AddVideosForm() {
@@ -238,7 +257,7 @@ export default function AddVideosForm() {
             return;
         }
 
-        setVideos(result.videos);
+        setVideos(sortVideosByNameThenSeqNo(result.videos));
         setTagOptions(result.tagOptions);
         setIsLoading(false);
     }
@@ -269,6 +288,8 @@ export default function AddVideosForm() {
         setEditingVideoId(videoItem.id);
         setFormState({
             videoName: videoItem.videoName,
+            seqNo: String(videoItem.seqNo),
+            caption: videoItem.caption,
             durationMinutes: String(videoItem.durationMinutes),
             descriptionJson: videoItem.videoJson,
             status: videoItem.status === "published" ? "published" : "draft",
@@ -325,10 +346,15 @@ export default function AddVideosForm() {
     }
 
     async function handleSaveVideo() {
-        const { videoName, durationMinutes, descriptionJson, status, selectedTagIds, selectedFile } = formState;
+        const { videoName, seqNo, caption, durationMinutes, descriptionJson, status, selectedTagIds, selectedFile } = formState;
 
         if (!videoName.trim()) {
             toast.error("Video name is required.");
+            return;
+        }
+
+        if (!caption.trim()) {
+            toast.error("Caption is required.");
             return;
         }
 
@@ -363,6 +389,12 @@ export default function AddVideosForm() {
             return;
         }
 
+        const parsedSeqNo = Number(seqNo);
+        if (!Number.isInteger(parsedSeqNo) || parsedSeqNo <= 0) {
+            toast.error("Sequence number must be a positive whole number.");
+            return;
+        }
+
         if (selectedFile && (selectedFile.size < RECOMMENDED_MIN_SIZE_BYTES || selectedFile.size > RECOMMENDED_MAX_SIZE_BYTES)) {
             toast("Video uploaded outside the expected 14-20MB range.");
         }
@@ -375,6 +407,8 @@ export default function AddVideosForm() {
                 const updateResult = await updateVideoEntryAction({
                     id: editingVideoId,
                     videoName: videoName.trim(),
+                    seqNo: parsedSeqNo,
+                    caption: caption.trim(),
                     status,
                     durationMinutes: parsedDuration,
                     descriptionJson,
@@ -386,8 +420,10 @@ export default function AddVideosForm() {
                 }
 
                 setVideos((current) =>
-                    current.map((videoItem) =>
-                        videoItem.id === editingVideoId ? updateResult.updatedVideo : videoItem,
+                    sortVideosByNameThenSeqNo(
+                        current.map((videoItem) =>
+                            videoItem.id === editingVideoId ? updateResult.updatedVideo : videoItem,
+                        ),
                     ),
                 );
                 toast.success(updateResult.message);
@@ -421,6 +457,8 @@ export default function AddVideosForm() {
 
                 const saveResult = await createVideoEntryAction({
                     videoName: videoName.trim(),
+                    seqNo: parsedSeqNo,
+                    caption: caption.trim(),
                     status,
                     durationMinutes: parsedDuration,
                     descriptionJson,
@@ -433,7 +471,7 @@ export default function AddVideosForm() {
                     throw new Error(saveResult.message ?? "Unable to create video entry.");
                 }
 
-                setVideos((current) => [saveResult.createdVideo, ...current]);
+                setVideos((current) => sortVideosByNameThenSeqNo([saveResult.createdVideo, ...current]));
                 toast.success(saveResult.message);
             }
 
@@ -514,8 +552,8 @@ export default function AddVideosForm() {
                             </DialogHeader>
 
                             <div className="space-y-5 py-2">
-                                <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className="space-y-2">
+                                <div className="grid gap-4 sm:grid-cols-12">
+                                    <div className="space-y-2 sm:col-span-8">
                                         <Label htmlFor="video-name">Video name</Label>
                                         <Input
                                             id="video-name"
@@ -526,8 +564,20 @@ export default function AddVideosForm() {
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <Label htmlFor="duration-minutes">Duration (minutes)</Label>
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <Label htmlFor="video-seq-no">Sequence #</Label>
+                                        <Input
+                                            id="video-seq-no"
+                                            type="number"
+                                            min={1}
+                                            value={formState.seqNo}
+                                            onChange={(event) => setFormState((current) => ({ ...current, seqNo: event.target.value }))}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <Label htmlFor="duration-minutes">Duration</Label>
                                         <Input
                                             id="duration-minutes"
                                             type="number"
@@ -535,6 +585,17 @@ export default function AddVideosForm() {
                                             max={600}
                                             value={formState.durationMinutes}
                                             onChange={(event) => setFormState((current) => ({ ...current, durationMinutes: event.target.value }))}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 sm:col-span-12">
+                                        <Label htmlFor="video-caption">Caption</Label>
+                                        <Input
+                                            id="video-caption"
+                                            value={formState.caption}
+                                            onChange={(event) => setFormState((current) => ({ ...current, caption: event.target.value }))}
+                                            placeholder="Example: Ticket Help Overview"
                                             disabled={isSubmitting}
                                         />
                                     </div>
@@ -752,7 +813,7 @@ export default function AddVideosForm() {
                                             </span>
                                         </div>
                                         <p className="mt-2 text-xs text-[#4b6a79]">
-                                            Duration: {videoItem.durationMinutes} min | Updated: {videoItem.updatedAt ? new Date(videoItem.updatedAt).toLocaleDateString() : "-"}
+                                            Seq: {videoItem.seqNo} | Caption: {videoItem.caption} | Duration: {videoItem.durationMinutes} min | Updated: {videoItem.updatedAt ? new Date(videoItem.updatedAt).toLocaleDateString() : "-"}
                                         </p>
                                         <div className="mt-3 flex flex-wrap gap-1.5">
                                             {videoItem.tags.length === 0 ? (
@@ -810,6 +871,8 @@ export default function AddVideosForm() {
                             <thead className="bg-[#f5fafc] text-left text-xs uppercase tracking-[0.14em] text-[#52707f]">
                                 <tr>
                                     <th className="px-4 py-3">Name</th>
+                                    <th className="px-4 py-3">Seq</th>
+                                    <th className="px-4 py-3">Caption</th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3">Duration</th>
                                     <th className="px-4 py-3">Tags</th>
@@ -825,6 +888,8 @@ export default function AddVideosForm() {
                                     return (
                                         <tr key={videoItem.id}>
                                             <td className="px-4 py-3 font-semibold">{videoItem.videoName}</td>
+                                            <td className="px-4 py-3">{videoItem.seqNo}</td>
+                                            <td className="px-4 py-3">{videoItem.caption}</td>
                                             <td className="px-4 py-3">{videoItem.status}</td>
                                             <td className="px-4 py-3">{videoItem.durationMinutes} min</td>
                                             <td className="px-4 py-3">

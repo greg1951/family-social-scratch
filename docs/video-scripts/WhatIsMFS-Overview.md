@@ -1,3 +1,17 @@
+- [Slide Overview](#slide-overview)
+- [Video Tour](#video-tour)
+  - [TV Junkies](#tv-junkies)
+    - [Show Finder](#show-finder)
+    - [Scroll Strip](#scroll-strip)
+    - [Show Templates](#show-templates)
+  - [Game Scoreboards](#game-scoreboards)
+    - [Mexican Train](#mexican-train)
+    - [Cricket](#cricket)
+    - [Acquire](#acquire)
+    - [Other Games](#other-games)
+  - [Family Foodies](#family-foodies)
+  - [Photo Galleries](#photo-galleries)
+
 # Slide Overview
 
 ```
@@ -197,47 +211,168 @@ As I mentioned in the intro, family members use the Game Scoreboards feature to:
 
 - Keep score on the game they are playing which is done in the Scoreboard section on the **left side** of the page
 - The game Leaderboard, player stats, and game history appears on the **right side** of the page.
-- You don't see anything until a **game is selected**, so let's do that.
+- You won't see anything until a **game is selected**, so let's do that.
 
 ### Mexican Train
 
-1. **Select a game** ... These are the supported games presently ... I'll pick **Mexican Train**
-
+1. Select a game ... **These are the supported games presently** ... I'll pick **Mexican Train**
 2. Alright, now we can see the **Leaderboard**, **Player Stats** and **Game History** have been retrieved for the selected game.
 
-3. When you select a game the default is a **New Game**, but you can continue a game as well: let's pick on (**Austin Crew Mexican Train**) 
+    - These are the stats **across the family** for the Mexican Train game. 
+    - There are **separate stats** for each of the games in the game selection list.
+    - We see **Joe Bloe** (a guest) has the high score (**not good**) and **Julio** is the current leader with an unbelievable score of 12 points.
 
-4. Those might be the lowest scores I've ever seen for a Mexican Train round of 12.
+3. When you select a game the default is a **New Game**, but you can continue a game as well: 
+4. Let's take a look at the game scoreboard by picking an existing game (**Phoenix Train Company**)
+5. Notice in the third column where **Joe Bloe** is listed. Joe is a guest and not a family member.
 
+    - If you want to use Game Scoreboards to track games you play with persons who likely are not members of the My Family Social, then you can add them as guests, just for scorekeeping purposes.
+    - How to do that? The **player column selection** has an option to add a guest, which was done for Joe.
+    - As you can see, we'll even **track Joe in the player stats**. 
+   
 ### Cricket
 
-The next game to look at is the Cricket dart game.
+The next game we'll look at is the **Cricket game** which is actually a darts game frequently played in bars and taverns (or, so I've heard).
 
-1. Select **Cricket** ... again I'll select a game of cricket that is currently in progress ... **Cricket-Dripping Dartsters**
+1. Select **Cricket** ... I'll select a game of cricket that is **currently in progress** ... **Cricket-Dripping Dartsters**
 2. The game can be played by 2 or 4 players, where 4 players are on two teams. 
-3. Each side (or team) takes turns throwing the darts. 
-4. The scoreboard indicates which side is to throw. 
-5. Notice in Side 2 partner there is a guest.
-6. In any of the games you can create one or more guests who are not registered in the family. 
-7. In fact, you may be the only family member in the game if you want to use the scoreboard.
-8. There are three darts thrown. You enter where each dart hit on the board, click on the submit Turn button.
-9. The score is updated automatically updated. **scroll down**
-10. Each turn's result is recorded. 
-11. There are bonus points calculated but this game has not reached that stage.
+3. Each side (or team) takes turns throwing the darts.
+4. They record their darts in a ledger of three darts.
+5. When they submit their dart scores their team scoreboard will be updated automatically. 
+6. Because the game is played in the presence of alcoholic beverages, the scoreboard helpfully reminds them which side is to throw darts next. 
 
+    Let's look at one more game: **Acquire**
+      
 ### Acquire
 
 1. Select **Acquire** ... select **Cape Cod Acquire Masters**
 2. Acquire scorekeeping is done by simply recording the end dollar amounts into the scoreboard. 
-3. As you see guests are shown here and we track guests as well, as you see in the **Leaderboard low score**.
+3. Acquire is like other games: Scrabble, Triominos, Monopoly that are supported out of the box.
 
 ### Other Games
 
-- If your favorite family game wansn't shown in the list, open a support issue and ask our support team about your game. Most game fit very nicely into our game metadata, so they can be added quickly. 
+- If your favorite family game wasn't shown in the list, open a support issue and ask our support team about your game. Most games fit very nicely into our game metadata, so they can be added quickly. 
 
-- Other games like the darts Cricket game have special rules and scoring and requires more effort. But, feel free to suggest it!
-
+- Some  games like the darts Cricket game have special rules and scoring and requires more effort. However, feel free to suggest even more complicated games!
 
 ## Family Foodies
 
+```
+    <CTL-Alt: Start Recording>
+    brief pause
+```
+George will take us to the **Family Foodies** feature.
+
+There are **many things** to be highlighted in the Family Foodies feature.
+
+1. First, the **Recipe Finder**. To find any recipes quickly, enter a recipe keyword: **chicken**, **lemon**
+
+2. On the **Scroll Strip** you can review latest or the **Top Rated** recipes. 
+
+    Here the recipes are listed according to **how many reactions** the recipes have received from family members.
+
+3. An important behavior in all My Family Social features and here in Family Foodies as well is who can edit what. 
+
+    - For example, if I select a **Greg recipe**, you would see that **Edit Recipe button is not enabled**. 
+    - Select a **George recipe**, and voila, the **Edit Recipe button available**! 
+    - **If you didn't post it, then you can't edit it**. Editing can only be done by the post author.
+   
+4. So what does a recipe look like? Opening a recipe by view recipe or double-click: **Mona's scalloped pineapple**
+
+5. Notice several things: 
+  - An **image can be uploaded** for a recipe. It's important to do so as it draws attention to the recipe.
+  - The **Pro Tips** section is sometimes overlooked but here is where the recipe poster can add information to make the recipe pop!
+  - Sometimes you want to take the recipe to the kitchen maybe so you can some notes when trying out someone's recipe. 
+
+    - The **Print Preview** button to the rescue.
+
+        ```
+            <CTL-Shift: pause>
+            toggle Window Capture
+            <CTL-Shift: resume>
+        ```
+    - When you click on the Print button, it will open your printer dialog
+
+Close Print dialog
+
+```
+    <CTL-Shift: pause>
+    toggle Window Capture off
+    <CTL-Shift: resume>
+```
+
+6. The next valuable feature in Family Foodies are the **recipe templates**. 
+
+- My Family Social provides a **global template** for any feature where members can post things. 
+
+- Well, George wanted a simpler recipe template so he clicked on the Create Template button and composed a **Simple Recipe Format**.
+
+  - Because George created the template, George can edit it and improve it again.
+  - Let's look at the editor: **Update Selected**.
+  - My Family Social uses a rich text editor anywhere a family member can enter text.
+  - The Edit dialog let's George create a simpler but also very elegant.
+    - When your working on a new template, it might be a good idea to set the status to **Draft** rather than **Published**, that is until you complete your changes.
+    - Just above the text area are the rich text editing buttons: several types of headings, Bold, Itlics, Underline, Bullet list, Number list and then you come to my favorite the website URL. 
+    - This allows you to include **a link** to a public site. Why would you do that?
+    - If you've **borrow a recipe somewhere** but then made it your own, it's a good idea to credit the original recipe site for by providing a link to it.
+
+- **Back to Foodies Home**
+
 ## Photo Galleries
+
+```
+    <CTL-ALT: Start Recording>
+    pause
+    <CTL-Shift: resume>
+```
+1. George will take us to the last stop in this video tour which is the **Photo Galleries** feature.
+2. We are in the **first of two galleries** provided by My Family Social: **The Family Gallery**.
+3. Here in the Family Gallery will find the albums and photos that **family members have shared** with the family. 
+4. George **shared an album** with the family. 
+5. **Selecting it** displays the pictures of George's sweet pup.
+
+But you don't edit or add albums here in the Family Gallery. 
+
+Instead, every member has a **private member gallery** where a member can upload pictures and create albums.
+
+1. To see George's member gallery, click on the **My Gallery button** at the top.
+
+    - The gallery truly is private. Other members cannot see George's gallery. 
+    - **We can for this video** because I've logged in as George.
+
+2. Here is the album George shared. George has another picture which he uploaded, to add to the album.
+3. Uploaded pictures are kept in an Unallocated queue.
+4. If I **edit the album** you can see where I can then add it and remove any pictures currently in the album.
+5. You see the "Share this album with the family" is checked. If I uncheck it then it will not be visibile in the family gallery.
+
+```
+    <CTL-Shift: pause>
+    get a breath
+    <CTL-Shift: resume>
+```
+
+Let me conclude the Photo Galleries tour with a question.
+
+You may be asking, "why would I use Photo Galleries?". I use Google Photos or the iCloud Photo site. Or I can just text them to you.
+
+The My Family Social mantra is: **because the family pictures are all in one place**. 
+Of course, the Photo Galleries feature in My Family Social will never take the place of those photo sharing avenues. 
+
+But, **what if there was a place where you could always find your family pics**? 
+
+Alright! This concludes the Photo Galleries quick tour. 
+
+```
+    Go back to main page
+```
+I hope you found the **What is My Family Social** videos informative.
+
+If you're visiting My Family Social, then there are additional video and online help by going to the **Videos link** on this page.
+
+If you want to setup a trial account in My Family Social, then you will find **how to that in the Videos link** as well. 
+
+I hope to see you join us!
+
+```
+    <CTL-ALT: Stop Recording>
+```

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Archive, Play, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -69,6 +70,11 @@ export function GamesScoreboardToolbar({
   onResetGameBoard,
   onDeleteSelectedGame,
 }: GamesScoreboardToolbarProps) {
+  const sortedAvailableGames = useMemo(
+    () => [...availableGames].sort((left, right) => left.name.localeCompare(right.name)),
+    [availableGames]
+  );
+
   return (
     <div className="mb-6 flex flex-wrap items-end gap-4">
       <Select
@@ -79,7 +85,7 @@ export function GamesScoreboardToolbar({
           <SelectValue placeholder="Select a game..." />
         </SelectTrigger>
         <SelectContent>
-          { availableGames.map((game) => (
+          { sortedAvailableGames.map((game) => (
             <SelectItem key={ game.id } value={ String(game.id) }>
               { game.name }
             </SelectItem>

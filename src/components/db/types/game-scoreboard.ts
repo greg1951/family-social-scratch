@@ -7,6 +7,7 @@ export interface GameMetadata {
   scoreUom: string;
   isRoundBased: boolean;
   maxRounds: number;
+  maxPlayers: number;
   roundsOrder: "asc" | "desc";
   winningScore: number;
   supportsTeams: boolean;

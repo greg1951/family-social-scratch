@@ -4,7 +4,6 @@ import Link from "next/link";
 import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
-import { Goal } from "lucide-react";
 import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
 import { FamilyFeatureKey, getFeatureKeyFromReferenceName } from "@/features/family/services/family-feature-flags";
 
@@ -77,9 +76,7 @@ export default async function MainPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
-                    { !memberKeyDetails.isLoggedIn && (
-                      <PublicHelpMenu href="/faq" />
-                    ) }
+                    <PublicHelpMenu href="/faq" />
                   </div>
                   <p className="text-sm text-slate-600 md:text-base">{ cta }</p>
                 </div>

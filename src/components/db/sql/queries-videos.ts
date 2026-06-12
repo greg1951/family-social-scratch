@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
@@ -15,6 +15,8 @@ import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
 
 const createVideoInputSchema = z.object({
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
+  seqNo: z.number().int().min(1, "Sequence number must be at least 1."),
+  caption: z.string().trim().min(1, "Caption is required."),
   status: z.enum(["draft", "published"]),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute.").max(600, "Duration is too large."),
   descriptionJson: serializedTipTapDocumentSchema,
@@ -34,6 +36,8 @@ export type VideoTagOption = {
 export type VideoListItem = {
   id: number;
   videoName: string;
+  seqNo: number;
+  caption: string;
   status: string;
   durationMinutes: number;
   videoJson: string;
@@ -44,6 +48,16 @@ export type VideoListItem = {
     category: string;
     tagName: string;
   }>;
+};
+
+export type FaqVideoItem = {
+  id: number;
+  videoName: string;
+  caption: string;
+  seqNo: number;
+  durationMinutes: number;
+  videoUrl: string;
+  playbackUrl: string;
 };
 
 export type VideoMaintenanceDataResult =
@@ -73,6 +87,8 @@ export type CreateVideoResult =
 const updateVideoInputSchema = z.object({
   id: z.number().int().positive(),
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
+  seqNo: z.number().int().min(1, "Sequence number must be at least 1."),
+  caption: z.string().trim().min(1, "Caption is required."),
   status: z.enum(["draft", "published"]),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute.").max(600, "Duration is too large."),
   descriptionJson: serializedTipTapDocumentSchema,
@@ -103,6 +119,68 @@ export type DeleteVideoResult =
     message: string;
   };
 
+export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
+  const requiredFaqTagNames = ["Visitor", "High-Level"];
+
+  const tagRows = await db
+    .select({
+      videoId: videoTag.videoId,
+      tagName: videoTagReference.tagName,
+    })
+    .from(videoTag)
+    .innerJoin(video, eq(video.id, videoTag.videoId))
+    .innerJoin(videoTagReference, eq(videoTagReference.id, videoTag.tagId))
+    .where(and(eq(video.status, "published"), inArray(videoTagReference.tagName, requiredFaqTagNames)));
+
+  const matchedTagNamesByVideoId = new Map<number, Set<string>>();
+
+  for (const row of tagRows) {
+    const currentTagSet = matchedTagNamesByVideoId.get(row.videoId) ?? new Set<string>();
+    currentTagSet.add(row.tagName);
+    matchedTagNamesByVideoId.set(row.videoId, currentTagSet);
+  }
+
+  const qualifiedVideoIds = Array.from(matchedTagNamesByVideoId.entries())
+    .filter(([, tagSet]) => requiredFaqTagNames.every((tagName) => tagSet.has(tagName)))
+    .map(([videoId]) => videoId);
+
+  if (qualifiedVideoIds.length === 0) {
+    return [];
+  }
+
+  const rows = await db
+    .select({
+      id: video.id,
+      videoName: video.videoName,
+      caption: video.caption,
+      seqNo: video.seqNo,
+      durationMinutes: video.durationMinutes,
+      videoUrl: video.videoUrl,
+    })
+    .from(video)
+    .where(and(eq(video.status, "published"), inArray(video.id, qualifiedVideoIds)))
+    .orderBy(asc(video.videoName), asc(video.seqNo), asc(video.id));
+
+  return rows
+    .map((row) => {
+      const key = extractS3KeyFromValue(row.videoUrl);
+      if (!key) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        videoName: row.videoName,
+        caption: row.caption,
+        seqNo: row.seqNo,
+        durationMinutes: row.durationMinutes,
+        videoUrl: row.videoUrl ?? "",
+        playbackUrl: `/api/video-faq-playback?videoId=${row.id}`,
+      } satisfies FaqVideoItem;
+    })
+    .filter((row): row is FaqVideoItem => row !== null);
+}
+
 function dedupeTagIds(tagIds: number[]) {
   return Array.from(new Set(tagIds));
 }
@@ -127,6 +205,8 @@ async function loadVideos(): Promise<VideoListItem[]> {
     .select({
       id: video.id,
       videoName: video.videoName,
+      seqNo: video.seqNo,
+      caption: video.caption,
       status: video.status,
       durationMinutes: video.durationMinutes,
       videoJson: video.videoJson,
@@ -134,7 +214,7 @@ async function loadVideos(): Promise<VideoListItem[]> {
       updatedAt: video.updatedAt,
     })
     .from(video)
-    .orderBy(desc(video.updatedAt), desc(video.id));
+    .orderBy(asc(video.videoName), asc(video.seqNo), asc(video.id));
 
   if (videoRows.length === 0) {
     return [];
@@ -238,6 +318,8 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
     .insert(video)
     .values({
       videoName: normalized.videoName,
+      seqNo: normalized.seqNo,
+      caption: normalized.caption,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
       videoJson: normalized.descriptionJson,
@@ -250,6 +332,8 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
     .returning({
       id: video.id,
       videoName: video.videoName,
+      seqNo: video.seqNo,
+      caption: video.caption,
       status: video.status,
       durationMinutes: video.durationMinutes,
       videoJson: video.videoJson,
@@ -340,6 +424,8 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     .select({
       id: video.id,
       videoName: video.videoName,
+      seqNo: video.seqNo,
+      caption: video.caption,
       status: video.status,
       durationMinutes: video.durationMinutes,
       videoJson: video.videoJson,
@@ -361,6 +447,8 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     .update(video)
     .set({
       videoName: normalized.videoName,
+      seqNo: normalized.seqNo,
+      caption: normalized.caption,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
       videoJson: normalized.descriptionJson,
@@ -393,6 +481,8 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     updatedVideo: {
       ...existingVideo,
       videoName: normalized.videoName,
+      seqNo: normalized.seqNo,
+      caption: normalized.caption,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
       updatedAt: new Date(),

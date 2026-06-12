@@ -333,8 +333,7 @@ export function GamesHomePage({
     const id = Number.parseInt(value, 10);
     setSelectedGameId(id);
     const game = gamesData.availableGames.find((entry) => entry.id === id);
-    const isSelectedCricket = game?.name.trim().toLowerCase() === "cricket";
-    const isSelectedCrokinole = game?.name.trim().toLowerCase() === "crokinole";
+    const selectedMaxPlayers = Math.min(Math.max(game?.maxPlayers ?? 1, 1), 8);
 
     if (game) {
       setSelectedGameTitleOption(NEW_GAME_OPTION_VALUE);
@@ -349,7 +348,7 @@ export function GamesHomePage({
     setPersistedCumulativeScores(null);
     setHasRoundScoreEdits(false);
     setIsContinueGameHidden(false);
-    setRequestedVisiblePlayerColumns(isSelectedCricket || isSelectedCrokinole ? 2 : 1);
+    setRequestedVisiblePlayerColumns(selectedMaxPlayers);
     router.refresh();
   };
 
@@ -365,7 +364,7 @@ export function GamesHomePage({
       crokinole.resetCrokinoleState();
       setPersistedCumulativeScores(null);
       setHasRoundScoreEdits(false);
-      setRequestedVisiblePlayerColumns(isCricketGame || isCrokinoleGame ? 2 : 1);
+      setRequestedVisiblePlayerColumns(Math.min(Math.max(selectedGame?.maxPlayers ?? 1, 1), 8));
       return;
     }
 

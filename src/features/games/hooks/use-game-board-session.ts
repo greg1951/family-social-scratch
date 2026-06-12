@@ -40,6 +40,7 @@ export function useGameBoardSession({
   const isCrokinoleGame = selectedGame?.name.trim().toLowerCase() === "crokinole";
   const isAcquireGame = selectedGame?.name.trim().toLowerCase() === "acquire";
   const isMexicanTrainGame = selectedGame?.name.trim().toLowerCase() === "mexican train";
+  const maxVisiblePlayerColumns = Math.min(Math.max(selectedGame?.maxPlayers ?? 8, 1), 8);
 
   const orderedSelectablePlayers = useMemo(() => {
     return [...localSelectablePlayers].sort((left, right) => {
@@ -146,10 +147,6 @@ export function useGameBoardSession({
       return [0, 1];
     }
 
-    if (isMexicanTrainGame) {
-      return Array.from({ length: 8 }, (_, index) => index);
-    }
-
     const visible = selectedPlayers
       .map((player, index) => {
         const hasPlayer = Boolean(player);
@@ -161,7 +158,7 @@ export function useGameBoardSession({
       })
       .filter((index): index is number => index !== null);
 
-    const highestForcedIndex = Math.min(requestedVisiblePlayerColumns, 8) - 1;
+    const highestForcedIndex = Math.min(requestedVisiblePlayerColumns, maxVisiblePlayerColumns) - 1;
     for (let index = 0; index <= highestForcedIndex; index += 1) {
       if (!visible.includes(index)) {
         visible.push(index);
@@ -176,7 +173,7 @@ export function useGameBoardSession({
   }, [
     isCricketGame,
     isCrokinoleGame,
-    isMexicanTrainGame,
+    maxVisiblePlayerColumns,
     requestedVisiblePlayerColumns,
     roundEntries,
     roundScores,
@@ -188,7 +185,7 @@ export function useGameBoardSession({
   }
 
   function addPlayerColumn() {
-    setRequestedVisiblePlayerColumns((current) => Math.min(current + 1, 8));
+    setRequestedVisiblePlayerColumns((current) => Math.min(current + 1, maxVisiblePlayerColumns));
   }
 
   function clearPlayerColumn(colIndex: number) {

@@ -337,8 +337,12 @@ export function FoodiesHomePage({
     (selectedRecipeDetail?.id === selectedRecipe
       ? selectedRecipeDetail
       : recipes.find((recipe) => recipe.id === selectedRecipe))
-    ?? selectedRecipeRecord;
-  const canEditSelectedRecipe = selectedRecipeBasic?.memberId === member.memberId;
+    ?? null;
+  const selectedRecipeOwnerId = recipes.find((recipe) => recipe.id === selectedRecipe)?.memberId ?? null;
+  const canEditSelectedRecipe = Boolean(
+    selectedRecipeOwnerId !== null
+    && selectedRecipeOwnerId === member.memberId
+  );
   const canReactToSelectedRecipe = Boolean(selectedRecipeBasic && selectedRecipeBasic.memberId !== member.memberId);
 
   function handleSelectRecipe(recipeId: number) {
@@ -810,7 +814,15 @@ export function FoodiesHomePage({
                     />
                     <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View Recipe</Button>
                     <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]"><Link href="/foodies/add-recipe"><Sparkles className="size-3.5" />Add Recipe</Link></Button>
-                    <Button type="button" variant="outline" asChild disabled={ !canEditSelectedRecipe } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50"><Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit Recipe</Link></Button>
+                    { canEditSelectedRecipe ? (
+                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]">
+                        <Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit Recipe</Link>
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="outline" disabled className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50">
+                        <Edit3 className="size-3.5" />Edit Recipe
+                      </Button>
+                    ) }
                   </div>
                   {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#647a50]">
                     Search the recipe list, then select a row to keep one dish highlighted while you browse details.

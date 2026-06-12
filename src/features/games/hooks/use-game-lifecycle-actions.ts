@@ -52,6 +52,7 @@ type UseGameLifecycleActionsArgs = {
     scoreUom: string;
     roundsOrder: "asc" | "desc";
     winningScore: number;
+    maxPlayers: number;
   } | null;
   selectedGameState: GameState | null;
   selectedPlayers: (SelectedPlayer | null)[];
@@ -238,7 +239,7 @@ export function useGameLifecycleActions({
       setSelectedGameState(result.gameState);
       setSelectedGameTitleOption(String(result.gameState.id));
       setGameTitleInput(result.gameState.gameTitle);
-      resetSharedBoardState(isCricketGame || isCrokinoleGame ? 2 : 8);
+      resetSharedBoardState(Math.min(Math.max(selectedGame.maxPlayers, 1), 8));
       setPersistedCumulativeScores(null);
       resetCricketState();
       resetCrokinoleState();
@@ -603,8 +604,7 @@ export function useGameLifecycleActions({
     setSelectedGameState(scoreboard.gameState);
     setGameTitleInput(scoreboard.gameState.gameTitle);
     setSelectedPlayers(loadedPlayers);
-    const loadedPlayerCount = loadedPlayers.filter((player) => player !== null).length;
-    setRequestedVisiblePlayerColumns(isLoadedCrokinoleGame ? 2 : Math.max(1, loadedPlayerCount));
+    setRequestedVisiblePlayerColumns(Math.min(Math.max(selectedGame.maxPlayers, 1), 8));
     setLocalSelectablePlayers((current) => {
       const existingIds = new Set(current.map((player) => player.id));
       const missing = loadedPlayers

@@ -2,42 +2,6 @@ import { FileText, Folder, Settings, Users, HelpCircle, Info, Heart, CircleAlert
 
 export const generalFaqItems = [
   {
-    value: "item-10",
-    category: "My Family Social",
-    trigger: (
-      <div>
-        <p className="text-base font-semibold">What is My Family Social?</p>
-        <p className="text-xs text-slate-600">Learn about our platform and features.</p>
-      </div>
-    ),
-    content: (
-      <div className="grid md:grid-cols-2 text-base">
-        <span>
-          <p>My Family Social is a platform that helps families stay connected and organized. All of the features are available during trial period.</p>
-          <ul className="list-disc ml-6 mt-2">
-            <li>Family Messaging and picture sharing</li>
-            <li>TV, Music, Movie, Book Reviews</li>
-            <li>Recipe Sharing with customizable recipe templates</li>
-            <li>Family Game Scoreboards with game scores, leaderboards, player stats</li>
-          </ul>
-
-        </span>
-        <div className="flex items-center justify-center mt-0">
-          <span>
-            <p className="text-center">Video coming soon, stay tuned!</p>
-            <video controls width="500" height="300" style={ { marginTop: 12, borderRadius: 8 } }>
-              <source src="/videos/faq-tv-home.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
-
-          </span>
-
-        </div>
-      </div>
-    ),
-    icon: Settings,
-  },
-  {
     value: "item-20",
     category: "Start a Family",
     trigger: (
