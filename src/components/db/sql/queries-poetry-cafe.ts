@@ -1,6 +1,17 @@
 import db from '@/components/db/drizzle';
-import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
-import { member, poemComment, poem, poemTag, poemLike, poemTagReference, poemTerm, poemVerse } from "../schema/family-social-schema-tables";
+import { and, asc, count, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
+import {
+  member,
+  poemComment,
+  poem,
+  poemTag,
+  poemLike,
+  poemTagReference,
+  poemTerm,
+  poemVerse,
+  poemCategoryReference,
+  poemCategoryTagReference,
+} from "../schema/family-social-schema-tables";
 import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,
@@ -18,11 +29,20 @@ import {
   PoetryHomePoem,
   PoemTagOptionsReturn,
   PoemTermsReturn,
-  TogglePoemLikeReturn,
+  TogglePoemReactionReturn,
   SavePoetryHomePoemInput,
   SavePoetryHomePoemReturn,
   SavePoemTermInput,
   SavePoemTermReturn,
+  PoemCategoryWithTagsReturn,
+  SavePoemCategoryInput,
+  SavePoemCategoryReturn,
+  SavePoemCategoryTagReferenceInput,
+  SavePoemCategoryTagReferenceReturn,
+  DeletePoemCategoryInput,
+  DeletePoemCategoryReturn,
+  DeletePoemCategoryTagReferenceInput,
+  DeletePoemCategoryTagReferenceReturn,
 } from '../types/poem-verses';
 import {
   createFamilyActivityRecord,
@@ -124,6 +144,7 @@ async function loadPoetryHomePoems(
     .select({
       poemId: poemLike.poemId,
       memberId: poemLike.memberId,
+      reactionType: poemLike.reactionType,
     })
     .from(poemLike)
     .where(inArray(poemLike.poemId, poemFactIds));
@@ -148,8 +169,8 @@ async function loadPoetryHomePoems(
   }
 
   const tagIdsByPoemId = new Map<number, number[]>();
-  const likesByPoemId = new Map<number, number>();
-  const likedPoemIdsByViewer = new Set<number>();
+  const reactionsByPoemId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
+  const userReactionTypeByPoemId = new Map<number, number>();
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByPoemId.get(factTagRow.poemId) ?? [];
@@ -158,10 +179,24 @@ async function loadPoetryHomePoems(
   }
 
   for (const likeRow of likeRows) {
-    likesByPoemId.set(likeRow.poemId, (likesByPoemId.get(likeRow.poemId) ?? 0) + 1);
+    const currentCounts = reactionsByPoemId.get(likeRow.poemId) ?? {
+      dislikeCount: 0,
+      likeCount: 0,
+      loveCount: 0,
+    };
+
+    if (likeRow.reactionType === -1) {
+      currentCounts.dislikeCount += 1;
+    } else if (likeRow.reactionType === 2) {
+      currentCounts.loveCount += 1;
+    } else {
+      currentCounts.likeCount += 1;
+    }
+
+    reactionsByPoemId.set(likeRow.poemId, currentCounts);
 
     if (viewerMemberId && likeRow.memberId === viewerMemberId) {
-      likedPoemIdsByViewer.add(likeRow.poemId);
+      userReactionTypeByPoemId.set(likeRow.poemId, likeRow.reactionType);
     }
   }
 
@@ -194,9 +229,11 @@ async function loadPoetryHomePoems(
       memberId: row.memberId,
       familyId: row.familyId,
       submitterName: memberNameById.get(row.memberId) ?? `Member #${ row.memberId }`,
-      likesCount: likesByPoemId.get(row.id) ?? 0,
+      dislikeCount: reactionsByPoemId.get(row.id)?.dislikeCount ?? 0,
+      likeCount: reactionsByPoemId.get(row.id)?.likeCount ?? 0,
+      loveCount: reactionsByPoemId.get(row.id)?.loveCount ?? 0,
       commentCount: submissionComments.length,
-      likedByMember: likedPoemIdsByViewer.has(row.id),
+      userReactionType: userReactionTypeByPoemId.get(row.id) ?? null,
       verseJson: verseRow?.verseJson,
       analysisJson: analysisComment?.commentJson,
       selectedTagIds: tagIdsByPoemId.get(row.id) ?? [],
@@ -672,13 +709,21 @@ export async function savePoetryHomePoem(
   };
 }
 
-export async function togglePoemLike(
+export async function togglePoemReaction(
   poemId: number,
+  reactionType: number,
   actor: {
     familyId: number;
     memberId: number;
   }
-): Promise<TogglePoemLikeReturn> {
+): Promise<TogglePoemReactionReturn> {
+  if (![-1, 1, 2].includes(reactionType)) {
+    return {
+      success: false,
+      message: 'Invalid reaction type. Must be -1 (dislike), 1 (like), or 2 (love).',
+    };
+  }
+
   const existingPoem = await db
     .select()
     .from(poem)
@@ -692,31 +737,44 @@ export async function togglePoemLike(
     };
   }
 
-  const existingLike = await db
-    .select()
+  const existingReaction = await db
+    .select({
+      id: poemLike.id,
+      reactionType: poemLike.reactionType,
+    })
     .from(poemLike)
     .where(and(eq(poemLike.poemId, poemId), eq(poemLike.memberId, actor.memberId)))
     .then((rows) => rows[0] ?? null);
 
-  if (existingLike) {
+  if (existingReaction && existingReaction.reactionType === reactionType) {
     await db
       .delete(poemLike)
-      .where(eq(poemLike.id, existingLike.id));
+      .where(eq(poemLike.id, existingReaction.id));
   } else {
-    await db
-      .insert(poemLike)
-      .values({
-        poemId: poemId,
+    if (existingReaction) {
+      await db
+        .update(poemLike)
+        .set({ reactionType })
+        .where(eq(poemLike.id, existingReaction.id));
+    } else {
+      await db
+        .insert(poemLike)
+        .values({
+          poemId,
+          memberId: actor.memberId,
+          reactionType,
+        });
+    }
+
+    if (reactionType === 1 || reactionType === 2) {
+      await createFamilyReactionActivityRecord({
+        reactionType: reactionType === 2 ? 'love' : 'like',
+        featureName: 'Poetry Cafe',
+        postName: existingPoem.poemTitle,
+        familyId: actor.familyId,
         memberId: actor.memberId,
       });
-
-    await createFamilyReactionActivityRecord({
-      reactionType: 'like',
-      featureName: 'Poetry Cafe',
-      postName: existingPoem.poemTitle,
-      familyId: actor.familyId,
-      memberId: actor.memberId,
-    });
+    }
   }
 
   const [updatedPoem] = await loadPoetryHomePoems(actor.familyId, [poemId], actor.memberId);
@@ -724,16 +782,18 @@ export async function togglePoemLike(
   if (!updatedPoem) {
     return {
       success: false,
-      message: 'Like was updated but the poem could not be reloaded.',
+      message: 'Reaction was updated but the poem could not be reloaded.',
     };
   }
+
+  const reactionLabel = reactionType === -1 ? 'dislike' : reactionType === 2 ? 'love' : 'like';
 
   return {
     success: true,
     poem: updatedPoem,
-    message: existingLike
-      ? `You removed your like from "${ updatedPoem.poemTitle }".`
-      : `You liked "${ updatedPoem.poemTitle }".`,
+    message: existingReaction && existingReaction.reactionType === reactionType
+      ? `You removed your ${ reactionLabel } reaction from "${ updatedPoem.poemTitle }".`
+      : `You set a ${ reactionLabel } reaction on "${ updatedPoem.poemTitle }".`,
   };
 }
 
@@ -962,5 +1022,326 @@ export async function savePoemTerm(input: SavePoemTermInput)
       status: result.status,
       createdAt: result.createdAt as Date,
     },
+  };
+}
+
+export async function getPoemCategoryWithTags()
+  : Promise<PoemCategoryWithTagsReturn> {
+  const categoryRows = await db
+    .select()
+    .from(poemCategoryReference)
+    .orderBy(asc(poemCategoryReference.categoryName));
+
+  const tagRows = await db
+    .select()
+    .from(poemCategoryTagReference)
+    .orderBy(asc(poemCategoryTagReference.poemCategoryId), asc(poemCategoryTagReference.tagName));
+
+  const tagsByCategoryId = new Map<number, typeof tagRows>();
+
+  for (const row of tagRows) {
+    const existingTags = tagsByCategoryId.get(row.poemCategoryId) ?? [];
+    existingTags.push(row);
+    tagsByCategoryId.set(row.poemCategoryId, existingTags);
+  }
+
+  return {
+    success: true,
+    categories: categoryRows.map((row) => ({
+      category: {
+        id: row.id,
+        categoryName: row.categoryName,
+        categoryDesc: row.categoryDesc,
+        updatedAt: row.updatedAt as Date,
+      },
+      tags: (tagsByCategoryId.get(row.id) ?? []).map((tagRow) => ({
+        id: tagRow.id,
+        poemCategoryId: tagRow.poemCategoryId,
+        tagName: tagRow.tagName,
+        tagJson: tagRow.tagJson,
+        updatedAt: tagRow.updatedAt as Date,
+      })),
+    })),
+  };
+}
+
+export async function savePoemCategory(input: SavePoemCategoryInput)
+  : Promise<SavePoemCategoryReturn> {
+  const categoryName = input.categoryName.trim();
+  const categoryDesc = input.categoryDesc?.trim() ?? '';
+
+  if (categoryName.length < 2) {
+    return {
+      success: false,
+      message: 'Category name must be at least 2 characters.',
+    };
+  }
+
+  const duplicateConditions = input.id
+    ? and(ilike(poemCategoryReference.categoryName, categoryName), ne(poemCategoryReference.id, input.id))
+    : ilike(poemCategoryReference.categoryName, categoryName);
+
+  const [existingCategory] = await db
+    .select({ id: poemCategoryReference.id })
+    .from(poemCategoryReference)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingCategory) {
+    return {
+      success: false,
+      message: `A category named "${ categoryName }" already exists.`,
+    };
+  }
+
+  if (input.id) {
+    const [result] = await db
+      .update(poemCategoryReference)
+      .set({
+        categoryName,
+        categoryDesc,
+        updatedAt: new Date(),
+      })
+      .where(eq(poemCategoryReference.id, input.id))
+      .returning();
+
+    if (!result) {
+      return {
+        success: false,
+        message: `Could not update category id ${ input.id }`,
+      };
+    }
+
+    return {
+      success: true,
+      category: {
+        id: result.id,
+        categoryName: result.categoryName,
+        categoryDesc: result.categoryDesc,
+        updatedAt: result.updatedAt as Date,
+      },
+      message: `Updated category "${ result.categoryName }".`,
+    };
+  }
+
+  const [result] = await db
+    .insert(poemCategoryReference)
+    .values({
+      categoryName,
+      categoryDesc,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!result) {
+    return {
+      success: false,
+      message: 'Could not create category.',
+    };
+  }
+
+  return {
+    success: true,
+    category: {
+      id: result.id,
+      categoryName: result.categoryName,
+      categoryDesc: result.categoryDesc,
+      updatedAt: result.updatedAt as Date,
+    },
+    message: `Added category "${ result.categoryName }".`,
+  };
+}
+
+export async function savePoemCategoryTagReference(input: SavePoemCategoryTagReferenceInput)
+  : Promise<SavePoemCategoryTagReferenceReturn> {
+  const tagName = input.tagName.trim();
+
+  if (tagName.length < 2) {
+    return {
+      success: false,
+      message: 'Tag name must be at least 2 characters.',
+    };
+  }
+
+  const [existingCategory] = await db
+    .select({ id: poemCategoryReference.id })
+    .from(poemCategoryReference)
+    .where(eq(poemCategoryReference.id, input.poemCategoryId))
+    .limit(1);
+
+  if (!existingCategory) {
+    return {
+      success: false,
+      message: `Category id ${ input.poemCategoryId } was not found.`,
+    };
+  }
+
+  const parsedTagJson = parseSerializedTipTapDocument(input.tagJson.trim());
+
+  if (!parsedTagJson.success) {
+    return {
+      success: false,
+      message: parsedTagJson.message,
+    };
+  }
+
+  const duplicateConditions = input.id
+    ? and(
+      eq(poemCategoryTagReference.poemCategoryId, input.poemCategoryId),
+      ilike(poemCategoryTagReference.tagName, tagName),
+      ne(poemCategoryTagReference.id, input.id)
+    )
+    : and(
+      eq(poemCategoryTagReference.poemCategoryId, input.poemCategoryId),
+      ilike(poemCategoryTagReference.tagName, tagName)
+    );
+
+  const [existingTag] = await db
+    .select({ id: poemCategoryTagReference.id })
+    .from(poemCategoryTagReference)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingTag) {
+    return {
+      success: false,
+      message: `A tag named "${ tagName }" already exists in this category.`,
+    };
+  }
+
+  const tagPayload = {
+    poemCategoryId: input.poemCategoryId,
+    tagName,
+    tagJson: serializeTipTapDocument(parsedTagJson.content),
+    updatedAt: new Date(),
+  };
+
+  if (input.id) {
+    const [result] = await db
+      .update(poemCategoryTagReference)
+      .set(tagPayload)
+      .where(eq(poemCategoryTagReference.id, input.id))
+      .returning();
+
+    if (!result) {
+      return {
+        success: false,
+        message: `Could not update tag id ${ input.id }`,
+      };
+    }
+
+    return {
+      success: true,
+      tag: {
+        id: result.id,
+        poemCategoryId: result.poemCategoryId,
+        tagName: result.tagName,
+        tagJson: result.tagJson,
+        updatedAt: result.updatedAt as Date,
+      },
+      message: `Updated tag "${ result.tagName }".`,
+    };
+  }
+
+  const [result] = await db
+    .insert(poemCategoryTagReference)
+    .values(tagPayload)
+    .returning();
+
+  if (!result) {
+    return {
+      success: false,
+      message: 'Could not create tag.',
+    };
+  }
+
+  return {
+    success: true,
+    tag: {
+      id: result.id,
+      poemCategoryId: result.poemCategoryId,
+      tagName: result.tagName,
+      tagJson: result.tagJson,
+      updatedAt: result.updatedAt as Date,
+    },
+    message: `Added tag "${ result.tagName }".`,
+  };
+}
+
+export async function deletePoemCategoryTagReference(
+  input: DeletePoemCategoryTagReferenceInput
+): Promise<DeletePoemCategoryTagReferenceReturn> {
+  const [existingTag] = await db
+    .select({
+      id: poemCategoryTagReference.id,
+      tagName: poemCategoryTagReference.tagName,
+    })
+    .from(poemCategoryTagReference)
+    .where(eq(poemCategoryTagReference.id, input.id))
+    .limit(1);
+
+  if (!existingTag) {
+    return {
+      success: false,
+      message: `Tag id ${ input.id } was not found.`,
+    };
+  }
+
+  const [deletedTag] = await db
+    .delete(poemCategoryTagReference)
+    .where(eq(poemCategoryTagReference.id, input.id))
+    .returning({
+      id: poemCategoryTagReference.id,
+    });
+
+  if (!deletedTag) {
+    return {
+      success: false,
+      message: `Could not delete tag id ${ input.id }.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `Deleted tag "${ existingTag.tagName }".`,
+  };
+}
+
+export async function deletePoemCategory(
+  input: DeletePoemCategoryInput
+): Promise<DeletePoemCategoryReturn> {
+  const [existingCategory] = await db
+    .select({
+      id: poemCategoryReference.id,
+      categoryName: poemCategoryReference.categoryName,
+    })
+    .from(poemCategoryReference)
+    .where(eq(poemCategoryReference.id, input.id))
+    .limit(1);
+
+  if (!existingCategory) {
+    return {
+      success: false,
+      message: `Category id ${ input.id } was not found.`,
+    };
+  }
+
+  const [deletedCategory] = await db
+    .delete(poemCategoryReference)
+    .where(eq(poemCategoryReference.id, input.id))
+    .returning({
+      id: poemCategoryReference.id,
+    });
+
+  if (!deletedCategory) {
+    return {
+      success: false,
+      message: `Could not delete category id ${ input.id }.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `Deleted category "${ existingCategory.categoryName }".`,
   };
 }

@@ -11,11 +11,13 @@ import {
   BookOpen,
   Heading3,
   Italic,
+  Link2,
   List,
   Redo2,
   Save,
   Tags,
   Underline as UnderlineIcon,
+  Unlink,
   Undo2,
   X,
 } from "lucide-react";
@@ -124,6 +126,38 @@ function RichTextToolbar({
     return null;
   }
 
+  function handleSetLink() {
+    if (!editor) {
+      return;
+    }
+
+    const activeEditor = editor;
+
+    const currentHref = (activeEditor.getAttributes("link") as { href?: string | null }).href ?? "https://";
+    const enteredValue = window.prompt("Enter a URL for the selected text", currentHref);
+
+    if (enteredValue === null) {
+      return;
+    }
+
+    const trimmedValue = enteredValue.trim();
+
+    if (!trimmedValue) {
+      activeEditor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+
+    const normalizedHref = /^(https?:|mailto:|tel:)/i.test(trimmedValue)
+      ? trimmedValue
+      : `https://${ trimmedValue }`;
+
+    activeEditor.chain().focus().extendMarkRange("link").setLink({
+      href: normalizedHref,
+      target: "_blank",
+      rel: "noopener noreferrer nofollow",
+    }).run();
+  }
+
   return (
     <div className="flex flex-wrap gap-2 rounded-t-[1.4rem] border border-b-0 border-[#d7d0ea] bg-[#faf6ff] p-3">
       { showExtended ? (
@@ -168,6 +202,24 @@ function RichTextToolbar({
           disabled={ !editor.can().chain().focus().toggleBulletList().run() }
         >
           <List className="size-4" />
+        </ToolbarButton>
+      ) : null }
+      { showExtended ? (
+        <ToolbarButton
+          label="Set link"
+          onClick={ handleSetLink }
+          active={ editor.isActive("link") }
+        >
+          <Link2 className="size-4" />
+        </ToolbarButton>
+      ) : null }
+      { showExtended ? (
+        <ToolbarButton
+          label="Remove link"
+          onClick={ () => editor.chain().focus().extendMarkRange("link").unsetLink().run() }
+          disabled={ !editor.isActive("link") }
+        >
+          <Unlink className="size-4" />
         </ToolbarButton>
       ) : null }
       <ToolbarButton

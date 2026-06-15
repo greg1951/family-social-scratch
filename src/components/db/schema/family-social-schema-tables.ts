@@ -512,6 +512,7 @@ export const poemComment = pgTable("poem_comment", {
   ]
 );
 
+// this table is deprecated in favor of poemCategoryTag and poemCategoryTagReference, but keeping it for now in case we want to support both category-based tags and flat tags
 export const poemTagReference = pgTable("poem_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),
@@ -522,6 +523,34 @@ export const poemTagReference = pgTable("poem_tag_reference", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const poemCategoryReference = pgTable("poem_category_reference", {
+  id: serial("id").primaryKey(),
+  categoryName: text("category_name").notNull().default(""),
+  categoryDesc: text("category_description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+
+export const poemCategoryTagReference = pgTable("poem_category_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagJson: text("tag_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  poemCategoryId: integer("fk_poem_category_id").notNull().references(() => poemCategoryReference.id, {onDelete: 'cascade'}),
+});
+
+export const poemCategoryTag = pgTable("poem_category_tag", {
+  id: serial("id").primaryKey(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
+  tagReferenceId: integer("fk_tag_id").notNull().references(() => poemCategoryTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_category_tag_poem_id_idx').on(table.poemId),
+    index('poem_category_tag_reference_id_idx').on(table.tagReferenceId),
+  ]
+);
+
+// this table is deprecated in favor of poemCategoryTag and poemCategoryTagReference, but keeping it for now in case we want to support both category-based tags and flat tags
 export const poemTag = pgTable("poem_tag", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
@@ -537,6 +566,7 @@ export const poemLike = pgTable("poem_like", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
   createdAt: timestamp("created_at").defaultNow(),
 },
   (table) => [
@@ -616,6 +646,7 @@ export const bookLike = pgTable("book_like", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
   createdAt: timestamp("created_at").defaultNow(),
 },
   (table) => [

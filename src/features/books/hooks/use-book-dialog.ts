@@ -15,9 +15,11 @@ export type BookDraft = {
   bookSeriesName: string;
   bookYear: string;
   submitterName: string;
-  likesCount: number;
+  dislikeCount: number;
+  likeCount: number;
+  loveCount: number;
   commentCount: number;
-  likedByMember: boolean;
+  userReactionType: number | null;
   memberId: number;
   familyId: number;
   status: string;
@@ -69,9 +71,11 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     bookSeriesName: bookRecord.bookSeriesName ?? "",
     bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
     submitterName: createSubmitterLabel(bookRecord, member),
-    likesCount: bookRecord.likesCount ?? 0,
+    dislikeCount: bookRecord.dislikeCount ?? 0,
+    likeCount: bookRecord.likeCount ?? 0,
+    loveCount: bookRecord.loveCount ?? 0,
     commentCount: summaryComments.length,
-    likedByMember: bookRecord.likedByMember ?? false,
+    userReactionType: bookRecord.userReactionType ?? null,
     memberId: bookRecord.memberId,
     familyId: bookRecord.familyId,
     status: bookRecord.status,
@@ -93,9 +97,11 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     bookSeriesName: "",
     bookYear: "",
     submitterName: `${ member.firstName } ${ member.lastName }`,
-    likesCount: 0,
+    dislikeCount: 0,
+    likeCount: 0,
+    loveCount: 0,
     commentCount: 0,
-    likedByMember: false,
+    userReactionType: null,
     memberId: member.memberId,
     familyId: member.familyId,
     status: "draft",

@@ -56,6 +56,7 @@ export type FaqVideoItem = {
   caption: string;
   seqNo: number;
   durationMinutes: number;
+  videoJson: string;
   videoUrl: string;
   playbackUrl: string;
 };
@@ -155,6 +156,7 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
       caption: video.caption,
       seqNo: video.seqNo,
       durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
       videoUrl: video.videoUrl,
     })
     .from(video)
@@ -174,6 +176,7 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
         caption: row.caption,
         seqNo: row.seqNo,
         durationMinutes: row.durationMinutes,
+        videoJson: row.videoJson,
         videoUrl: row.videoUrl ?? "",
         playbackUrl: `/api/video-faq-playback?videoId=${row.id}`,
       } satisfies FaqVideoItem;

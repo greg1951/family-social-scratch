@@ -210,7 +210,7 @@ export default function AddVideosForm() {
         editorProps: {
             attributes: {
                 class:
-                    "tiptap min-h-[10rem] rounded-b-2xl border border-t-0 border-[#d7e3e8] bg-white px-4 py-4 text-[#173848] shadow-xs outline-none focus:outline-none",
+                    "tiptap h-[8rem] sm:h-[6rem] md:h-[4.5rem] overflow-y-auto rounded-b-2xl border border-t-0 border-[#d7e3e8] bg-white px-4 py-3 text-[#173848] shadow-xs outline-none focus:outline-none",
             },
         },
         onUpdate({ editor }) {

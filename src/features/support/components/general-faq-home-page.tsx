@@ -1,5 +1,10 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/core";
+import LinkExtension from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import { EditorContent, useEditor } from "@tiptap/react";
 import {
   Accordion,
   AccordionContent,
@@ -7,11 +12,64 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
+import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { generalFaqItems } from "../types/constants";
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { HelpCircle, ArrowLeft } from "lucide-react";
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
 import Link from "next/link";
+
+function getVideoDescriptionDocument(videoJson?: string): JSONContent {
+  if (!videoJson) {
+    return createEmptyTipTapDocument();
+  }
+
+  const parsed = parseSerializedTipTapDocument(videoJson);
+  return parsed.success ? parsed.content : createEmptyTipTapDocument();
+}
+
+function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
+  const viewer = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [3],
+        },
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
+      }),
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+    ],
+    content: getVideoDescriptionDocument(videoJson),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-[8rem] text-[#12384e] focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!viewer) {
+      return;
+    }
+
+    viewer.commands.setContent(getVideoDescriptionDocument(videoJson));
+  }, [viewer, videoJson]);
+
+  return (
+    <div className="rounded-xl border border-[#cfe0e8] bg-white p-3 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_p]:leading-6 [&_.tiptap_a]:text-[#0f6080] [&_.tiptap_a]:underline">
+      <EditorContent editor={viewer} />
+    </div>
+  );
+}
 
 
 // --- State for category selection ---
@@ -34,7 +92,7 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-5xl space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(10,64,79,0.95),rgba(24,115,143,0.9)_50%,rgba(249,197,121,0.85))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.9)] sm:px-8">
           <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#def8ff]">
             Support
@@ -56,7 +114,7 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_3fr]">
           <section className="rounded-[1.8rem] border border-[#d8e8ed] bg-white p-5 shadow-[0_18px_50px_-36px_rgba(7,63,72,0.55)] sm:p-6">
             <div className="mb-4">
               <h2 className="text-lg font-bold tracking-tight text-[#164657]">Video Help</h2>
@@ -81,6 +139,7 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="space-y-3 text-sm text-[#305867]">
+                        <VideoJsonViewer videoJson={videoItem.videoJson} />
                         <details className="rounded-xl border border-[#cfe0e8] bg-white/80 p-3">
                           <summary className="cursor-pointer text-sm font-semibold text-[#164657]">Preview Video</summary>
                           <div className="mt-3 overflow-hidden rounded-lg border border-[#d8e8ed] bg-black">
@@ -103,14 +162,13 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
           </section>
 
           <section className="rounded-[1.8rem] border border-[#d8e8ed] bg-white p-5 shadow-[0_18px_50px_-36px_rgba(7,63,72,0.55)] sm:p-6">
-            <div className="mb-4">
-              <h2 className="text-lg font-bold tracking-tight text-[#164657]">Text Help</h2>
-              <p className="text-sm text-[#4a6d79]">Browse FAQ topics with details and screenshots.</p>
-            </div>
-
-            <div className="mb-4 flex justify-start">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-[#164657]">Text Help</h2>
+                <p className="text-sm text-[#4a6d79]">Browse FAQ topics with details and screenshots.</p>
+              </div>
               <select
-                className="border border-[#d8e8ed] rounded-lg px-3 py-2 text-sm text-[#164657] bg-white focus:outline-none focus:ring-2 focus:ring-[#1976d2]"
+                className="border border-[#d8e8ed] rounded-lg px-3 py-2 text-sm text-[#164657] bg-white focus:outline-none focus:ring-2 focus:ring-[#1976d2] sm:min-w-52"
                 value={ selectedCategory }
                 onChange={ (e) => setSelectedCategory(e.target.value) }
               >
@@ -138,12 +196,14 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
                     <Accordion type="single" collapsible>
                       <AccordionItem value={ faqItem.value }>
                         <AccordionTrigger>
-                          <div>
+                          <div className="min-w-0 flex-1 pr-2 [&_p]:wrap-break-word">
                             { faqItem.trigger }
                           </div>
                         </AccordionTrigger>
                         <AccordionContent>
-                          { faqItem.content }
+                          <div className="min-w-0 max-w-full wrap-break-word [&_a]:wrap-anywhere [&_li]:wrap-break-word [&_img]:h-auto [&_img]:w-auto [&_img]:max-w-full!">
+                            { faqItem.content }
+                          </div>
                         </AccordionContent>
                       </AccordionItem>
                     </Accordion>

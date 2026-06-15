@@ -105,6 +105,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                       Add Videos
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/add-poem-tags">
+                      Add Poem Tag
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) }

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { addBookComment, saveBooksHomeBook, toggleBookLike } from '@/components/db/sql/queries-book-besties';
-import { AddBookCommentInput, SaveBooksHomeBookInput, ToggleBookLikeInput } from '@/components/db/types/books';
+import { addBookComment, saveBooksHomeBook, toggleBookReaction } from '@/components/db/sql/queries-book-besties';
+import { AddBookCommentInput, SaveBooksHomeBookInput, ToggleBookReactionInput } from '@/components/db/types/books';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
 export async function saveBooksHomeBookAction(input: SaveBooksHomeBookInput) {
@@ -29,17 +29,17 @@ export async function saveBooksHomeBookAction(input: SaveBooksHomeBookInput) {
   return result;
 }
 
-export async function toggleBookLikeAction(input: ToggleBookLikeInput) {
+export async function toggleBookReactionAction(input: ToggleBookReactionInput) {
   const memberDetails = await getMemberPageDetails();
 
   if (!memberDetails.isLoggedIn) {
     return {
       success: false as const,
-      message: 'You must be signed in to like a book.',
+      message: 'You must be signed in to react to a book.',
     };
   }
 
-  const result = await toggleBookLike(input.bookId, {
+  const result = await toggleBookReaction(input.bookId, input.reactionType, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

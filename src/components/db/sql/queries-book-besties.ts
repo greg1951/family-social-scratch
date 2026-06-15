@@ -14,7 +14,7 @@ import {
   BookTermsReturn,
   SaveBooksHomeBookInput,
   SaveBooksHomeBookReturn,
-  ToggleBookLikeReturn,
+  ToggleBookReactionReturn,
 } from '@/components/db/types/books';
 import {
   createTextTipTapDocument,
@@ -121,6 +121,7 @@ async function loadBooksHomeBooks(
     .select({
       bookId: bookLike.bookId,
       memberId: bookLike.memberId,
+      reactionType: bookLike.reactionType,
     })
     .from(bookLike)
     .where(inArray(bookLike.bookId, bookIdsToLoad));
@@ -144,8 +145,8 @@ async function loadBooksHomeBooks(
   }
 
   const tagIdsByBookId = new Map<number, number[]>();
-  const likesByBookId = new Map<number, number>();
-  const likedBookIdsByViewer = new Set<number>();
+  const reactionsByBookId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
+  const userReactionTypeByBookId = new Map<number, number>();
   const submitterMemberIdByBookId = new Map(bookRows.map((row) => [row.id, row.memberId]));
 
   for (const factTagRow of factTagRows) {
@@ -158,11 +159,25 @@ async function loadBooksHomeBooks(
     const submitterMemberId = submitterMemberIdByBookId.get(likeRow.bookId);
 
     if (submitterMemberId !== likeRow.memberId) {
-      likesByBookId.set(likeRow.bookId, (likesByBookId.get(likeRow.bookId) ?? 0) + 1);
+      const currentCounts = reactionsByBookId.get(likeRow.bookId) ?? {
+        dislikeCount: 0,
+        likeCount: 0,
+        loveCount: 0,
+      };
+
+      if (likeRow.reactionType === -1) {
+        currentCounts.dislikeCount += 1;
+      } else if (likeRow.reactionType === 2) {
+        currentCounts.loveCount += 1;
+      } else {
+        currentCounts.likeCount += 1;
+      }
+
+      reactionsByBookId.set(likeRow.bookId, currentCounts);
     }
 
     if (viewerMemberId && likeRow.memberId === viewerMemberId) {
-      likedBookIdsByViewer.add(likeRow.bookId);
+      userReactionTypeByBookId.set(likeRow.bookId, likeRow.reactionType);
     }
   }
 
@@ -195,9 +210,11 @@ async function loadBooksHomeBooks(
       memberId: row.memberId,
       familyId: row.familyId,
       submitterName: memberNameById.get(row.memberId) ?? `Member #${ row.memberId }`,
-      likesCount: likesByBookId.get(row.id) ?? 0,
+      dislikeCount: reactionsByBookId.get(row.id)?.dislikeCount ?? 0,
+      likeCount: reactionsByBookId.get(row.id)?.likeCount ?? 0,
+      loveCount: reactionsByBookId.get(row.id)?.loveCount ?? 0,
       commentCount: bookComments.length,
-      likedByMember: likedBookIdsByViewer.has(row.id),
+      userReactionType: userReactionTypeByBookId.get(row.id) ?? null,
       analysisJson: analysisComment?.commentJson,
       selectedTagIds: tagIdsByBookId.get(row.id) ?? [],
       bookComments,
@@ -560,13 +577,21 @@ export async function saveBooksHomeBook(
   };
 }
 
-export async function toggleBookLike(
+export async function toggleBookReaction(
   bookId: number,
+  reactionType: number,
   actor: {
     familyId: number;
     memberId: number;
   }
-): Promise<ToggleBookLikeReturn> {
+): Promise<ToggleBookReactionReturn> {
+  if (![-1, 1, 2].includes(reactionType)) {
+    return {
+      success: false,
+      message: 'Invalid reaction type. Must be -1 (dislike), 1 (like), or 2 (love).',
+    };
+  }
+
   const existingBook = await db
     .select()
     .from(book)
@@ -580,31 +605,44 @@ export async function toggleBookLike(
     };
   }
 
-  const existingLike = await db
-    .select()
+  const existingReaction = await db
+    .select({
+      id: bookLike.id,
+      reactionType: bookLike.reactionType,
+    })
     .from(bookLike)
     .where(and(eq(bookLike.bookId, bookId), eq(bookLike.memberId, actor.memberId)))
     .then((rows) => rows[0] ?? null);
 
-  if (existingLike) {
+  if (existingReaction && existingReaction.reactionType === reactionType) {
     await db
       .delete(bookLike)
-      .where(eq(bookLike.id, existingLike.id));
+      .where(eq(bookLike.id, existingReaction.id));
   } else {
-    await db
-      .insert(bookLike)
-      .values({
-        bookId: bookId,
+    if (existingReaction) {
+      await db
+        .update(bookLike)
+        .set({ reactionType })
+        .where(eq(bookLike.id, existingReaction.id));
+    } else {
+      await db
+        .insert(bookLike)
+        .values({
+          bookId,
+          memberId: actor.memberId,
+          reactionType,
+        });
+    }
+
+    if (reactionType === 1 || reactionType === 2) {
+      await createFamilyReactionActivityRecord({
+        reactionType: reactionType === 2 ? 'love' : 'like',
+        featureName: 'Book Besties',
+        postName: existingBook.bookTitle,
+        familyId: actor.familyId,
         memberId: actor.memberId,
       });
-
-    await createFamilyReactionActivityRecord({
-      reactionType: 'like',
-      featureName: 'Book Besties',
-      postName: existingBook.bookTitle,
-      familyId: actor.familyId,
-      memberId: actor.memberId,
-    });
+    }
   }
 
   const [updatedBook] = await loadBooksHomeBooks(actor.familyId, [bookId], actor.memberId);
@@ -612,16 +650,18 @@ export async function toggleBookLike(
   if (!updatedBook) {
     return {
       success: false,
-      message: 'Like was updated but the book could not be reloaded.',
+      message: 'Reaction was updated but the book could not be reloaded.',
     };
   }
+
+  const reactionLabel = reactionType === -1 ? 'dislike' : reactionType === 2 ? 'love' : 'like';
 
   return {
     success: true,
     book: updatedBook,
-    message: existingLike
-      ? `You removed your like from "${ updatedBook.bookTitle }".`
-      : `You liked "${ updatedBook.bookTitle }".`,
+    message: existingReaction && existingReaction.reactionType === reactionType
+      ? `You removed your ${ reactionLabel } reaction from "${ updatedBook.bookTitle }".`
+      : `You set a ${ reactionLabel } reaction on "${ updatedBook.bookTitle }".`,
   };
 }
 

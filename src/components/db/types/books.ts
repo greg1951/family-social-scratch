@@ -31,9 +31,11 @@ export interface BooksHomeBook {
   memberId: number;
   familyId: number;
   submitterName: string;
-  likesCount: number;
+  dislikeCount: number;
+  likeCount: number;
+  loveCount: number;
   commentCount: number;
-  likedByMember: boolean;
+  userReactionType?: number | null;
   analysisJson?: string;
   selectedTagIds: number[];
   bookComments: BookHomeComment[];
@@ -85,11 +87,12 @@ export type SaveBooksHomeBookReturn =
       message: string;
     };
 
-export interface ToggleBookLikeInput {
+export interface ToggleBookReactionInput {
   bookId: number;
+  reactionType: number;
 }
 
-export type ToggleBookLikeReturn =
+export type ToggleBookReactionReturn =
   | { success: false; message: string }
   | {
       success: true;

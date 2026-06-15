@@ -1,6 +1,6 @@
 import type { Editor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
-import { Heart, MessageSquare, Save, Tags, X } from "lucide-react";
+import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, X } from "lucide-react";
 
 import type { BookTagOption } from "@/components/db/types/books";
 import { Button } from "@/components/ui/button";
@@ -39,9 +39,10 @@ type BookDialogTags = {
 
 type BookDialogEngagement = {
   isEngaging: boolean;
+  canEngage: boolean;
   commentText: string;
   setCommentText: (value: string) => void;
-  onToggleLike: () => void;
+  onToggleReaction: (reactionType: -1 | 1 | 2) => void;
   onAddComment: () => void;
 };
 
@@ -70,7 +71,7 @@ export function BookDetailsDialog({
 }: BookDetailsDialogProps) {
   const { draft, setDraft } = bookDialog;
   const { selectedBookTags, activeBookTags, categoryTagOptions } = tags;
-  const { isEngaging, commentText, setCommentText, onToggleLike, onAddComment } = engagement;
+  const { isEngaging, canEngage, commentText, setCommentText, onToggleReaction, onAddComment } = engagement;
 
   return (
     <Dialog open={ bookDialog.isBookDialogOpen } onOpenChange={ bookDialog.setIsBookDialogOpen }>
@@ -303,42 +304,80 @@ export function BookDetailsDialog({
 
               <div className="rounded-[1.15rem] border border-[#d9e5ea] bg-white px-3 py-3">
                 <div className="mb-3 flex flex-wrap items-center gap-4">
-                  <Button
-                    type="button"
-                    onClick={ onToggleLike }
-                    disabled={ isEngaging }
-                    className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                  >
-                    <Heart className={ `size-4 ${ draft.likedByMember ? "fill-white" : "" }` } />
-                    { draft.likedByMember ? "Unlike" : "Like" }
-                  </Button>
+                  { canEngage ? (
+                    <>
+                      <Button
+                        type="button"
+                        onClick={ () => onToggleReaction(-1) }
+                        disabled={ isEngaging }
+                        className={ `rounded-full ${ draft.userReactionType === -1
+                          ? "bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                          : "border border-[#c8d7df] bg-white text-[#355161] hover:bg-[#edf7fb]" }` }
+                      >
+                        <ThumbsDown className="size-4" />
+                        Dislike
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => onToggleReaction(1) }
+                        disabled={ isEngaging }
+                        className={ `rounded-full ${ draft.userReactionType === 1
+                          ? "bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                          : "border border-[#c8d7df] bg-white text-[#355161] hover:bg-[#edf7fb]" }` }
+                      >
+                        <ThumbsUp className="size-4" />
+                        Like
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => onToggleReaction(2) }
+                        disabled={ isEngaging }
+                        className={ `rounded-full ${ draft.userReactionType === 2
+                          ? "bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                          : "border border-[#c8d7df] bg-white text-[#355161] hover:bg-[#edf7fb]" }` }
+                      >
+                        <Heart className={ `size-4 ${ draft.userReactionType === 2 ? "fill-white" : "" }` } />
+                        Love
+                      </Button>
+                    </>
+                  ) : null }
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
+                    <ThumbsDown className="size-4 text-[#5d7c8a]" />
+                    { (draft.dislikeCount ?? 0).toLocaleString() }
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
+                    <ThumbsUp className="size-4 text-[#1d6d8f]" />
+                    { (draft.likeCount ?? 0).toLocaleString() }
+                  </span>
                   <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
                     <Heart className="size-4 text-[#c06c4a]" />
-                    { draft.likesCount.toLocaleString() }
+                    { (draft.loveCount ?? 0).toLocaleString() }
                   </span>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
-                  <textarea
-                    id="book-comment-input"
-                    value={ commentText }
-                    onChange={ (event) => setCommentText(event.target.value) }
-                    placeholder="What stood out to you about this book?"
-                    disabled={ isEngaging }
-                    className="min-h-24 w-full rounded-xl border border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#183746] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3d819b]"
-                  />
-                  <div className="flex justify-end">
-                    <Button
-                      type="button"
-                      onClick={ onAddComment }
-                      disabled={ isEngaging || commentText.trim().length < 2 }
-                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                    >
-                      Post Comment
-                    </Button>
+                { canEngage ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
+                    <textarea
+                      id="book-comment-input"
+                      value={ commentText }
+                      onChange={ (event) => setCommentText(event.target.value) }
+                      placeholder="What stood out to you about this book?"
+                      disabled={ isEngaging }
+                      className="min-h-24 w-full rounded-xl border border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#183746] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3d819b]"
+                    />
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={ onAddComment }
+                        disabled={ isEngaging || commentText.trim().length < 2 }
+                        className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                      >
+                        Post Comment
+                      </Button>
+                    </div>
                   </div>
-                </div>
+                ) : null }
               </div>
 
               <div className="space-y-2">

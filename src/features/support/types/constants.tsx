@@ -11,7 +11,7 @@ export const generalFaqItems = [
       </div>
     ),
     content: (
-      <div className="grid md:grid-cols-2 text-base">
+      <div className="flex items-center justify-center mt-4">
         <span>
           <p>There is a guided process to create a family account. It consists of the four steps shown below. In five minutes or less you will have your family set up and ready to go.</p>
           <ol className="list-decimal ml-6 mt-2">
@@ -21,18 +21,18 @@ export const generalFaqItems = [
             <li>Confirm and create the family account.</li>
           </ol>
           <p className="pt-2 italic pb-2">If you are already registered in My Family Social, you must use a different email to create a new family.</p>
+          <p className="pt-2">The link below 👇 will take you to the new family setup page.</p>
           <p style={ { marginTop: 8 } }>
             <a href="https://kbgfamilysocial.com/family-setup-home" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Start a Family today!</a>
           </p>
-        </span>
-        <div className="flex items-center justify-center mt-0">
+        <div className="flex items-center justify-center mt-4">
           <img
-            src="images/support/faq-tv-home.jpg"
+            src="images/support/faq-family-setup-start.jpg"
             alt="Family setup screenshot"
-            style={ { maxWidth: '500px', maxHeight: '500px', marginTop: 12, borderRadius: 8 } }
+            style={ { maxWidth: '600px', maxHeight: '600px', marginTop: 12, borderRadius: 8 } }
           />
-
         </div>
+        </span>
       </div>
     ),
     icon: FileText,

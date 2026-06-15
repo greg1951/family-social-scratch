@@ -36,9 +36,11 @@ export interface PoetryHomePoem {
   memberId: number;
   familyId: number;
   submitterName: string;
-  likesCount: number;
+  dislikeCount: number;
+  likeCount: number;
+  loveCount: number;
   commentCount: number;
-  likedByMember: boolean;
+  userReactionType?: number | null;
   verseJson?: string;
   analysisJson?: string;
   selectedTagIds: number[];
@@ -91,11 +93,12 @@ export type SavePoetryHomePoemReturn =
       message: string;
     };
 
-export interface TogglePoemLikeInput {
+export interface TogglePoemReactionInput {
   poemId: number;
+  reactionType: number;
 }
 
-export type TogglePoemLikeReturn =
+export type TogglePoemReactionReturn =
   | { success: false; message: string }
   | {
       success: true;
@@ -164,4 +167,82 @@ export type PoemTermsReturn =
   | {
       success: true;
       poemTerms: PoemTerm[];
+    };
+
+export interface PoemCategory {
+  id: number;
+  categoryName: string;
+  categoryDesc?: string | null;
+  updatedAt: Date;
+}
+
+export interface PoemCategoryTagReferenceItem {
+  id: number;
+  poemCategoryId: number;
+  tagName: string;
+  tagJson: string;
+  updatedAt: Date;
+}
+
+export interface PoemCategoryWithTags {
+  category: PoemCategory;
+  tags: PoemCategoryTagReferenceItem[];
+}
+
+export interface SavePoemCategoryInput {
+  id?: number;
+  categoryName: string;
+  categoryDesc?: string;
+}
+
+export interface SavePoemCategoryTagReferenceInput {
+  id?: number;
+  poemCategoryId: number;
+  tagName: string;
+  tagJson: string;
+}
+
+export interface DeletePoemCategoryInput {
+  id: number;
+}
+
+export interface DeletePoemCategoryTagReferenceInput {
+  id: number;
+}
+
+export type PoemCategoryWithTagsReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      categories: PoemCategoryWithTags[];
+    };
+
+export type SavePoemCategoryReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      category: PoemCategory;
+      message: string;
+    };
+
+export type SavePoemCategoryTagReferenceReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      tag: PoemCategoryTagReferenceItem;
+      message: string;
+    };
+
+export type DeletePoemCategoryTagReferenceReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      message: string;
+    };
+
+export type DeletePoemCategoryReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      message: string;
     };

@@ -25,7 +25,7 @@ import { toast } from "sonner";
 
 import {
   addPoemCommentAction,
-  togglePoemLikeAction,
+  togglePoemReactionAction,
 } from "@/app/(features)/(poetry)/poetry/actions";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
@@ -51,9 +51,11 @@ type PoemDraft = {
   poetName: string;
   poemYear: string;
   submitterName: string;
-  likesCount: number;
+  dislikeCount: number;
+  likeCount: number;
+  loveCount: number;
   commentCount: number;
-  likedByMember: boolean;
+  userReactionType: number | null;
   memberId: number;
   familyId: number;
   status: string;
@@ -110,9 +112,11 @@ function createDraftFromPoem(poemRecord: PoetryHomePoem, member: MemberKeyDetail
     poetName: poemRecord.poetName,
     poemYear: poemRecord.poemYear ? String(poemRecord.poemYear) : "",
     submitterName: createSubmitterLabel(poemRecord, member),
-    likesCount: poemRecord.likesCount ?? 0,
+    dislikeCount: poemRecord.dislikeCount ?? 0,
+    likeCount: poemRecord.likeCount ?? 0,
+    loveCount: poemRecord.loveCount ?? 0,
     commentCount: poemRecord.commentCount ?? 0,
-    likedByMember: poemRecord.likedByMember ?? false,
+    userReactionType: poemRecord.userReactionType ?? null,
     memberId: poemRecord.memberId,
     familyId: poemRecord.familyId,
     status: poemRecord.status,
@@ -244,10 +248,13 @@ export default function PoetryHomePage({
     }
 
     return poemItems
-      .filter((poemItem) => poemItem.likesCount > 0)
+      .filter((poemItem) => (poemItem.likeCount + poemItem.loveCount) > 0)
       .sort((leftPoem, rightPoem) => {
-        if (rightPoem.likesCount !== leftPoem.likesCount) {
-          return rightPoem.likesCount - leftPoem.likesCount;
+        const rightScore = rightPoem.likeCount + rightPoem.loveCount;
+        const leftScore = leftPoem.likeCount + leftPoem.loveCount;
+
+        if (rightScore !== leftScore) {
+          return rightScore - leftScore;
         }
 
         return new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime();
@@ -339,13 +346,21 @@ export default function PoetryHomePage({
     setSelectedPoemId(updatedDraft.id);
   }
 
-  function handleToggleLike() {
+  function handleToggleReaction(reactionType: -1 | 1 | 2) {
     if (!selectedPoem) {
       return;
     }
 
+    if (!isPoemDialogOpen) {
+      toast.error("Open View Poem before posting a reaction.");
+      return;
+    }
+
     startEngageTransition(async () => {
-      const result = await togglePoemLikeAction({ poemId: selectedPoem.id });
+      const result = await togglePoemReactionAction({
+        poemId: selectedPoem.id,
+        reactionType,
+      });
 
       if (!result.success) {
         toast.error(result.message);
@@ -413,7 +428,7 @@ export default function PoetryHomePage({
               </div>
 
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                Welcome to your family Poetry Cafe. Share your favorite poems and comment on each other&apos;s favorites.
+                Share your favorite poetry. Comment on each other&apos;s favorites.
               </h1>
             </div>
           </div>
@@ -653,7 +668,7 @@ export default function PoetryHomePage({
                           </div>
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
                         </div>
-                        <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:gap-x-8 md:items-center md:gap-x-10">
+                        <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 sm:gap-x-4 md:items-center md:gap-x-5">
                           <div className="min-w-26">
                             <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poet</p>
                             <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poetName }</p>
@@ -666,9 +681,17 @@ export default function PoetryHomePage({
                             <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
                             <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
                           </div>
-                          <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
-                            <Heart className="size-3.5 text-[#a86a8e] sm:size-4" />
-                            { poemItem.likesCount }
+                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                            <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
+                            { poemItem.dislikeCount }
+                          </div>
+                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                            <ThumbsUp className="size-3 text-[#6e3f98] sm:size-3.5" />
+                            { poemItem.likeCount }
+                          </div>
+                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                            <Heart className="size-3 text-[#a86a8e] sm:size-3.5" />
+                            { poemItem.loveCount }
                           </div>
                           <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
                             <MessageSquare className="size-3.5 text-[#7a5a9f] sm:size-4" />
@@ -787,42 +810,80 @@ export default function PoetryHomePage({
 
                 <div className="rounded-[1.15rem] border border-[#e5daf0] bg-white px-3 py-3">
                   <div className="mb-3 flex flex-wrap items-center gap-4">
-                    <Button
-                      type="button"
-                      onClick={ handleToggleLike }
-                      disabled={ isEngaging }
-                      className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
-                    >
-                      <Heart className={ `size-4 ${ selectedPoem.likedByMember ? "fill-white" : "" }` } />
-                      { selectedPoem.likedByMember ? "Unlike" : "Like" }
-                    </Button>
+                    { selectedPoem.memberId !== member.memberId ? (
+                      <>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleReaction(-1) }
+                          disabled={ isEngaging }
+                          className={ `rounded-full ${ selectedPoem.userReactionType === -1
+                            ? "bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                            : "border border-[#d7d0ea] bg-white text-[#5f466f] hover:bg-[#f7f2ff]" }` }
+                        >
+                          <ThumbsDown className="size-4" />
+                          Dislike
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleReaction(1) }
+                          disabled={ isEngaging }
+                          className={ `rounded-full ${ selectedPoem.userReactionType === 1
+                            ? "bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                            : "border border-[#d7d0ea] bg-white text-[#5f466f] hover:bg-[#f7f2ff]" }` }
+                        >
+                          <ThumbsUp className="size-4" />
+                          Like
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleReaction(2) }
+                          disabled={ isEngaging }
+                          className={ `rounded-full ${ selectedPoem.userReactionType === 2
+                            ? "bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                            : "border border-[#d7d0ea] bg-white text-[#5f466f] hover:bg-[#f7f2ff]" }` }
+                        >
+                          <Heart className={ `size-4 ${ selectedPoem.userReactionType === 2 ? "fill-white" : "" }` } />
+                          Love
+                        </Button>
+                      </>
+                    ) : null }
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
+                      <ThumbsDown className="size-4 text-[#7b6394]" />
+                      { (selectedPoem.dislikeCount ?? 0).toLocaleString() }
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
+                      <ThumbsUp className="size-4 text-[#6e3f98]" />
+                      { (selectedPoem.likeCount ?? 0).toLocaleString() }
+                    </span>
                     <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
                       <Heart className="size-4 text-[#a86a8e]" />
-                      { selectedPoem.likesCount.toLocaleString() }
+                      { (selectedPoem.loveCount ?? 0).toLocaleString() }
                     </span>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#5d426f]" htmlFor="poem-comment-input">Add Comment</label>
-                    <textarea
-                      id="poem-comment-input"
-                      value={ commentText }
-                      onChange={ (event) => setCommentText(event.target.value) }
-                      placeholder="What stood out to you in this poem?"
-                      disabled={ isEngaging }
-                      className="min-h-24 w-full rounded-xl border border-[#d7d0ea] bg-white px-3 py-2 text-sm text-[#43245d] outline-none transition focus-visible:ring-2 focus-visible:ring-[#8c62b5]"
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        onClick={ handleAddComment }
-                        disabled={ isEngaging || commentText.trim().length < 2 }
-                        className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
-                      >
-                        Post Comment
-                      </Button>
+                  { selectedPoem.memberId !== member.memberId ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[#5d426f]" htmlFor="poem-comment-input">Add Comment</label>
+                      <textarea
+                        id="poem-comment-input"
+                        value={ commentText }
+                        onChange={ (event) => setCommentText(event.target.value) }
+                        placeholder="What stood out to you in this poem?"
+                        disabled={ isEngaging }
+                        className="min-h-24 w-full rounded-xl border border-[#d7d0ea] bg-white px-3 py-2 text-sm text-[#43245d] outline-none transition focus-visible:ring-2 focus-visible:ring-[#8c62b5]"
+                      />
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          onClick={ handleAddComment }
+                          disabled={ isEngaging || commentText.trim().length < 2 }
+                          className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                        >
+                          Post Comment
+                        </Button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null }
                 </div>
 
                 <div className="space-y-2">

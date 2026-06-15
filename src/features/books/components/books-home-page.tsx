@@ -23,7 +23,7 @@ import { toast } from "sonner";
 
 import {
   addBookCommentAction,
-  toggleBookLikeAction,
+  toggleBookReactionAction,
 } from "@/app/(features)/(books)/books/actions";
 import {
   createEmptyTipTapDocument,
@@ -213,10 +213,13 @@ export default function BooksHomePage({
     }
 
     return bookItems
-      .filter((bookItem) => bookItem.likesCount > 0)
+      .filter((bookItem) => (bookItem.likeCount + bookItem.loveCount) > 0)
       .sort((leftBook, rightBook) => {
-        if (rightBook.likesCount !== leftBook.likesCount) {
-          return rightBook.likesCount - leftBook.likesCount;
+        const rightScore = rightBook.likeCount + rightBook.loveCount;
+        const leftScore = leftBook.likeCount + leftBook.loveCount;
+
+        if (rightScore !== leftScore) {
+          return rightScore - leftScore;
         }
 
         return new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime();
@@ -315,14 +318,20 @@ export default function BooksHomePage({
     }
   }
 
-  function handleToggleLike() {
+  function handleToggleReaction(reactionType: -1 | 1 | 2) {
     if (!selectedBook) {
       return;
     }
 
+    if (!bookDialog.isBookDialogOpen || bookDialog.bookDialogMode !== "view") {
+      toast.error("Open View Book before posting a reaction.");
+      return;
+    }
+
     startEngageTransition(async () => {
-      const result = await toggleBookLikeAction({
+      const result = await toggleBookReactionAction({
         bookId: selectedBook.id,
+        reactionType,
       });
 
       if (!result.success) {
@@ -637,7 +646,7 @@ export default function BooksHomePage({
                           </div>
                           <p className="mt-1 text-[0.7rem] text-[#6b8a98] sm:text-xs">Created { formatCreatedAt(bookItem.createdAt) }</p>
                         </div>
-                        <div className="flex flex-wrap items-start gap-x-4 gap-y-2 sm:gap-x-8 md:items-center md:gap-x-10">
+                        <div className="flex flex-wrap items-start gap-x-2.5 gap-y-1.5 sm:gap-x-3 md:items-center md:gap-x-4">
                           <div className="min-w-26">
                             <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Author</p>
                             <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.authorName }</p>
@@ -650,16 +659,24 @@ export default function BooksHomePage({
                             <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Language</p>
                             <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookLanguage }</p>
                           </div>
-                          <div className="min-w-32 max-w-full">
+                          <div className="min-w-24 max-w-full">
                             <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
-                            <p className="wrap-break-word text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.submitterName }</p>
+                            <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
                           </div>
-                          <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#355161] sm:text-sm">
-                            <Heart className="size-3.5 text-[#c06c4a] sm:size-4" />
-                            { bookItem.likesCount }
+                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                            <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
+                            { bookItem.dislikeCount }
                           </div>
-                          <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#355161] sm:text-sm">
-                            <MessageSquare className="size-3.5 text-[#3d819b] sm:size-4" />
+                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                            <ThumbsUp className="size-2.5 text-[#1d6d8f] sm:size-3" />
+                            { bookItem.likeCount }
+                          </div>
+                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                            <Heart className="size-2.5 text-[#c06c4a] sm:size-3" />
+                            { bookItem.loveCount }
+                          </div>
+                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#355161] sm:text-xs">
+                            <MessageSquare className="size-3 text-[#3d819b] sm:size-3.5" />
                             { bookItem.commentCount }
                           </div>
                         </div>
@@ -692,9 +709,10 @@ export default function BooksHomePage({
         } }
         engagement={ {
           isEngaging,
+          canEngage: selectedBook?.memberId !== member.memberId,
           commentText,
           setCommentText,
-          onToggleLike: handleToggleLike,
+          onToggleReaction: handleToggleReaction,
           onAddComment: handleAddComment,
         } }
         save={ {

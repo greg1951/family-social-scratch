@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { addPoemComment, savePoetryHomePoem, togglePoemLike } from '@/components/db/sql/queries-poetry-cafe';
-import { AddPoemCommentInput, SavePoetryHomePoemInput, TogglePoemLikeInput } from '@/components/db/types/poem-verses';
+import { addPoemComment, savePoetryHomePoem, togglePoemReaction } from '@/components/db/sql/queries-poetry-cafe';
+import { AddPoemCommentInput, SavePoetryHomePoemInput, TogglePoemReactionInput } from '@/components/db/types/poem-verses';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
 export async function savePoetryHomePoemAction(input: SavePoetryHomePoemInput) {
@@ -29,17 +29,17 @@ export async function savePoetryHomePoemAction(input: SavePoetryHomePoemInput) {
   return result;
 }
 
-export async function togglePoemLikeAction(input: TogglePoemLikeInput) {
+export async function togglePoemReactionAction(input: TogglePoemReactionInput) {
   const memberDetails = await getMemberPageDetails();
 
   if (!memberDetails.isLoggedIn) {
     return {
       success: false as const,
-      message: 'You must be signed in to like a poem.',
+      message: 'You must be signed in to react to a poem.',
     };
   }
 
-  const result = await togglePoemLike(input.poemId, {
+  const result = await togglePoemReaction(input.poemId, input.reactionType, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });
