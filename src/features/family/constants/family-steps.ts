@@ -78,7 +78,7 @@
   export const familyFeatures = [
     { name: 'TV Junkies', description: 'Share your favorite TV shows with your family.' },
     { name: 'Movie Maniacs', description: 'Discuss and recommend movies with your family.' },
-    { name: 'Book Besties', description: 'Share and review books with your family.' },
+    { name: 'Reading Room', description: 'Share and review books with your family.' },
     { name: 'Family Foodies', description: 'Exchange recipes and cooking tips with your family.' },
     { name: 'Music Lovers', description: 'Share your favorite music and playlists with your family.' },
     { name: 'Poetry Cafe', description: 'Share your love of poetry and creative writing with your family.' },    

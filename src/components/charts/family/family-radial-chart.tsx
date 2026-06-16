@@ -46,7 +46,7 @@ const chartConfig = {
     color: "var(--chart-4)",
   },
   books: {
-    label: "Book Besties",
+    label: "Reading Room",
     color: "var(--chart-5)",
   },
 } satisfies ChartConfig

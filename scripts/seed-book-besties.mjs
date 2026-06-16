@@ -64,7 +64,7 @@ async function main() {
   const rawConnectionString = process.env.FAMILY_SOCIAL_DATABASE_URL || process.env.DATABASE_URL;
 
   if (!rawConnectionString) {
-    throw new Error("Set FAMILY_SOCIAL_DATABASE_URL or DATABASE_URL before running the Book Besties seed.");
+    throw new Error("Set FAMILY_SOCIAL_DATABASE_URL or DATABASE_URL before running the Reading Room seed.");
   }
 
   const client = new Client({ connectionString: normalizeDatabaseUrl(rawConnectionString) });
@@ -137,7 +137,7 @@ async function main() {
     );
 
     if (!memberResult.rowCount || !memberResult.rows[0]) {
-      throw new Error("No active member found. Create at least one member before seeding Book Besties data.");
+      throw new Error("No active member found. Create at least one member before seeding Reading Room data.");
     }
 
     const memberId = memberResult.rows[0].id;
@@ -257,7 +257,7 @@ async function main() {
     }
 
     await client.query("COMMIT");
-    console.log("Book Besties seed completed: tags, terms, books, analysis, and comments are now populated.");
+    console.log("Reading Room seed completed: tags, terms, books, analysis, and comments are now populated.");
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;

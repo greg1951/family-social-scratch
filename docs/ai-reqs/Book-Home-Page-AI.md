@@ -13,7 +13,7 @@
 
 - The purpose of this request is to generate React and TipTap code for the "BookHomePage" as described below. 
 - The "BookHomePage" is nearly identical functionally as what was implemented in the "PoetryHomePage" that resides in "src/features/poetry/components/poetry-home-page.tsx".  
-- Pay close attention to the PoetryHomePage as stated above, functionally the Book Besties feature is nearly identical.
+- Pay close attention to the PoetryHomePage as stated above, functionally the Reading Room feature is nearly identical.
 
 ------------------------------------
 

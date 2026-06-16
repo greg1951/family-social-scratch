@@ -674,19 +674,19 @@ export const featureFaqItems = [
   },
   {
     value: "item-100",
-    category: "Book Besties",
+    category: "Reading Room",
     trigger: (
       <div>
-        <p className="text-base font-semibold">I like to read but I'm not sure how to get started with Book Besties. What do you recommend?</p>
+        <p className="text-base font-semibold">I like to read but I'm not sure how to get started with Reading Room. What do you recommend?</p>
         <p className="text-sm text-slate-600">First of all, you've already met the first criteria which is you like to read!</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">Book Besties provides a number of resources to get you going.</p>
+          <p className="text-base font-semibold">Reading Room provides a number of resources to get you going.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Book Besties provides a number of <b>sample book reviews</b>. Read those to get a sense of what a good review looks like.</li>
+            <li>Reading Room provides a number of <b>sample book reviews</b>. Read those to get a sense of what a good review looks like.</li>
             <li>Visit the <b>Book Terms</b> page. There you'll find definitions and explanations for various book-related terms.</li>
             <p className="pt-2 pb-2 text-xs"><u>Tip</u>: Personalizing the review to your experience is the kind of review people enjoy reading.</p>
             <li>Write your own book review, incorporating what you've learned from the sample reviews and book terms.</li>
@@ -706,18 +706,18 @@ export const featureFaqItems = [
   },
   {
     value: "item-101",
-    category: "Book Besties",
+    category: "Reading Room",
     trigger: (
       <div>
         <p className="text-base font-semibold">I've read a wonderful book and want to share it with others. What's the best way to write it up?</p>
-        <p className="text-sm text-slate-600">Book Besties provides a complete book club for the family!</p>
+        <p className="text-sm text-slate-600">Reading Room provides a complete book club for the family!</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
           <p className="text-base font-semibold">Writing a book review is easy. Writing a good one takes a little more time and thought.</p>
-          <p className="text-sm text-slate-600">Begin by selecting <b>Add Book</b> from the Book Besties home page.</p>
+          <p className="text-sm text-slate-600">Begin by selecting <b>Add Book</b> from the Reading Room home page.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Provide general <b>Book Details</b>.</li>
             <li>In the <b>Book Analysis</b> section, write your review.</li>

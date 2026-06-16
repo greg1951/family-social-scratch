@@ -110,6 +110,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                       Add Poem Tag
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/add-book-tags">
+                      Add Book Tag
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) }

@@ -48,7 +48,7 @@ export default async function MainHeader({
                 { isFeatureEnabled("tv") ? <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" /> : null }
                 { isFeatureEnabled("movies") ? <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" /> : null }
                 { isFeatureEnabled("music") ? <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Lovers" /> : null }
-                { isFeatureEnabled("books") ? <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Book Besties" /> : null }
+                { isFeatureEnabled("books") ? <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Reading Room" /> : null }
                 { isFeatureEnabled("poetry") ? <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" /> : null }
                 { isFeatureEnabled("foodies") ? <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" /> : null }
                 { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Photo Galleries" /> : null }

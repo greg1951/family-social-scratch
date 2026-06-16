@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { getPoemCategoryWithTags } from "@/components/db/sql/queries-poetry-cafe";
-import { PoemTagCategoriesAdminPage } from "@/components/features/support/components/poem-tag-categories-admin-page";
+import { PoemTagCategoriesAdminPage } from "@/features/support/components/poem-tag-categories-admin-page";
 
 export default async function AddPoemTagsPage() {
   const session = await auth();

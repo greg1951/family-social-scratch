@@ -98,7 +98,7 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
-                Book Besties
+                Reading Room
               </p>
               <Link
                 href="/books"

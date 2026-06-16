@@ -4,9 +4,8 @@ import {
   member,
   poemComment,
   poem,
-  poemTag,
+  poemCategoryTag,
   poemLike,
-  poemTagReference,
   poemTerm,
   poemVerse,
   poemCategoryReference,
@@ -151,8 +150,8 @@ async function loadPoetryHomePoems(
 
   const factTagRows = await db
     .select()
-    .from(poemTag)
-    .where(inArray(poemTag.poemId, poemFactIds));
+    .from(poemCategoryTag)
+    .where(inArray(poemCategoryTag.poemId, poemFactIds));
 
   const discussionThreadsByPoemId = await loadDiscussionThreadSummariesByTargetIds(familyId, 'poem', poemFactIds);
 
@@ -174,7 +173,7 @@ async function loadPoetryHomePoems(
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByPoemId.get(factTagRow.poemId) ?? [];
-    existingTagIds.push(factTagRow.tagId);
+    existingTagIds.push(factTagRow.tagReferenceId);
     tagIdsByPoemId.set(factTagRow.poemId, existingTagIds);
   }
 
@@ -333,15 +332,18 @@ export async function getPoemTagReferences()
   : Promise<PoemTagOptionsReturn> {
   const result = await db
     .select({
-      id: poemTagReference.id,
-      tagName: poemTagReference.tagName,
-      tagDesc: poemTagReference.tagDesc,
-      tagType: poemTagReference.tagType,
-      status: poemTagReference.status,
-      seqNo: poemTagReference.seqNo,
+      id: poemCategoryTagReference.id,
+      tagName: poemCategoryTagReference.tagName,
+      tagJson: poemCategoryTagReference.tagJson,
+      poemCategoryId: poemCategoryTagReference.poemCategoryId,
+      categoryName: poemCategoryReference.categoryName,
     })
-    .from(poemTagReference)
-    .orderBy(asc(poemTagReference.seqNo), asc(poemTagReference.tagName));
+    .from(poemCategoryTagReference)
+    .innerJoin(
+      poemCategoryReference,
+      eq(poemCategoryTagReference.poemCategoryId, poemCategoryReference.id)
+    )
+    .orderBy(asc(poemCategoryReference.categoryName), asc(poemCategoryTagReference.tagName));
 
   if (!result) {
     return {
@@ -352,7 +354,16 @@ export async function getPoemTagReferences()
 
   return {
     success: true,
-    poemTags: result,
+    poemTags: result.map((row) => ({
+      id: row.id,
+      tagName: row.tagName,
+      tagJson: row.tagJson,
+      poemCategoryId: row.poemCategoryId,
+      categoryName: row.categoryName,
+      status: 'active',
+      tagType: 'category-tag',
+      seqNo: 0,
+    })),
   };
 }
 
@@ -367,7 +378,7 @@ export async function savePoetryHomePoem(
   const normalizedTitle = input.poemTitle.trim();
   const normalizedPoetName = input.poetName.trim();
   const normalizedSource = input.poemSource.trim() || 'Unknown';
-  const uniqueTagIds = [...new Set(input.selectedTagIds)].slice(0, 3);
+  const uniqueTagIds = [...new Set(input.selectedTagIds)];
   const parsedVerseJson = parseSerializedTipTapDocument(input.verseJson.trim());
   const parsedAnalysisJson = parseSerializedTipTapDocument(input.analysisJson.trim());
 
@@ -413,11 +424,18 @@ export async function savePoetryHomePoem(
     };
   }
 
+  if (uniqueTagIds.length === 0) {
+    return {
+      success: false,
+      message: 'Select at least one poem tag before saving.',
+    };
+  }
+
   if (uniqueTagIds.length > 0) {
     const validTags = await db
-      .select({ id: poemTagReference.id })
-      .from(poemTagReference)
-      .where(inArray(poemTagReference.id, uniqueTagIds));
+      .select({ id: poemCategoryTagReference.id })
+      .from(poemCategoryTagReference)
+      .where(inArray(poemCategoryTagReference.id, uniqueTagIds));
 
     if (validTags.length !== uniqueTagIds.length) {
       return {
@@ -468,8 +486,8 @@ export async function savePoetryHomePoem(
   const existingFactTags = existingPoem
     ? await db
       .select()
-      .from(poemTag)
-      .where(eq(poemTag.poemId, existingPoem.id))
+      .from(poemCategoryTag)
+      .where(eq(poemCategoryTag.poemId, existingPoem.id))
     : [];
 
   const isAnalysisEmpty = isTipTapDocumentEmpty(parsedAnalysisJson.content);
@@ -557,16 +575,16 @@ export async function savePoetryHomePoem(
     }
 
     await db
-      .delete(poemTag)
-      .where(eq(poemTag.poemId, savedPoemFact.id));
+      .delete(poemCategoryTag)
+      .where(eq(poemCategoryTag.poemId, savedPoemFact.id));
     replacedTags = true;
 
     if (uniqueTagIds.length > 0) {
       await db
-        .insert(poemTag)
+        .insert(poemCategoryTag)
         .values(uniqueTagIds.map((tagId) => ({
           poemId: savedPoemFact.id,
-          tagId,
+          tagReferenceId: tagId,
         })));
     }
 
@@ -594,15 +612,15 @@ export async function savePoetryHomePoem(
       if (replacedTags && existingPoem) {
         try {
           await db
-            .delete(poemTag)
-            .where(eq(poemTag.poemId, existingPoem.id));
+            .delete(poemCategoryTag)
+            .where(eq(poemCategoryTag.poemId, existingPoem.id));
 
           if (existingFactTags.length > 0) {
             await db
-              .insert(poemTag)
+              .insert(poemCategoryTag)
               .values(existingFactTags.map((factTag) => ({
                 poemId: existingPoem.id,
-                tagId: factTag.tagId,
+                tagReferenceId: factTag.tagReferenceId,
               })));
           }
         } catch {

@@ -92,7 +92,7 @@ export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessag
               <Column align='left' valign='top'>
                 <Text className='m-0 mb-4 pt-2 text-left font-app text-base leading-6'>
                   We would be thrilled for you to join us and can&apos;t wait for you to experience all the wonderful features we have to offer:
-                  <i>TV Junkies, Movie Maniacs, Music Lovers, Family Foodies, Book Besties, Poetry Cafe, Family Game Scoreboard</i>, and more!
+                  <i>TV Junkies, Movie Maniacs, Music Lovers, Family Foodies, Reading Room, Poetry Cafe, Family Game Scoreboard</i>, and more!
                 </Text>
                 <Text className='m-0 mb-4 pt-2 text-left font-app text-base font-semibold leading-6 text-brandText'>
                   To get started, click on the <b>Register in My Family Social</b> button below to register in the &quot;{ familyName }&quot; family network.

@@ -1,14 +1,23 @@
 import db from '@/components/db/drizzle';
 import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
-import { member, bookComment, book, bookTag, bookLike, bookTagReference, bookTerm } from "../schema/family-social-schema-tables";
+import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference } from "../schema/family-social-schema-tables";
 import {
   AddBookCommentReturn,
   Book,
+  BookCategoryWithTagsReturn,
+  DeleteBookCategoryInput,
+  DeleteBookCategoryReturn,
+  DeleteBookCategoryTagReferenceInput,
+  DeleteBookCategoryTagReferenceReturn,
   GetBookTermReturn,
   BookTagOptionsReturn,
   BooksHomeBook,
   BooksHomePageDataReturn,
   BooksReturn,
+  SaveBookCategoryInput,
+  SaveBookCategoryReturn,
+  SaveBookCategoryTagReferenceInput,
+  SaveBookCategoryTagReferenceReturn,
   SaveBookTermInput,
   SaveBookTermReturn,
   BookTermsReturn,
@@ -151,7 +160,7 @@ async function loadBooksHomeBooks(
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByBookId.get(factTagRow.bookId) ?? [];
-    existingTagIds.push(factTagRow.tagId);
+    existingTagIds.push(factTagRow.tagReferenceId);
     tagIdsByBookId.set(factTagRow.bookId, existingTagIds);
   }
 
@@ -251,13 +260,16 @@ export async function getBookTagReferences()
     .select({
       id: bookTagReference.id,
       tagName: bookTagReference.tagName,
-      tagDesc: bookTagReference.tagDesc,
-      tagType: bookTagReference.tagType,
-      status: bookTagReference.status,
-      seqNo: bookTagReference.seqNo,
+      tagJson: bookTagReference.tagJson,
+      bookCategoryId: bookTagReference.bookCategoryId,
+      categoryName: bookCategoryReference.categoryName,
     })
     .from(bookTagReference)
-    .orderBy(asc(bookTagReference.seqNo), asc(bookTagReference.tagName));
+    .innerJoin(
+      bookCategoryReference,
+      eq(bookTagReference.bookCategoryId, bookCategoryReference.id)
+    )
+    .orderBy(asc(bookCategoryReference.categoryName), asc(bookTagReference.tagName));
 
   if (!result) {
     return {
@@ -268,7 +280,16 @@ export async function getBookTagReferences()
 
   return {
     success: true,
-    bookTags: result,
+    bookTags: result.map((row) => ({
+      id: row.id,
+      tagName: row.tagName,
+      tagJson: row.tagJson,
+      bookCategoryId: row.bookCategoryId,
+      categoryName: row.categoryName,
+      status: 'active',
+      tagType: 'category-tag',
+      seqNo: 0,
+    })),
   };
 }
 
@@ -284,7 +305,7 @@ export async function saveBooksHomeBook(
   const normalizedAuthorName = input.authorName.trim();
   const normalizedLanguage = input.bookLanguage.trim() || 'English';
   const normalizedSeriesName = (input.bookSeriesName ?? '').trim();
-  const uniqueTagIds = [...new Set(input.selectedTagIds)].slice(0, 3);
+  const uniqueTagIds = [...new Set(input.selectedTagIds)];
   const parsedAnalysisJson = parseSerializedTipTapDocument(input.analysisJson.trim());
 
   if (!normalizedTitle) {
@@ -452,14 +473,14 @@ export async function saveBooksHomeBook(
         .insert(bookTag)
         .values(uniqueTagIds.map((tagId) => ({
           bookId: savedBookFact.id,
-          tagId,
+          tagReferenceId: tagId,
         })));
     }
 
     if (!existingBook) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: 'Book Besties',
+        featureName: 'Reading Room',
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -488,7 +509,7 @@ export async function saveBooksHomeBook(
               .insert(bookTag)
               .values(existingFactTags.map((factTag) => ({
                 bookId: existingBook.id,
-                tagId: factTag.tagId,
+                tagReferenceId: factTag.tagReferenceId,
               })));
           }
         } catch {
@@ -637,7 +658,7 @@ export async function toggleBookReaction(
     if (reactionType === 1 || reactionType === 2) {
       await createFamilyReactionActivityRecord({
         reactionType: reactionType === 2 ? 'love' : 'like',
-        featureName: 'Book Besties',
+        featureName: 'Reading Room',
         postName: existingBook.bookTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -708,7 +729,7 @@ export async function addBookComment(
 
   await createFamilyActivityRecord({
     actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
-    featureName: 'Book Besties',
+    featureName: 'Reading Room',
     postName: existingBook.bookTitle,
     familyId: actor.familyId,
     memberId: actor.memberId,
@@ -773,6 +794,327 @@ export async function getAllFamilyBooks(familyId: number)
     books: books,
     }
   };
+
+export async function getBookCategoryWithTags()
+  : Promise<BookCategoryWithTagsReturn> {
+  const categoryRows = await db
+    .select()
+    .from(bookCategoryReference)
+    .orderBy(asc(bookCategoryReference.categoryName));
+
+  const tagRows = await db
+    .select()
+    .from(bookCategoryTagReference)
+    .orderBy(asc(bookCategoryTagReference.bookCategoryId), asc(bookCategoryTagReference.tagName));
+
+  const tagsByCategoryId = new Map<number, typeof tagRows>();
+
+  for (const row of tagRows) {
+    const existingTags = tagsByCategoryId.get(row.bookCategoryId) ?? [];
+    existingTags.push(row);
+    tagsByCategoryId.set(row.bookCategoryId, existingTags);
+  }
+
+  return {
+    success: true,
+    categories: categoryRows.map((row) => ({
+      category: {
+        id: row.id,
+        categoryName: row.categoryName,
+        categoryDesc: row.categoryDesc,
+        updatedAt: row.updatedAt as Date,
+      },
+      tags: (tagsByCategoryId.get(row.id) ?? []).map((tagRow) => ({
+        id: tagRow.id,
+        bookCategoryId: tagRow.bookCategoryId,
+        tagName: tagRow.tagName,
+        tagJson: tagRow.tagJson,
+        updatedAt: tagRow.updatedAt as Date,
+      })),
+    })),
+  };
+}
+
+export async function saveBookCategory(input: SaveBookCategoryInput)
+  : Promise<SaveBookCategoryReturn> {
+  const categoryName = input.categoryName.trim();
+  const categoryDesc = input.categoryDesc?.trim() ?? '';
+
+  if (categoryName.length < 2) {
+    return {
+      success: false,
+      message: 'Category name must be at least 2 characters.',
+    };
+  }
+
+  const duplicateConditions = input.id
+    ? and(ilike(bookCategoryReference.categoryName, categoryName), ne(bookCategoryReference.id, input.id))
+    : ilike(bookCategoryReference.categoryName, categoryName);
+
+  const [existingCategory] = await db
+    .select({ id: bookCategoryReference.id })
+    .from(bookCategoryReference)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingCategory) {
+    return {
+      success: false,
+      message: `A category named "${ categoryName }" already exists.`,
+    };
+  }
+
+  if (input.id) {
+    const [result] = await db
+      .update(bookCategoryReference)
+      .set({
+        categoryName,
+        categoryDesc,
+        updatedAt: new Date(),
+      })
+      .where(eq(bookCategoryReference.id, input.id))
+      .returning();
+
+    if (!result) {
+      return {
+        success: false,
+        message: `Could not update category id ${ input.id }`,
+      };
+    }
+
+    return {
+      success: true,
+      category: {
+        id: result.id,
+        categoryName: result.categoryName,
+        categoryDesc: result.categoryDesc,
+        updatedAt: result.updatedAt as Date,
+      },
+      message: `Updated category "${ result.categoryName }".`,
+    };
+  }
+
+  const [result] = await db
+    .insert(bookCategoryReference)
+    .values({
+      categoryName,
+      categoryDesc,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!result) {
+    return {
+      success: false,
+      message: 'Could not create category.',
+    };
+  }
+
+  return {
+    success: true,
+    category: {
+      id: result.id,
+      categoryName: result.categoryName,
+      categoryDesc: result.categoryDesc,
+      updatedAt: result.updatedAt as Date,
+    },
+    message: `Added category "${ result.categoryName }".`,
+  };
+}
+
+export async function saveBookCategoryTagReference(input: SaveBookCategoryTagReferenceInput)
+  : Promise<SaveBookCategoryTagReferenceReturn> {
+  const tagName = input.tagName.trim();
+
+  if (tagName.length < 2) {
+    return {
+      success: false,
+      message: 'Tag name must be at least 2 characters.',
+    };
+  }
+
+  const [existingCategory] = await db
+    .select({ id: bookCategoryReference.id })
+    .from(bookCategoryReference)
+    .where(eq(bookCategoryReference.id, input.bookCategoryId))
+    .limit(1);
+
+  if (!existingCategory) {
+    return {
+      success: false,
+      message: `Category id ${ input.bookCategoryId } was not found.`,
+    };
+  }
+
+  const parsedTagJson = parseSerializedTipTapDocument(input.tagJson.trim());
+
+  if (!parsedTagJson.success) {
+    return {
+      success: false,
+      message: parsedTagJson.message,
+    };
+  }
+
+  const duplicateConditions = input.id
+    ? and(
+      eq(bookCategoryTagReference.bookCategoryId, input.bookCategoryId),
+      ilike(bookCategoryTagReference.tagName, tagName),
+      ne(bookCategoryTagReference.id, input.id)
+    )
+    : and(
+      eq(bookCategoryTagReference.bookCategoryId, input.bookCategoryId),
+      ilike(bookCategoryTagReference.tagName, tagName)
+    );
+
+  const [existingTag] = await db
+    .select({ id: bookCategoryTagReference.id })
+    .from(bookCategoryTagReference)
+    .where(duplicateConditions)
+    .limit(1);
+
+  if (existingTag) {
+    return {
+      success: false,
+      message: `A tag named "${ tagName }" already exists in this category.`,
+    };
+  }
+
+  const tagPayload = {
+    bookCategoryId: input.bookCategoryId,
+    tagName,
+    tagJson: serializeTipTapDocument(parsedTagJson.content),
+    updatedAt: new Date(),
+  };
+
+  if (input.id) {
+    const [result] = await db
+      .update(bookCategoryTagReference)
+      .set(tagPayload)
+      .where(eq(bookCategoryTagReference.id, input.id))
+      .returning();
+
+    if (!result) {
+      return {
+        success: false,
+        message: `Could not update tag id ${ input.id }`,
+      };
+    }
+
+    return {
+      success: true,
+      tag: {
+        id: result.id,
+        bookCategoryId: result.bookCategoryId,
+        tagName: result.tagName,
+        tagJson: result.tagJson,
+        updatedAt: result.updatedAt as Date,
+      },
+      message: `Updated tag "${ result.tagName }".`,
+    };
+  }
+
+  const [result] = await db
+    .insert(bookCategoryTagReference)
+    .values(tagPayload)
+    .returning();
+
+  if (!result) {
+    return {
+      success: false,
+      message: 'Could not create tag.',
+    };
+  }
+
+  return {
+    success: true,
+    tag: {
+      id: result.id,
+      bookCategoryId: result.bookCategoryId,
+      tagName: result.tagName,
+      tagJson: result.tagJson,
+      updatedAt: result.updatedAt as Date,
+    },
+    message: `Added tag "${ result.tagName }".`,
+  };
+}
+
+export async function deleteBookCategoryTagReference(
+  input: DeleteBookCategoryTagReferenceInput
+): Promise<DeleteBookCategoryTagReferenceReturn> {
+  const [existingTag] = await db
+    .select({
+      id: bookCategoryTagReference.id,
+      tagName: bookCategoryTagReference.tagName,
+    })
+    .from(bookCategoryTagReference)
+    .where(eq(bookCategoryTagReference.id, input.id))
+    .limit(1);
+
+  if (!existingTag) {
+    return {
+      success: false,
+      message: `Tag id ${ input.id } was not found.`,
+    };
+  }
+
+  const [deletedTag] = await db
+    .delete(bookCategoryTagReference)
+    .where(eq(bookCategoryTagReference.id, input.id))
+    .returning({
+      id: bookCategoryTagReference.id,
+    });
+
+  if (!deletedTag) {
+    return {
+      success: false,
+      message: `Could not delete tag id ${ input.id }.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `Deleted tag "${ existingTag.tagName }".`,
+  };
+}
+
+export async function deleteBookCategory(
+  input: DeleteBookCategoryInput
+): Promise<DeleteBookCategoryReturn> {
+  const [existingCategory] = await db
+    .select({
+      id: bookCategoryReference.id,
+      categoryName: bookCategoryReference.categoryName,
+    })
+    .from(bookCategoryReference)
+    .where(eq(bookCategoryReference.id, input.id))
+    .limit(1);
+
+  if (!existingCategory) {
+    return {
+      success: false,
+      message: `Category id ${ input.id } was not found.`,
+    };
+  }
+
+  const [deletedCategory] = await db
+    .delete(bookCategoryReference)
+    .where(eq(bookCategoryReference.id, input.id))
+    .returning({
+      id: bookCategoryReference.id,
+    });
+
+  if (!deletedCategory) {
+    return {
+      success: false,
+      message: `Could not delete category id ${ input.id }.`,
+    };
+  }
+
+  return {
+    success: true,
+    message: `Deleted category "${ existingCategory.categoryName }".`,
+  };
+}
 
 /*-------- getBookTerms ------------------ */
 export async function getBookTerms()

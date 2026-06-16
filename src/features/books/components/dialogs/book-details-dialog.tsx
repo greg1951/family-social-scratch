@@ -3,7 +3,15 @@ import { EditorContent } from "@tiptap/react";
 import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, X } from "lucide-react";
 
 import type { BookTagOption } from "@/components/db/types/books";
+import { parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -12,29 +20,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { RichTextField } from "@/features/books/components/book-rich-text-field";
 import { useBookDialog } from "@/features/books/hooks/use-book-dialog";
 import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
 
-type CategoryTagOption = {
-  seqNo: number;
-  categoryName: string;
-  qualifierOptions: BookTagOption[];
-};
-
 type BookDialogTags = {
   selectedBookTags: BookTagOption[];
   activeBookTags: BookTagOption[];
-  categoryTagOptions: CategoryTagOption[];
 };
 
 type BookDialogEngagement = {
@@ -60,6 +53,35 @@ type BookDetailsDialogProps = {
   formatCreatedAt: (createdAt: Date) => string;
 };
 
+function extractTipTapText(content: unknown): string {
+  const parsed = extractTipTapTextFromNode(content);
+
+  return parsed.replace(/\s+/g, " ").trim();
+}
+
+function extractTipTapTextFromNode(node: unknown): string {
+  if (!node || typeof node !== "object") {
+    return "";
+  }
+
+  const candidate = node as {
+    text?: string;
+    content?: unknown[];
+  };
+
+  let text = "";
+
+  if (typeof candidate.text === "string") {
+    text += candidate.text;
+  }
+
+  if (Array.isArray(candidate.content)) {
+    text += candidate.content.map((childNode) => extractTipTapTextFromNode(childNode)).join(" ");
+  }
+
+  return text;
+}
+
 export function BookDetailsDialog({
   bookDialog,
   linkDialog,
@@ -70,12 +92,48 @@ export function BookDetailsDialog({
   formatCreatedAt,
 }: BookDetailsDialogProps) {
   const { draft, setDraft } = bookDialog;
-  const { selectedBookTags, activeBookTags, categoryTagOptions } = tags;
+  const { selectedBookTags, activeBookTags } = tags;
   const { isEngaging, canEngage, commentText, setCommentText, onToggleReaction, onAddComment } = engagement;
+
+  const tagsByCategory = activeBookTags.reduce((categories, tagOption) => {
+    if (!tagOption.bookCategoryId) {
+      return categories;
+    }
+
+    const existingCategory = categories.get(tagOption.bookCategoryId) ?? {
+      categoryId: tagOption.bookCategoryId,
+      categoryName: tagOption.categoryName?.trim() || `Category ${ tagOption.bookCategoryId }`,
+      tags: [] as BookTagOption[],
+    };
+
+    existingCategory.tags.push(tagOption);
+    categories.set(tagOption.bookCategoryId, existingCategory);
+
+    return categories;
+  }, new Map<number, { categoryId: number; categoryName: string; tags: BookTagOption[] }>());
+
+  const groupedCategoryTags = Array.from(tagsByCategory.values())
+    .map((groupedCategory) => ({
+      ...groupedCategory,
+      tags: [...groupedCategory.tags].sort((leftTag, rightTag) => leftTag.tagName.localeCompare(rightTag.tagName)),
+    }))
+    .sort((leftCategory, rightCategory) => leftCategory.categoryName.localeCompare(rightCategory.categoryName));
+
+  function getTagDescriptionText(tagJson?: string | null) {
+    const parsedTagJson = parseSerializedTipTapDocument(tagJson ?? undefined);
+
+    if (!parsedTagJson.success) {
+      return "No tag description available.";
+    }
+
+    const tagDescriptionText = extractTipTapText(parsedTagJson.content);
+
+    return tagDescriptionText || "No tag description available.";
+  }
 
   return (
     <Dialog open={ bookDialog.isBookDialogOpen } onOpenChange={ bookDialog.setIsBookDialogOpen }>
-      <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-4xl">
+      <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-[#183746]">
             { bookDialog.bookDialogMode === "add" ? "Add a New Book" : draft.bookTitle || "Book Details" }
@@ -215,7 +273,7 @@ export function BookDetailsDialog({
                 <Tags className="mr-2 size-3.5" />
                 { bookDialog.bookDialogMode === "view"
                   ? `${ selectedBookTags.length } tag${ selectedBookTags.length !== 1 ? "s" : "" }`
-                  : `${ draft.selectedTagIds.length } / 3 selected` }
+                  : `${ draft.selectedTagIds.length } selected` }
               </div>
             </div>
 
@@ -225,64 +283,82 @@ export function BookDetailsDialog({
                   This book has no tags selected yet.
                 </p>
               ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  { selectedBookTags.map((tagOption) => (
-                    <span
-                      key={ tagOption.id }
-                      className="inline-flex items-center rounded-full border border-[#b8d4df] bg-white px-3 py-1 text-xs font-semibold text-[#355161]"
-                    >
-                      { tagOption.tagName }
-                    </span>
-                  )) }
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  { groupedCategoryTags
+                    .map((categoryGroup) => ({
+                      ...categoryGroup,
+                      selectedTags: categoryGroup.tags.filter((tagOption) => selectedBookTags.some((selectedTag) => selectedTag.id === tagOption.id)),
+                    }))
+                    .filter((categoryGroup) => categoryGroup.selectedTags.length > 0)
+                    .map((categoryGroup) => (
+                      <div key={ categoryGroup.categoryId } className="rounded-2xl border border-[#d7e4ea] bg-white p-3">
+                        <p className="text-sm font-semibold text-[#355161]">{ categoryGroup.categoryName }</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          { categoryGroup.selectedTags.map((tagOption) => (
+                            <span
+                              key={ tagOption.id }
+                              className="inline-flex items-center rounded-full border border-[#b8d4df] bg-[#f9fcff] px-3 py-1 text-xs font-semibold text-[#355161]"
+                            >
+                              { tagOption.tagName }
+                            </span>
+                          )) }
+                        </div>
+                      </div>
+                    )) }
                 </div>
               )
             ) : (
-              activeBookTags.length === 0 ? (
+              groupedCategoryTags.length === 0 ? (
                 <p className="mt-3 rounded-3xl border border-dashed border-[#c8d7df] bg-white px-4 py-3 text-sm text-[#51707e]">
                   No book tag options are loaded yet.
                 </p>
               ) : (
                 <div className="mt-3 space-y-3">
-                  <p className="text-sm text-[#51707e]">Choose 1-3 tags across Fiction, Non-Fiction, and Other.</p>
-                  <div className="grid gap-3 md:grid-cols-3">
-                    { categoryTagOptions.map((categoryTagOption) => {
-                      const selectedTagId = bookDialog.getSelectedTagForCategory(categoryTagOption.seqNo, activeBookTags);
+                  <p className="text-sm text-[#51707e]">Choose one or more tags by category.</p>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    { groupedCategoryTags.map((categoryGroup) => (
+                      <div key={ categoryGroup.categoryId } className="space-y-2 rounded-2xl border border-[#d7e4ea] bg-white p-3">
+                        <p className="text-sm font-semibold text-[#355161]">{ categoryGroup.categoryName }</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          { categoryGroup.tags.map((tagOption) => {
+                            const isSelected = draft.selectedTagIds.includes(tagOption.id);
 
-                      return (
-                        <div key={ categoryTagOption.seqNo } className="space-y-2 rounded-2xl border border-[#d7e4ea] bg-white p-3">
-                          <label className="text-sm font-semibold text-[#355161]">
-                            { categoryTagOption.categoryName }
-                          </label>
-                          <Select
-                            value={ selectedTagId ? String(selectedTagId) : "none" }
-                            onValueChange={ (value) => bookDialog.handleCategoryTagSelect(categoryTagOption.seqNo, value, activeBookTags) }
-                          >
-                            <SelectTrigger className="border-[#c8d7df] text-[#183746]">
-                              <SelectValue placeholder={ `Select ${ categoryTagOption.categoryName } tag` } />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">No selection</SelectItem>
-                              <SelectGroup>
-                                <SelectLabel>Category</SelectLabel>
-                                <SelectItem value={ `category-${ categoryTagOption.seqNo }` } disabled>
-                                  { categoryTagOption.categoryName }
-                                </SelectItem>
-                              </SelectGroup>
-                              { categoryTagOption.qualifierOptions.length > 0 ? (
-                                <SelectGroup>
-                                  <SelectLabel>Qualifiers</SelectLabel>
-                                  { categoryTagOption.qualifierOptions.map((tagOption) => (
-                                    <SelectItem key={ tagOption.id } value={ String(tagOption.id) }>
+                            return (
+                              <div key={ tagOption.id } className="rounded-xl border border-[#dfebf0] bg-[#fcfeff] px-3 py-2">
+                                <div className="flex items-start gap-2">
+                                  <Checkbox
+                                    id={ `book-tag-${ tagOption.id }` }
+                                    checked={ isSelected }
+                                    onCheckedChange={ (checked) => bookDialog.handleToggleTag(tagOption.id, Boolean(checked)) }
+                                    disabled={ bookDialog.isSaving }
+                                    className="mt-0.5 border-[#9ec3d2] data-[state=checked]:bg-[#0f5c78] data-[state=checked]:text-white"
+                                  />
+                                  <div className="min-w-0 flex-1">
+                                    <label htmlFor={ `book-tag-${ tagOption.id }` } className="cursor-pointer text-xs font-semibold text-[#2f5668]">
                                       { tagOption.tagName }
-                                    </SelectItem>
-                                  )) }
-                                </SelectGroup>
-                              ) : null }
-                            </SelectContent>
-                          </Select>
+                                    </label>
+                                    <Accordion type="single" collapsible className="mt-1 w-full">
+                                      <AccordionItem value={ `tag-${ tagOption.id }` } className="border-0">
+                                        <AccordionTrigger className="py-1 text-[11px] text-[#387892] hover:no-underline">
+                                          View tag description
+                                        </AccordionTrigger>
+                                        <AccordionContent className="pb-0">
+                                          <Textarea
+                                            readOnly
+                                            value={ getTagDescriptionText(tagOption.tagJson) }
+                                            className="min-h-24 border-[#c8d7df] bg-[#f5fbfe] text-xs leading-5 text-[#355161]"
+                                          />
+                                        </AccordionContent>
+                                      </AccordionItem>
+                                    </Accordion>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }) }
                         </div>
-                      );
-                    }) }
+                      </div>
+                    )) }
                   </div>
                 </div>
               )

@@ -512,17 +512,6 @@ export const poemComment = pgTable("poem_comment", {
   ]
 );
 
-// this table is deprecated in favor of poemCategoryTag and poemCategoryTagReference, but keeping it for now in case we want to support both category-based tags and flat tags
-export const poemTagReference = pgTable("poem_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("category"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const poemCategoryReference = pgTable("poem_category_reference", {
   id: serial("id").primaryKey(),
   categoryName: text("category_name").notNull().default(""),
@@ -550,18 +539,6 @@ export const poemCategoryTag = pgTable("poem_category_tag", {
   ]
 );
 
-// this table is deprecated in favor of poemCategoryTag and poemCategoryTagReference, but keeping it for now in case we want to support both category-based tags and flat tags
-export const poemTag = pgTable("poem_tag", {
-  id: serial("id").primaryKey(),
-  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => poemTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('poem_tag_poem_id_idx').on(table.poemId),
-    index('poem_tag_tag_id_idx').on(table.tagId),
-  ]
-);
-
 export const poemLike = pgTable("poem_like", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
@@ -586,7 +563,7 @@ export const poemTerm = pgTable("poem_term", {
 });
 
 
-/*------------------------------- Book Besties ------------------------------ */
+/*------------------------------- Reading Room ------------------------------ */
 //export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
 export const book = pgTable("book", {
@@ -621,26 +598,54 @@ export const bookComment = pgTable("book_comment", {
   ]
 );
 
-export const bookTagReference = pgTable("book_tag_reference", {
+export const bookCategoryReference = pgTable("book_category_reference", {
   id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("category"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow(),
+  categoryName: text("category_name").notNull().default(""),
+  categoryDesc: text("category_description"),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const bookTag = pgTable("book_tag", {
+
+export const bookCategoryTagReference = pgTable("book_category_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagJson: text("tag_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  bookCategoryId: integer("fk_book_category_id").notNull().references(() => bookCategoryReference.id, {onDelete: 'cascade'}),
+});
+
+export const bookCategoryTag = pgTable("book_category_tag", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => bookTagReference.id, {onDelete: 'cascade'}),
+  tagReferenceId: integer("fk_tag_id").notNull().references(() => bookCategoryTagReference.id, {onDelete: 'cascade'}),
 },
   (table) => [
-    index('book_tag_book_id_idx').on(table.bookId),
-    index('book_tag_tag_id_idx').on(table.tagId),
+    index('book_category_tag_book_id_idx').on(table.bookId),
+    index('book_category_tag_reference_id_idx').on(table.tagReferenceId),
   ]
 );
+
+
+// export const bookTagReference = pgTable("book_tag_reference", {
+//   id: serial("id").primaryKey(),
+//   tagName: text("tag_name").notNull().default(""),
+//   tagDesc: text("tag_description"),
+//   tagType: text("tag_type").notNull().default("category"),
+//   status: text("status").notNull().default("active"),
+//   seqNo: integer("seq_no").notNull().default(1),
+//   createdAt: timestamp("created_at").defaultNow(),
+// });
+
+// export const bookTag = pgTable("book_tag", {
+//   id: serial("id").primaryKey(),
+//   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
+//   tagId: integer("fk_tag_id").notNull().references(() => bookTagReference.id, {onDelete: 'cascade'}),
+// },
+//   (table) => [
+//     index('book_tag_book_id_idx').on(table.bookId),
+//     index('book_tag_tag_id_idx').on(table.tagId),
+//   ]
+// );
 
 export const bookLike = pgTable("book_like", {
   id: serial("id").primaryKey(),

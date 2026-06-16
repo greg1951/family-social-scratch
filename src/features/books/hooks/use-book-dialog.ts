@@ -39,15 +39,6 @@ export type BookDraft = {
 export type BookDialogMode = "view" | "edit" | "add";
 export type SavePhase = "idle" | "saving" | "saved" | "error";
 
-function getSeqNoRange(seqNo: number) {
-  const rangeStart = Math.floor(seqNo / 10) * 10;
-
-  return {
-    rangeStart,
-    rangeEnd: rangeStart + 9,
-  };
-}
-
 function createSubmitterLabel(bookRecord: BooksHomeBook, member: MemberKeyDetails) {
   if (bookRecord.submitterName) {
     return bookRecord.submitterName;
@@ -136,51 +127,25 @@ export function useBookDialog({
   const [savePhase, setSavePhase] = useState<SavePhase>("idle");
   const [draft, setDraft] = useState<BookDraft>(initialDraft);
 
-  function getSelectedTagForCategory(categorySeqNo: number, activeBookTags: BookTagOption[]) {
-    const categoryRange = getSeqNoRange(categorySeqNo);
-
-    return draft.selectedTagIds.find((selectedTagId) => {
-      const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
-
-      if (!tagOption) {
-        return false;
-      }
-
-      return tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd;
-    });
-  }
-
-  function handleCategoryTagSelect(categorySeqNo: number, selectedValue: string, activeBookTags: BookTagOption[]) {
-    const categoryRange = getSeqNoRange(categorySeqNo);
-    const nextTagId = selectedValue === "none" ? null : Number(selectedValue);
-
+  function handleToggleTag(tagId: number, isChecked: boolean) {
     setDraft((currentDraft) => {
-      const nextSelectedTagIds = currentDraft.selectedTagIds.filter((selectedTagId) => {
-        const tagOption = activeBookTags.find((candidateTag) => candidateTag.id === selectedTagId);
+      const isAlreadySelected = currentDraft.selectedTagIds.includes(tagId);
 
-        if (!tagOption) {
-          return false;
-        }
-
-        return !(tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd);
-      });
-
-      if (nextTagId === null) {
+      if (isChecked && !isAlreadySelected) {
         return {
           ...currentDraft,
-          selectedTagIds: nextSelectedTagIds,
+          selectedTagIds: [...currentDraft.selectedTagIds, tagId],
         };
       }
 
-      if (nextSelectedTagIds.length >= 3) {
-        toast.error("Select no more than three book tags.");
-        return currentDraft;
+      if (!isChecked && isAlreadySelected) {
+        return {
+          ...currentDraft,
+          selectedTagIds: currentDraft.selectedTagIds.filter((selectedTagId) => selectedTagId !== tagId),
+        };
       }
 
-      return {
-        ...currentDraft,
-        selectedTagIds: [...nextSelectedTagIds, nextTagId],
-      };
+      return currentDraft;
     });
   }
 
@@ -295,7 +260,6 @@ export function useBookDialog({
     handleCancelDialog,
     handleSave,
     markSaveSynced,
-    getSelectedTagForCategory,
-    handleCategoryTagSelect,
+    handleToggleTag,
   };
 }

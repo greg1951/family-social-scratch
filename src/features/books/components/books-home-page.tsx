@@ -46,12 +46,6 @@ import { BookDetailsDialog } from "@/features/books/components/dialogs/book-deta
 import { BookLinkDialog } from "@/features/books/components/dialogs/book-link-dialog";
 type DirectoryMode = "latest" | "top-rated";
 
-const BOOK_TAG_CATEGORY_SLOTS = [
-  { seqNo: 10, fallbackName: "Fiction" },
-  { seqNo: 30, fallbackName: "Non-Fiction" },
-  { seqNo: 90, fallbackName: "Other" },
-] as const;
-
 function getEditorDocument(value?: string): JSONContent {
   const parsed = parseSerializedTipTapDocument(value);
 
@@ -68,15 +62,6 @@ function formatCreatedAt(createdAt: Date) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(createdAt));
-}
-
-function getSeqNoRange(seqNo: number) {
-  const rangeStart = Math.floor(seqNo / 10) * 10;
-
-  return {
-    rangeStart,
-    rangeEnd: rangeStart + 9,
-  };
 }
 
 export default function BooksHomePage({
@@ -181,7 +166,6 @@ export default function BooksHomePage({
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBookItems(nextBookItems);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedBookId((currentSelectedBookId) => {
       const preferredBookId = resolvedSelectedBookId ?? currentSelectedBookId;
 
@@ -195,7 +179,6 @@ export default function BooksHomePage({
     const receivedRefreshedBooks = previousBooksRef.current !== books;
 
     if (receivedRefreshedBooks && pendingSelectedBookId && nextBookItems.some((bookItem) => bookItem.id === pendingSelectedBookId)) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPendingSelectedBookId(null);
       markSaveSynced();
     }
@@ -250,29 +233,6 @@ export default function BooksHomePage({
     bookTags.filter((tagOption) => tagOption.status !== "archived")
   ), [bookTags]);
 
-  const categoryTagOptions = useMemo(() => (
-    BOOK_TAG_CATEGORY_SLOTS.map((slot) => {
-      const categoryRange = getSeqNoRange(slot.seqNo);
-      const categoryTag = activeBookTags.find((tagOption) => (
-        tagOption.tagType === "category" && tagOption.seqNo === slot.seqNo
-      ));
-
-      const qualifierOptions = activeBookTags
-        .filter((tagOption) => (
-          tagOption.tagType === "qualifier"
-          && tagOption.seqNo >= categoryRange.rangeStart + 1
-          && tagOption.seqNo <= categoryRange.rangeEnd
-        ))
-        .sort((a, b) => a.seqNo - b.seqNo || a.tagName.localeCompare(b.tagName));
-
-      return {
-        seqNo: slot.seqNo,
-        categoryName: categoryTag?.tagName ?? slot.fallbackName,
-        qualifierOptions,
-      };
-    })
-  ), [activeBookTags]);
-
   useEffect(() => {
     if (filteredBooks.length === 0) {
       return;
@@ -282,6 +242,7 @@ export default function BooksHomePage({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedBookId(filteredBooks[0].id);
   }, [filteredBooks, selectedBookId]);
 
@@ -379,9 +340,9 @@ export default function BooksHomePage({
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5">
-            <div className="max-w-3xl">
+            <div className="max-w-4xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
-                Book Besties
+                Reading Room
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
@@ -401,7 +362,7 @@ export default function BooksHomePage({
               </div>
 
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                Book Besties is your family&apos;s book club. Post a book and discuss it with other book lovers in the family!
+                Post a book review and discuss it with other members of the family!
               </h1>
             </div>
           </div>
@@ -705,7 +666,6 @@ export default function BooksHomePage({
         tags={ {
           selectedBookTags,
           activeBookTags,
-          categoryTagOptions,
         } }
         engagement={ {
           isEngaging,

@@ -16,7 +16,7 @@ WITH discussion_targets AS (
     CASE dt.target_type
       WHEN 'show' THEN 'TV Junkies'
       WHEN 'movie' THEN 'Movie Maniacs'
-      WHEN 'book' THEN 'Book Besties'
+      WHEN 'book' THEN 'Reading Room'
       WHEN 'poem' THEN 'Poetry Cafe'
       WHEN 'recipe' THEN 'Family Foodies'
       WHEN 'music' THEN 'Music Lovers'

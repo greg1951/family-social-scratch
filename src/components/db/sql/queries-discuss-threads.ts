@@ -56,7 +56,7 @@ function resolveDiscussionFeatureName(targetType: string): string {
 		case 'movie':
 			return 'Movie Maniacs';
 		case 'book':
-			return 'Book Besties';
+			return 'Reading Room';
 		case 'poem':
 			return 'Poetry Cafe';
 		case 'recipe':

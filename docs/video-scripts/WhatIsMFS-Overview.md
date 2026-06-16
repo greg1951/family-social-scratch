@@ -94,7 +94,7 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
 3. Over the years I've been in a number of Book clubs and many of us in the family are avid book readers. 
 
-   - The **Book Besties** feature in MFS provides a forum for book recommendations to family members. They can react, add comments or create a discussion about the book.
+   - The **Reading Room** feature in MFS provides a forum for book recommendations to family members. They can react, add comments or create a discussion about the book.
 
    - I've never been to a Poetry group before but I do enjoy reading poetry, I think because of my love for music, as the two are intertwined. 
 

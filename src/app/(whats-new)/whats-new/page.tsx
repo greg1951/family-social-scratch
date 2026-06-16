@@ -70,7 +70,7 @@ const updates = [
   },
   {
     title: "The Very First Live Features!",
-    summary: "The Game Scoreboards, Poetry Cafe, and Book Besties are now live! Check them out and let us know what you think!",
+    summary: "The Game Scoreboards, Poetry Cafe, and Reading Room are now live! Check them out and let us know what you think!",
     category: "Features",
     date: "April 15, 2026",
   },

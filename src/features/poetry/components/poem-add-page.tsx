@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { savePoetryHomePoemAction } from "@/app/(features)/(poetry)/poetry/actions";
@@ -33,26 +33,16 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { PoemTagOption, PoetryHomePoem } from "@/components/db/types/poem-verses";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
 type PoemDraft = {
@@ -85,15 +75,6 @@ function getEditorDocument(value?: string): JSONContent {
   }
 
   return createEmptyTipTapDocument();
-}
-
-function getSeqNoRange(seqNo: number) {
-  const rangeStart = Math.floor(seqNo / 10) * 10;
-
-  return {
-    rangeStart,
-    rangeEnd: rangeStart + 9,
-  };
 }
 
 function ToolbarButton({ label, active = false, disabled = false, onClick, children }: ToolbarButtonProps) {
@@ -292,6 +273,35 @@ function getEditorLineCount(editor: Editor | null) {
   return editorText.split("\n").length;
 }
 
+function extractTipTapText(content: unknown): string {
+  const parsed = extractTipTapTextFromNode(content);
+
+  return parsed.replace(/\s+/g, " ").trim();
+}
+
+function extractTipTapTextFromNode(node: unknown): string {
+  if (!node || typeof node !== "object") {
+    return "";
+  }
+
+  const candidate = node as {
+    text?: string;
+    content?: unknown[];
+  };
+
+  let text = "";
+
+  if (typeof candidate.text === "string") {
+    text += candidate.text;
+  }
+
+  if (Array.isArray(candidate.content)) {
+    text += candidate.content.map((childNode) => extractTipTapTextFromNode(childNode)).join(" ");
+  }
+
+  return text;
+}
+
 function createEmptyDraft(member: MemberKeyDetails): PoemDraft {
   return {
     id: 0,
@@ -342,9 +352,34 @@ export function PoemAddPage({
   const [verseLineCount, setVerseLineCount] = useState(1);
 
   const activePoemTags = poemTags.filter((tagOption) => tagOption.status !== "archived");
-  const categoryTags = activePoemTags
-    .filter((tagOption) => tagOption.tagType === "category")
-    .sort((a, b) => a.seqNo - b.seqNo || a.tagName.localeCompare(b.tagName));
+
+  const tagsByCategory = useMemo(() => {
+    const groupedTags = new Map<number, { categoryId: number; categoryName: string; tags: PoemTagOption[] }>();
+
+    for (const tagOption of activePoemTags) {
+      if (!tagOption.poemCategoryId) {
+        continue;
+      }
+
+      const categoryId = tagOption.poemCategoryId;
+      const categoryName = tagOption.categoryName?.trim() || `Category ${ categoryId }`;
+      const currentGroup = groupedTags.get(categoryId) ?? {
+        categoryId,
+        categoryName,
+        tags: [],
+      };
+
+      currentGroup.tags.push(tagOption);
+      groupedTags.set(categoryId, currentGroup);
+    }
+
+    return Array.from(groupedTags.values())
+      .map((group) => ({
+        ...group,
+        tags: [...group.tags].sort((leftTag, rightTag) => leftTag.tagName.localeCompare(rightTag.tagName)),
+      }))
+      .sort((leftCategory, rightCategory) => leftCategory.categoryName.localeCompare(rightCategory.categoryName));
+  }, [activePoemTags]);
 
   const verseEditor = useEditor({
     extensions: [
@@ -401,63 +436,38 @@ export function PoemAddPage({
     setVerseLineCount(getEditorLineCount(verseEditor));
   }, [verseEditor]);
 
-  function getTagsForCategory(categoryTag: PoemTagOption) {
-    const categoryRange = getSeqNoRange(categoryTag.seqNo);
-
-    return activePoemTags
-      .filter((tagOption) => (
-        tagOption.seqNo >= categoryRange.rangeStart
-        && tagOption.seqNo <= categoryRange.rangeEnd
-      ))
-      .sort((a, b) => a.seqNo - b.seqNo || a.tagName.localeCompare(b.tagName));
-  }
-
-  function getSelectedTagForCategory(categoryTag: PoemTagOption) {
-    const categoryRange = getSeqNoRange(categoryTag.seqNo);
-
-    return draft.selectedTagIds.find((selectedTagId) => {
-      const tagOption = activePoemTags.find((candidateTag) => candidateTag.id === selectedTagId);
-
-      if (!tagOption) {
-        return false;
-      }
-
-      return tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd;
-    });
-  }
-
-  function handleCategoryTagSelect(categoryTag: PoemTagOption, selectedValue: string) {
-    const categoryRange = getSeqNoRange(categoryTag.seqNo);
-    const nextTagId = selectedValue === "none" ? null : Number(selectedValue);
-
+  function handleToggleTag(tagId: number, isChecked: boolean) {
     setDraft((currentDraft) => {
-      const nextSelectedTagIds = currentDraft.selectedTagIds.filter((selectedTagId) => {
-        const tagOption = activePoemTags.find((candidateTag) => candidateTag.id === selectedTagId);
+      const isAlreadySelected = currentDraft.selectedTagIds.includes(tagId);
 
-        if (!tagOption) {
-          return false;
-        }
-
-        return !(tagOption.seqNo >= categoryRange.rangeStart && tagOption.seqNo <= categoryRange.rangeEnd);
-      });
-
-      if (nextTagId === null) {
+      if (isChecked && !isAlreadySelected) {
         return {
           ...currentDraft,
-          selectedTagIds: nextSelectedTagIds,
+          selectedTagIds: [...currentDraft.selectedTagIds, tagId],
         };
       }
 
-      if (nextSelectedTagIds.length >= 3) {
-        toast.error("Select no more than three poem tags.");
-        return currentDraft;
+      if (!isChecked && isAlreadySelected) {
+        return {
+          ...currentDraft,
+          selectedTagIds: currentDraft.selectedTagIds.filter((selectedTagId) => selectedTagId !== tagId),
+        };
       }
 
-      return {
-        ...currentDraft,
-        selectedTagIds: [...nextSelectedTagIds, nextTagId],
-      };
+      return currentDraft;
     });
+  }
+
+  function getTagDescriptionText(tagJson?: string | null) {
+    const parsedTagJson = parseSerializedTipTapDocument(tagJson ?? undefined);
+
+    if (!parsedTagJson.success) {
+      return "No tag description available.";
+    }
+
+    const tagDescriptionText = extractTipTapText(parsedTagJson.content);
+
+    return tagDescriptionText || "No tag description available.";
   }
 
   function handleSave() {
@@ -477,6 +487,11 @@ export function PoemAddPage({
 
     if (!/^\d{1,4}$/.test(normalizedYear)) {
       toast.error("Enter a valid numeric poem year.");
+      return;
+    }
+
+    if (draft.selectedTagIds.length === 0) {
+      toast.error("Select at least one poem tag before saving.");
       return;
     }
 
@@ -680,7 +695,7 @@ export function PoemAddPage({
               Tag Selection
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
-              Choose 1-3 tags from different poetry categories.
+              Select one or more tags by category before saving.
             </p>
           </div>
 
@@ -693,59 +708,63 @@ export function PoemAddPage({
                 </div> */}
                 <div className="inline-flex items-center rounded-full border border-[#d7d0ea] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#7b54a0]">
                   <Tags className="mr-2 size-3.5" />
-                  { draft.selectedTagIds.length } / 3 selected
+                  { draft.selectedTagIds.length } selected
                 </div>
               </div>
 
-              { activePoemTags.length === 0 ? (
+              { tagsByCategory.length === 0 ? (
                 <p className="rounded-3xl border border-dashed border-[#d7d0ea] bg-white px-4 py-3 text-sm text-[#7a5f91]">
                   No poem tag options are available.
                 </p>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  { categoryTags.map((categoryTag) => {
-                    const categoryOptions = getTagsForCategory(categoryTag);
-                    const selectedTagId = getSelectedTagForCategory(categoryTag);
-                    const categoryOption = categoryOptions.find((tagOption) => tagOption.seqNo === categoryTag.seqNo) ?? null;
-                    const qualifierOptions = categoryOptions.filter((tagOption) => tagOption.seqNo !== categoryTag.seqNo);
+                  { tagsByCategory.map((categoryGroup) => (
+                    <div key={ categoryGroup.categoryId } className="space-y-3 rounded-2xl border border-[#e4d9ee] bg-white p-3">
+                      <p className="text-sm font-semibold text-[#5d426f]">{ categoryGroup.categoryName }</p>
 
-                    return (
-                      <div key={ categoryTag.id } className="space-y-2 rounded-2xl border border-[#e4d9ee] bg-white p-3">
-                        <label className="text-sm font-semibold text-[#5d426f]">
-                          { categoryTag.tagName }
-                        </label>
-                        <Select
-                          value={ selectedTagId ? String(selectedTagId) : "none" }
-                          onValueChange={ (value) => handleCategoryTagSelect(categoryTag, value) }
-                        >
-                          <SelectTrigger className="border-[#d7d0ea] text-[#43245d]">
-                            <SelectValue placeholder={ `Select ${ categoryTag.tagName } tag` } />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No selection</SelectItem>
-                            { categoryOption ? (
-                              <SelectGroup>
-                                <SelectLabel>Category</SelectLabel>
-                                <SelectItem value={ String(categoryOption.id) }>
-                                  { categoryOption.tagName }
-                                </SelectItem>
-                              </SelectGroup>
-                            ) : null }
-                            { qualifierOptions.length > 0 ? (
-                              <SelectGroup>
-                                <SelectLabel>Qualifiers</SelectLabel>
-                                { qualifierOptions.map((tagOption) => (
-                                  <SelectItem key={ tagOption.id } value={ String(tagOption.id) }>
+                      <div className="grid grid-cols-2 gap-2">
+                        { categoryGroup.tags.map((tagOption) => {
+                          const isSelected = draft.selectedTagIds.includes(tagOption.id);
+
+                          return (
+                            <div key={ tagOption.id } className="rounded-xl border border-[#ece4f3] bg-[#fefcff] px-3 py-2">
+                              <div className="flex items-start gap-2">
+                                <Checkbox
+                                  id={ `poem-tag-${ tagOption.id }` }
+                                  checked={ isSelected }
+                                  onCheckedChange={ (checked) => handleToggleTag(tagOption.id, Boolean(checked)) }
+                                  disabled={ isSaving }
+                                  className="mt-0.5 border-[#b79ad1] data-[state=checked]:bg-[#5a2f85] data-[state=checked]:text-white"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <label
+                                    htmlFor={ `poem-tag-${ tagOption.id }` }
+                                    className="cursor-pointer text-sm font-semibold text-[#4d3261]"
+                                  >
                                     { tagOption.tagName }
-                                  </SelectItem>
-                                )) }
-                              </SelectGroup>
-                            ) : null }
-                          </SelectContent>
-                        </Select>
+                                  </label>
+                                  <Accordion type="single" collapsible className="mt-1 w-full">
+                                    <AccordionItem value={ `tag-${ tagOption.id }` } className="border-0">
+                                      <AccordionTrigger className="py-1 text-xs text-[#7b54a0] hover:no-underline">
+                                        View tag description
+                                      </AccordionTrigger>
+                                      <AccordionContent className="pb-0">
+                                        <Textarea
+                                          readOnly
+                                          value={ getTagDescriptionText(tagOption.tagJson) }
+                                          className="min-h-28 border-[#d7d0ea] bg-[#faf7ff] text-xs leading-5 text-[#5d426f]"
+                                        />
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  </Accordion>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }) }
                       </div>
-                    );
-                  }) }
+                    </div>
+                  )) }
                 </div>
               ) }
             </div>

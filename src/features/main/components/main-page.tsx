@@ -132,7 +132,7 @@ export default async function MainPage() {
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/movies" src="/images/movie-maniacs-wide.jpg" title="Movie Maniacs" tw="rounded-xl border border-yellow-300 bg-yellow-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("books") ? (
-            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/book-besties-wide.jpg" title="Book Besties" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
+            <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/books" src="/images/reading-room-wide.jpg" title="Reading Room" tw="rounded-xl border border-blue-300 bg-blue-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />
           ) : null }
           { isFeatureEnabled("foodies") ? (
             <MainLinkCard isLoggedIn={ memberKeyDetails.isLoggedIn } href="/foodies" src="/images/family-foodies-wide.jpg" title="Family Foodies" tw="rounded-xl border border-green-300 bg-green-500 p-2 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg relative overflow-hidden" />

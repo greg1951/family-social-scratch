@@ -39,7 +39,7 @@ const featureNameMap: Record<string, string> = {
   "Movie Maniacs": "Maniacs",
   "Family Foodies": "Foodies",
   "Poetry Cafe": "Poets",
-  "Book Besties": "Besties",
+  "Reading Room": "Besties",
   "Family Gallery": "Gallery",
 };
 

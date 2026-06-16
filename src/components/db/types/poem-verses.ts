@@ -59,10 +59,13 @@ export interface PoetryHomeComment {
 export interface PoemTagOption {
   id: number;
   tagName: string;
+  tagJson?: string | null;
+  poemCategoryId?: number;
+  categoryName?: string;
   tagDesc?: string | null;
-  tagType: string;
-  status: string;
-  seqNo: number;
+  tagType?: string;
+  status?: string;
+  seqNo?: number;
 }
 
 export type PoetryHomePageDataReturn =

@@ -7,7 +7,7 @@ const FEATURE_POST_NAMES = [
   "Movie Maniacs",
   "Family Foodies",
   "Poetry Cafe",
-  "Book Besties",
+  "Reading Room",
   "Family Gallery",
 ] as const;
 

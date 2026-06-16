@@ -1,4 +1,4 @@
--- Backfill missing Book Besties POST_CREATED records into family_activity.
+-- Backfill missing Reading Room POST_CREATED records into family_activity.
 -- Safe to run multiple times.
 
 BEGIN;
@@ -14,7 +14,7 @@ INSERT INTO family_activity (
 )
 SELECT
   'POST_CREATED' AS action_type,
-  'Book Besties' AS feature_name,
+  'Reading Room' AS feature_name,
   b.book_title AS post_name,
   'active' AS status,
   b.created_at AS created_at,
@@ -25,7 +25,7 @@ WHERE NOT EXISTS (
   SELECT 1
   FROM family_activity fa
   WHERE fa.action_type = 'POST_CREATED'
-    AND fa.feature_name = 'Book Besties'
+    AND fa.feature_name = 'Reading Room'
     AND fa.post_name = b.book_title
     AND fa.fk_family_id = b.fk_family_id
     AND fa.fk_member_id = b.fk_member_id
