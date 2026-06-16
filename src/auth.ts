@@ -99,6 +99,7 @@ type AuthRecord = {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  trustHost: true,
   callbacks: {
     async signIn({ user: oauthUser, account }) {
       if (account?.provider !== "google") {
