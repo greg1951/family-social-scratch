@@ -17,8 +17,15 @@ import {
   getShowDetailAction,
   toggleShowLikeAction,
 } from "@/app/(features)/(tv)/tv/actions";
+import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
-import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
+import {
+  createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
+  parseSerializedTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import { TvShow, TvShowDetail } from "@/components/db/types/shows";
 import { Button } from "@/components/ui/button";
 import {
@@ -393,10 +400,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       return;
     }
 
-    const normalizedComment = commentText.trim();
+    const normalizedComment = normalizeSerializedTipTapDocument(commentText);
 
-    if (normalizedComment.length < 2) {
-      toast.error("Enter at least 2 characters before posting your comment.");
+    if (isSerializedTipTapDocumentEmpty(normalizedComment)) {
+      toast.error("Enter a comment before posting.");
       return;
     }
 
@@ -769,19 +776,23 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                         <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-comment-input">
                           Add Comment
                         </label>
-                        <textarea
-                          id="show-comment-input"
+                        <div id="show-comment-input">
+                          <TipTapCommentEditor
                           value={ commentText }
-                          onChange={ (event) => setCommentText(event.target.value) }
+                          onChange={ setCommentText }
                           placeholder="What did you think about this show?"
                           disabled={ !selectedShowBasic || isEngaging }
-                          className="min-h-24 w-full rounded-xl border border-[#d7ebf3] bg-white px-3 py-2 text-sm text-[#15384a] outline-none transition focus-visible:ring-2 focus-visible:ring-[#59cdf7]"
+                          toolbarClassName="border-[#d7ebf3] bg-[#eef8fd]"
+                          editorClassName="border-[#d7ebf3] text-[#15384a]"
+                          buttonClassName="border-[#c9e2ec] text-[#24536a]"
+                          activeButtonClassName="border-[#2d87a8] bg-[#dff2f9] text-[#15384a]"
                         />
+                        </div>
                         <div className="flex justify-end">
                           <Button
                             type="button"
                             onClick={ handleAddComment }
-                            disabled={ !selectedShowBasic || isEngaging || commentText.trim().length < 2 }
+                            disabled={ !selectedShowBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
                             className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
                           >
                             Post Comment
@@ -801,7 +812,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                         ) : (
                           (selectedShowDetail?.showComments ?? []).map((comment) => (
                             <article key={ comment.id } className="rounded-2xl border border-[#d7ebf3] bg-white px-3 py-3 text-sm text-[#3f6576]">
-                              <p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p>
+                              <TiptapRenderer contentJson={ comment.commentJson } />
                               <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4f7384]">
                                 { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
                               </p>

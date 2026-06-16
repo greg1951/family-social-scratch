@@ -28,6 +28,7 @@ import {
 import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from '../types/poem-term-validation';
@@ -46,35 +47,6 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   }
 
   return 'Unknown Member';
-}
-
-function extractTipTapText(content: unknown): string {
-  const parsed = tipTapTextFromNode(content);
-
-  return parsed.replace(/\s+/g, ' ').trim();
-}
-
-function tipTapTextFromNode(node: unknown): string {
-  if (!node || typeof node !== 'object') {
-    return '';
-  }
-
-  const candidate = node as {
-    text?: string;
-    content?: unknown[];
-  };
-
-  let text = '';
-
-  if (typeof candidate.text === 'string') {
-    text += candidate.text;
-  }
-
-  if (Array.isArray(candidate.content)) {
-    text += candidate.content.map((childNode) => tipTapTextFromNode(childNode)).join(' ');
-  }
-
-  return text;
 }
 
 async function loadBooksHomeBooks(
@@ -195,15 +167,11 @@ async function loadBooksHomeBooks(
     const analysisComment = bookCommentsForBook.find((commentRow) => commentRow.isBookAnalysis);
     const submissionComments = bookCommentsForBook.filter((commentRow) => !commentRow.isBookAnalysis);
     const bookComments = submissionComments.map((commentRow) => {
-      const parsedComment = parseSerializedTipTapDocument(commentRow.commentJson);
-
       return {
         id: commentRow.id,
         createdAt: commentRow.createdAt as Date,
         commenterName: memberNameById.get(commentRow.memberId) ?? `Member #${ commentRow.memberId }`,
-        text: parsedComment.success
-          ? extractTipTapText(parsedComment.content)
-          : '',
+        commentJson: normalizeSerializedTipTapDocument(commentRow.commentJson),
       };
     });
 
@@ -379,10 +347,10 @@ export async function saveBooksHomeBook(
     };
   }
 
-  if (existingBook && !actor.isAdmin && existingBook.memberId !== actor.memberId) {
+  if (existingBook && existingBook.memberId !== actor.memberId) {
     return {
       success: false,
-      message: 'Only the book submitter or an admin can save changes to this book.',
+      message: 'Only the book submitter can save changes to this book.',
     };
   }
 
@@ -696,7 +664,20 @@ export async function addBookComment(
 ): Promise<AddBookCommentReturn> {
   const normalizedComment = commentText.trim();
 
-  if (normalizedComment.length < 2) {
+  const parsedComment = parseSerializedTipTapDocument(normalizedComment);
+  const content = parsedComment.success
+    ? parsedComment.content
+    : createTextTipTapDocument(normalizedComment);
+  const commentJson = serializeTipTapDocument(content);
+
+  if (parsedComment.success && isTipTapDocumentEmpty(parsedComment.content)) {
+    return {
+      success: false,
+      message: 'Comment cannot be empty.',
+    };
+  }
+
+  if (!parsedComment.success && normalizedComment.length < 2) {
     return {
       success: false,
       message: 'Enter at least 2 characters before posting a comment.',
@@ -715,8 +696,6 @@ export async function addBookComment(
       message: 'The selected book could not be found.',
     };
   }
-
-  const commentJson = serializeTipTapDocument(createTextTipTapDocument(normalizedComment));
 
   await db
     .insert(bookComment)

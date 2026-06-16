@@ -6,7 +6,7 @@ export interface ShowComment {
   id: number;
   createdAt: Date;
   commenterName: string;
-  text: string;
+  commentJson: string;
 }
 
 export interface TvShow {

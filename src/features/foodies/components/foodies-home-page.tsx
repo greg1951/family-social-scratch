@@ -16,9 +16,13 @@ import {
   addRecipeCommentAction,
   getFoodiesRecipeDetailAction,
 } from "@/app/(features)/(foodies)/foodies/actions";
+import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import { FoodiesRecipe, FoodiesRecipeDetail } from "@/components/db/types/recipes";
 import {
   createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { Input } from "@/components/ui/input";
@@ -390,10 +394,10 @@ export function FoodiesHomePage({
       return;
     }
 
-    const normalizedComment = commentText.trim();
+    const normalizedComment = normalizeSerializedTipTapDocument(commentText);
 
-    if (normalizedComment.length < 2) {
-      toast.error("Enter at least 2 characters before posting your comment.");
+    if (isSerializedTipTapDocumentEmpty(normalizedComment)) {
+      toast.error("Enter a comment before posting.");
       return;
     }
 
@@ -1103,19 +1107,23 @@ export function FoodiesHomePage({
                         <label className="text-sm font-semibold text-[#2f4820]" htmlFor="recipe-comment-input">
                           Add Comment
                         </label>
-                        <textarea
-                          id="recipe-comment-input"
+                        <div id="recipe-comment-input">
+                          <TipTapCommentEditor
                           value={ commentText }
-                          onChange={ (event) => setCommentText(event.target.value) }
+                          onChange={ setCommentText }
                           placeholder="What do you think about this recipe?"
                           disabled={ !selectedRecipeBasic || isEngaging }
-                          className="min-h-24 w-full rounded-xl border border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#2f4820] outline-none transition focus-visible:ring-2 focus-visible:ring-[#578c24]"
+                          toolbarClassName="border-[#dbeacc] bg-[#f0f9df]"
+                          editorClassName="border-[#dbeacc] text-[#2f4820]"
+                          buttonClassName="border-[#cfe8b2] text-[#476232]"
+                          activeButtonClassName="border-[#578c24] bg-[#e5f7cb] text-[#2f4820]"
                         />
+                        </div>
                         <div className="flex justify-end">
                           <Button
                             type="button"
                             onClick={ handleAddComment }
-                            disabled={ !selectedRecipeBasic || isEngaging || commentText.trim().length < 2 }
+                            disabled={ !selectedRecipeBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
                             className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
                           >
                             Post Comment
@@ -1135,7 +1143,7 @@ export function FoodiesHomePage({
                         ) : (
                           (selectedRecipeDetail?.recipeComments ?? []).map((comment) => (
                             <article key={ comment.id } className="rounded-2xl border border-[#dbeacc] bg-white px-3 py-3 text-sm text-[#4e6640]">
-                              <p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p>
+                              <TiptapRenderer contentJson={ comment.commentJson } />
                               <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
                                 { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
                               </p>

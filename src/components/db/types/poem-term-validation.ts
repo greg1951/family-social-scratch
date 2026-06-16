@@ -135,6 +135,22 @@ export function serializeTipTapDocument(content: JSONContent): string {
   return JSON.stringify(content);
 }
 
+export function normalizeSerializedTipTapDocument(value?: string): string {
+  const normalized = value?.trim() ?? "";
+
+  if (!normalized) {
+    return serializeTipTapDocument(createEmptyTipTapDocument());
+  }
+
+  const parsed = parseSerializedTipTapDocument(normalized);
+
+  if (parsed.success) {
+    return serializeTipTapDocument(parsed.content);
+  }
+
+  return serializeTipTapDocument(createTextTipTapDocument(normalized));
+}
+
 export function isTipTapDocumentEmpty(content?: JSONContent): boolean {
   if (!content) {
     return true;
@@ -149,6 +165,20 @@ export function isTipTapDocumentEmpty(content?: JSONContent): boolean {
   }
 
   return true;
+}
+
+export function isSerializedTipTapDocumentEmpty(value?: string): boolean {
+  if (!value || !value.trim()) {
+    return true;
+  }
+
+  const parsed = parseSerializedTipTapDocument(value);
+
+  if (!parsed.success) {
+    return value.trim().length === 0;
+  }
+
+  return isTipTapDocumentEmpty(parsed.content);
 }
 
 export function removeUnusedLinesFromEnd(content?: JSONContent): JSONContent {

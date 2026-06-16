@@ -2,8 +2,13 @@ import type { Editor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, X } from "lucide-react";
 
+import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import type { BookTagOption } from "@/components/db/types/books";
-import { parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
+import {
+  isSerializedTipTapDocumentEmpty,
+  parseSerializedTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import {
   Accordion,
   AccordionContent,
@@ -434,19 +439,23 @@ export function BookDetailsDialog({
                 { canEngage ? (
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
-                    <textarea
-                      id="book-comment-input"
+                    <div id="book-comment-input">
+                      <TipTapCommentEditor
                       value={ commentText }
-                      onChange={ (event) => setCommentText(event.target.value) }
+                      onChange={ setCommentText }
                       placeholder="What stood out to you about this book?"
                       disabled={ isEngaging }
-                      className="min-h-24 w-full rounded-xl border border-[#c8d7df] bg-white px-3 py-2 text-sm text-[#183746] outline-none transition focus-visible:ring-2 focus-visible:ring-[#3d819b]"
+                      toolbarClassName="border-[#c8d7df] bg-[#edf7fb]"
+                      editorClassName="border-[#c8d7df] text-[#183746]"
+                      buttonClassName="border-[#b9ccd5] text-[#355161]"
+                      activeButtonClassName="border-[#0f5c78] bg-[#d9edf5] text-[#183746]"
                     />
+                    </div>
                     <div className="flex justify-end">
                       <Button
                         type="button"
                         onClick={ onAddComment }
-                        disabled={ isEngaging || commentText.trim().length < 2 }
+                        disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
                         className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
                       >
                         Post Comment
@@ -464,7 +473,7 @@ export function BookDetailsDialog({
                 ) : (
                   draft.bookComments.map((bookComment) => (
                     <article key={ bookComment.id } className="rounded-2xl border border-[#d9e5ea] bg-white px-3 py-3 text-sm text-[#355161]">
-                      <p className="whitespace-pre-wrap leading-6">{ bookComment.text || "(No text in comment)" }</p>
+                      <TiptapRenderer contentJson={ bookComment.commentJson } />
                       <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
                         { bookComment.commenterName } · { formatCreatedAt(bookComment.createdAt) }
                       </p>

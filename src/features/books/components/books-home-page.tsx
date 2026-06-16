@@ -27,6 +27,8 @@ import {
 } from "@/app/(features)/(books)/books/actions";
 import {
   createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
@@ -93,7 +95,7 @@ export default function BooksHomePage({
 
   const selectedBook = bookItems.find((bookItem) => bookItem.id === selectedBookId) ?? null;
   const canEditSelected = selectedBook
-    ? Boolean(member.isAdmin) || selectedBook.memberId === member.memberId
+    ? selectedBook.memberId === member.memberId
     : false;
 
   const bookDialog = useBookDialog({
@@ -310,10 +312,10 @@ export default function BooksHomePage({
       return;
     }
 
-    const normalizedComment = commentText.trim();
+    const normalizedComment = normalizeSerializedTipTapDocument(commentText);
 
-    if (normalizedComment.length < 2) {
-      toast.error("Enter at least 2 characters before posting your comment.");
+    if (isSerializedTipTapDocumentEmpty(normalizedComment)) {
+      toast.error("Enter a comment before posting.");
       return;
     }
 

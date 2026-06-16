@@ -30,7 +30,10 @@ import {
   ToggleMovieLikeReturn,
 } from "../types/movies";
 import {
+  createTextTipTapDocument,
   createEmptyTipTapDocument,
+  isTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
@@ -540,7 +543,7 @@ async function loadMovieDetail(
     id: row.id,
     createdAt: row.createdAt ?? new Date(),
     commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
-    text: row.commentJson,
+    commentJson: normalizeSerializedTipTapDocument(row.commentJson),
   }));
 
   return {
@@ -1042,7 +1045,19 @@ export async function addMovieComment(
 ): Promise<AddMovieCommentReturn> {
   const normalizedComment = commentText.trim();
 
-  if (!normalizedComment) {
+  const parsedComment = parseSerializedTipTapDocument(normalizedComment);
+  const commentJson = parsedComment.success
+    ? serializeTipTapDocument(parsedComment.content)
+    : serializeTipTapDocument(createTextTipTapDocument(normalizedComment));
+
+  if (parsedComment.success && isTipTapDocumentEmpty(parsedComment.content)) {
+    return {
+      success: false,
+      message: "Comment cannot be empty.",
+    };
+  }
+
+  if (!parsedComment.success && !normalizedComment) {
     return {
       success: false,
       message: "Comment text is required.",
@@ -1062,7 +1077,7 @@ export async function addMovieComment(
     await db.insert(movieComment).values({
       movieId,
       memberId: actor.memberId,
-      commentJson: normalizedComment,
+      commentJson,
       ismovieReviewer: false,
       createdAt: new Date(),
     });

@@ -27,10 +27,14 @@ import {
   addPoemCommentAction,
   togglePoemReactionAction,
 } from "@/app/(features)/(poetry)/poetry/actions";
+import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import {
   createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { PoemTagOption, PoetryHomePoem } from "@/components/db/types/poem-verses";
@@ -69,7 +73,7 @@ type PoemDraft = {
     id: number;
     createdAt: Date;
     commenterName: string;
-    text: string;
+    commentJson: string;
   }>;
 };
 
@@ -180,7 +184,7 @@ export default function PoetryHomePage({
 
   const selectedPoem = poemItems.find((poemItem) => poemItem.id === selectedPoemId) ?? null;
   const canEditSelected = selectedPoem
-    ? Boolean(member.isAdmin) || selectedPoem.memberId === member.memberId
+    ? selectedPoem.memberId === member.memberId
     : false;
 
   const verseViewer = useEditor({
@@ -326,7 +330,7 @@ export default function PoetryHomePage({
     }
 
     if (!canEditSelected) {
-      toast.error("Only the poem submitter or an admin can edit this poem.");
+      toast.error("Only the poem submitter can edit this poem.");
       return;
     }
 
@@ -377,10 +381,10 @@ export default function PoetryHomePage({
       return;
     }
 
-    const normalizedComment = commentText.trim();
+    const normalizedComment = normalizeSerializedTipTapDocument(commentText);
 
-    if (normalizedComment.length < 2) {
-      toast.error("Enter at least 2 characters before posting your comment.");
+    if (isSerializedTipTapDocumentEmpty(normalizedComment)) {
+      toast.error("Enter a comment before posting.");
       return;
     }
 
@@ -864,19 +868,23 @@ export default function PoetryHomePage({
                   { selectedPoem.memberId !== member.memberId ? (
                     <div className="space-y-2">
                       <label className="text-sm font-semibold text-[#5d426f]" htmlFor="poem-comment-input">Add Comment</label>
-                      <textarea
-                        id="poem-comment-input"
+                      <div id="poem-comment-input">
+                        <TipTapCommentEditor
                         value={ commentText }
-                        onChange={ (event) => setCommentText(event.target.value) }
+                        onChange={ setCommentText }
                         placeholder="What stood out to you in this poem?"
                         disabled={ isEngaging }
-                        className="min-h-24 w-full rounded-xl border border-[#d7d0ea] bg-white px-3 py-2 text-sm text-[#43245d] outline-none transition focus-visible:ring-2 focus-visible:ring-[#8c62b5]"
+                        toolbarClassName="border-[#d7d0ea] bg-[#f7f1ff]"
+                        editorClassName="border-[#d7d0ea] text-[#43245d]"
+                        buttonClassName="border-[#d8b5ff] text-[#5d426f]"
+                        activeButtonClassName="border-[#8c62b5] bg-[#efe6fb] text-[#43245d]"
                       />
+                      </div>
                       <div className="flex justify-end">
                         <Button
                           type="button"
                           onClick={ handleAddComment }
-                          disabled={ isEngaging || commentText.trim().length < 2 }
+                          disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
                           className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
                         >
                           Post Comment
@@ -894,7 +902,7 @@ export default function PoetryHomePage({
                   ) : (
                     selectedPoem.poemComments.map((poemComment) => (
                       <article key={ poemComment.id } className="rounded-2xl border border-[#e5daf0] bg-white px-3 py-3 text-sm text-[#5f466f]">
-                        <p className="whitespace-pre-wrap leading-6">{ poemComment.text || "(No text in comment)" }</p>
+                        <TiptapRenderer contentJson={ poemComment.commentJson } />
                         <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
                           { poemComment.commenterName } · { formatCreatedAt(poemComment.createdAt) }
                         </p>

@@ -14,6 +14,7 @@ import {
 import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   removeUnusedLinesFromEnd,
   serializeTipTapDocument,
@@ -58,35 +59,6 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   }
 
   return 'Unknown Member';
-}
-
-function extractTipTapText(content: unknown): string {
-  const parsed = tipTapTextFromNode(content);
-
-  return parsed.replace(/\s+/g, ' ').trim();
-}
-
-function tipTapTextFromNode(node: unknown): string {
-  if (!node || typeof node !== 'object') {
-    return '';
-  }
-
-  const candidate = node as {
-    text?: string;
-    content?: unknown[];
-  };
-
-  let text = '';
-
-  if (typeof candidate.text === 'string') {
-    text += candidate.text;
-  }
-
-  if (Array.isArray(candidate.content)) {
-    text += candidate.content.map((childNode) => tipTapTextFromNode(childNode)).join(' ');
-  }
-
-  return text;
 }
 
 async function loadPoetryHomePoems(
@@ -205,15 +177,11 @@ async function loadPoetryHomePoems(
     const analysisComment = verseComments.find((commentRow) => commentRow.isPoemAnalysis);
     const submissionComments = verseComments.filter((commentRow) => !commentRow.isPoemAnalysis);
     const poemComments = submissionComments.map((commentRow) => {
-      const parsedComment = parseSerializedTipTapDocument(commentRow.commentJson);
-
       return {
         id: commentRow.id,
         createdAt: commentRow.createdAt as Date,
         commenterName: memberNameById.get(commentRow.memberId) ?? `Member #${ commentRow.memberId }`,
-        text: parsedComment.success
-          ? extractTipTapText(parsedComment.content)
-          : '',
+        commentJson: normalizeSerializedTipTapDocument(commentRow.commentJson),
       };
     });
 
@@ -460,10 +428,10 @@ export async function savePoetryHomePoem(
     };
   }
 
-  if (existingPoem && !actor.isAdmin && existingPoem.memberId !== actor.memberId) {
+  if (existingPoem && existingPoem.memberId !== actor.memberId) {
     return {
       success: false,
-      message: 'Only the poem submitter or an admin can save changes to this poem.',
+      message: 'Only the poem submitter can save changes to this poem.',
     };
   }
 
@@ -825,7 +793,20 @@ export async function addPoemComment(
 ): Promise<AddPoemCommentReturn> {
   const normalizedComment = commentText.trim();
 
-  if (normalizedComment.length < 2) {
+  const parsedComment = parseSerializedTipTapDocument(normalizedComment);
+  const content = parsedComment.success
+    ? parsedComment.content
+    : createTextTipTapDocument(normalizedComment);
+  const commentJson = serializeTipTapDocument(content);
+
+  if (parsedComment.success && isTipTapDocumentEmpty(parsedComment.content)) {
+    return {
+      success: false,
+      message: 'Comment cannot be empty.',
+    };
+  }
+
+  if (!parsedComment.success && normalizedComment.length < 2) {
     return {
       success: false,
       message: 'Enter at least 2 characters before posting a comment.',
@@ -857,8 +838,6 @@ export async function addPoemComment(
       message: 'The selected poem has no saved verse to comment on yet.',
     };
   }
-
-  const commentJson = serializeTipTapDocument(createTextTipTapDocument(normalizedComment));
 
   await db
     .insert(poemComment)

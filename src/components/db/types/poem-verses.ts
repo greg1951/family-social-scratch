@@ -53,7 +53,7 @@ export interface PoetryHomeComment {
   id: number;
   createdAt: Date;
   commenterName: string;
-  text: string;
+  commentJson: string;
 }
 
 export interface PoemTagOption {

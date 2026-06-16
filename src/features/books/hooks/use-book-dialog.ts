@@ -32,7 +32,7 @@ export type BookDraft = {
     id: number;
     createdAt: Date;
     commenterName: string;
-    text: string;
+    commentJson: string;
   }>;
 };
 
@@ -155,7 +155,7 @@ export function useBookDialog({
     }
 
     if (mode === "edit" && !canEditSelected) {
-      toast.error("Only the book submitter or an admin can edit this book.");
+      toast.error("Only the book submitter can edit this book.");
       return;
     }
 

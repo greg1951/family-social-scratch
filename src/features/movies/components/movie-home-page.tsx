@@ -17,8 +17,15 @@ import {
   getMovieDetailAction,
   toggleMovieLikeAction,
 } from "@/app/(features)/(movies)/movies/actions";
+import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
-import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
+import {
+  createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
+  parseSerializedTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import { MovieDetail, MovieRecord } from "@/components/db/types/movies";
 import { Button } from "@/components/ui/button";
 import {
@@ -292,9 +299,10 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       return;
     }
 
-    const normalizedComment = commentText.trim();
-    if (normalizedComment.length < 2) {
-      toast.error("Enter at least 2 characters before posting your comment.");
+    const normalizedComment = normalizeSerializedTipTapDocument(commentText);
+
+    if (isSerializedTipTapDocumentEmpty(normalizedComment)) {
+      toast.error("Enter a comment before posting.");
       return;
     }
 
@@ -598,7 +606,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                 </div>
               ) }
 
-              <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p><p className="text-xs text-[#8b5a3c]">Share your thoughts about this movie with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-comment-input">Add Comment</label><textarea id="movie-comment-input" value={ commentText } onChange={ (event) => setCommentText(event.target.value) } placeholder="What did you think about this movie?" disabled={ !selectedMovieBasic || isEngaging } className="min-h-24 w-full rounded-xl border border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#5c2e1a] outline-none transition focus-visible:ring-2 focus-visible:ring-[#d4a574]" /><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMovieBasic || isEngaging || commentText.trim().length < 2 } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMovieDetail?.id === selectedMovie && selectedMovieDetail.movieComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p> : selectedMovieDetail?.id !== selectedMovie ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p> : (selectedMovieDetail?.movieComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]"><p className="whitespace-pre-wrap leading-6">{ comment.text || "(No text in comment)" }</p><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-6 py-10 text-center text-[#8b5a3c]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#d4a574]" /><p className="text-lg font-semibold text-[#5c2e1a]">Select a movie to view comments.</p><p className="mt-2 text-sm">Choose a movie from the finder list to see and post family comments.</p></div> }</div></div>
+              <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p><p className="text-xs text-[#8b5a3c]">Share your thoughts about this movie with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-comment-input">Add Comment</label><div id="movie-comment-input"><TipTapCommentEditor value={ commentText } onChange={ setCommentText } placeholder="What did you think about this movie?" disabled={ !selectedMovieBasic || isEngaging } toolbarClassName="border-[#f0d9c4] bg-[#fff1e8]" editorClassName="border-[#f0d9c4] text-[#5c2e1a]" buttonClassName="border-[#e8c4a0] text-[#7b3306]" activeButtonClassName="border-[#b8581a] bg-[#fde7d5] text-[#5c2e1a]" /></div><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMovieBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMovieDetail?.id === selectedMovie && selectedMovieDetail.movieComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p> : selectedMovieDetail?.id !== selectedMovie ? <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p> : (selectedMovieDetail?.movieComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]"><TiptapRenderer contentJson={ comment.commentJson } /><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-6 py-10 text-center text-[#8b5a3c]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#d4a574]" /><p className="text-lg font-semibold text-[#5c2e1a]">Select a movie to view comments.</p><p className="mt-2 text-sm">Choose a movie from the finder list to see and post family comments.</p></div> }</div></div>
           </div>
         </div>
       </div>

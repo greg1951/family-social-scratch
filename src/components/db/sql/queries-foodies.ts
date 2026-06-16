@@ -36,8 +36,10 @@ import {
   SaveRecipeTermReturn,
 } from "../types/recipes";
 import {
+  createTextTipTapDocument,
   createEmptyTipTapDocument,
   isTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
@@ -1125,7 +1127,7 @@ async function loadFoodiesRecipeDetail(
       id: row.id,
       createdAt: row.createdAt ?? new Date(),
       commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
-      text: row.commentJson,
+      commentJson: normalizeSerializedTipTapDocument(row.commentJson),
     })),
   };
 }
@@ -1276,7 +1278,19 @@ export async function addRecipeComment(
 ): Promise<AddRecipeCommentReturn> {
   const normalizedComment = commentText.trim();
 
-  if (normalizedComment.length < 2) {
+  const parsedComment = parseSerializedTipTapDocument(normalizedComment);
+  const commentJson = parsedComment.success
+    ? serializeTipTapDocument(parsedComment.content)
+    : serializeTipTapDocument(createTextTipTapDocument(normalizedComment));
+
+  if (parsedComment.success && isTipTapDocumentEmpty(parsedComment.content)) {
+    return {
+      success: false,
+      message: "Comment cannot be empty.",
+    };
+  }
+
+  if (!parsedComment.success && normalizedComment.length < 2) {
     return {
       success: false,
       message: "Comment must be at least 2 characters.",
@@ -1302,7 +1316,7 @@ export async function addRecipeComment(
       .values({
         recipeId,
         memberId: actor.memberId,
-        commentJson: normalizedComment,
+        commentJson,
         isRecipeProTip: false,
       });
 

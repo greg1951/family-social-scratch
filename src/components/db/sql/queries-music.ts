@@ -35,6 +35,8 @@ import {
 import {
   createEmptyTipTapDocument,
   createTextTipTapDocument,
+  isTipTapDocumentEmpty,
+  normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "../types/poem-term-validation";
@@ -55,50 +57,6 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   }
 
   return "Unknown Member";
-}
-
-function extractTipTapText(value?: string): string {
-  if (!value) {
-    return "";
-  }
-
-  const parsed = parseSerializedTipTapDocument(value);
-  if (!parsed.success) {
-    return "";
-  }
-
-  const segments: string[] = [];
-
-  type TipTapTextNode = {
-    type?: string;
-    text?: string;
-    content?: TipTapTextNode[];
-  };
-
-  const walk = (node?: TipTapTextNode) => {
-    if (!node) {
-      return;
-    }
-
-    if (typeof node.text === "string") {
-      segments.push(node.text);
-    }
-
-    if (!Array.isArray(node.content)) {
-      return;
-    }
-
-    for (const child of node.content) {
-      walk(child);
-      if (["paragraph", "heading", "listItem", "blockquote", "tableRow"].includes(child.type ?? "")) {
-        segments.push("\n");
-      }
-    }
-  };
-
-  walk(parsed.content as TipTapTextNode);
-
-  return segments.join("").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function createDefaultMusicTemplateJson() {
@@ -636,7 +594,7 @@ async function loadMusicDetail(
     id: row.id,
     createdAt: row.createdAt ?? new Date(),
     commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
-    text: extractTipTapText(row.commentJson),
+    commentJson: normalizeSerializedTipTapDocument(row.commentJson),
   }));
 
   return {
@@ -1286,7 +1244,19 @@ export async function addMusicComment(
 ): Promise<AddMusicCommentReturn> {
   const normalizedComment = commentText.trim();
 
-  if (!normalizedComment) {
+  const parsedComment = parseSerializedTipTapDocument(normalizedComment);
+  const commentJson = parsedComment.success
+    ? serializeTipTapDocument(parsedComment.content)
+    : serializeTipTapDocument(createTextTipTapDocument(normalizedComment));
+
+  if (parsedComment.success && isTipTapDocumentEmpty(parsedComment.content)) {
+    return {
+      success: false,
+      message: "Comment cannot be empty.",
+    };
+  }
+
+  if (!parsedComment.success && !normalizedComment) {
     return {
       success: false,
       message: "Comment text is required.",
@@ -1306,7 +1276,7 @@ export async function addMusicComment(
     await db.insert(musicComment).values({
       musicId,
       memberId: actor.memberId,
-      commentJson: serializeTipTapDocument(createTextTipTapDocument(normalizedComment)),
+      commentJson,
       isMusicReviewer: false,
       createdAt: new Date(),
     });

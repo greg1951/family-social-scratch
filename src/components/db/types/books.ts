@@ -47,7 +47,7 @@ export interface BookHomeComment {
   id: number;
   createdAt: Date;
   commenterName: string;
-  text: string;
+  commentJson: string;
 }
 
 export interface BookTagOption {

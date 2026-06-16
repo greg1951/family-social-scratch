@@ -6,7 +6,7 @@ export interface MusicComment {
   id: number;
   createdAt: Date;
   commenterName: string;
-  text: string;
+  commentJson: string;
 }
 
 export interface MusicRecord {
