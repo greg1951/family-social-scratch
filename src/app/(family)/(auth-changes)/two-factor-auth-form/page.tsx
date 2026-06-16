@@ -24,7 +24,7 @@ export default async function MfaChange() {
             Account Security
           </div>
           <CardTitle className="mt-3 text-center text-2xl font-extrabold text-[#10364a]">Two-Factor Authentication</CardTitle>
-          <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { session.user?.name }</CardDescription>
+          <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { session.user?.name ?? session.user?.email }</CardDescription>
         </CardHeader>
         <CardDescription className="px-6 pt-3 text-center text-base font-medium text-[#315363]">
           Scan the QR code with your authenticator app, then confirm setup with a six-digit code.

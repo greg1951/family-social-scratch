@@ -29,6 +29,7 @@ export const authValidation = async ({email, password, family, token}
     id?: string;
     email?: string;
     family?: string;
+    familyId?: number;
     error?: boolean;
     message?: string;
     }> => {
@@ -67,6 +68,7 @@ export const authValidation = async ({email, password, family, token}
         id: selectedUser.id?.toString(),
         email: selectedUser.email,
         family: family,
+        familyId: selectedUser.familyId,
         // isActive: selectedUser.isActivated,
         // secret: selectedUser.secret 
       };

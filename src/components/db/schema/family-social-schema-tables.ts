@@ -1,5 +1,5 @@
 // ...existing code...
-import { serial, pgTable, index, text, timestamp, boolean, integer, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
+import { serial, index, boolean, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
@@ -11,9 +11,67 @@ export const optionReferenceCategory = pgEnum('category', [
   'feature', 'notification', 'admin', 'other'
 ]);
 
-/*------------------------------- Essential Family Schema ------------------------------ */
+import {
+  timestamp,
+  pgTable,
+  text,
+  primaryKey,
+  integer,
+} from "drizzle-orm/pg-core"
+import type { AdapterAccount } from "@auth/core/adapters"
+
+
+/*------------------------------- OAuth Schema ------------------------------ */
+export const accounts = pgTable("account",
+  {
+    userId: integer("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccount["type"]>().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => ({
+    compoundKey: primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  })
+)
+
+export const verificationTokens = pgTable(
+  "verificationToken",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (vt) => ({
+    compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+  })
+)
+
+export const sessions = pgTable("session", {
+  sessionToken: text("sessionToken").primaryKey().notNull(),
+  userId: integer("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+})
+
+
+/* Table below is a hybrid using the original user table with addition OAuth columns */
 export const user = pgTable("user", {
   id: serial("id").primaryKey(),
+  name: text("name"), 
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  image: text("image"),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
@@ -24,6 +82,7 @@ export const user = pgTable("user", {
   memberId: integer("fk_member_id").references(() => member.id),
 });
 
+/*------------------------------- Essential Family Schema ------------------------------ */
 export const passwordReset = pgTable("password_reset", {
   id: serial("id").primaryKey(),
   userId: integer("fk_user_id").notNull().references(() => user.id, {onDelete: "cascade"}).unique(),

@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { emailLoginCheck, fullLoginUser } from "./actions";
+import { beginGoogleLogin, emailLoginCheck, fullLoginUser } from "./actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -15,9 +15,10 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CircleHelp, Eye, EyeOff, LogIn, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, CircleHelp, Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
 import { FamilySocialLoginSchema } from "@/features/family/components/validation/schema";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { signIn } from "next-auth/react";
 
 const formSchema = FamilySocialLoginSchema;
 
@@ -101,6 +102,28 @@ export default function LoginForm() {
     };
   };
 
+  const handleGoogleLogin = async () => {
+    const family = form.getValues("family");
+    const familyValidation = familySchema.safeParse(family);
+    if (!familyValidation.success) {
+      form.setError("family", {
+        message: familyValidation.error.issues[0]?.message ?? "Family name is required",
+      });
+      return;
+    }
+
+    const response = await beginGoogleLogin({ family });
+    if (response?.error) {
+      form.setError("root", {
+        message: response.message,
+      });
+      setEmailAuthError(response.message ?? "Unable to begin Google sign-in");
+      return;
+    }
+
+    await signIn("google", { callbackUrl: "/" });
+  };
+
   return (
     <main className="font-app flex justify-center items-center h-2/12">
       { step === 1 &&
@@ -118,6 +141,47 @@ export default function LoginForm() {
             <Form { ...form }>
               <form onSubmit={ form.handleSubmit(handleEmailSubmit) }>
                 <fieldset disabled={ form.formState.isSubmitting } className="flex flex-col gap-3">
+                  <CardDescription className="rounded-xl border border-[#d8eef7] bg-[linear-gradient(180deg,rgba(223,246,255,0.5),rgba(255,255,255,0.92))] px-3 py-2 text-xs leading-5 text-[#315363] md:text-sm">
+                    Sign in with a credential or use Google, or Apple. Start by entering your Family Name first.
+                  </CardDescription>
+                  <div className="relative">
+                    <FormField
+                      control={ form.control }
+                      name="family"
+                      render={ ({ field }) => (
+                        <FormItem>
+                          <FormLabel className="font-extrabold text-sm md:text-base">Family Name</FormLabel>
+                          <FormControl>
+                            <Input { ...field } type="text" placeholder="Family Name is required" className="text-xs" />
+                          </FormControl>
+                          <CardDescription className="rounded-xl border border-[#d8eef7] bg-[linear-gradient(180deg,rgba(223,246,255,0.5),rgba(255,255,255,0.92))] px-3 py-2 text-xs leading-5 text-[#315363] md:text-sm">
+                            Credential sign in requires an Email and Password. Skip them if using Google or Apple.
+                          </CardDescription>
+                          <FormMessage />
+                        </FormItem>
+                      ) }
+                    />
+                    <div className="absolute top-0 right-0 mt-7">
+                      <HoverCard open={ infoOpen } openDelay={ 300 } closeDelay={ 150 }>
+                        <HoverCardTrigger asChild>
+                          <Button
+                            className='w-auto text-xs md:text-sm'
+                            variant="link"
+                            onMouseEnter={ () => setInfoOpen(true) }
+                            onMouseLeave={ () => setInfoOpen(false) }
+                          >
+                            <CircleHelp size={ 6 } className="h-5 w-5 text-[#315363]" />
+                          </Button>
+                        </HoverCardTrigger>
+                        <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
+                          <p className='text-sm p-1'>When you join My Family Social you become part of a unique family. Your family name is required to sign in.</p>
+                          <p className='text-sm p-1'>In your email invitation, and in the login instructions email you received after registering,
+                            your family name was prominently mentioned.</p>
+                          <p className='text-sm p-1'>You may use the email and password credential when you registered. If using Google or Apple instead, it must match the email you registed with. </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                  </div>
                   <FormField
                     control={ form.control }
                     name="email"
@@ -155,42 +219,6 @@ export default function LoginForm() {
                         <Eye className="h-4 w-4" />
                       ) }
                     </Button>
-
-                  </div>
-                  <div className="relative">
-                    <FormField
-                      control={ form.control }
-                      name="family"
-                      render={ ({ field }) => (
-                        <FormItem>
-                          <FormLabel className="font-extrabold text-sm md:text-base">Family Name</FormLabel>
-                          <FormControl>
-                            <Input { ...field } type="text" placeholder="Family name 10-30 characters" className="text-xs" />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      ) }
-                    />
-                    <div className="absolute top-0 right-0 mt-7">
-                      <HoverCard open={ infoOpen } openDelay={ 300 } closeDelay={ 150 }>
-                        <HoverCardTrigger asChild>
-                          <Button
-                            className='w-auto text-xs md:text-sm'
-                            variant="link"
-                            onMouseEnter={ () => setInfoOpen(true) }
-                            onMouseLeave={ () => setInfoOpen(false) }
-                          >
-                            <CircleHelp size={ 6 } className="h-5 w-5 text-[#315363]" />
-                          </Button>
-                        </HoverCardTrigger>
-                        <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
-                          <p className='text-sm p-1'>When you join My Family Social you become part of a unique family. Your family name is required to sign in.</p>
-                          <p className='text-sm p-1'>In your email invitation, and in the login instructions email you received after registering,
-                            your family name was prominently mentioned.</p>
-                          <p className='text-sm p-1'>If you have not registered in a family, then there is no signin needed. Select the &quot;Take me home&quot; link below to return to the main page.</p>
-                        </HoverCardContent>
-                      </HoverCard>
-                    </div>
                   </div>
 
                   { !!emailAuthError &&
@@ -199,11 +227,18 @@ export default function LoginForm() {
                     </FormMessage>
                   }
                   <Button
-                    className="mt-2 h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] text-sm font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
+                    className="mt-2 h-11 rounded-2xl border border-[#d8eef7] bg-white text-sm font-bold text-[#10364a] shadow-[0_18px_30px_-24px_rgba(16,54,74,0.8)] hover:bg-[#f1fbff]"
                     type="submit"
                   >
-                    <LogIn className="h-4 w-4" />
-                    Enter Family Social
+                    Use a Credential to Sign In
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    className="h-11 rounded-2xl border border-[#d8eef7] bg-white text-sm font-bold text-[#10364a] shadow-[0_18px_30px_-24px_rgba(16,54,74,0.8)] hover:bg-[#f1fbff]"
+                    type="button"
+                    onClick={ handleGoogleLogin }
+                  >
+                    OR Continue with Google
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </fieldset>

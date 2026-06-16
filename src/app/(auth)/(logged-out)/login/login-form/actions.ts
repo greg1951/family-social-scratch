@@ -7,6 +7,10 @@ import { signIn } from "@/auth";
 import { preLoginAuthValidation } from "@/features/auth/services/auth-utils";
 import { generate } from "otplib";
 import { getUser2fa } from "@/components/db/sql/queries-user";
+import { cookies } from "next/headers";
+import { findRegisteredFamily } from "@/components/db/sql/queries-family-member";
+
+const OAUTH_FAMILY_COOKIE = "oauth_family_context";
 
 export const fullLoginUser = async({email, password, family, token}: {email: string, password: string, family: string, token?: string}) => {
     // console.log('fullLoginUser->email: ',email, 'family: ',family, 'token: ', token);
@@ -94,3 +98,38 @@ export const validateOtp = async(args: ValidateOtpRecordType) => {
     error: false,
   }
 }
+
+export const beginGoogleLogin = async ({ family }: { family: string }) => {
+  const validation = familySchema.safeParse(family);
+  if (!validation.success) {
+    return {
+      error: true,
+      message: validation.error.issues[0]?.message ?? "Family name is required",
+    };
+  }
+
+  const familyResult = await findRegisteredFamily(family);
+  if (!familyResult.success || !familyResult.familyId) {
+    return {
+      error: true,
+      message: "Family name is not registered in My Family Social",
+    };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    OAUTH_FAMILY_COOKIE,
+    JSON.stringify({ familyName: familyResult.familyName, familyId: familyResult.familyId }),
+    {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10,
+    }
+  );
+
+  return {
+    error: false,
+  };
+};

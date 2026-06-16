@@ -1,4 +1,7 @@
 export { 
+  accounts,
+  sessions,
+  verificationTokens,
   user, 
   passwordReset, 
   family, 

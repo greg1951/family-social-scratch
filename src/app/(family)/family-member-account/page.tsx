@@ -46,7 +46,7 @@ export default async function FamilyMemberAccount() {
     const accountDetails: AccountDetails = {
       accountDetails: {
         email: session?.user?.email as string,
-        familyName: session?.user?.name as string,
+        familyName: memberKeyDetails.familyName,
         userId: userId as number,
         memberId: memberDetails.memberId as number,
         firstName: memberDetails.firstName as string,
