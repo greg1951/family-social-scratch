@@ -15,32 +15,22 @@ export type FeaturePostsChartData = {
   feature: string;
   POST_CREATED: number;
   COMMENT_CREATED: number;
-  ALBUM_SHARED: number;
-  LIKE_ADDED: number;
-  LOVE_ADDED: number;
-  DISCUSS_START: number;
-  DISCUSS_REPLY: number;
-  DISCUSS_REACT: number;
+  REACTION_ADDED: number;
 }[];
 
 const chartConfig = {
   POST_CREATED: { label: "Posts", color: "#d1d5db" },
   COMMENT_CREATED: { label: "Comments", color: "var(--chart-2)" },
-  ALBUM_SHARED: { label: "Albums", color: "#fbbf24" },
-  LIKE_ADDED: { label: "Likes", color: "#93c5fd" },
-  LOVE_ADDED: { label: "Loves", color: "#f472b6" },
-  DISCUSS_START: { label: "Discuss Starts", color: "#fb923c" },
-  DISCUSS_REPLY: { label: "Discuss Replies", color: "#22c55e" },
-  DISCUSS_REACT: { label: "Discuss Reacts", color: "#8b5cf6" },
+  REACTION_ADDED: { label: "Reactions", color: "#60a5fa" },
 } satisfies ChartConfig;
 
 const featureNameMap: Record<string, string> = {
-  "TV Junkies": "Junkies",
-  "Movie Maniacs": "Maniacs",
-  "Family Foodies": "Foodies",
-  "Poetry Cafe": "Poets",
-  "Reading Room": "Besties",
-  "Family Gallery": "Gallery",
+  "TV Junkies": "TV",
+  "Movie Maniacs": "Movies",
+  "Family Foodies": "Recipes",
+  "Poetry Cafe": "Poems",
+  "Reading Room": "Books",
+  "Family Gallery": "Photos",
 };
 
 export default function FeaturePostsChart({ data }: { data: FeaturePostsChartData }) {
@@ -48,7 +38,7 @@ export default function FeaturePostsChart({ data }: { data: FeaturePostsChartDat
     <>
       <CardHeader className="flex-row items-start space-y-0 pt-0">
         <div className="grid gap-1">
-          <CardTitle className="text-center text-sm font-semibold">Feature Posts</CardTitle>
+          <CardTitle className="text-center text-sm font-semibold">By Feature: Posts, Comments, Reactions</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center">
@@ -67,12 +57,7 @@ export default function FeaturePostsChart({ data }: { data: FeaturePostsChartDat
             <ChartLegend verticalAlign="top" height={ 56 } content={ <ChartLegendContent className="flex-wrap gap-x-3 gap-y-1 text-[11px]" /> } />
             <Bar dataKey="POST_CREATED" stackId="a" fill="#d1d5db" radius={ [0, 0, 0, 0] } />
             <Bar dataKey="COMMENT_CREATED" stackId="a" fill="var(--chart-2)" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="ALBUM_SHARED" stackId="a" fill="#fbbf24" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="LIKE_ADDED" stackId="a" fill="#93c5fd" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="LOVE_ADDED" stackId="a" fill="#f472b6" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="DISCUSS_START" stackId="a" fill="#fb923c" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="DISCUSS_REPLY" stackId="a" fill="#22c55e" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="DISCUSS_REACT" stackId="a" fill="#8b5cf6" radius={ [4, 4, 0, 0] } />
+            <Bar dataKey="REACTION_ADDED" stackId="a" fill="#60a5fa" radius={ [4, 4, 0, 0] } />
           </BarChart>
         </ChartContainer>
       </CardContent>

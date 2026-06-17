@@ -13,8 +13,31 @@ import { getAllFamilyMembers, getFamilyFounderDetails, getMemberImageDetailsByMe
 import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import { toast } from "sonner";
 import MemberAvatar from "@/components/common/member-avatar";
+import { getMemberDashboardActivitySummary, type MemberDashboardActivitySummary } from "@/components/db/sql/queries-family-activity";
 
-export default async function FamilyMemberAccount() {
+function toDateTimeLocalValue(date: Date): string {
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
+}
+
+function parseDate(value: string | undefined, fallback: Date): Date {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export default async function FamilyMemberAccount({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; startDate?: string; endDate?: string }>;
+}) {
   const session = await auth();
 
   if (!session) {
@@ -31,6 +54,21 @@ export default async function FamilyMemberAccount() {
   if (memberKeyDetails.isFounder === true) {
     redirect("/family-founder-account");
   }
+
+  const now = new Date();
+  const defaultStartDate = new Date(now);
+  defaultStartDate.setMonth(defaultStartDate.getMonth() - 1);
+  const params = await searchParams;
+  const startDate = parseDate(params.startDate, defaultStartDate);
+  const endDate = parseDate(params.endDate, now);
+  const startDateValue = toDateTimeLocalValue(startDate);
+  const endDateValue = toDateTimeLocalValue(endDate);
+
+  const memberActivitySummary: MemberDashboardActivitySummary = await getMemberDashboardActivitySummary(
+    memberKeyDetails.familyId,
+    memberKeyDetails.memberId,
+    { startDate, endDate },
+  );
 
   const [memberDetails, memberNotificationsResult, memberImageResult] = await Promise.all([
     getMemberDetails(userId),
@@ -128,6 +166,9 @@ export default async function FamilyMemberAccount() {
                 currentFamilyMembers={ currentFamilyMembers }
                 memberKeyDetails={ memberKeyDetails }
                 founderDetails={ founderDetails }
+                memberActivitySummary={ memberActivitySummary }
+                startDateValue={ startDateValue }
+                endDateValue={ endDateValue }
               />
             ) }
           </CardContent>

@@ -17,8 +17,31 @@ import MemberAvatar from "@/components/common/member-avatar";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 import FounderFaqHelp from "@/components/common/founder-faq-help";
 import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
+import { getMemberDashboardActivitySummary, type MemberDashboardActivitySummary } from "@/components/db/sql/queries-family-activity";
 
-export default async function FamilyMyAccountPage() {
+function toDateTimeLocalValue(date: Date): string {
+  const timezoneOffsetMs = date.getTimezoneOffset() * 60 * 1000;
+  return new Date(date.getTime() - timezoneOffsetMs).toISOString().slice(0, 16);
+}
+
+function parseDate(value: string | undefined, fallback: Date): Date {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
+export default async function FamilyMyAccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string; startDate?: string; endDate?: string }>;
+}) {
   const session = await auth();
 
   if (!session) {
@@ -34,6 +57,21 @@ export default async function FamilyMyAccountPage() {
     console.warn('Unauthorized access attempt to family founder account page. Redirecting to home page.');
     redirect("/");
   }
+
+  const now = new Date();
+  const defaultStartDate = new Date(now);
+  defaultStartDate.setMonth(defaultStartDate.getMonth() - 1);
+  const params = await searchParams;
+  const startDate = parseDate(params.startDate, defaultStartDate);
+  const endDate = parseDate(params.endDate, now);
+  const startDateValue = toDateTimeLocalValue(startDate);
+  const endDateValue = toDateTimeLocalValue(endDate);
+
+  const memberActivitySummary: MemberDashboardActivitySummary = await getMemberDashboardActivitySummary(
+    memberKeyDetails.familyId,
+    memberKeyDetails.memberId,
+    { startDate, endDate },
+  );
 
   const [
     memberNotificationsResult,
@@ -147,6 +185,9 @@ export default async function FamilyMyAccountPage() {
               featureConfig={ featureConfig }
               currentFamilyMembers={ currentFamilyMembers }
               joinedFamilyMembers={ joinedFamilyMembers }
+              memberActivitySummary={ memberActivitySummary }
+              startDateValue={ startDateValue }
+              endDateValue={ endDateValue }
             />
           </CardContent>
         </Card>

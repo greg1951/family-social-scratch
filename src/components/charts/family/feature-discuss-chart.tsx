@@ -11,25 +11,34 @@ import {
   type ChartConfig,
 } from "@/components/ui/chart";
 
-export type MemberPostsChartData = {
-  member: string;
-  POST_CREATED: number;
-  COMMENT_CREATED: number;
-  REACTION_ADDED: number;
+export type FeatureDiscussChartData = {
+  feature: string;
+  DISCUSS_START: number;
+  DISCUSS_REPLY: number;
+  DISCUSS_REACT: number;
 }[];
 
 const chartConfig = {
-  POST_CREATED: { label: "Posts", color: "#d1d5db" },
-  COMMENT_CREATED: { label: "Comments", color: "var(--chart-2)" },
-  REACTION_ADDED: { label: "Reactions", color: "#60a5fa" },
+  DISCUSS_START: { label: "Discussion Creates", color: "#fb923c" },
+  DISCUSS_REPLY: { label: "Discussion Replies", color: "#22c55e" },
+  DISCUSS_REACT: { label: "Discussion Reacts", color: "#8b5cf6" },
 } satisfies ChartConfig;
 
-export default function MemberPostsChart({ data }: { data: MemberPostsChartData }) {
+const featureNameMap: Record<string, string> = {
+  "TV Junkies": "TV",
+  "Movie Maniacs": "Movies",
+  "Family Foodies": "Recipes",
+  "Poetry Cafe": "Poems",
+  "Reading Room": "Books",
+  "Family Gallery": "Photos",
+};
+
+export default function FeatureDiscussChart({ data }: { data: FeatureDiscussChartData }) {
   return (
     <>
       <CardHeader className="flex-row items-start space-y-0 pt-0">
         <div className="grid gap-1">
-          <CardTitle className="text-center text-sm font-semibold">By Member: Posts, Comments, Reactions</CardTitle>
+          <CardTitle className="text-center text-sm font-semibold">Discussion Activity By Feature</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center">
@@ -37,18 +46,18 @@ export default function MemberPostsChart({ data }: { data: MemberPostsChartData 
           <BarChart accessibilityLayer data={ data } margin={ { top: 56, left: 12, right: 12 } }>
             <CartesianGrid vertical={ false } />
             <XAxis
-              dataKey="member"
+              dataKey="feature"
               tickLine={ false }
               tickMargin={ 10 }
               axisLine={ false }
               tick={ { fontSize: 12 } }
-              tickFormatter={ (value: string) => value.split(" ")[0] }
+              tickFormatter={ (value: string) => featureNameMap[value] || value }
             />
             <ChartTooltip content={ <ChartTooltipContent hideLabel /> } />
             <ChartLegend verticalAlign="top" height={ 56 } content={ <ChartLegendContent className="flex-wrap gap-x-3 gap-y-1 text-[11px]" /> } />
-            <Bar dataKey="POST_CREATED" stackId="a" fill="#d1d5db" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="COMMENT_CREATED" stackId="a" fill="var(--chart-2)" radius={ [0, 0, 0, 0] } />
-            <Bar dataKey="REACTION_ADDED" stackId="a" fill="#60a5fa" radius={ [4, 4, 0, 0] } />
+            <Bar dataKey="DISCUSS_START" stackId="a" fill="#fb923c" radius={ [0, 0, 0, 0] } />
+            <Bar dataKey="DISCUSS_REPLY" stackId="a" fill="#22c55e" radius={ [0, 0, 0, 0] } />
+            <Bar dataKey="DISCUSS_REACT" stackId="a" fill="#8b5cf6" radius={ [4, 4, 0, 0] } />
           </BarChart>
         </ChartContainer>
       </CardContent>

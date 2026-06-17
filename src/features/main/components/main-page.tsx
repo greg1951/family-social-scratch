@@ -6,6 +6,8 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import PublicHelpMenu from "@/components/common/public-help-menu";
 import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
 import { FamilyFeatureKey, getFeatureKeyFromReferenceName } from "@/features/family/services/family-feature-flags";
+import { SquareActivity } from "lucide-react";
+import FamilyActivity from "@/components/common/family-activity";
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
@@ -77,51 +79,26 @@ export default async function MainPage() {
                   <div className="flex items-center gap-2">
                     <p className="text-base font-extrabold text-slate-800 md:text-lg">{ title }</p>
                     <PublicHelpMenu href="/faq" />
-                  </div>
+                { memberKeyDetails.isLoggedIn && (
+                    <FamilyActivity />
+                ) }
                   <p className="text-sm text-slate-600 md:text-base">{ cta }</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid w-full grid-cols-1 gap-2 text-base md:w-auto md:grid-cols-3 pt-2">
-                { memberKeyDetails.isFounder && (
+              {/* <div className="grid w-full grid-cols-1 gap-2 text-base md:w-auto md:grid-cols-3 pt-2"> */}
+                {/* { memberKeyDetails.isFounder && (
                   <>
                     <Link
                       href="/family-dashboard"
                       className={ ctaCardClasses }
                     >
-                      Activity Dashboard
-                    </Link>
-                    <Link
-                      href="/whats-new"
-                      className={ ctaCardClasses }
-                    >
-                      What&apos;s New?
-                    </Link>
-                    {/* <Link
-                      href="/help-subscribe"
-                      className={ ctaCardClasses }
-                    >
-                      Review Subscription Plans
-                    </Link> */}
-                  </>
-                ) }
-                { memberKeyDetails.isLoggedIn && !memberKeyDetails.isFounder && (
-                  <>
-                    <Link
-                      href="/family-dashboard"
-                      className={ ctaCardClasses }
-                    >
-                      Activity Dashboard
-                    </Link>
-                    <Link
-                      href="/whats-new"
-                      className={ ctaCardClasses }
-                    >
-                      What&apos;s New?
+                      <SquareActivity  />
                     </Link>
                   </>
-                ) }
-              </div>
+                ) } */}
+              {/* </div> */}
             </div>
           </Card>
 

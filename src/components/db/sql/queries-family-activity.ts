@@ -16,7 +16,6 @@ const POST_ACTION_TYPES = [
   "COMMENT_CREATED",
   "LIKE_ADDED",
   "LOVE_ADDED",
-  "ALBUM_SHARED",
   "DISCUSS_START",
   "DISCUSS_REPLY",
   "DISCUSS_REACT",
@@ -27,9 +26,14 @@ const FAMILY_WIDE_ACTION_TYPES = [
   "GAME_STARTED",
   "INVITE_SENT",
   "MEMBER_JOINED",
-  "DISCUSS_START",
-  "DISCUSS_REPLY",
-  "DISCUSS_REACT",
+] as const;
+
+const MEMBER_DASHBOARD_ACTION_TYPES = [
+  "POST_CREATED",
+  "ALBUM_SHARED",
+  "COMMENT_CREATED",
+  "LIKE_ADDED",
+  "LOVE_ADDED",
 ] as const;
 
 export type FeaturePostsRawRow = {
@@ -50,6 +54,28 @@ export type ThreadGameRawRow = {
   lastName: string;
   actionType: string;
   count: number;
+};
+
+type MemberDashboardActivityRow = {
+  actionType: string;
+  featureName: string;
+  postName: string;
+  memberId: number;
+};
+
+export type MemberDashboardActivitySummary = {
+  memberToOthers: {
+    posts: number;
+    comments: number;
+    likes: number;
+    loves: number;
+  };
+  othersToMember: {
+    posts: number;
+    comments: number;
+    likes: number;
+    loves: number;
+  };
 };
 
 type DateRangeFilter = {
@@ -151,6 +177,113 @@ export async function getThreadAndGameActivityFamilySummary(
     .groupBy(familyActivity.actionType);
 
   return rows.map((r) => ({ ...r, count: Number(r.count) }));
+}
+
+function buildPostKey(row: { featureName: string; postName: string }): string {
+  return `${ row.featureName }::${ row.postName }`;
+}
+
+function isPostAction(actionType: string): boolean {
+  return actionType === "POST_CREATED" || actionType === "ALBUM_SHARED";
+}
+
+function isLikeAction(actionType: string): boolean {
+  return actionType === "LIKE_ADDED";
+}
+
+function isLoveAction(actionType: string): boolean {
+  return actionType === "LOVE_ADDED";
+}
+
+export async function getMemberDashboardActivitySummary(
+  familyId: number,
+  memberId: number,
+  dateRange: DateRangeFilter,
+): Promise<MemberDashboardActivitySummary> {
+  const rows = await db
+    .select({
+      actionType: familyActivity.actionType,
+      featureName: familyActivity.featureName,
+      postName: familyActivity.postName,
+      memberId: familyActivity.memberId,
+    })
+    .from(familyActivity)
+    .where(
+      and(
+        eq(familyActivity.familyId, familyId),
+        inArray(familyActivity.featureName, [...FEATURE_POST_NAMES]),
+        inArray(familyActivity.actionType, [...MEMBER_DASHBOARD_ACTION_TYPES]),
+        gte(familyActivity.createdAt, dateRange.startDate),
+        lte(familyActivity.createdAt, dateRange.endDate),
+      ),
+    );
+
+  const typedRows: MemberDashboardActivityRow[] = rows.filter(
+    (row): row is MemberDashboardActivityRow => row.memberId !== null,
+  );
+
+  const memberPostKeys = new Set(
+    typedRows
+      .filter((row) => row.memberId === memberId && isPostAction(row.actionType))
+      .map((row) => buildPostKey(row)),
+  );
+
+  const otherMemberPostKeys = new Set(
+    typedRows
+      .filter((row) => row.memberId !== memberId && isPostAction(row.actionType))
+      .map((row) => buildPostKey(row)),
+  );
+
+  const memberToOthers = {
+    posts: typedRows.filter((row) => row.memberId === memberId && isPostAction(row.actionType)).length,
+    comments: typedRows.filter(
+      (row) =>
+        row.memberId === memberId
+        && row.actionType === "COMMENT_CREATED"
+        && otherMemberPostKeys.has(buildPostKey(row)),
+    ).length,
+    likes: typedRows.filter(
+      (row) =>
+        row.memberId === memberId
+        && isLikeAction(row.actionType)
+        && otherMemberPostKeys.has(buildPostKey(row)),
+    ).length,
+    loves: typedRows.filter(
+      (row) =>
+        row.memberId === memberId
+        && isLoveAction(row.actionType)
+        && otherMemberPostKeys.has(buildPostKey(row)),
+    ).length,
+  };
+
+  const othersToMember = {
+    posts: typedRows.filter(
+      (row) =>
+        row.memberId !== memberId
+        && isPostAction(row.actionType)
+        && memberPostKeys.has(buildPostKey(row)),
+    ).length,
+    comments: typedRows.filter(
+      (row) =>
+        row.memberId !== memberId
+        && row.actionType === "COMMENT_CREATED"
+        && memberPostKeys.has(buildPostKey(row)),
+    ).length,
+    likes: typedRows.filter(
+      (row) =>
+        row.memberId !== memberId
+        && isLikeAction(row.actionType)
+        && memberPostKeys.has(buildPostKey(row)),
+    ).length,
+    loves: typedRows.filter(
+      (row) =>
+        row.memberId !== memberId
+        && isLoveAction(row.actionType)
+        && memberPostKeys.has(buildPostKey(row)),
+    ).length,
+  };
+
+  return { memberToOthers, othersToMember };
 }
 
 export const FAMILY_ACTIVITY_ACTION_TYPES = {

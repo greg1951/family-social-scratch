@@ -11,6 +11,7 @@ import {
 } from "../schema/family-social-schema-tables";
 import {
   createFamilyActivityRecord,
+  createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
 import type {
@@ -266,6 +267,14 @@ export async function setGalleryPhotoReaction(
       likeType: input.reactionType === "love" ? 2 : 1,
     });
 
+    await createFamilyReactionActivityRecord({
+      reactionType: input.reactionType,
+      featureName: "Family Gallery",
+      postName: `Album Photo ${ input.albumPhotoId }`,
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
+    });
+
     const [likeRow] = await db
       .select({ count: count() })
       .from(galleryAlbumPhotoLike)
@@ -331,6 +340,14 @@ export async function addGalleryAlbumComment(
       albumId: input.albumId,
       memberId: ctx.memberId,
       commentText: normalizedComment,
+    });
+
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
+      featureName: "Family Gallery",
+      postName: `Album ${ input.albumId }`,
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
     });
 
     return { success: true };
@@ -452,6 +469,14 @@ export async function saveGalleryPhoto(
       return { success: false, message: "Failed to save photo record" };
     }
 
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+      featureName: "Family Gallery",
+      postName: input.caption?.trim() || input.fileName || "Photo Upload",
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
+    });
+
     return { success: true, photo: photo as GalleryPhoto };
   } catch (error) {
     return {
@@ -526,6 +551,14 @@ export async function createGalleryAlbum(
     if (!album) {
       return { success: false, message: "Failed to create album" };
     }
+
+    await createFamilyActivityRecord({
+      actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
+      featureName: "Family Gallery",
+      postName: album.albumName,
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
+    });
 
     if (album.isShared) {
       await createFamilyActivityRecord({

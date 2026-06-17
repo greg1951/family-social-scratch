@@ -17,6 +17,9 @@ import FeaturePostsChart, {
 import MemberPostsChart, {
   type MemberPostsChartData,
 } from "@/components/charts/family/member-posts-chart";
+import FeatureDiscussChart, {
+  type FeatureDiscussChartData,
+} from "@/components/charts/family/feature-discuss-chart";
 import ThreadGameChart, {
   type ThreadGameChartData,
 } from "@/components/charts/family/thread-game-chart";
@@ -37,12 +40,9 @@ function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartDat
       feature,
       POST_CREATED: featureRows.find((r) => r.actionType === "POST_CREATED")?.count ?? 0,
       COMMENT_CREATED: featureRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
-      ALBUM_SHARED: featureRows.find((r) => r.actionType === "ALBUM_SHARED")?.count ?? 0,
-      LIKE_ADDED: featureRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
-      LOVE_ADDED: featureRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
-      DISCUSS_START: featureRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
-      DISCUSS_REPLY: featureRows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
-      DISCUSS_REACT: featureRows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
+      REACTION_ADDED:
+        (featureRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0)
+        + (featureRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0),
     };
   });
 }
@@ -55,12 +55,21 @@ function buildMemberPostsData(rows: MemberPostsRawRow[]): MemberPostsChartData {
       member: memberName,
       POST_CREATED: memberRows.find((r) => r.actionType === "POST_CREATED")?.count ?? 0,
       COMMENT_CREATED: memberRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
-      ALBUM_SHARED: memberRows.find((r) => r.actionType === "ALBUM_SHARED")?.count ?? 0,
-      LIKE_ADDED: memberRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0,
-      LOVE_ADDED: memberRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0,
-      DISCUSS_START: memberRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
-      DISCUSS_REPLY: memberRows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
-      DISCUSS_REACT: memberRows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
+      REACTION_ADDED:
+        (memberRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0)
+        + (memberRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0),
+    };
+  });
+}
+
+function buildFeatureDiscussData(rows: FeaturePostsRawRow[]): FeatureDiscussChartData {
+  return FEATURE_POST_NAMES.map((feature) => {
+    const featureRows = rows.filter((r) => r.featureName === feature);
+    return {
+      feature,
+      DISCUSS_START: featureRows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
+      DISCUSS_REPLY: featureRows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
+      DISCUSS_REACT: featureRows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
     };
   });
 }
@@ -73,9 +82,6 @@ function buildThreadGameData(rows: { actionType: string; count: number }[]): Thr
       GAME_STARTED: rows.find((r) => r.actionType === "GAME_STARTED")?.count ?? 0,
       INVITES_SENT: rows.find((r) => r.actionType === "INVITE_SENT")?.count ?? 0,
       NEW_MEMBERS_JOINED: rows.find((r) => r.actionType === "MEMBER_JOINED")?.count ?? 0,
-      DISCUSS_START: rows.find((r) => r.actionType === "DISCUSS_START")?.count ?? 0,
-      DISCUSS_REPLY: rows.find((r) => r.actionType === "DISCUSS_REPLY")?.count ?? 0,
-      DISCUSS_REACT: rows.find((r) => r.actionType === "DISCUSS_REACT")?.count ?? 0,
     },
   ];
 }
@@ -128,6 +134,7 @@ export default async function FamilyMemberDashboard({
 
   const featurePostsData = buildFeaturePostsData(featurePostsRaw);
   const memberPostsData = buildMemberPostsData(memberPostsRaw);
+  const featureDiscussData = buildFeatureDiscussData(featurePostsRaw);
   const threadGameData = buildThreadGameData(threadGameRaw);
 
   return (
@@ -155,7 +162,7 @@ export default async function FamilyMemberDashboard({
             <Button type="submit" className="md:w-auto">Apply Range</Button>
           </form>
         </Card>
-        <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-3">
+        <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
           <Card className="p-3">
             <div className="pt-5">
               <FeaturePostsChart data={ featurePostsData } />
@@ -169,6 +176,11 @@ export default async function FamilyMemberDashboard({
           <Card className="p-3">
             <div className="pt-5">
               <ThreadGameChart data={ threadGameData } />
+            </div>
+          </Card>
+          <Card className="p-3">
+            <div className="pt-5">
+              <FeatureDiscussChart data={ featureDiscussData } />
             </div>
           </Card>
         </div>

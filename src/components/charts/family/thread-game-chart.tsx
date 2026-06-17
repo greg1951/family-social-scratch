@@ -17,9 +17,6 @@ export type ThreadGameChartData = {
   GAME_STARTED: number;
   INVITES_SENT: number;
   NEW_MEMBERS_JOINED: number;
-  DISCUSS_START: number;
-  DISCUSS_REPLY: number;
-  DISCUSS_REACT: number;
 }[];
 
 const chartConfig = {
@@ -27,9 +24,6 @@ const chartConfig = {
   GAME_STARTED: { label: "Games", color: "var(--chart-2)" },
   INVITES_SENT: { label: "Invites", color: "var(--chart-3)" },
   NEW_MEMBERS_JOINED: { label: "New Members", color: "var(--chart-4)" },
-  DISCUSS_START: { label: "Discuss Starts", color: "#fb923c" },
-  DISCUSS_REPLY: { label: "Discuss Replies", color: "#22c55e" },
-  DISCUSS_REACT: { label: "Discuss Reacts", color: "#8b5cf6" },
 } satisfies ChartConfig;
 
 export default function ThreadGameChart({ data }: { data: ThreadGameChartData }) {
@@ -37,7 +31,7 @@ export default function ThreadGameChart({ data }: { data: ThreadGameChartData })
     <>
       <CardHeader className="flex-row items-start space-y-0 pt-0">
         <div className="grid gap-1">
-          <CardTitle className="text-center text-sm font-semibold">Family-Wide Activity</CardTitle>
+          <CardTitle className="text-center text-sm font-semibold">Family-Wide Threads, Games, Invites</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="flex flex-1 justify-center">
@@ -57,9 +51,6 @@ export default function ThreadGameChart({ data }: { data: ThreadGameChartData })
             <Bar dataKey="GAME_STARTED" fill="var(--chart-2)" radius={ [4, 4, 0, 0] } />
             <Bar dataKey="INVITES_SENT" fill="var(--chart-3)" radius={ [4, 4, 0, 0] } />
             <Bar dataKey="NEW_MEMBERS_JOINED" fill="var(--chart-4)" radius={ [4, 4, 0, 0] } />
-            <Bar dataKey="DISCUSS_START" fill="#fb923c" radius={ [4, 4, 0, 0] } />
-            <Bar dataKey="DISCUSS_REPLY" fill="#22c55e" radius={ [4, 4, 0, 0] } />
-            <Bar dataKey="DISCUSS_REACT" fill="#8b5cf6" radius={ [4, 4, 0, 0] } />
           </BarChart>
         </ChartContainer>
       </CardContent>

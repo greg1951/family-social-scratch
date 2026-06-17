@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 const updates = [
   {
     title: "New Games in Game Scoreboards!",
-    summary: "We've added the darts Cricket game and for our Canadian family members (eh?) we've added Crokinole! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
+    summary: "There's a long list of popular family games now available, including the darts Cricket game and Crokinole! All games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
     category: "Game Scoreboards",
     date: "May 22, 2026",
   },
