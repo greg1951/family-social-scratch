@@ -82,7 +82,7 @@ export default async function MainPage() {
                 { memberKeyDetails.isLoggedIn && (
                     <FamilyActivity />
                 ) }
-                  <p className="text-sm text-slate-600 md:text-base">{ cta }</p>
+                  <p className="text-sm font-semibold text-slate-600 md:text-base">{ cta }</p>
                   </div>
                 </div>
               </div>

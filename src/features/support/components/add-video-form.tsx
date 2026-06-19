@@ -33,6 +33,7 @@ const HARD_MAX_SIZE_BYTES = 60 * 1024 * 1024;
 
 type FormState = {
     videoName: string;
+    faqPageSeqNo: string;
     seqNo: string;
     caption: string;
     durationMinutes: string;
@@ -141,6 +142,7 @@ function createSafeFileName(originalName: string) {
 function createDefaultFormState(): FormState {
     return {
         videoName: "",
+        faqPageSeqNo: "1",
         seqNo: "1",
         caption: "",
         durationMinutes: "",
@@ -161,16 +163,16 @@ function buildPlaybackUrl(value: string | null) {
 
 function sortVideosByNameThenSeqNo(items: VideoListItem[]) {
     return [...items].sort((left, right) => {
+        if (left.faqPageSeqNo !== right.faqPageSeqNo) {
+            return left.faqPageSeqNo - right.faqPageSeqNo;
+        }
+
         const nameCompare = left.videoName.localeCompare(right.videoName, undefined, { sensitivity: "base" });
         if (nameCompare !== 0) {
             return nameCompare;
         }
 
-        if (left.seqNo !== right.seqNo) {
-            return left.seqNo - right.seqNo;
-        }
-
-        return left.id - right.id;
+        return left.seqNo - right.seqNo;
     });
 }
 
@@ -288,6 +290,7 @@ export default function AddVideosForm() {
         setEditingVideoId(videoItem.id);
         setFormState({
             videoName: videoItem.videoName,
+            faqPageSeqNo: String(videoItem.faqPageSeqNo),
             seqNo: String(videoItem.seqNo),
             caption: videoItem.caption,
             durationMinutes: String(videoItem.durationMinutes),
@@ -346,7 +349,7 @@ export default function AddVideosForm() {
     }
 
     async function handleSaveVideo() {
-        const { videoName, seqNo, caption, durationMinutes, descriptionJson, status, selectedTagIds, selectedFile } = formState;
+        const { videoName, faqPageSeqNo, seqNo, caption, durationMinutes, descriptionJson, status, selectedTagIds, selectedFile } = formState;
 
         if (!videoName.trim()) {
             toast.error("Video name is required.");
@@ -395,6 +398,12 @@ export default function AddVideosForm() {
             return;
         }
 
+        const parsedFaqPageSeqNo = Number(faqPageSeqNo);
+        if (!Number.isInteger(parsedFaqPageSeqNo) || parsedFaqPageSeqNo <= 0) {
+            toast.error("FAQ page sequence number must be a positive whole number.");
+            return;
+        }
+
         if (selectedFile && (selectedFile.size < RECOMMENDED_MIN_SIZE_BYTES || selectedFile.size > RECOMMENDED_MAX_SIZE_BYTES)) {
             toast("Video uploaded outside the expected 14-20MB range.");
         }
@@ -404,15 +413,44 @@ export default function AddVideosForm() {
 
         try {
             if (isEditing && editingVideoId) {
+                let newVideoUrl: string | undefined = undefined;
+
+                if (selectedFile) {
+                    const fileName = createSafeFileName(selectedFile.name);
+
+                    const signRes = await fetch("/api/video-s3-upload", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "upload", fileName, contentType: selectedFile.type }),
+                    });
+
+                    if (!signRes.ok) {
+                        throw new Error("Unable to create signed video upload URL.");
+                    }
+
+                    const signBody = await signRes.json();
+
+                    await uploadWithProgress(
+                        signBody.url,
+                        selectedFile,
+                        signBody.signedContentType ?? selectedFile.type,
+                        setUploadProgress,
+                    );
+
+                    newVideoUrl = signBody.s3Key;
+                }
+
                 const updateResult = await updateVideoEntryAction({
                     id: editingVideoId,
                     videoName: videoName.trim(),
+                    faqPageSeqNo: parsedFaqPageSeqNo,
                     seqNo: parsedSeqNo,
                     caption: caption.trim(),
                     status,
                     durationMinutes: parsedDuration,
                     descriptionJson,
                     selectedTagIds,
+                    videoUrl: newVideoUrl,
                 });
 
                 if (!updateResult.success) {
@@ -457,6 +495,7 @@ export default function AddVideosForm() {
 
                 const saveResult = await createVideoEntryAction({
                     videoName: videoName.trim(),
+                    faqPageSeqNo: parsedFaqPageSeqNo,
                     seqNo: parsedSeqNo,
                     caption: caption.trim(),
                     status,
@@ -553,13 +592,25 @@ export default function AddVideosForm() {
 
                             <div className="space-y-5 py-2">
                                 <div className="grid gap-4 sm:grid-cols-12">
-                                    <div className="space-y-2 sm:col-span-8">
+                                    <div className="space-y-2 sm:col-span-6">
                                         <Label htmlFor="video-name">Video name</Label>
                                         <Input
                                             id="video-name"
                                             value={formState.videoName}
                                             onChange={(event) => setFormState((current) => ({ ...current, videoName: event.target.value }))}
                                             placeholder="Example: How To Open A Support Ticket"
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2 sm:col-span-2">
+                                        <Label htmlFor="video-faq-seq-no">FAQ Seq</Label>
+                                        <Input
+                                            id="video-faq-seq-no"
+                                            type="number"
+                                            min={1}
+                                            value={formState.faqPageSeqNo}
+                                            onChange={(event) => setFormState((current) => ({ ...current, faqPageSeqNo: event.target.value }))}
                                             disabled={isSubmitting}
                                         />
                                     </div>
@@ -677,22 +728,20 @@ export default function AddVideosForm() {
                                     </select>
                                 </div>
 
-                                {!isEditing && (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="video-file">Video file (MP4)</Label>
-                                        <Input
-                                            id="video-file"
-                                            type="file"
-                                            accept="video/mp4"
-                                            disabled={isSubmitting}
-                                            onChange={(event) => {
-                                                const file = event.target.files?.[0] ?? null;
-                                                setFormState((current) => ({ ...current, selectedFile: file }));
-                                            }}
-                                        />
-                                        <p className="text-xs text-[#5a7886]">Expected upload size: 14MB to 20MB.</p>
-                                    </div>
-                                )}
+                                <div className="space-y-2">
+                                    <Label htmlFor="video-file">Video file (MP4){isEditing && <span className="ml-1 text-xs text-[#5a7886] font-normal">— leave empty to keep existing file</span>}</Label>
+                                    <Input
+                                        id="video-file"
+                                        type="file"
+                                        accept="video/mp4"
+                                        disabled={isSubmitting}
+                                        onChange={(event) => {
+                                            const file = event.target.files?.[0] ?? null;
+                                            setFormState((current) => ({ ...current, selectedFile: file }));
+                                        }}
+                                    />
+                                    <p className="text-xs text-[#5a7886]">Expected upload size: 14MB to 20MB.</p>
+                                </div>
 
                                 <div className="space-y-2">
                                     <Label>Select 2 or 3 tags</Label>
@@ -813,7 +862,7 @@ export default function AddVideosForm() {
                                             </span>
                                         </div>
                                         <p className="mt-2 text-xs text-[#4b6a79]">
-                                            Seq: {videoItem.seqNo} | Caption: {videoItem.caption} | Duration: {videoItem.durationMinutes} min | Updated: {videoItem.updatedAt ? new Date(videoItem.updatedAt).toLocaleDateString() : "-"}
+                                            FAQ Seq: {videoItem.faqPageSeqNo} | Seq: {videoItem.seqNo} | Caption: {videoItem.caption} | Duration: {videoItem.durationMinutes} min | Updated: {videoItem.updatedAt ? new Date(videoItem.updatedAt).toLocaleDateString() : "-"}
                                         </p>
                                         <div className="mt-3 flex flex-wrap gap-1.5">
                                             {videoItem.tags.length === 0 ? (
@@ -871,6 +920,7 @@ export default function AddVideosForm() {
                             <thead className="bg-[#f5fafc] text-left text-xs uppercase tracking-[0.14em] text-[#52707f]">
                                 <tr>
                                     <th className="px-4 py-3">Name</th>
+                                    <th className="px-4 py-3">FAQ Seq</th>
                                     <th className="px-4 py-3">Seq</th>
                                     <th className="px-4 py-3">Caption</th>
                                     <th className="px-4 py-3">Status</th>
@@ -888,6 +938,7 @@ export default function AddVideosForm() {
                                     return (
                                         <tr key={videoItem.id}>
                                             <td className="px-4 py-3 font-semibold">{videoItem.videoName}</td>
+                                            <td className="px-4 py-3">{videoItem.faqPageSeqNo}</td>
                                             <td className="px-4 py-3">{videoItem.seqNo}</td>
                                             <td className="px-4 py-3">{videoItem.caption}</td>
                                             <td className="px-4 py-3">{videoItem.status}</td>

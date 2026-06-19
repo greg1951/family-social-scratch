@@ -1,41 +1,11 @@
 -- Backfill missing Family Gallery activity records into family_activity.
--- Covers POST_CREATED (photo uploads + album creates), COMMENT_CREATED (album comments),
+-- Covers POST_CREATED (album creates), COMMENT_CREATED (album comments),
 -- and LIKE_ADDED / LOVE_ADDED (album photo reactions).
 -- Safe to run multiple times (all inserts are guarded by NOT EXISTS).
 
 BEGIN;
 
--- ── 1. POST_CREATED — one record per uploaded photo ─────────────────────────
-INSERT INTO family_activity (
-  action_type,
-  feature_name,
-  post_name,
-  status,
-  created_at,
-  fk_family_id,
-  fk_member_id
-)
-SELECT
-  'POST_CREATED'                                           AS action_type,
-  'Family Gallery'                                         AS feature_name,
-  COALESCE(NULLIF(BTRIM(gp.caption), ''), gp.file_name, 'Photo Upload') AS post_name,
-  'active'                                                 AS status,
-  gp.created_at                                            AS created_at,
-  m.fk_family_id                                           AS fk_family_id,
-  gp.fk_member_id                                          AS fk_member_id
-FROM gallery_photo gp
-INNER JOIN member m ON m.id = gp.fk_member_id
-WHERE NOT EXISTS (
-  SELECT 1
-  FROM family_activity fa
-  WHERE fa.action_type  = 'POST_CREATED'
-    AND fa.feature_name = 'Family Gallery'
-    AND fa.fk_family_id = m.fk_family_id
-    AND fa.fk_member_id = gp.fk_member_id
-    AND fa.created_at   = gp.created_at
-);
-
--- ── 2. POST_CREATED — one record per created album ──────────────────────────
+-- ── 1. POST_CREATED — one record per created album ──────────────────────────
 INSERT INTO family_activity (
   action_type,
   feature_name,
@@ -65,7 +35,7 @@ WHERE NOT EXISTS (
     AND fa.fk_member_id = ga.fk_member_id
 );
 
--- ── 3. COMMENT_CREATED — one record per album comment ───────────────────────
+-- ── 2. COMMENT_CREATED — one record per album comment ───────────────────────
 INSERT INTO family_activity (
   action_type,
   feature_name,
@@ -97,7 +67,7 @@ WHERE BTRIM(gac.comment_text) <> ''
       AND fa.created_at   = gac.created_at
   );
 
--- ── 4. LIKE_ADDED / LOVE_ADDED — one record per photo reaction ───────────────
+  -- ── 3. LIKE_ADDED / LOVE_ADDED — one record per photo reaction ───────────────
 INSERT INTO family_activity (
   action_type,
   feature_name,
@@ -131,6 +101,18 @@ WHERE gapl.like_type IN (1, 2)
       AND fa.fk_family_id = m.fk_family_id
       AND fa.fk_member_id = gapl.fk_member_id
       AND fa.created_at   = gapl.created_at
+  );
+
+-- ── Cleanup: remove Family Gallery photo-upload post rows that were previously inserted
+DELETE FROM family_activity fa
+WHERE fa.action_type = 'POST_CREATED'
+  AND fa.feature_name = 'Family Gallery'
+  AND EXISTS (
+    SELECT 1
+    FROM gallery_photo gp
+    WHERE gp.fk_member_id = fa.fk_member_id
+      AND gp.created_at = fa.created_at
+      AND fa.post_name = COALESCE(NULLIF(BTRIM(gp.caption), ''), gp.file_name, 'Photo Upload')
   );
 
 COMMIT;

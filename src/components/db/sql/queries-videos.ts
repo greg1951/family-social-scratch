@@ -15,6 +15,7 @@ import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
 
 const createVideoInputSchema = z.object({
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
+  faqPageSeqNo: z.number().int().min(1, "FAQ page sequence number must be at least 1."),
   seqNo: z.number().int().min(1, "Sequence number must be at least 1."),
   caption: z.string().trim().min(1, "Caption is required."),
   status: z.enum(["draft", "published"]),
@@ -36,6 +37,7 @@ export type VideoTagOption = {
 export type VideoListItem = {
   id: number;
   videoName: string;
+  faqPageSeqNo: number;
   seqNo: number;
   caption: string;
   status: string;
@@ -88,7 +90,9 @@ export type CreateVideoResult =
 const updateVideoInputSchema = z.object({
   id: z.number().int().positive(),
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
+  faqPageSeqNo: z.number().int().min(1, "FAQ page sequence number must be at least 1."),
   seqNo: z.number().int().min(1, "Sequence number must be at least 1."),
+  videoUrl: z.string().trim().optional(),
   caption: z.string().trim().min(1, "Caption is required."),
   status: z.enum(["draft", "published"]),
   durationMinutes: z.number().int().min(1, "Duration must be at least 1 minute.").max(600, "Duration is too large."),
@@ -161,7 +165,7 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
     })
     .from(video)
     .where(and(eq(video.status, "published"), inArray(video.id, qualifiedVideoIds)))
-    .orderBy(asc(video.videoName), asc(video.seqNo), asc(video.id));
+    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
 
   return rows
     .map((row) => {
@@ -208,6 +212,7 @@ async function loadVideos(): Promise<VideoListItem[]> {
     .select({
       id: video.id,
       videoName: video.videoName,
+      faqPageSeqNo: video.faqPageSeqNo,
       seqNo: video.seqNo,
       caption: video.caption,
       status: video.status,
@@ -217,7 +222,7 @@ async function loadVideos(): Promise<VideoListItem[]> {
       updatedAt: video.updatedAt,
     })
     .from(video)
-    .orderBy(asc(video.videoName), asc(video.seqNo), asc(video.id));
+    .orderBy(asc(video.faqPageSeqNo), asc(video.seqNo), asc(video.videoName));
 
   if (videoRows.length === 0) {
     return [];
@@ -321,6 +326,7 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
     .insert(video)
     .values({
       videoName: normalized.videoName,
+      faqPageSeqNo: normalized.faqPageSeqNo,
       seqNo: normalized.seqNo,
       caption: normalized.caption,
       status: normalized.status,
@@ -335,6 +341,7 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
     .returning({
       id: video.id,
       videoName: video.videoName,
+      faqPageSeqNo: video.faqPageSeqNo,
       seqNo: video.seqNo,
       caption: video.caption,
       status: video.status,
@@ -427,6 +434,7 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     .select({
       id: video.id,
       videoName: video.videoName,
+      faqPageSeqNo: video.faqPageSeqNo,
       seqNo: video.seqNo,
       caption: video.caption,
       status: video.status,
@@ -450,11 +458,13 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     .update(video)
     .set({
       videoName: normalized.videoName,
+      faqPageSeqNo: normalized.faqPageSeqNo,
       seqNo: normalized.seqNo,
       caption: normalized.caption,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
       videoJson: normalized.descriptionJson,
+      ...(normalized.videoUrl !== undefined ? { videoUrl: normalized.videoUrl, link: normalized.videoUrl } : {}),
       updatedAt: new Date(),
     })
     .where(eq(video.id, normalized.id));
@@ -484,10 +494,12 @@ export async function updateVideoEntry(input: UpdateVideoInput): Promise<UpdateV
     updatedVideo: {
       ...existingVideo,
       videoName: normalized.videoName,
+      faqPageSeqNo: normalized.faqPageSeqNo,
       seqNo: normalized.seqNo,
       caption: normalized.caption,
       status: normalized.status,
       durationMinutes: normalized.durationMinutes,
+      videoUrl: normalized.videoUrl !== undefined ? normalized.videoUrl : existingVideo.videoUrl,
       updatedAt: new Date(),
       tags: tagDetails,
     },

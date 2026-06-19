@@ -11,19 +11,38 @@ position cursor on slide
 
 Hello family and friends. Welcome to the **My Family Social** video series. 
 
-I'm Greg Hughlett, the founder of My Family Social. 
+I'm Greg Hughlett. 
 
 In this video I'll explain the family member invitiation process.
 
-1. It all starts with the **family founder** . The founder is the person who set up the family account. In one of the steps, the founder configures to whom they want to send out **email invitations**.
+1. It all starts with the **family founder** . 
+
+   - The founder is the person who set up the family account.
+
+   - In one of the steps, the founder configures to whom they want to send out **email invitations**.
 
     We will take a quick look at the Family Founder's console and how they do that.
 
-2. Then we'll **review the email** the invited family member or friend received and how quickly they can register to their the family. The member registration step creates a credential for the new member to sign in.
+2. Then we'll **review the email** the invited family member or friend received and how quickly they can register to their the family. 
 
-3. After they have registered, then the new member will get a final email with login instructions. Although signing in is relatively straight-forward, this email should help clarify any questions they might have.
+   - The member registration step creates a credential for the new member to sign in.
+
+3. After they have registered, then the new member will get a final email with login instructions. 
+
+   - The email clarifies why they must provide a family name when they sign in. 
+
+Why is the family name important?
+
+- The family name provides a way to isolate family data inside My Family Social. 
+
+- It means tat one family cannot see any of the content posted by another family. 
+
+- A family member can interact with members of their own family but not members of other families. 
+
+Alright, let's move on to see how the Family founder invites someone to join their family.
 
 ```
+pause 2 seconds
 <CTL-Alt: Stop Recording>
 ```
 ## Family Founder
@@ -46,30 +65,49 @@ Until you sign in, nothing happens when you click on any of the **features in th
 
 As a visitor however, what you will find available is a **link to the videos**, where you found this and other videos.
 
+```
+    This is for a re-recording of the Founder login
+    <CTL-ALT: Start Recording>
+```
+
 1. To sign in as a family founder, go to the **settings icon** and select the option to **login**.
    
-2. The login page prompts you to enter your member credentials: **email** address, **password**, as well as the **family name**.
+    The My Family Social Login supports both an **email login**, or you may use Social login like Google, Apple, and others. Here Google is supported.
+
+    - Notice **helpful links below** : They allow you to reset your password or be reminded of your family name. 
+
+
+2. The login page prompts you to first enter the **family name**.
 
     - Hovering over the **help** in the Family Name you'll find a brief explanation of the family name.
-    - Notice **helpful links below** : To reset your password or maybe you've forgotten the family name. 
 
-3. I'll now **enter the credentials** for the family founder.
+    - ```<CTL-Shift: pause>```
 
-    ```
-      <CTL-Shift: Pause>  
-      enter **greg.hughlett@gmail.com** creds and **TheTexasJonesFamily**
-      <CTL-Shift: Resume>
-    ```
+    - Enter **TheTexasJonesFamily**
 
-4. And I'll click the **big blue button** to enter My Family Social.        
+    - ```<CTL-Shift: resume>```
 
-5. When logged in succesfully, you are redirected back to the home page.
+3. Here the family founder will use the Google login.
 
-    Notice the profile picture of the founder and the little red dot, that indicates the founder has mail. 
+    - A social login can be used if a Google email address was used when the founder or a member registers to My Family Social.
+    - If you don't have a Google email address then you can use the email and password login.
 
-    No, not email, but mail in **Family Threads** which is where the family messages one another, but that is the subject of another video!
+    - The first time the founder signed in using the Google social login, he was prompted to select his Google email address and give his Google email access to My Family Social.
+    - But because the founder did this already, the login doesn't require a password because of the Social login.
+    - Once verified, the founder will be redirected to the My Family Social home.
 
-6. The next step is for the founder to send an invitation to Julio Jones, his Costa Rican cousin. This is done by going to the founder's **My Family Account** option.
+```
+    This is for a re-recording of the login of the Founder
+    <CTL-ALT: Stop Recording>
+```
+
+4. Once your membership is confirmed in the MyFamilySocial family you are redirected to the home page.
+
+    - Notice the profile picture of the founder and the little red dot, that indicates the founder has mail. 
+
+    - No, not email, but mail in **Family Threads** which is where the family messages one another, but that is the subject of another video!
+
+5. The next step is for the founder to send an invitation to Julio Jones, his Costa Rican cousin. This is done by going to the founder's **My Family Account** option.
 
 ```
     <CTL-Shift: Pause>
@@ -205,18 +243,6 @@ Shown here is the 2nd email with the login instructions. It likely isn't necessa
 
 As I scroll down you can see the login form fields and some of the helpful links on the login page. 
 
-It explains that My Family Social requires an email address, password, but also a family name. Why is that?
-
-The family name is a **unique key** that differentiates and separates the family data inside My Family Social. 
-
-**The family data are private**.
-
-This means, one family cannot see any of the content posted in another family. 
-
-A family member can interact with members of their own family but not other families. All content is **isolated** and strictly private.
-
-Alright, let's return to Julio's login. 
-
 ```
     <CTL-Shift: resume>
     <Transition to Window Capture --> Browser Capture>
@@ -224,17 +250,20 @@ Alright, let's return to Julio's login.
     wait 2 seconds
     <CTL-Shift: pause>
 ```
-1. And now for this video's denoueument (day-noo-MAWN), let's get Julio logged in! 
+When Julio registered to the family, he did so with a hotmail email address. For this reason Julio will use the Credential login, not the Google social login.
+
+He'll provide the **Family Name** first and then enter his **email** and **password** which he used to register to the family. 
+
 
     ```
     <CTL-Shift: pause>
-    email (**greghughlett@hotmail.com**), password (**BigGLovesHisFamily**) and family name **TheTexasJonesFamily**
+    email (family name **TheTexasJonesFamily**, **juliojones@hotmail.com**), password (**BigGLovesHisFamily**)
     <CTL-Shift: resume>
     ```
 
-2. Clicking on the big blue button will redirect Julio to the main page of My Family Social where he can begin the journey with his new family.
+1. Clicking on the **Credential to Sign** in button, he will be authenticated and then redirected to the main page of My Family Social.
 
-On the My Family Social main page Julio now has access to all of the features and can begin his exploration.
+2. There he can begin his exploration of My Family Social.
 
 You can **follow Julio on other videos** as he explores all of the features of My Family Social. 
 

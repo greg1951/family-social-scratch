@@ -6,7 +6,7 @@ export const generalFaqItems = [
     category: "Start a Family",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How to create a family in My Family Social?</p>
+        <p className="text-base font-semibold">How do I create a family in My Family Social?</p>
         <p className="text-xs text-slate-600">Learn how easy the setup is for a new family.</p>
       </div>
     ),

@@ -1216,6 +1216,7 @@ export const videoS3Credentials = pgTable("video_s3_credentials", {
 export const video = pgTable("video", {
   id: serial("id").primaryKey(),
   videoName: text("video_name").notNull().default(""),
+  faqPageSeqNo: integer("faq_page_seq_no").notNull().default(1),
   videoJson: text("video_json").notNull().default("{}"),
   version: integer("version").notNull().default(1),
   status: text("status").notNull().default("draft"),

@@ -469,14 +469,6 @@ export async function saveGalleryPhoto(
       return { success: false, message: "Failed to save photo record" };
     }
 
-    await createFamilyActivityRecord({
-      actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-      featureName: "Family Gallery",
-      postName: input.caption?.trim() || input.fileName || "Photo Upload",
-      familyId: ctx.familyId,
-      memberId: ctx.memberId,
-    });
-
     return { success: true, photo: photo as GalleryPhoto };
   } catch (error) {
     return {
