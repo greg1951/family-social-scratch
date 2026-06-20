@@ -83,6 +83,7 @@ export default function BooksHomePage({
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
+  const [expandBookCards, setExpandBookCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
   const deferredSearchValue = useDeferredValue(searchValue);
   const initialDraft = useMemo(() => {
@@ -449,6 +450,15 @@ export default function BooksHomePage({
                       />
                       Filter with Discussion Threads
                     </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                      <input
+                        type="checkbox"
+                        checked={ expandBookCards }
+                        onChange={ (event) => setExpandBookCards(event.target.checked) }
+                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                      />
+                      Expand Book Cards
+                    </label>
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -593,56 +603,61 @@ export default function BooksHomePage({
                           }` }
                       >
                         <div>
-                          <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Book</p>
-                          <div className="flex flex-wrap items-center gap-2">
+                          { expandBookCards ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
+                              { bookItem.hasDiscussionThread ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Discussion thread available">
+                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                                </span>
+                              ) : null }
+                              { isAwaitingServerSync ? (
+                                <span className="rounded-full bg-[#dbf1fb] px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#2d667d]">
+                                  Syncing
+                                </span>
+                              ) : null }
+                            </div>
+                          ) : (
                             <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
-                            { bookItem.hasDiscussionThread ? (
-                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Discussion thread available">
-                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
-                              </span>
-                            ) : null }
-                            { isAwaitingServerSync ? (
-                              <span className="rounded-full bg-[#dbf1fb] px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.16em] text-[#2d667d]">
-                                Syncing
-                              </span>
-                            ) : null }
-                          </div>
+                          ) }
                           <p className="mt-1 text-[0.7rem] text-[#6b8a98] sm:text-xs">Created { formatCreatedAt(bookItem.createdAt) }</p>
                         </div>
-                        <div className="flex flex-wrap items-start gap-x-2.5 gap-y-1.5 sm:gap-x-3 md:items-center md:gap-x-4">
-                          <div className="min-w-26">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Author</p>
-                            <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.authorName }</p>
+                        { expandBookCards ? (
+                          <div className="flex flex-wrap items-start gap-x-2.5 gap-y-1.5 sm:gap-x-3 md:items-center md:gap-x-4">
+                            <div className="min-w-26">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Author</p>
+                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.authorName }</p>
+                            </div>
+                            <div className="min-w-18">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Year</p>
+                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookYear || "-" }</p>
+                            </div>
+                            <div className="min-w-18">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Language</p>
+                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookLanguage }</p>
+                            </div>
+                            <div className="min-w-24 max-w-full">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
+                              <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
+                            </div>
+                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                              <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
+                              { bookItem.dislikeCount }
+                            </div>
+                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                              <ThumbsUp className="size-2.5 text-[#1d6d8f] sm:size-3" />
+                              { bookItem.likeCount }
+                            </div>
+                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                              <Heart className="size-2.5 text-[#c06c4a] sm:size-3" />
+                              { bookItem.loveCount }
+                            </div>
+                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#355161] sm:text-xs">
+                              <MessageSquare className="size-3 text-[#3d819b] sm:size-3.5" />
+                              { bookItem.commentCount }
+                            </div>
                           </div>
-                          <div className="min-w-18">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Year</p>
-                            <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookYear || "-" }</p>
-                          </div>
-                          <div className="min-w-18">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Language</p>
-                            <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookLanguage }</p>
-                          </div>
-                          <div className="min-w-24 max-w-full">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
-                            <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
-                          </div>
-                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                            <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
-                            { bookItem.dislikeCount }
-                          </div>
-                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                            <ThumbsUp className="size-2.5 text-[#1d6d8f] sm:size-3" />
-                            { bookItem.likeCount }
-                          </div>
-                          <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                            <Heart className="size-2.5 text-[#c06c4a] sm:size-3" />
-                            { bookItem.loveCount }
-                          </div>
-                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#355161] sm:text-xs">
-                            <MessageSquare className="size-3 text-[#3d819b] sm:size-3.5" />
-                            { bookItem.commentCount }
-                          </div>
-                        </div>
+                        ) : null }
                       </button>
                     );
                   }) }

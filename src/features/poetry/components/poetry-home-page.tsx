@@ -164,9 +164,11 @@ export default function PoetryHomePage({
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
+  const [expandPoemCards, setExpandPoemCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("latest");
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
   const [verseLineCount, setVerseLineCount] = useState(1);
+  const [verseLines, setVerseLines] = useState<string[]>([""]);
   const deferredSearchValue = useDeferredValue(searchValue);
 
   useEffect(() => {
@@ -233,7 +235,10 @@ export default function PoetryHomePage({
     }
 
     verseViewer.commands.setContent(getEditorDocument(selectedPoem?.verseJson));
-    setVerseLineCount(getEditorLineCount(verseViewer));
+    const editorText = verseViewer.getText({ blockSeparator: "\n" });
+    const nextLines = editorText.trim().length === 0 ? [""] : editorText.split("\n");
+    setVerseLines(nextLines);
+    setVerseLineCount(nextLines.length);
   }, [selectedPoem?.id, selectedPoem?.verseJson, verseViewer]);
 
   useEffect(() => {
@@ -302,6 +307,11 @@ export default function PoetryHomePage({
 
     return poemTags.filter((tagOption) => selectedPoem.selectedTagIds.includes(tagOption.id));
   }, [poemTags, selectedPoem]);
+
+  const useTwoColumnVerseLayout = verseLineCount > 40;
+  const verseSplitIndex = Math.ceil(verseLineCount / 2);
+  const verseColumnOneLines = verseLines.slice(0, verseSplitIndex);
+  const verseColumnTwoLines = verseLines.slice(verseSplitIndex);
 
   function handleSelectPoem(poemId: number) {
     setCommentText("");
@@ -518,6 +528,15 @@ export default function PoetryHomePage({
                       />
                       Filter with Discussion Threads
                     </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                      <input
+                        type="checkbox"
+                        checked={ expandPoemCards }
+                        onChange={ (event) => setExpandPoemCards(event.target.checked) }
+                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                      />
+                      Expand Poem Cards
+                    </label>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-3">
@@ -661,47 +680,52 @@ export default function PoetryHomePage({
                           }` }
                       >
                         <div>
-                          <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poem</p>
-                          <div className="flex items-start gap-2">
+                          { expandPoemCards ? (
+                            <div className="flex items-start gap-2">
+                              <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
+                              { poemItem.hasDiscussionThread ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Discussion thread available">
+                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                                </span>
+                              ) : null }
+                            </div>
+                          ) : (
                             <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
-                            { poemItem.hasDiscussionThread ? (
-                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Discussion thread available">
-                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
-                              </span>
-                            ) : null }
-                          </div>
+                          ) }
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
                         </div>
-                        <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 sm:gap-x-4 md:items-center md:gap-x-5">
-                          <div className="min-w-26">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poet</p>
-                            <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poetName }</p>
+                        { expandPoemCards ? (
+                          <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 sm:gap-x-4 md:items-center md:gap-x-5">
+                            <div className="min-w-26">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poet</p>
+                              <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poetName }</p>
+                            </div>
+                            <div className="min-w-18">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Year</p>
+                              <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poemYear || "-" }</p>
+                            </div>
+                            <div className="min-w-32 max-w-full">
+                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
+                              <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
+                            </div>
+                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                              <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
+                              { poemItem.dislikeCount }
+                            </div>
+                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                              <ThumbsUp className="size-3 text-[#6e3f98] sm:size-3.5" />
+                              { poemItem.likeCount }
+                            </div>
+                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                              <Heart className="size-3 text-[#a86a8e] sm:size-3.5" />
+                              { poemItem.loveCount }
+                            </div>
+                            <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
+                              <MessageSquare className="size-3.5 text-[#7a5a9f] sm:size-4" />
+                              { poemItem.commentCount }
+                            </div>
                           </div>
-                          <div className="min-w-18">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Year</p>
-                            <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poemYear || "-" }</p>
-                          </div>
-                          <div className="min-w-32 max-w-full">
-                            <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
-                            <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
-                          </div>
-                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                            <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
-                            { poemItem.dislikeCount }
-                          </div>
-                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                            <ThumbsUp className="size-3 text-[#6e3f98] sm:size-3.5" />
-                            { poemItem.likeCount }
-                          </div>
-                          <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                            <Heart className="size-3 text-[#a86a8e] sm:size-3.5" />
-                            { poemItem.loveCount }
-                          </div>
-                          <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
-                            <MessageSquare className="size-3.5 text-[#7a5a9f] sm:size-4" />
-                            { poemItem.commentCount }
-                          </div>
-                        </div>
+                        ) : null }
                       </button>
                     );
                   }) }
@@ -722,7 +746,7 @@ export default function PoetryHomePage({
 
       <Dialog open={ isPoemDialogOpen } onOpenChange={ setIsPoemDialogOpen }>
         <DialogContent
-          className="top-[6vh]! translate-y-0! max-h-[88vh] overflow-hidden border-[#d7d0ea] bg-[#fcf9ff] sm:max-w-5xl lg:max-w-6xl"
+          className="font-app top-[6vh]! translate-y-0! max-h-[88vh] overflow-hidden border-[#d7d0ea] bg-[#fcf9ff] sm:max-w-5xl lg:max-w-6xl"
           onOpenAutoFocus={ (event) => event.preventDefault() }
         >
           <DialogHeader>
@@ -736,19 +760,62 @@ export default function PoetryHomePage({
 
           { selectedPoem ? (
             <div className="max-h-[74vh] space-y-4 overflow-auto pr-1">
-              <div className="grid gap-4 xl:grid-cols-2">
-                <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#8154a3]">Poem Verse</p>
-                      <p className="mt-1 text-sm text-[#5f466f]">
-                        { selectedPoem.poemTitle } by { selectedPoem.poetName } ({ selectedPoem.poemYear || "Unknown year" })
-                      </p>
-                    </div>
-                    <p className="text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
-                      Added { formatCreatedAt(selectedPoem.createdAt) }
+              <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#8154a3]">Poem Verse</p>
+                    <p className="mt-1 text-sm text-[#5f466f]">
+                      { selectedPoem.poemTitle } by { selectedPoem.poetName } ({ selectedPoem.poemYear || "Unknown year" })
                     </p>
                   </div>
+                  <p className="text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
+                    Added { formatCreatedAt(selectedPoem.createdAt) }
+                  </p>
+                </div>
+
+                { useTwoColumnVerseLayout ? (
+                  <div className="mt-3 max-h-120 overflow-auto rounded-[1.2rem] border border-[#d7d0ea] bg-[#f8f3ff] p-2">
+                    <div className="grid gap-3 lg:grid-cols-2">
+                      <div className="overflow-hidden rounded-3xl border border-[#d7d0ea] bg-white">
+                        <div className="flex">
+                          <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-sm text-[#8b69ab]">
+                            { verseColumnOneLines.map((_, index) => (
+                              <div key={ index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                                { index + 1 }
+                              </div>
+                            )) }
+                          </div>
+                          <div className="min-w-0 flex-1 px-4 py-4">
+                            { verseColumnOneLines.map((line, index) => (
+                              <div key={ `left-${index + 1}` } className="min-h-6 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
+                                { line || "\u00A0" }
+                              </div>
+                            )) }
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="overflow-hidden rounded-3xl border border-[#d7d0ea] bg-white">
+                        <div className="flex">
+                          <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-sm text-[#8b69ab]">
+                            { verseColumnTwoLines.map((_, index) => (
+                              <div key={ verseSplitIndex + index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                                { verseSplitIndex + index + 1 }
+                              </div>
+                            )) }
+                          </div>
+                          <div className="min-w-0 flex-1 px-4 py-4">
+                            { verseColumnTwoLines.map((line, index) => (
+                              <div key={ `right-${verseSplitIndex + index + 1}` } className="min-h-6 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
+                                { line || "\u00A0" }
+                              </div>
+                            )) }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                   <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-[#d7d0ea] bg-white">
                     <div className="flex max-h-120 overflow-auto">
                       <div className="w-11 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-base text-[#8b69ab]">
@@ -763,41 +830,43 @@ export default function PoetryHomePage({
                       </div>
                     </div>
                   </div>
-                </div>
+                ) }
+              </div>
 
-                <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
+              <div className="grid gap-4 xl:grid-cols-3">
+                <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4 xl:col-span-2">
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#8154a3]">Poem Analysis</p>
                   <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-[#d7d0ea] bg-white px-4 py-4 [&_.tiptap]:text-[#43245d] [&_.tiptap]:outline-none [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#cfbbe3] [&_.tiptap_blockquote]:pl-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5">
                     <EditorContent editor={ analysisViewer } />
                   </div>
                 </div>
-              </div>
 
-              <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#5d426f]">Poem Tags</p>
-                  <div className="inline-flex items-center rounded-full border border-[#d7d0ea] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#7b54a0]">
-                    <Tags className="mr-2 size-3.5" />
-                    { selectedPoemTags.length } tag{ selectedPoemTags.length !== 1 ? "s" : "" }
+                <div className="rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-semibold text-[#5d426f]">Poem Tags</p>
+                    <div className="inline-flex items-center rounded-full border border-[#d7d0ea] bg-white px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#7b54a0]">
+                      <Tags className="mr-2 size-3.5" />
+                      { selectedPoemTags.length } tag{ selectedPoemTags.length !== 1 ? "s" : "" }
+                    </div>
                   </div>
+
+                  { selectedPoemTags.length === 0 ? (
+                    <p className="mt-3 rounded-2xl border border-dashed border-[#d7d0ea] bg-white px-3 py-2 text-sm text-[#77578f]">
+                      This poem has no tags selected yet.
+                    </p>
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      { selectedPoemTags.map((tagOption) => (
+                        <span
+                          key={ tagOption.id }
+                          className="inline-flex items-center rounded-full border border-[#d9c9ea] bg-white px-3 py-1 text-xs font-semibold text-[#5f466f]"
+                        >
+                          { tagOption.tagName }
+                        </span>
+                      )) }
+                    </div>
+                  ) }
                 </div>
-
-                { selectedPoemTags.length === 0 ? (
-                  <p className="mt-3 rounded-2xl border border-dashed border-[#d7d0ea] bg-white px-3 py-2 text-sm text-[#77578f]">
-                    This poem has no tags selected yet.
-                  </p>
-                ) : (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    { selectedPoemTags.map((tagOption) => (
-                      <span
-                        key={ tagOption.id }
-                        className="inline-flex items-center rounded-full border border-[#d9c9ea] bg-white px-3 py-1 text-xs font-semibold text-[#5f466f]"
-                      >
-                        { tagOption.tagName }
-                      </span>
-                    )) }
-                  </div>
-                ) }
               </div>
 
               <div className="space-y-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
