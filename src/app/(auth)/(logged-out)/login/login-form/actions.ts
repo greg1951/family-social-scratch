@@ -133,3 +133,40 @@ export const beginGoogleLogin = async ({ family }: { family: string }) => {
     error: false,
   };
 };
+
+export const beginAppleLogin = async ({ family }: { family: string }) => {
+  const validation = familySchema.safeParse(family);
+  if (!validation.success) {
+    return {
+      error: true,
+      message: validation.error.issues[0]?.message ?? "Family name is required",
+    };
+  }
+
+  const familyResult = await findRegisteredFamily(family);
+  if (!familyResult.success || !familyResult.familyId) {
+    return {
+      error: true,
+      message: "Family name is not registered in My Family Social",
+    };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    OAUTH_FAMILY_COOKIE,
+    JSON.stringify({ familyName: familyResult.familyName, familyId: familyResult.familyId }),
+    {
+      httpOnly: true,
+      secure: true,
+      // Apple uses response_mode=form_post, so callback is a cross-site POST.
+      // SameSite=Lax blocks cookies on that POST; None allows the callback to read family context.
+      sameSite: "none",
+      path: "/",
+      maxAge: 60 * 10,
+    }
+  );
+
+  return {
+    error: false,
+  };
+};

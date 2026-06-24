@@ -4,6 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:google-local": "node ./scripts/run-next-with-env.mjs .env.google-local --hostname localhost --port 3000",
+    "dev:apple-local": "node ./scripts/run-next-with-env.mjs .env.apple-local --hostname 0.0.0.0 --port 3000 --experimental-https --experimental-https-key ./auth-local.kbgfamilysocial.com-key.pem --experimental-https-cert ./auth-local.kbgfamilysocial.com.pem",
+    "dev:https-local": "next dev --hostname 0.0.0.0 --port 3000 --experimental-https --experimental-https-key ./auth-local.kbgfamilysocial.com-key.pem --experimental-https-cert ./auth-local.kbgfamilysocial.com.pem",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

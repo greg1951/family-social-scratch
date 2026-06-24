@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from 'next-auth/providers/credentials';
 import Google from "next-auth/providers/google";
+import Apple from "next-auth/providers/apple";
 import { authValidation } from "./features/auth/services/auth-utils";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
@@ -9,6 +10,13 @@ import db from "@/components/db/drizzle";
 import { accounts, user } from "@/components/db/schema/family-social-schema-tables";
 import { findRegisteredFamily } from "@/components/db/sql/queries-family-member";
 import type { AdapterAccount } from "@auth/core/adapters";
+
+const OAUTH_PROVIDERS = ["google", "apple"] as const;
+type OAuthProvider = typeof OAUTH_PROVIDERS[number];
+const APPLE_ENV_KEYS = [
+  "AUTH_APPLE_ID",
+  "AUTH_APPLE_SECRET",
+] as const;
 
 const OAUTH_FAMILY_COOKIE = "oauth_family_context";
 
@@ -62,6 +70,7 @@ async function upsertOAuthAccount(params: {
   id_token?: string | null;
   session_state?: string | null;
 }) {
+  // Check for existing account by provider + providerAccountId
   const [existingAccount] = await db
     .select({ provider: accounts.provider })
     .from(accounts)
@@ -91,6 +100,36 @@ async function upsertOAuthAccount(params: {
   });
 }
 
+/**
+ * For Apple OAuth, the email is only returned on the FIRST sign-in.
+ * On subsequent sign-ins, look up the user via the linked account record.
+ */
+async function findUserByProviderAccount(provider: string, providerAccountId: string) {
+  const [linked] = await db
+    .select({ userId: accounts.userId })
+    .from(accounts)
+    .where(
+      and(
+        eq(accounts.provider, provider),
+        eq(accounts.providerAccountId, providerAccountId)
+      )
+    );
+  if (!linked?.userId) return null;
+
+  const [foundUser] = await db
+    .select({ id: user.id, email: user.email, familyId: user.familyId, name: user.name })
+    .from(user)
+    .where(eq(user.id, linked.userId));
+
+  return foundUser ?? null;
+}
+
+function isAppleProviderConfigured(): boolean {
+  return APPLE_ENV_KEYS.every((key) => {
+    const value = process.env[key];
+    return typeof value === "string" && value.trim().length > 0;
+  });
+}
 type AuthRecord = {
   email: string;
   family: string;
@@ -102,22 +141,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
   callbacks: {
     async signIn({ user: oauthUser, account }) {
-      if (account?.provider !== "google") {
+      if (!account || !(OAUTH_PROVIDERS as readonly string[]).includes(account.provider)) {
         return true;
       }
 
+      const provider = account.provider as OAuthProvider;
+
       const cookieStore = await cookies();
       const rawFamilyContext = cookieStore.get(OAUTH_FAMILY_COOKIE)?.value;
-      if (!rawFamilyContext || !oauthUser.email) {
-        return false;
-      }
 
       let familyContext: OAuthFamilyContext;
       try {
-        familyContext = JSON.parse(rawFamilyContext) as OAuthFamilyContext;
+        familyContext = JSON.parse(rawFamilyContext ?? "null") as OAuthFamilyContext;
       } catch {
         return false;
       }
+
+      // Apple does not return the email on repeat logins. If email is absent, look
+      // up the existing account by providerAccountId to restore user context.
+      if (!oauthUser.email) {
+        if (provider !== "apple" || !account.providerAccountId) return false;
+
+        const existingUser = await findUserByProviderAccount(provider, account.providerAccountId);
+        if (!existingUser) return false;
+
+        (oauthUser as { id: string }).id = String(existingUser.id);
+        (oauthUser as { familyId: number }).familyId = existingUser.familyId;
+        return true;
+      }
+
+      if (!rawFamilyContext) return false;
 
       const familyResult = await findRegisteredFamily(familyContext.familyName);
       if (!familyResult.success || !familyResult.familyId) {
@@ -138,7 +191,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       await upsertOAuthAccount({
         userId,
-        provider: account.provider,
+        provider,
         providerAccountId: account.providerAccountId,
         type: "oauth",
         refresh_token: account.refresh_token,
@@ -179,6 +232,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       clientId: process.env.AUTH_GOOGLE_ID as string,
       clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
     }),
+    ...(isAppleProviderConfigured()
+      ? [
+          Apple({
+            clientId: process.env.AUTH_APPLE_ID as string,
+            clientSecret: process.env.AUTH_APPLE_SECRET as string,
+          }),
+        ]
+      : []),
     Credentials({
       credentials: {
         email: {},
