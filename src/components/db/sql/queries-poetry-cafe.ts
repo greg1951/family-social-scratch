@@ -49,6 +49,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from './queries-family-activity';
+import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
@@ -125,6 +126,7 @@ async function loadPoetryHomePoems(
     .from(poemCategoryTag)
     .where(inArray(poemCategoryTag.poemId, poemFactIds));
 
+  const clubSessionTargetIds = await getActiveClubSessionTargetIds(familyId, 'poem');
   const discussionThreadsByPoemId = await loadDiscussionThreadSummariesByTargetIds(familyId, 'poem', poemFactIds);
 
   const memberNameById = new Map(
@@ -142,6 +144,7 @@ async function loadPoetryHomePoems(
   const tagIdsByPoemId = new Map<number, number[]>();
   const reactionsByPoemId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
   const userReactionTypeByPoemId = new Map<number, number>();
+  const hasClubSessionByPoemId = new Set(clubSessionTargetIds);
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByPoemId.get(factTagRow.poemId) ?? [];
@@ -207,6 +210,7 @@ async function loadPoetryHomePoems(
       poemComments,
       discussionThreads: discussionThreadsByPoemId.get(row.id) ?? [],
       hasDiscussionThread: (discussionThreadsByPoemId.get(row.id) ?? []).length > 0,
+      hasClubSession: hasClubSessionByPoemId.has(row.id),
     };
   });
 }
@@ -257,15 +261,17 @@ export async function getAllFamilyPoems(familyId: number)
 export async function getPoetryHomePageData(familyId: number, memberId?: number)
   : Promise<PoetryHomePageDataReturn> {
   try {
-    const [poems, poemTagsResult] = await Promise.all([
+    const [poems, poemTagsResult, clubs] = await Promise.all([
       loadPoetryHomePoems(familyId, undefined, memberId),
       getPoemTagReferences(),
+      getFamilyClubs(familyId),
     ]);
 
     return {
       success: true,
       poems,
       poemTags: poemTagsResult.success ? poemTagsResult.poemTags : [],
+      clubs,
     };
   } catch (error) {
     return {

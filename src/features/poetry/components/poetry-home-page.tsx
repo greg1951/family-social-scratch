@@ -29,7 +29,6 @@ import {
 } from "@/app/(features)/(poetry)/poetry/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
-import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import {
   createEmptyTipTapDocument,
@@ -48,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import type { Club } from "@/components/db/types/clubs";
 
 type PoemDraft = {
   id: number;
@@ -69,6 +69,7 @@ type PoemDraft = {
   selectedTagIds: number[];
   discussionThreads: PoetryHomePoem["discussionThreads"];
   hasDiscussionThread: boolean;
+  hasClubSession: boolean;
   poemComments: Array<{
     id: number;
     createdAt: Date;
@@ -130,6 +131,7 @@ function createDraftFromPoem(poemRecord: PoetryHomePoem, member: MemberKeyDetail
     selectedTagIds: poemRecord.selectedTagIds ?? [],
     discussionThreads: poemRecord.discussionThreads ?? [],
     hasDiscussionThread: poemRecord.hasDiscussionThread ?? false,
+    hasClubSession: poemRecord.hasClubSession ?? false,
     poemComments: poemRecord.poemComments ?? [],
   };
 }
@@ -152,10 +154,12 @@ export default function PoetryHomePage({
   poems,
   member,
   poemTags = [],
+  clubs = [],
 }: {
   poems: PoetryHomePoem[];
   member: MemberKeyDetails;
   poemTags?: PoemTagOption[];
+  clubs?: Club[];
 }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
@@ -163,7 +167,7 @@ export default function PoetryHomePage({
   const [selectedPoemId, setSelectedPoemId] = useState<number | null>(poems[0]?.id ?? null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
+  const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandPoemCards, setExpandPoemCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("latest");
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
@@ -272,8 +276,8 @@ export default function PoetryHomePage({
 
   const filteredPoems = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
-    const poemsWithFilter = filterWithDiscussionThreads
-      ? directoryPoems.filter((poemItem) => poemItem.hasDiscussionThread)
+    const poemsWithFilter = filterWithClubSessions
+      ? directoryPoems.filter((poemItem) => poemItem.hasClubSession)
       : directoryPoems;
 
     if (!normalizedQuery) {
@@ -286,7 +290,7 @@ export default function PoetryHomePage({
       || poemItem.poemYear.toLowerCase().includes(normalizedQuery)
       || poemItem.submitterName.toLowerCase().includes(normalizedQuery)
     ));
-  }, [deferredSearchValue, directoryPoems, filterWithDiscussionThreads]);
+  }, [deferredSearchValue, directoryPoems, filterWithClubSessions]);
 
   useEffect(() => {
     if (filteredPoems.length === 0) {
@@ -439,6 +443,13 @@ export default function PoetryHomePage({
                   <LibraryBig className="mr-2 size-4" />
                   Poetry Terms
                 </Link>
+                  <Link
+                    href="/add-club"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <LibraryBig className="mr-2 size-4" />
+                    Book & Poetry Clubs
+                  </Link>
               </div>
 
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
@@ -522,11 +533,11 @@ export default function PoetryHomePage({
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
                       <input
                         type="checkbox"
-                        checked={ filterWithDiscussionThreads }
-                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        checked={ filterWithClubSessions }
+                        onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
                         className="size-4 border-[#b79ad1] text-[#6e3f98]"
                       />
-                      Filter with Discussion Threads
+                      Filter Poetry Clubs
                     </label>
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
                       <input
@@ -560,7 +571,7 @@ export default function PoetryHomePage({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Discussion Threads</p>
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Start Poetry Club Session</p>
                         <FeatureFaqHelp
                           href="/feature-faq?category=Discussion%20Groups"
                           buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#e4d9ee] bg-gradient-to-b from-[#fcf7ff] to-[#f0e3ff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
@@ -568,19 +579,22 @@ export default function PoetryHomePage({
                           tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
                         />
                       </div>
-                      <p className="mt-1 text-sm text-[#77578f]">Follow the conversation that belongs to this poem.</p>
+                      <p className="mt-1 text-sm text-[#77578f]">Start or review poetry club sessions for this poem.</p>
                     </div>
-                    <StartDiscussionDialog
-                      targetType="poem"
-                      targetId={ selectedPoem.id }
-                      topicLabel={ `${ selectedPoem.poemTitle } Discussion` }
-                      revalidatePaths={ ["/poetry"] }
-                      onSuccessRoute="/poetry/discussions/:threadId"
-                      disabled={ isEngaging }
-                      triggerLabel="Add Discussion"
-                      triggerClassName="rounded-full bg-[#5a2f85] px-4 text-xs font-semibold text-white hover:bg-[#47216b]"
-                    />
+                    <Button
+                      type="button"
+                      onClick={ () => router.push(`/add-club-session?targetType=poem&targetId=${ selectedPoem.id }`) }
+                      disabled={ isEngaging || clubs.length === 0 || selectedPoem.hasClubSession }
+                      className="rounded-full bg-[#5a2f85] px-4 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50"
+                    >
+                      Add Poetry Club Session
+                    </Button>
                   </div>
+                  { clubs.length === 0 ? (
+                    <p className="mt-2 text-xs text-[#917ba5]">Create a club first using Book & Poetry Clubs.</p>
+                  ) : selectedPoem.hasClubSession ? (
+                    <p className="mt-2 text-xs text-[#917ba5]">This poem already has an active club session.</p>
+                  ) : null }
 
                   <div className="mt-3 space-y-3">
                     { selectedPoem.discussionThreads.length === 0 ? (
@@ -683,9 +697,9 @@ export default function PoetryHomePage({
                           { expandPoemCards ? (
                             <div className="flex items-start gap-2">
                               <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
-                              { poemItem.hasDiscussionThread ? (
-                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Discussion thread available">
-                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                              { poemItem.hasClubSession ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Club session available">
+                                  <MessageSquare className="size-3" aria-label="Club session available" />
                                 </span>
                               ) : null }
                             </div>

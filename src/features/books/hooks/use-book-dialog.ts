@@ -28,6 +28,7 @@ export type BookDraft = {
   selectedTagIds: number[];
   discussionThreads: BooksHomeBook["discussionThreads"];
   hasDiscussionThread: boolean;
+  hasClubSession: boolean;
   bookComments: Array<{
     id: number;
     createdAt: Date;
@@ -75,6 +76,7 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     selectedTagIds: bookRecord.selectedTagIds ?? [],
     discussionThreads: bookRecord.discussionThreads ?? [],
     hasDiscussionThread: bookRecord.hasDiscussionThread ?? false,
+    hasClubSession: bookRecord.hasClubSession ?? false,
     bookComments: summaryComments,
   };
 }
@@ -101,6 +103,7 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     selectedTagIds: [],
     discussionThreads: [],
     hasDiscussionThread: false,
+    hasClubSession: false,
     bookComments: [],
   };
 }

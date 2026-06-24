@@ -20,6 +20,8 @@ export {
   bookCategoryTagReference,
   bookCategoryTag,
   bookTerm,
+  club,
+  club_session,
   discussThread,
   discussLike,
   discussPostReply,

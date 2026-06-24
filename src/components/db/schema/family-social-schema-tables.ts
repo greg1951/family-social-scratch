@@ -200,6 +200,35 @@ export const optionReference = pgTable("option_reference", {
   isSelected: boolean("is_selected").notNull().default(false),
 });
 
+/*------------------------------- Club Schema ------------------------------ */
+export const club = pgTable("club", {
+  id: serial("id").primaryKey(),
+  status: text("status").notNull().default("active"),
+  clubName: text("club_name").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+  clubFounderId: integer("fk_club_founder_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('club_family_id_idx').on(table.familyId),
+    index('club_club_founder_id_idx').on(table.clubFounderId),
+]);
+
+export const club_session = pgTable("club_session", {
+  id: serial("id").primaryKey(),
+  status: text("status").notNull().default("active"),
+  startedAt: timestamp("created_at").defaultNow(),
+  finishesAt: timestamp("updated_at"),
+  targetType: text("target_type").notNull(),
+  targetId: integer("fk_target_id").notNull(),
+  clubId: integer("fk_club_id").notNull().references(() => club.id, {onDelete: 'cascade'}),
+  moderatorId: integer("fk_post_member_id").references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('club_session_moderator_id_idx').on(table.moderatorId),
+    index('club_session_club_id_idx').on(table.clubId),
+]);
+
 /*------------------------------- Discussion Thread Schema ------------------------------ */
 export const discussThread = pgTable("discuss_thread", {
   id: serial("id").primaryKey(),

@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import {
   addBookCommentAction,
@@ -37,7 +38,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
-import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import {
   createDraftFromBook,
   createEmptyDraft,
@@ -46,6 +46,7 @@ import {
 import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
 import { BookDetailsDialog } from "@/features/books/components/dialogs/book-details-dialog";
 import { BookLinkDialog } from "@/features/books/components/dialogs/book-link-dialog";
+import type { Club } from "@/components/db/types/clubs";
 type DirectoryMode = "latest" | "top-rated";
 
 function getEditorDocument(value?: string): JSONContent {
@@ -70,11 +71,14 @@ export default function BooksHomePage({
   books,
   member,
   bookTags = [],
+  clubs = [],
 }: {
   books: BooksHomeBook[];
   member: MemberKeyDetails;
   bookTags?: BookTagOption[];
+  clubs?: Club[];
 }) {
+  const router = useRouter();
   const previousBooksRef = useRef(books);
   const [isEngaging, startEngageTransition] = useTransition();
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
@@ -82,7 +86,7 @@ export default function BooksHomePage({
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
-  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
+  const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandBookCards, setExpandBookCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
   const deferredSearchValue = useDeferredValue(searchValue);
@@ -214,8 +218,8 @@ export default function BooksHomePage({
 
   const filteredBooks = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
-    const booksWithFilter = filterWithDiscussionThreads
-      ? directoryBooks.filter((bookItem) => bookItem.hasDiscussionThread)
+    const booksWithFilter = filterWithClubSessions
+      ? directoryBooks.filter((bookItem) => bookItem.hasClubSession)
       : directoryBooks;
 
     if (!normalizedQuery) {
@@ -230,7 +234,7 @@ export default function BooksHomePage({
       || (bookItem.bookSeriesName ?? "").toLowerCase().includes(normalizedQuery)
       || bookItem.submitterName.toLowerCase().includes(normalizedQuery)
     ));
-  }, [deferredSearchValue, directoryBooks, filterWithDiscussionThreads]);
+  }, [deferredSearchValue, directoryBooks, filterWithClubSessions]);
 
   const activeBookTags = useMemo(() => (
     bookTags.filter((tagOption) => tagOption.status !== "archived")
@@ -362,6 +366,13 @@ export default function BooksHomePage({
                   <LibraryBig className="mr-2 size-4" />
                   Book Terms
                 </Link>
+                  <Link
+                    href="/add-club"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <LibraryBig className="mr-2 size-4" />
+                    Book & Poetry Clubs
+                  </Link>
               </div>
 
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
@@ -444,11 +455,11 @@ export default function BooksHomePage({
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
                       <input
                         type="checkbox"
-                        checked={ filterWithDiscussionThreads }
-                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        checked={ filterWithClubSessions }
+                        onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
                         className="size-4 border-[#9ec3d2] text-[#0f5c78]"
                       />
-                      Filter with Discussion Threads
+                      Filter Book Clubs
                     </label>
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
                       <input
@@ -482,7 +493,7 @@ export default function BooksHomePage({
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#3d819b]">Discussion Threads</p>
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#3d819b]">Start Book Club Session</p>
                         <FeatureFaqHelp
                           href="/feature-faq?category=Discussion%20Groups"
                           buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
@@ -490,19 +501,22 @@ export default function BooksHomePage({
                           tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
                         />
                       </div>
-                      <p className="mt-1 text-sm text-[#51707e]">Start or review book-specific discussion threads.</p>
+                      <p className="mt-1 text-sm text-[#51707e]">Start or review book club sessions for this book.</p>
                     </div>
-                    <StartDiscussionDialog
-                      targetType="book"
-                      targetId={ selectedBook.id }
-                      topicLabel={ `${ selectedBook.bookTitle } Discussion` }
-                      revalidatePaths={ ["/books"] }
-                      onSuccessRoute="/books/discussions/:threadId"
-                      disabled={ isEngaging }
-                      triggerLabel="Add Discussion"
-                      triggerClassName="rounded-full bg-[#0f5c78] px-4 text-xs font-semibold text-white hover:bg-[#0a4860]"
-                    />
+                    <Button
+                      type="button"
+                      onClick={ () => router.push(`/add-club-session?targetType=book&targetId=${ selectedBook.id }`) }
+                      disabled={ isEngaging || clubs.length === 0 || selectedBook.hasClubSession }
+                      className="rounded-full bg-[#0f5c78] px-4 text-xs font-semibold text-white hover:bg-[#0a4860] disabled:opacity-50"
+                    >
+                      Add Book Club Session
+                    </Button>
                   </div>
+                  { clubs.length === 0 ? (
+                    <p className="mt-2 text-xs text-[#7a8f9c]">Create a club first using Book & Poetry Clubs.</p>
+                  ) : selectedBook.hasClubSession ? (
+                    <p className="mt-2 text-xs text-[#7a8f9c]">This book already has an active club session.</p>
+                  ) : null }
 
                   <div className="mt-3 space-y-3">
                     { selectedBook.discussionThreads.length === 0 ? (
@@ -606,9 +620,9 @@ export default function BooksHomePage({
                           { expandBookCards ? (
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
-                              { bookItem.hasDiscussionThread ? (
-                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Discussion thread available">
-                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
+                              { bookItem.hasClubSession ? (
+                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Club session available">
+                                  <MessageSquare className="size-3" aria-label="Club session available" />
                                 </span>
                               ) : null }
                               { isAwaitingServerSync ? (

@@ -1,3 +1,4 @@
+import type { Club } from './clubs';
 import type { DiscussionThreadSummary } from './discuss-threads';
 
 export interface Poem {
@@ -47,6 +48,7 @@ export interface PoetryHomePoem {
   poemComments: PoetryHomeComment[];
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
+  hasClubSession: boolean;
 }
 
 export interface PoetryHomeComment {
@@ -74,6 +76,7 @@ export type PoetryHomePageDataReturn =
       success: true;
       poems: PoetryHomePoem[];
       poemTags: PoemTagOption[];
+      clubs: Club[];
     };
 
 export interface SavePoetryHomePoemInput {

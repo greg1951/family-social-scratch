@@ -20,6 +20,7 @@ export default async function PoetryPage() {
     <PoetryHomePage
       poems={ poems }
       poemTags={ poemTags }
+      clubs={ poetryHomeData.success ? poetryHomeData.clubs : [] }
       member={ memberKeyDetails }
     />
   );

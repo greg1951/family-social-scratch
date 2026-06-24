@@ -37,6 +37,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from './queries-family-activity';
+import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
@@ -112,6 +113,7 @@ async function loadBooksHomeBooks(
     .from(bookTag)
     .where(inArray(bookTag.bookId, bookIdsToLoad));
 
+  const clubSessionTargetIds = await getActiveClubSessionTargetIds(familyId, 'book');
   const discussionThreadsByBookId = await loadDiscussionThreadSummariesByTargetIds(familyId, 'book', bookIdsToLoad);
 
   const memberNameById = new Map(
@@ -129,6 +131,7 @@ async function loadBooksHomeBooks(
   const reactionsByBookId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
   const userReactionTypeByBookId = new Map<number, number>();
   const submitterMemberIdByBookId = new Map(bookRows.map((row) => [row.id, row.memberId]));
+  const hasClubSessionByBookId = new Set(clubSessionTargetIds);
 
   for (const factTagRow of factTagRows) {
     const existingTagIds = tagIdsByBookId.get(factTagRow.bookId) ?? [];
@@ -197,6 +200,7 @@ async function loadBooksHomeBooks(
       bookComments,
       discussionThreads: discussionThreadsByBookId.get(row.id) ?? [],
       hasDiscussionThread: (discussionThreadsByBookId.get(row.id) ?? []).length > 0,
+      hasClubSession: hasClubSessionByBookId.has(row.id),
     };
   });
 }
@@ -204,15 +208,17 @@ async function loadBooksHomeBooks(
 export async function getBooksHomePageData(familyId: number, memberId?: number)
   : Promise<BooksHomePageDataReturn> {
   try {
-    const [books, bookTagsResult] = await Promise.all([
+    const [books, bookTagsResult, clubs] = await Promise.all([
       loadBooksHomeBooks(familyId, undefined, memberId),
       getBookTagReferences(),
+      getFamilyClubs(familyId),
     ]);
 
     return {
       success: true,
       books,
       bookTags: bookTagsResult.success ? bookTagsResult.bookTags : [],
+      clubs,
     };
   } catch (error) {
     return {

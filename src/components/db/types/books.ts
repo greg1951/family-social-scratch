@@ -1,3 +1,4 @@
+import type { Club } from './clubs';
 import type { DiscussionThreadSummary } from './discuss-threads';
 
 export interface Book {
@@ -41,6 +42,7 @@ export interface BooksHomeBook {
   bookComments: BookHomeComment[];
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
+  hasClubSession: boolean;
 }
 
 export interface BookHomeComment {
@@ -68,6 +70,7 @@ export type BooksHomePageDataReturn =
       success: true;
       books: BooksHomeBook[];
       bookTags: BookTagOption[];
+      clubs: Club[];
     };
 
 export interface SaveBooksHomeBookInput {
