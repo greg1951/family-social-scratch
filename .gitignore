@@ -44,3 +44,5 @@ family-social-s3-user_accessKeys.csv
 .env.local
 .env.google-local
 .env.apple-local
+
+*.pem
