@@ -30,15 +30,15 @@ const chartConfig = {
     label: "Visitors",
   },
   tv: {
-    label: "TV Junkies",
+    label: "TV Room",
     color: "var(--chart-1)",
   },
   movies: {
-    label: "Movie Maniacs",
+    label: "Movie Theater",
     color: "var(--chart-2)",
   },
   foodie: {
-    label: "Family Foodies",
+    label: "The Kitchen",
     color: "var(--chart-3)",
   },
   threads: {

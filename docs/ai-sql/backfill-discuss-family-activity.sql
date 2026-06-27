@@ -14,12 +14,12 @@ WITH discussion_targets AS (
     dt.title AS discuss_topic,
     dt.created_at,
     CASE dt.target_type
-      WHEN 'show' THEN 'TV Junkies'
-      WHEN 'movie' THEN 'Movie Maniacs'
+      WHEN 'show' THEN 'TV Room'
+      WHEN 'movie' THEN 'Movie Theater'
       WHEN 'book' THEN 'Reading Room'
-      WHEN 'poem' THEN 'Poetry Cafe'
-      WHEN 'recipe' THEN 'Family Foodies'
-      WHEN 'music' THEN 'Music Lovers'
+      WHEN 'poem' THEN 'Poetry Nook'
+      WHEN 'recipe' THEN 'The Kitchen'
+      WHEN 'music' THEN 'Music Salon'
       ELSE 'Family Discussions'
     END AS feature_name,
     COALESCE(

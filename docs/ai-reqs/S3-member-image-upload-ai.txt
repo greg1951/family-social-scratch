@@ -5,11 +5,11 @@ S3 BACKGROUND
 - There is a POST API function define in the router.ts file that will handle uploads and downloads to S3.
 - The S3 content will in the "thosecrazyhughletts" bucket will be separated by using the following folder structure
   - members: where member profile images (png or jpeg) will be uploaded from their My-Account setup.
-  - movies: images of movies to be used by the Movie Maniacs feature
-  - tv: images of movies to be used by the TV Junkies feature
-  - music: images of movies to be used by the Music Lovers feature
-  - foodies: images of food recipes to be used in the Family Foodies feature
-  - threads: images uploaded in in the Family Threads feature
+  - movies: images of movies to be used by the Movie Theater feature
+  - tv: images of movies to be used by the TV Room feature
+  - music: images of movies to be used by the Music Salon feature
+  - foodies: images of food recipes to be used in the The Kitchen feature
+  - threads: images uploaded in in the Mail Box feature
 - The member table has been updated to include a memberImageUrl which is a URL to the S3 "/members" folder 
   - The memberImageUrl also contains the  jpeg or png file name appended to the "/members" folder.
   - The file name format will be named "memberId-zzz0" where "zzz0" is the numeric memberId number, for example, "memberId-63"

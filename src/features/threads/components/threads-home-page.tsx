@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon } from "lucide-react";
+import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -170,20 +170,21 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e8c0ff]">
-                Family Threads
+                Family Mail Box
               </p>
               <Link
                 href="/"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0d8ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Back to Main Page
+                <ArrowLeft className="font-app mr-2 size-4" />
+                Go Home
               </Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Keep your family conversations in one place, { firstName }.
+                Your family messages are here.
               </h1>
             </div>
 
-            <div className="grid gap-3 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:grid-cols-4 lg:min-w-120">
+            <div className="grid gap-1 rounded-[1.6rem] border border-white/20 bg-white/10 p-3 shadow-inner backdrop-blur sm:grid-cols-4 lg:min-w-120">
               <div>
                 <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Total</p>
                 <p className="mt-2 text-2xl font-black">{ totalCount }</p>
@@ -222,7 +223,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                   Conversation Finder
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7a4a9a]">
-                  Search and filter your family threads by sender, recipient, read status, or time.
+                  Search and filter your mail box messages by sender, recipient, read status, or time.
                 </p>
               </div>
 

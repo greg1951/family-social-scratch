@@ -324,11 +324,11 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Maniacs</p>
+              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <ArrowLeft className="font-app mr-2 size-4" />
-                  Back to Main Page
+                  Go Home
                 </Link>
                 <Link href="/movies/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Movie Templates</Link>
               </div>

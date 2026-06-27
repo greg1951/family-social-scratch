@@ -808,7 +808,7 @@ export async function saveShow(
     if (!existingShow) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: "TV Junkies",
+        featureName: "TV Room",
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1083,7 +1083,7 @@ export async function toggleShowLike(
     if (!existingLike || existingLike.likenessDegree !== likenessDegree) {
       await createFamilyReactionActivityRecord({
         reactionType: likenessDegree === 2 ? "love" : "like",
-        featureName: "TV Junkies",
+        featureName: "TV Room",
         postName: existingShow.showTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1170,7 +1170,7 @@ export async function addShowComment(
 
     await createFamilyActivityRecord({
       actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
-      featureName: "TV Junkies",
+      featureName: "TV Room",
       postName: existingShow.showTitle,
       familyId: actor.familyId,
       memberId: actor.memberId,

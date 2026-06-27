@@ -8,14 +8,14 @@ import { ArrowLeft } from 'lucide-react';
 // const featureImages = [
 //   {
 //     src: '/images/family-foodies-tablet.png',
-//     alt: 'Family Foodies community preview',
+//     alt: 'The Kitchen community preview',
 //     title: 'Swap recipes and table stories',
 //     className: 'left-3 top-2 hidden w-24 rotate-[0deg] md:block md:w-30 lg:left-6 lg:top-9 lg:w-34',
 //     accent: 'from-[#fff2d8] to-[#ffd68a]',
 //   },
 //   {
 //     src: '/images/family-threads-tablet.png',
-//     alt: 'Family Threads community preview',
+//     alt: 'Mail Box community preview',
 //     title: 'Keep family conversations alive',
 //     className: 'left-1/2 top-2 z-10 w-34 -translate-x-1/2 rotate-[0deg] md:top-1 md:w-38 lg:w-40',
 //     accent: 'from-[#dff6ff] to-[#8fdcff]',
@@ -29,14 +29,14 @@ import { ArrowLeft } from 'lucide-react';
 //   },
 //   {
 //     src: '/images/poetry-cafe-tablet.png',
-//     alt: 'Poetry Cafe community preview',
+//     alt: 'Poetry Nook community preview',
 //     title: 'Celebrate creative family voices',
 //     className: 'left-42 top-15 hidden w-26 rotate-[0deg] xl:block',
 //     accent: 'from-[#efe5ff] to-[#cab5ff]',
 //   },
 //   {
 //     src: '/images/tv-junkies-tablet.png',
-//     alt: 'TV Junkies community preview',
+//     alt: 'TV Room community preview',
 //     title: 'Turn favorites into family traditions',
 //     className: 'right-42 top-15 hidden w-26 rotate-[0deg] xl:block',
 //     accent: 'from-[#e7ffd9] to-[#b9f57e]',

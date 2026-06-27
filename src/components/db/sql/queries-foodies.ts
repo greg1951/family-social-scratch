@@ -821,7 +821,7 @@ export async function saveFoodiesRecipe(
     if (!existingRecipe) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: "Family Foodies",
+        featureName: "The Kitchen",
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1235,7 +1235,7 @@ export async function toggleRecipeLike(
     if (!existingLike || existingLike.likenessDegree !== likenessDegree) {
       await createFamilyReactionActivityRecord({
         reactionType: likenessDegree === 2 ? "love" : "like",
-        featureName: "Family Foodies",
+        featureName: "The Kitchen",
         postName: existingRecipe.recipeTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1322,7 +1322,7 @@ export async function addRecipeComment(
 
     await createFamilyActivityRecord({
       actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
-      featureName: "Family Foodies",
+      featureName: "The Kitchen",
       postName: existingRecipe.recipeTitle,
       familyId: actor.familyId,
       memberId: actor.memberId,

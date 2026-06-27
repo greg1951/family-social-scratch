@@ -1,6 +1,6 @@
-## Plan: Family Threads Schema + UI Alignment
+## Plan: Mail Box Schema + UI Alignment
 
-Implement Family Threads in two delivery phases, with a Phase 1 that completes conversation composition/list/recipient-state/image-attachment behavior and a Phase 2 that layers in send-as-email. Reuse existing Threads listing patterns, TipTap patterns from other features, and S3 upload utilities while tightening thread schema constraints/indexes for correctness and query performance.
+Implement Mail Box in two delivery phases, with a Phase 1 that completes conversation composition/list/recipient-state/image-attachment behavior and a Phase 2 that layers in send-as-email. Reuse existing Threads listing patterns, TipTap patterns from other features, and S3 upload utilities while tightening thread schema constraints/indexes for correctness and query performance.
 
 **Steps**
 1. Phase 0 - Baseline audit and safety checks

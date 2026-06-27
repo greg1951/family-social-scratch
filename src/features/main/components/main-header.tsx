@@ -45,15 +45,15 @@ export default async function MainHeader({
           <div className="grid gap-4 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
             <nav className="rounded-[1.5rem] border border-white/30 bg-white/12 px-3 py-3 backdrop-blur md:px-4">
               <ul className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                { isFeatureEnabled("tv") ? <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Junkies" /> : null }
-                { isFeatureEnabled("movies") ? <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Maniacs" /> : null }
-                { isFeatureEnabled("music") ? <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Lovers" /> : null }
+                { isFeatureEnabled("tv") ? <NavBar isLoggedIn={ isLoggedIn } href="/tv" src="/icons/tv.png" title="TV Room" /> : null }
+                { isFeatureEnabled("movies") ? <NavBar isLoggedIn={ isLoggedIn } href="/movies" src="/icons/movies.png" title="Movie Theater" /> : null }
+                { isFeatureEnabled("music") ? <NavBar isLoggedIn={ isLoggedIn } href="/music" src="/icons/music.png" title="Music Salon" /> : null }
                 { isFeatureEnabled("books") ? <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Reading Room" /> : null }
-                { isFeatureEnabled("poetry") ? <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Cafe" /> : null }
-                { isFeatureEnabled("foodies") ? <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="Family Foodies" /> : null }
-                { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Photo Galleries" /> : null }
-                { isFeatureEnabled("games") ? <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Scoreboards" /> : null }
-                { isFeatureEnabled("threads") ? <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Family Threads" /> : null }
+                { isFeatureEnabled("poetry") ? <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Nook" /> : null }
+                { isFeatureEnabled("foodies") ? <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="The Kitchen" /> : null }
+                { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Picture Hallway" /> : null }
+                { isFeatureEnabled("games") ? <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Room" /> : null }
+                { isFeatureEnabled("threads") ? <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Mail Box" /> : null }
                 <MainDropMenu
                   firstName={ menuFirstName }
                   email={ menuEmail }

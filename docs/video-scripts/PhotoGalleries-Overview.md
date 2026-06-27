@@ -1,6 +1,6 @@
 Hello family and friends. I'm Greg Hughlett, the founder of My Family Social. 
-In this video I'll introduce you to an **exciting** feature of My Family Social, **Photo Galleries**. 
-In this short video I'll give you an **idea** as to what Photo Galleries is all about. 
+In this video I'll introduce you to an **exciting** feature of My Family Social, **Picture Hallway**. 
+In this short video I'll give you an **idea** as to what Picture Hallway is all about. 
 
 There are other **how-to videos** available that will give you **expert hands-on** advice on how to share you photos with the rest of the family. 
 
@@ -18,7 +18,7 @@ There are two ways to navigate from the main page to any of the features in My F
 1. From the main toolbar icons at the top, where you'll find the feature name below the icon
 2. Or by selecting the feature further down the page.
 
-Selecting either one will take you to the feature. Let's click on the icon and traverse to the Photo Galleries.
+Selecting either one will take you to the feature. Let's click on the icon and traverse to the Picture Hallway.
 
 **<CTL-Shift: Pause>**
 **wait 2 seconds**
@@ -56,7 +56,7 @@ Let's return to the **Family Gallery** and open the updated album and there is t
 
 You can see on the album there is a comment count of 1. Other members can post comments to your album, and the comments are shown below, where George was wondering why no bluebonnets?
 
-That's the end-to-end workflow in the Photo Galleries. It's also the end of this video. What do you think?
+That's the end-to-end workflow in the Picture Hallway. It's also the end of this video. What do you think?
 
 Let's return to the main page. There are many other interesting features in My Family Social. Check out those videos too!
 

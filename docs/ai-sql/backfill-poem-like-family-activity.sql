@@ -1,4 +1,4 @@
--- Backfill missing Poetry Cafe LIKE_ADDED records into family_activity.
+-- Backfill missing Poetry Nook LIKE_ADDED records into family_activity.
 -- Safe to run multiple times.
 
 BEGIN;
@@ -14,7 +14,7 @@ INSERT INTO family_activity (
 )
 SELECT
   'LIKE_ADDED' AS action_type,
-  'Poetry Cafe' AS feature_name,
+  'Poetry Nook' AS feature_name,
   p.poem_title AS post_name,
   'active' AS status,
   pl.created_at AS created_at,
@@ -26,7 +26,7 @@ WHERE NOT EXISTS (
     SELECT 1
     FROM family_activity fa
     WHERE fa.action_type = 'LIKE_ADDED'
-      AND fa.feature_name = 'Poetry Cafe'
+      AND fa.feature_name = 'Poetry Nook'
       AND fa.post_name = p.poem_title
       AND fa.fk_family_id = p.fk_family_id
       AND fa.fk_member_id = pl.fk_member_id

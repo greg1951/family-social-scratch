@@ -73,7 +73,7 @@ export function FeaturesFaqHomePage({ defaultCategory = "" }: { defaultCategory?
             Browse the most common questions and answers about My Family Social Features.
           </p>
           <p className="mt-3 max-w-2xl text-xs leading-6 text-[#eafcff]">
-            Current FAQ questions use TV Junkies as an example, but the information applies to many My Family Social features.
+            Current FAQ questions use TV Room as an example, but the information applies to many My Family Social features.
           </p>
           <div className="mt-0 flex items-center gap-4">
             <BackButton tw="border-white/35 bg-white/15 px-3 py-2 text-sm font-semibold text-[#eafcff] transition hover:-translate-y-0.5 " />

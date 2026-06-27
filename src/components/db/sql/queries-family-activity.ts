@@ -3,10 +3,10 @@ import db from "@/components/db/drizzle";
 import { familyActivity, member } from "@/components/db/schema/family-social-schema-tables";
 
 const FEATURE_POST_NAMES = [
-  "TV Junkies",
-  "Movie Maniacs",
-  "Family Foodies",
-  "Poetry Cafe",
+  "TV Room",
+  "Movie Theater",
+  "The Kitchen",
+  "Poetry Nook",
   "Reading Room",
   "Family Gallery",
 ] as const;

@@ -1,16 +1,16 @@
 - [Slide Overview](#slide-overview)
 - [Video Tour](#video-tour)
-  - [TV Junkies](#tv-junkies)
+  - [TV Room](#tv-junkies)
     - [Show Finder](#show-finder)
     - [Scroll Strip](#scroll-strip)
     - [Show Templates](#show-templates)
-  - [Game Scoreboards](#game-scoreboards)
+  - [Game Room](#game-scoreboards)
     - [Mexican Train](#mexican-train)
     - [Cricket](#cricket)
     - [Acquire](#acquire)
     - [Other Games](#other-games)
-  - [Family Foodies](#family-foodies)
-  - [Photo Galleries](#photo-galleries)
+  - [The Kitchen](#family-foodies)
+  - [Picture Hallway](#photo-galleries)
 
 # Slide Overview
 
@@ -68,9 +68,9 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
    - They can react to your review, add comments or start a discussion thread on the show or movie. 
 
-   - The TV Junkies, Movie Maniacs, Music Lovers provide a way to see the **latest** or the **top rated** reviews.
+   - The TV Room, Movie Theater, Music Salon provide a way to see the **latest** or the **top rated** reviews.
 
-     - I'll demonstrate TV Junkies later.
+     - I'll demonstrate TV Room later.
 
 ```
     <CTL-Shift: Pause>
@@ -82,9 +82,9 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
    - In fact, in my family there are a number of games that we have played for decades and there's a lot of tradition and sometimes misinformation about who won the game the last time. Where is the last scoresheet?
 
-   - You don't play the games on MFS. In the **Game Scoreboards** feature what we do is keep the track the game scores as they are being played.
+   - You don't play the games on MFS. In the **Game Room** feature what we do is keep the track the game scores as they are being played.
 
-   -  At the end of the game, then Game Scoreboards will update the leader boards, player stats, and game history so you can settle, once and for all, who the best player is. 
+   -  At the end of the game, then Game Room will update the leader boards, player stats, and game history so you can settle, once and for all, who the best player is. 
 
 ```
     <CTL-Shift: Pause>
@@ -98,7 +98,7 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
    - I've never been to a Poetry group before but I do enjoy reading poetry, I think because of my love for music, as the two are intertwined. 
 
-   - The Poetry Cafe feature is not for everyone but it has a strong offering if you want to share a poem or two and test how others in the family react to it.
+   - The Poetry Nook feature is not for everyone but it has a strong offering if you want to share a poem or two and test how others in the family react to it.
 
 ```
     <CTL-Shift: Pause>
@@ -114,7 +114,7 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
    - Consider the family recipes as an example. How do you share them today? 
 
-   - The **Family Foodies** feature in MFS let's you do that
+   - The **The Kitchen** feature in MFS let's you do that
 
      - It gives the family members an opportunity to react to your recipe: they can **like**, **love**, or even **dislike** it. 
 
@@ -124,7 +124,7 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 
    - And the recipes are **all in one place**!
 
-     - We'll take a look at the **Family Foodies** in the upcoming video tour
+     - We'll take a look at the **The Kitchen** in the upcoming video tour
 
 ```
 <CTL-Alt: Stop Recording>
@@ -137,17 +137,17 @@ I will **summarize** the features of My Family Social shown below and then I'll 
 ```
 We are presently on the **main page** of My Family Social and family member **George Watkins** is signed in and will be our tour guide and he will take us first to the
 
-- TV Junkies feature,
-- then to the Game Scoreboards,
-- on to Family Foodies and finally 
-- we'll wrap up in the Photo Galleries 
+- TV Room feature,
+- then to the Game Room,
+- on to The Kitchen and finally 
+- we'll wrap up in the Picture Hallway 
 
-## TV Junkies
-Let's navigate to the TV Junkies feature
+## TV Room
+Let's navigate to the TV Room feature
 
-Everything I say here in TV Junkies also applies to the Movies, Music, and Recipes features. 
+Everything I say here in TV Room also applies to the Movies, Music, and Recipes features. 
 
-There are **two sections** in the TV Junkies home page: **Show Finder** on the left side and The **scroll strip** on the right side.
+There are **two sections** in the TV Room home page: **Show Finder** on the left side and The **scroll strip** on the right side.
 
 ```
     <CTL-Shift: Pause>
@@ -191,23 +191,23 @@ There are **two sections** in the TV Junkies home page: **Show Finder** on the l
 
   -  Templates are available anywhere a member can post something. We'll look at this in more detail in the Recipes feature.
 
-This is concludes our tour of the TV Junkies feature. 
+This is concludes our tour of the TV Room feature. 
 
 ```
     pause 2 seconds
     <CTL-Alt: Stop Recording>
 ```
 
-## Game Scoreboards
+## Game Room
 
 ```
     <CTL-Alt: Start Recording>
     brief pause
 ```
 
-George now will take us to the **Game Scoreboards** feature from the main page.
+George now will take us to the **Game Room** feature from the main page.
 
-As I mentioned in the intro, family members use the Game Scoreboards feature to: 
+As I mentioned in the intro, family members use the Game Room feature to: 
 
 - Keep score on the game they are playing which is done in the Scoreboard section on the **left side** of the page
 - The game Leaderboard, player stats, and game history appears on the **right side** of the page.
@@ -226,7 +226,7 @@ As I mentioned in the intro, family members use the Game Scoreboards feature to:
 4. Let's take a look at the game scoreboard by picking an existing game (**Phoenix Train Company**)
 5. Notice in the third column where **Joe Bloe** is listed. Joe is a guest and not a family member.
 
-    - If you want to use Game Scoreboards to track games you play with persons who likely are not members of the My Family Social, then you can add them as guests, just for scorekeeping purposes.
+    - If you want to use Game Room to track games you play with persons who likely are not members of the My Family Social, then you can add them as guests, just for scorekeeping purposes.
     - How to do that? The **player column selection** has an option to add a guest, which was done for Joe.
     - As you can see, we'll even **track Joe in the player stats**. 
    
@@ -255,15 +255,15 @@ The next game we'll look at is the **Cricket game** which is actually a darts ga
 
 - Some  games like the darts Cricket game have special rules and scoring and requires more effort. However, feel free to suggest even more complicated games!
 
-## Family Foodies
+## The Kitchen
 
 ```
     <CTL-Alt: Start Recording>
     brief pause
 ```
-George will take us to the **Family Foodies** feature.
+George will take us to the **The Kitchen** feature.
 
-There are **many things** to be highlighted in the Family Foodies feature.
+There are **many things** to be highlighted in the The Kitchen feature.
 
 1. First, the **Recipe Finder**. To find any recipes quickly, enter a recipe keyword: **chicken**, **lemon**
 
@@ -271,7 +271,7 @@ There are **many things** to be highlighted in the Family Foodies feature.
 
     Here the recipes are listed according to **how many reactions** the recipes have received from family members.
 
-3. An important behavior in all My Family Social features and here in Family Foodies as well is who can edit what. 
+3. An important behavior in all My Family Social features and here in The Kitchen as well is who can edit what. 
 
     - For example, if I select a **Greg recipe**, you would see that **Edit Recipe button is not enabled**. 
     - Select a **George recipe**, and voila, the **Edit Recipe button available**! 
@@ -301,7 +301,7 @@ Close Print dialog
     <CTL-Shift: resume>
 ```
 
-6. The next valuable feature in Family Foodies are the **recipe templates**. 
+6. The next valuable feature in The Kitchen are the **recipe templates**. 
 
 - My Family Social provides a **global template** for any feature where members can post things. 
 
@@ -318,14 +318,14 @@ Close Print dialog
 
 - **Back to Foodies Home**
 
-## Photo Galleries
+## Picture Hallway
 
 ```
     <CTL-ALT: Start Recording>
     pause
     <CTL-Shift: resume>
 ```
-1. George will take us to the last stop in this video tour which is the **Photo Galleries** feature.
+1. George will take us to the last stop in this video tour which is the **Picture Hallway** feature.
 2. We are in the **first of two galleries** provided by My Family Social: **The Family Gallery**.
 3. Here in the Family Gallery will find the albums and photos that **family members have shared** with the family. 
 4. George **shared an album** with the family. 
@@ -351,16 +351,16 @@ Instead, every member has a **private member gallery** where a member can upload
     <CTL-Shift: resume>
 ```
 
-Let me conclude the Photo Galleries tour with a question.
+Let me conclude the Picture Hallway tour with a question.
 
-You may be asking, "why would I use Photo Galleries?". I use Google Photos or the iCloud Photo site. Or I can just text them to you.
+You may be asking, "why would I use Picture Hallway?". I use Google Photos or the iCloud Photo site. Or I can just text them to you.
 
 The My Family Social mantra is: **because the family pictures are all in one place**. 
-Of course, the Photo Galleries feature in My Family Social will never take the place of those photo sharing avenues. 
+Of course, the Picture Hallway feature in My Family Social will never take the place of those photo sharing avenues. 
 
 But, **what if there was a place where you could always find your family pics**? 
 
-Alright! This concludes the Photo Galleries quick tour. 
+Alright! This concludes the Picture Hallway quick tour. 
 
 ```
     Go back to main page

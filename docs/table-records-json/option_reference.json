@@ -1,35 +1,35 @@
 [
   {
     "id": 1,
-    "option_name": "TV Junkies",
+    "option_name": "TV Room",
     "category": "feature",
     "is_selected": false,
     "seq_no": 1
   },
   {
     "id": 2,
-    "option_name": "Movie Maniacs",
+    "option_name": "Movie Theater",
     "category": "feature",
     "is_selected": false,
     "seq_no": 2
   },
   {
     "id": 3,
-    "option_name": "Music Lovers",
+    "option_name": "Music Salon",
     "category": "feature",
     "is_selected": false,
     "seq_no": 3
   },
   {
     "id": 4,
-    "option_name": "Family Foodies",
+    "option_name": "The Kitchen",
     "category": "feature",
     "is_selected": false,
     "seq_no": 4
   },
   {
     "id": 5,
-    "option_name": "Poetry Cafe",
+    "option_name": "Poetry Nook",
     "category": "feature",
     "is_selected": false,
     "seq_no": 5
@@ -50,7 +50,7 @@
   },
   {
     "id": 8,
-    "option_name": "Family Threads",
+    "option_name": "Mail Box",
     "category": "feature",
     "is_selected": false,
     "seq_no": 8

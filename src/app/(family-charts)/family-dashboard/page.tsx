@@ -25,10 +25,10 @@ import ThreadGameChart, {
 } from "@/components/charts/family/thread-game-chart";
 
 const FEATURE_POST_NAMES = [
-  "TV Junkies",
-  "Movie Maniacs",
-  "Family Foodies",
-  "Poetry Cafe",
+  "TV Room",
+  "Movie Theater",
+  "The Kitchen",
+  "Poetry Nook",
   "Reading Room",
   "Family Gallery",
 ] as const;

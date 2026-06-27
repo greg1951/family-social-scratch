@@ -8,94 +8,18 @@ import FamilyActivity from "@/components/common/family-activity";
 import MainDropMenu from "@/components/common/main-dropmenu";
 import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
 import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
+import { RoomDefinitions, PhoneRoomOrder, TabletRoomOrder   } from "../types/constants";
 
-type MainRoomDefinition = {
-  featureKey: FamilyFeatureKey;
-  href: string;
-  roomTitle: string;
-  src: string;
-};
+// type MainRoomDefinition = {
+//   featureKey: FamilyFeatureKey;
+//   href: string;
+//   roomTitle: string;
+//   src: string;
+// };
 
-const roomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
-  tv: {
-    featureKey: "tv",
-    href: "/tv",
-    roomTitle: "TV Room",
-    src: "/images/main/room-tv-tablet.png",
-  },
-  movies: {
-    featureKey: "movies",
-    href: "/movies",
-    roomTitle: "Movie Theater",
-    src: "/images/main/room-movies-tablet.jpg",
-  },
-  books: {
-    featureKey: "books",
-    href: "/books",
-    roomTitle: "Reading Room",
-    src: "/images/main/room-reading-tablet.jpg",
-  },
-  music: {
-    featureKey: "music",
-    href: "/music",
-    roomTitle: "Music Salon",
-    src: "/images/main/room-music-tablet.jpg",
-  },
-  games: {
-    featureKey: "games",
-    href: "/games",
-    roomTitle: "Game Room",
-    src: "/images/main/room-games-tablet.jpg",
-  },
-  poetry: {
-    featureKey: "poetry",
-    href: "/poetry",
-    roomTitle: "Poetry Nook",
-    src: "/images/main/room-poetry-tablet.jpg",
-  },
-  foodies: {
-    featureKey: "foodies",
-    href: "/foodies",
-    roomTitle: "The Kitchen",
-    src: "/images/main/room-kitchen-tablet.jpg",
-  },
-  gallery: {
-    featureKey: "gallery",
-    href: "/family-gallery",
-    roomTitle: "Picture Hallway",
-    src: "/images/main/room-pictures-tablet.jpg",
-  },
-  threads: {
-    featureKey: "threads",
-    href: "/threads",
-    roomTitle: "Living Room",
-    src: "/images/main/room-mailbox-tablet.jpg",
-  },
-};
-
-const phoneRoomOrder: FamilyFeatureKey[] = [
-  "tv",
-  "movies",
-  "books",
-  "music",
-  "games",
-  "poetry",
-  "foodies",
-  "gallery",
-  "threads",
-];
-
-const tabletRoomOrder: FamilyFeatureKey[] = [
-  "tv",
-  "movies",
-  "books",
-  "music",
-  "games",
-  "poetry",
-  "gallery",
-  "foodies",
-  "threads",
-];
+const roomDefinitions = RoomDefinitions;
+const phoneRoomOrder = PhoneRoomOrder;
+const tabletRoomOrder = TabletRoomOrder;
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
@@ -167,9 +91,9 @@ export default async function MainPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#b6c9e4] via-[#c7d9ef] to-[#d6e3f4]">
-      <section className="font-app px-2 pb-5 pt-5 sm:px-4 sm:pb-6 sm:pt-6 lg:px-8">
+      <section className="font-app px-2 pb-5 pt-5 sm:px-4 sm:pb-6 sm:pt-6 md:px-8">
         <div className="mx-auto w-full max-w-260">
-          <Card className="min-h-24 rounded-[22px] border border-slate-200/70 bg-white/95 px-3 py-2 shadow-sm sm:min-h-27 sm:px-6 sm:py-2.5">
+          <Card className="rounded-[22px] border border-slate-200/70 bg-white/95 px-3 py-2 shadow-sm sm:min-h-27 sm:px-6 sm:py-2.5">
             <div className="flex items-center justify-between gap-3 sm:gap-5">
               <div>
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -205,16 +129,16 @@ export default async function MainPage() {
           </Card>
 
           <div className="mx-auto mt-6 w-fit max-w-full overflow-x-hidden px-2 pb-4">
-            <div className="relative mx-auto w-fit pt-16 lg:pt-17">
-              <div className="absolute left-1/2 top-0 h-16 w-102.5 -translate-x-1/2 bg-[#1f2c42] [clip-path:polygon(50%_0,100%_100%,0_100%)] lg:h-17 lg:w-234" />
-              <div className="absolute right-6 top-7 h-11 w-9 rounded-t-sm bg-[#cf4505] lg:right-19 lg:top-6 lg:h-11 lg:w-10" />
+            <div className="relative mx-auto w-fit pt-16 md:pt-17">
+              <div className="absolute left-1/2 top-0 h-16 w-102.5 -translate-x-1/2 bg-[#1f2c42] [clip-path:polygon(50%_0,100%_100%,0_100%)] md:h-17 md:w-234" />
+              <div className="absolute right-6 top-7 h-11 w-9 rounded-t-sm bg-[#cf4505] md:right-19 md:top-6 md:h-11 md:w-10" />
 
-              <div className="relative rounded-[22px] border-8 border-[#cf4505] bg-[#cf4505] p-2 shadow-[0_25px_55px_-28px_rgba(11,15,23,0.92)] lg:p-3">
-                <div className="grid grid-cols-3 gap-2 lg:hidden">
+              <div className="relative rounded-[22px] border-8 border-[#cf4505] bg-[#cf4505] p-2 shadow-[0_25px_55px_-28px_rgba(11,15,23,0.92)] md:p-3">
+                <div className="grid grid-cols-3 gap-2 md:hidden">
                   { phoneRoomOrder.map((featureKey) => renderRoom(featureKey, "h-[172px] w-[120px] object-cover")) }
                 </div>
 
-                <div className="hidden grid-cols-3 gap-3 lg:grid">
+                <div className="hidden grid-cols-3 gap-3 md:grid">
                   { tabletRoomOrder.map((featureKey) => renderRoom(featureKey, "h-[182px] w-[293px] object-cover")) }
                 </div>
               </div>

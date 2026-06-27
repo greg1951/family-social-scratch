@@ -1,6 +1,6 @@
 ## Plan: Threads Edge Cases
 
-This follow-up plan pressure-tests the Family Threads design against member lifecycle changes, family expiration, private-thread authorization, recipient-specific state, and future archive behavior. The recommended v1 approach is to keep the model transactional and simple: immutable recipient snapshots, per-recipient read/archive state, private-thread authorization enforced strictly by sender plus recipient membership, and read-only behavior for expired families. Defer destructive or high-risk capabilities such as hard member deletion, post deletion, and S3 archival writes until the core behavior is stable.
+This follow-up plan pressure-tests the Mail Box design against member lifecycle changes, family expiration, private-thread authorization, recipient-specific state, and future archive behavior. The recommended v1 approach is to keep the model transactional and simple: immutable recipient snapshots, per-recipient read/archive state, private-thread authorization enforced strictly by sender plus recipient membership, and read-only behavior for expired families. Defer destructive or high-risk capabilities such as hard member deletion, post deletion, and S3 archival writes until the core behavior is stable.
 
 **Steps**
 1. Phase 1 - Lock core authorization rules before schema finalization: private threads are visible only to `senderMemberId` and rows materialized in `thread_recipient`; founder has no override; post visibility inherits from the parent conversation and cannot vary per post in v1.
@@ -21,7 +21,7 @@ This follow-up plan pressure-tests the Family Threads design against member life
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/features/auth/services/auth-utils.ts` — current auth validation path appears to validate credentials without clearly enforcing family/member status, which is why thread write guards should not rely only on sign-in checks.
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/auth.ts` — session callback shape likely does not carry family/member lifecycle state, which affects where expiration enforcement should happen.
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/components/db/sql/queries-family-notifications.ts` — reference pattern for per-member state updates and query module structure.
-- `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/docs/insert-option-reference-records.csv` — existing `Family Threads` and `Threads Only` option records can be reused for notification behavior later.
+- `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/docs/insert-option-reference-records.csv` — existing `Mail Box` and `Threads Only` option records can be reused for notification behavior later.
 
 **Verification**
 1. Validate authorization with concrete scenarios: founder attempting to open a private thread they are not part of, resigned member opening a thread received before resignation, rejoined member attempting to access prior-tenure threads, and a member outside the snapshot audience trying to fetch an `All` thread.

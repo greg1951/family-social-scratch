@@ -9,12 +9,12 @@ DROP CONSTRAINT IF EXISTS family_activity_action_type_ck;
 -- Backfill legacy/dynamic values into canonical taxonomy.
 UPDATE family_activity
 SET action_type = 'GAME_STARTED'
-WHERE feature_name = 'Game Scoreboards'
+WHERE feature_name = 'Game Room'
   AND action_type NOT IN ('POST_CREATED', 'COMMENT_CREATED', 'THREAD_CREATED', 'GAME_STARTED', 'LIKE_ADDED', 'LOVE_ADDED');
 
 UPDATE family_activity
 SET action_type = 'THREAD_CREATED'
-WHERE feature_name = 'Family Threads'
+WHERE feature_name = 'Mail Box'
   AND action_type NOT IN ('POST_CREATED', 'COMMENT_CREATED', 'THREAD_CREATED', 'GAME_STARTED', 'LIKE_ADDED', 'LOVE_ADDED');
 
 UPDATE family_activity

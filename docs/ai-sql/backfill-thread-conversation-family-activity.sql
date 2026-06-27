@@ -1,4 +1,4 @@
--- Backfill missing Family Threads THREAD_CREATED records into family_activity.
+-- Backfill missing Mail Box THREAD_CREATED records into family_activity.
 -- Safe to run multiple times.
 
 BEGIN;
@@ -14,7 +14,7 @@ INSERT INTO family_activity (
 )
 SELECT
   'THREAD_CREATED' AS action_type,
-  'Family Threads' AS feature_name,
+  'Mail Box' AS feature_name,
   COALESCE(m.first_name || ' ' || m.last_name, 'Unknown Member') AS post_name,
   'active' AS status,
   tc.created_at AS created_at,
@@ -28,7 +28,7 @@ WHERE tc.status = 'active'
     SELECT 1
     FROM family_activity fa
     WHERE fa.action_type = 'THREAD_CREATED'
-      AND fa.feature_name = 'Family Threads'
+      AND fa.feature_name = 'Mail Box'
       AND fa.fk_family_id = tc.fk_family_id
       AND fa.fk_member_id = tc.fk_sender_member_id
       AND fa.created_at = tc.created_at

@@ -789,7 +789,7 @@ export async function saveMovie(
     if (!existingMovie) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: "Movie Maniacs",
+        featureName: "Movie Theater",
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1006,7 +1006,7 @@ export async function toggleMovieLike(
     if (likenessDegree === 1 || likenessDegree === 2) {
       await createFamilyReactionActivityRecord({
         reactionType: likenessDegree === 2 ? "love" : "like",
-        featureName: "Movie Maniacs",
+        featureName: "Movie Theater",
         postName: selectedMovie.movieTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1084,7 +1084,7 @@ export async function addMovieComment(
 
     await createFamilyActivityRecord({
       actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
-      featureName: "Movie Maniacs",
+      featureName: "Movie Theater",
       postName: selectedMovie.movieTitle,
       familyId: actor.familyId,
       memberId: actor.memberId,

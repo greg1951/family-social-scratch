@@ -333,7 +333,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     };
   }, [selectedShow, showSelectionRevision]);
 
-  const selectedShowName = showFinderRows.find((show) => show.id === selectedShow)?.name ?? "";
+  // const selectedShowName = showFinderRows.find((show) => show.id === selectedShow)?.name ?? "";
   const selectedShowBasic =
     (selectedShowDetail?.id === selectedShow
       ? selectedShowDetail
@@ -431,7 +431,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
-                Family TV Junkies
+                Family TV Room
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
@@ -439,7 +439,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="font-app mr-2 size-4" />
-                  Back to Main Page
+                  Go Home
                 </Link>
                 <Link
                   href="/tv/templates"

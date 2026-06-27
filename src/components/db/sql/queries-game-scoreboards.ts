@@ -412,7 +412,7 @@ export async function createGameStateRecord(input: StartGameRecordInput): Promis
   if (input.memberId) {
     await createFamilyActivityRecord({
       actionType: FAMILY_ACTIVITY_ACTION_TYPES.GAME_STARTED,
-      featureName: 'Game Scoreboards',
+      featureName: 'Game Room',
       postName: trimmedTitle,
       familyId: input.familyId,
       memberId: input.memberId,

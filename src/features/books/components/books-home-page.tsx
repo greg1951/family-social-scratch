@@ -349,7 +349,7 @@ export default function BooksHomePage({
           <div className="flex flex-col gap-5">
             <div className="max-w-4xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
-                Reading Room
+                Family Reading Room
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
@@ -357,7 +357,7 @@ export default function BooksHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Back to Main Page
+                  Go Home
                 </Link>
                 <Link
                   href="/book-terms"

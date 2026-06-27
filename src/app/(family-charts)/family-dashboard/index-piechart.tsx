@@ -52,13 +52,13 @@ const chartConfig = {
     label: "Posts",
   },
   tv: {
-    label: "TV Junkies",
+    label: "TV Room",
   },
   movie: {
-    label: "Movie Maniacs",
+    label: "Movie Theater",
   },
   foodie: {
-    label: "Family Foodies",
+    label: "The Kitchen",
   },
   january: {
     label: "January",

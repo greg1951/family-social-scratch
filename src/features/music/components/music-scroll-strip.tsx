@@ -145,7 +145,7 @@ export function MusicScrollStrip({
       <CardHeader className="gap-4 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-5 py-5 sm:px-6">
         <div>
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
-            Music Lovers
+            Music Salon
           </p>
           <CardTitle className="mt-2 text-2xl font-black tracking-tight text-[#15384a]">
             { title }

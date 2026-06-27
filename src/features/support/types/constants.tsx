@@ -171,7 +171,7 @@ export const generalFaqItems = [
             <li>Open the <b>My Settings</b> tab and select which My Family Social features you would like to be notified when someone posts or interacts with your content.</li>
             <li>Open the <b>My Family</b> tab to see all your family members.</li>
             <li>If you would like to recommend a new family member fill out the <b>Suggest New Family Member</b> form and submit it.
-              The family founder will get a private message in Family Threads about your suggestion.</li>
+              The family founder will get a private message in Mail Box about your suggestion.</li>
           </ol>
         </span>
       </div>
@@ -219,8 +219,8 @@ export const founderFaqItems = [
           <span>
             <p>The steps below would be followed.</p>
             <ul className="list-disc ml-6 mt-2">
-              <li>Family member who wants to leave a family needs to let the family founder know via a private message in Family Threads.</li>
-              <li>That family member should select and fill in the <b>Leave a Family Notification</b> template in Family Threads.</li>
+              <li>Family member who wants to leave a family needs to let the family founder know via a private message in Mail Box.</li>
+              <li>That family member should select and fill in the <b>Leave a Family Notification</b> template in Mail Box.</li>
               <li>When the family founder gets the message the founder will remove the member in the Founder Account settings.</li>
             </ul>
             <p className="pt-2">The founder can remove the member using one of two methods:</p>
@@ -282,8 +282,8 @@ export const featureFaqItems = [
     category: "TV and Movie Reviews",
     trigger: (
       <div>
-        <p className="text-base font-semibold">What's the general layout of the TV Junkies home page?</p>
-        <p className="text-xs text-slate-600">The <i>Movie Maniacs</i>, <i>Music Lovers</i>, and <i>Family Foodies</i> layouts are similar in behavior.</p>
+        <p className="text-base font-semibold">What's the general layout of the TV Room home page?</p>
+        <p className="text-xs text-slate-600">The <i>Movie Theater</i>, <i>Music Salon</i>, and <i>The Kitchen</i> layouts are similar in behavior.</p>
       </div>
     ),
     content: (
@@ -292,12 +292,12 @@ export const featureFaqItems = [
           <div className="flex justify-center pb-4">
             <img
               src="/images/support/faq-tv-home.jpg"
-              alt="TV Junkies Home"
+              alt="TV Room Home"
               style={ { maxWidth: '900px', maxHeight: '800px', marginTop: 12, borderRadius: 8 } }
             />
 
           </div>
-          <p className="text-base font-semibold">The TV Junkies home page let's you find shows that have been reviewed by others in the family.</p>
+          <p className="text-base font-semibold">The TV Room home page let's you find shows that have been reviewed by others in the family.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>The <b>Show Finder</b> let's you type in a name, a genre, a family member.</li>
             <li>When you find what you're looking for you can select it and see <b>View the Show</b>.</li>
@@ -317,7 +317,7 @@ export const featureFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">How do I add a TV show review?</p>
-        <p className="text-xs text-slate-600">It works the same way in <i>Movie Maniacs</i>, <i>Music Lovers</i>, and <i>Family Foodies</i> as well.</p>
+        <p className="text-xs text-slate-600">It works the same way in <i>Movie Theater</i>, <i>Music Salon</i>, and <i>The Kitchen</i> as well.</p>
       </div>
     ),
     content: (
@@ -442,7 +442,7 @@ export const featureFaqItems = [
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Go to IMDB or YouTube and find the TV Show you want to use.</li>
             <li>Copy the URL of the TV Show to your clipboard.</li>
-            <li>In My Family Social TV Junkies home page, select the Add Show option and complete the form as instructed below.</li>
+            <li>In My Family Social TV Room home page, select the Add Show option and complete the form as instructed below.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-150 h-95 md:w-230 md:h-130"
@@ -450,7 +450,7 @@ export const featureFaqItems = [
               alt="IMDB Link"
             />
           </div>
-          <p className="text-base font-semibold">In My Family Social TV Junkies <b>Add Show</b>:</p>
+          <p className="text-base font-semibold">In My Family Social TV Room <b>Add Show</b>:</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Enter the <b>Show Name</b> as you want it to appear in the home page.</li>
             <li>Paste the URL you copied from IMDB or YouTube into the <b>Show Site URL</b> field.</li>
@@ -475,10 +475,10 @@ export const featureFaqItems = [
   },
   {
     value: "item-60",
-    category: "Music Lovers",
+    category: "Music Salon",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How do I add Music Lyrics for an Album I created in the Music Lovers feature?</p>
+        <p className="text-base font-semibold">How do I add Music Lyrics for an Album I created in the Music Salon feature?</p>
         <p className="text-xs text-slate-600">Lyrics have a different twist that you won't find in the other features.</p>
       </div>
     ),
@@ -487,7 +487,7 @@ export const featureFaqItems = [
         <span>
           <p className="text-base font-semibold">The short answer is that Lyrics are associated with a <b>Song</b> and not an <b>Album</b>.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select <b>Add Music</b> at the top right of the Music Lovers heading.</li>
+            <li>Select <b>Add Music</b> at the top right of the Music Salon heading.</li>
             <li>If you look right above the Music Image section, you'll see the <b>Type</b> option defaults to <i>Song</i>.</li>
             <li>Add information relevant to your song and <b>Save the Song</b>.</li>
             <li>Once the song is safely saved, you can add lyrics to it by choosing the <b>Add Lyrics</b> button. </li>
@@ -511,7 +511,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-70",
-    category: "Family Foodies",
+    category: "The Kitchen",
     trigger: (
       <div>
         <p className="text-base font-semibold">What are recipe templates and how do I use them?</p>
@@ -523,7 +523,7 @@ export const featureFaqItems = [
         <span>
           <p className="text-base font-semibold">Writing a recipe can be time consuming, but we think we've made it easier with our recipe templates.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select the <b>Manage Templates</b> button in the Family Foodies heading.</li>
+            <li>Select the <b>Manage Templates</b> button in the The Kitchen heading.</li>
             <li>By default the General Template will be shown. Selecting it will allow you to preview its content. However, you cannot edit this template.</li>
             <li>To create a new template, select the <b>Create Template</b> button.</li>
             <li>In all likelihood, you have your recipe written up nicely in a document or text editor. You can copy and paste it into the template.</li>
@@ -560,10 +560,10 @@ export const featureFaqItems = [
   },
   {
     value: "item-80",
-    category: "Family Foodies",
+    category: "The Kitchen",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How best to add a recipe in the Family Foodies feature?</p>
+        <p className="text-base font-semibold">How best to add a recipe in the The Kitchen feature?</p>
         <p className="text-xs text-slate-600">Adding a recipe is easier with a template and following some of the suggestions here.</p>
       </div>
     ),
@@ -573,7 +573,7 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">Ahead of creating your recipe, review the available templates and decide which one best fits your needs.</p>
           <p className="text-sm text-slate-600">If you have a recipe already written, you can paste it right in to the new recipe dialog.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select the <b>Add Recipe</b> button in the Family Foodies heading.</li>
+            <li>Select the <b>Add Recipe</b> button in the The Kitchen heading.</li>
             <p className="pt-2 pb-2"><u>Note:</u> Using a template is optional. If you don't use a template you have to jam the recipe content in manually.</p>
             <li>When you select a template, it will prefill the Recipe edit area below. Pick different template and see which template fits your needs.</li>
           </ol>
@@ -612,7 +612,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-90",
-    category: "Poetry Cafe",
+    category: "Poetry Nook",
     trigger: (
       <div>
         <p className="text-base font-semibold">Poetry is a very technical art form. What resources are available to help with the terminology?</p>
@@ -625,7 +625,7 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">Visit the Poetry Terms page for poetry definitions and explanations.</p>
           <p className="text-sm text-slate-600">My Family Social provides a dictionary of poetry terms to help define terms you may see in the poetry submissions.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select the <b>Poetry Terms</b> button in the <b>Poetry Cafe</b> heading.</li>
+            <li>Select the <b>Poetry Terms</b> button in the <b>Poetry Nook</b> heading.</li>
             <li>A term search field is provided or scroll the list to find a term.</li>
             <li>Selecting the term will display its definition and explanation.</li>
           </ol>
@@ -642,7 +642,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-91",
-    category: "Poetry Cafe",
+    category: "Poetry Nook",
     trigger: (
       <div>
         <p className="text-base font-semibold">I have a long poem I'd like to submit. How difficult will it be to post it?</p>
@@ -655,7 +655,7 @@ export const featureFaqItems = [
           <p className="text-base font-semibold">Here we'll focus on the Poetry Verse and the Poem Analysis sections of that form.</p>
           <p className="text-sm text-slate-600"></p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select <b>Add Poem</b> from the Poetry Cafe home page.</li>
+            <li>Select <b>Add Poem</b> from the Poetry Nook home page.</li>
             <li>If you were able to copy the poem verse, paste it into the <b>Poem Text</b>. See the example below.</li>
             <p className="pt-2 pb-2 text-xs"><u>Note:</u> Sometimes when you paste into the Poem Text area you lose the blank lines between verses. Add those back in the editor.</p>
             <li>In the <b>Poem Text</b> a numbered column appears next to each line of the poem.</li>
@@ -737,17 +737,17 @@ export const featureFaqItems = [
   },
   {
     value: "item-200",
-    category: "Family Threads",
+    category: "Mail Box",
     trigger: (
       <div>
-        <p className="text-base font-semibold">Why should I use Family threads? I can simply text someone!</p>
-        <p className="text-sm text-slate-600">We're not trying to replace texting, but Family Threads offers a more organized and private way to communicate within your family.</p>
+        <p className="text-base font-semibold">Why should I use Mail Box? I can simply text someone!</p>
+        <p className="text-sm text-slate-600">We're not trying to replace texting, but Mail Box offers a more organized and private way to communicate within your family.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">Listed below are some reasons to use Family Threads.</p>
+          <p className="text-base font-semibold">Listed below are some reasons to use Mail Box.</p>
           <p className="text-sm">All of the reasons listed below have one thing in common: they help you stay connected with your family in a more organized and private way.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>You're planning a family event around a certain date and want to know who can make it</li>
@@ -760,7 +760,7 @@ export const featureFaqItems = [
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-150 h-95 md:w-210 md:h-130"
               src="/images/support/faq-threads-pics.jpg"
-              alt="Family Threads Pictures"
+              alt="Mail Box Pictures"
             />
           </div>
         </span>
@@ -770,7 +770,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-300",
-    category: "Photo Galleries",
+    category: "Picture Hallway",
     trigger: (
       <div>
         <p className="text-base font-semibold">I'm in the Family Photo Gallery but I don't see any way to upload pictures. How do I do this?</p>
@@ -792,7 +792,7 @@ export const featureFaqItems = [
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-100 h-120 md:w-150 md:h-180"
               src="/images/support/faq-member-gallery-add-album.jpg"
-              alt="Photo Galleries Pictures"
+              alt="Picture Hallway Pictures"
             />
           </div>
         </span>
@@ -802,7 +802,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-400",
-    category: "Game Scoreboards",
+    category: "Game Room",
     trigger: (
       <div>
         <p className="text-base font-semibold">What does the Game Scoreboard feature provide?</p>
@@ -837,7 +837,7 @@ export const featureFaqItems = [
   },
   {
     value: "item-401",
-    category: "Game Scoreboards",
+    category: "Game Room",
     trigger: (
       <div>
         <p className="text-base font-semibold">I'm from Canada and I very much enjoy playing Crokinole. What does the Game Scoreboard feature provide?</p>

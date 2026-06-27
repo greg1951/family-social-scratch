@@ -48,7 +48,7 @@ This home page should consists of 3 parts (A, B, C) as depicted below.
 
 -----------------------------
 
-There are a couple of issues with the game scoreboards UI that need to be corrected.
+There are a couple of issues with the game room UI that need to be corrected.
 - When a game is selected from the game_state table, provide a button to allow the game to be archived if the game_state.status === "completed". 
    - Archived games should not appear in the game_state list in the UI.
 - When a new acquire game (game_metadata) is started, all 8 columns should appear. 

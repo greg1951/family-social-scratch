@@ -25,10 +25,10 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 const featureNameMap: Record<string, string> = {
-  "TV Junkies": "TV",
-  "Movie Maniacs": "Movies",
-  "Family Foodies": "Recipes",
-  "Poetry Cafe": "Poems",
+  "TV Room": "TV",
+  "Movie Theater": "Movies",
+  "The Kitchen": "Recipes",
+  "Poetry Nook": "Poems",
   "Reading Room": "Books",
   "Family Gallery": "Photos",
 };

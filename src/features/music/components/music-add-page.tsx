@@ -343,7 +343,7 @@ export function MusicAddPage({
       <div className="mx-auto max-w-6xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
           <div className="max-w-3xl">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Lovers</p>
+            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
             <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               <ArrowLeft className="mr-1 size-4" />
               Back to Music Home Page

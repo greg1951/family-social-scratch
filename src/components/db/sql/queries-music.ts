@@ -864,7 +864,7 @@ export async function saveMusic(
     if (!existingMusic) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: "Music Lovers",
+        featureName: "Music Salon",
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -1205,7 +1205,7 @@ export async function toggleMusicLike(
     if (likenessDegree === 1 || likenessDegree === 2) {
       await createFamilyReactionActivityRecord({
         reactionType: likenessDegree === 2 ? "love" : "like",
-        featureName: "Music Lovers",
+        featureName: "Music Salon",
         postName: selectedMusic.musicTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,

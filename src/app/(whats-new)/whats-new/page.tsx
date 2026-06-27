@@ -3,15 +3,15 @@ import { ArrowLeft } from "lucide-react";
 
 const updates = [
   {
-    title: "New Games in Game Scoreboards!",
+    title: "New Games in Game Room!",
     summary: "There's a long list of popular family games now available, including the darts Cricket game and Crokinole! All games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
-    category: "Game Scoreboards",
+    category: "Game Room",
     date: "May 22, 2026",
   },
   {
-    title: "Show off your best pics in Photo Galleries! ",
-    summary: "Photo Galleries is now live in My Family Social! You can upload pics to your private gallery, compose albums from them and then share with the family.",
-    category: "Photo Galleries",
+    title: "Show off your best pics in Picture Hallway! ",
+    summary: "Picture Hallway is now live in My Family Social! You can upload pics to your private gallery, compose albums from them and then share with the family.",
+    category: "Picture Hallway",
     date: "May 20, 2026",
   },
   {
@@ -33,33 +33,33 @@ const updates = [
     date: "April 24, 2026",
   },
   {
-    title: "Music Lovers will love this!",
-    summary: "Music stirs the soul and brings people together 💘. The Music Lovers feature is up and running! You can share your favorite songs and albums, write reviews, and see what music other family members are enjoying. Start sharing your music love today!",
-    category: "Music Lovers",
+    title: "Music Salon will love this!",
+    summary: "Music stirs the soul and brings people together 💘. The Music Salon feature is up and running! You can share your favorite songs and albums, write reviews, and see what music other family members are enjoying. Start sharing your music love today!",
+    category: "Music Salon",
     date: "April 22, 2026",
   },
   {
-    title: "Family Threads is Live!",
+    title: "Mail Box is Live!",
     summary: "It's the My Family Social message board! Start a public or private thread to share updates, ask questions, and share your 📷 pics with family members.",
-    category: "Family Threads",
+    category: "Mail Box",
     date: "April 22, 2026",
   },
   {
-    title: "Movie Maniacs Go Crazy!",
-    summary: "Add your favorite movies to Movie Maniacs! See what movies other family members like.",
-    category: "Movie Maniacs",
+    title: "Movie Theater Go Crazy!",
+    summary: "Add your favorite movies to Movie Theater! See what movies other family members like.",
+    category: "Movie Theater",
     date: "April 21, 2026",
   },
   {
-    title: "TV Junkies Unite!",
-    summary: "TV Junkies is now live in My Family Social! Check it out and start adding your favorite shows.",
-    category: "TV Junkies",
+    title: "TV Room Unite!",
+    summary: "TV Room is now live in My Family Social! Check it out and start adding your favorite shows.",
+    category: "TV Room",
     date: "April 21, 2026",
   },
   {
-    title: "It's alive! See Family Foodies in action.",
-    summary: "Family Foodies is now live in the family social experience! You can access it from the main navigation and start sharing your favorite recipes with your family. It comes with a recipe template but you can create your own recipe template, if you hate ours 😒 ",
-    category: "Family Foodies",
+    title: "It's alive! See The Kitchen in action.",
+    summary: "The Kitchen is now live in the family social experience! You can access it from the main navigation and start sharing your favorite recipes with your family. It comes with a recipe template but you can create your own recipe template, if you hate ours 😒 ",
+    category: "The Kitchen",
     date: "April 20, 2026",
   },
   {
@@ -70,14 +70,14 @@ const updates = [
   },
   {
     title: "The Very First Live Features!",
-    summary: "The Game Scoreboards, Poetry Cafe, and Reading Room are now live! Check them out and let us know what you think!",
+    summary: "The Game Room, Poetry Nook, and Reading Room are now live! Check them out and let us know what you think!",
     category: "Features",
     date: "April 15, 2026",
   },
   {
-    title: "Game Scoreboards Supports Mexican Train and Acquire!",
-    summary: "The Game Scoreboards feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
-    category: "Game Scoreboards",
+    title: "Game Room Supports Mexican Train and Acquire!",
+    summary: "The Game Room feature now supports Mexican Train and Acquire! Both games support guests, so you can easily add non-family members to your game sessions. We hope you enjoy playing these games with your family!",
+    category: "Game Room",
     date: "April 13, 2026",
   },
 ];

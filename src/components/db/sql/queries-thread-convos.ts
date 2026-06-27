@@ -760,7 +760,7 @@ export async function createThreadConversationWithInitialPost(
 
   await createFamilyActivityRecord({
     actionType: FAMILY_ACTIVITY_ACTION_TYPES.THREAD_CREATED,
-    featureName: 'Family Threads',
+    featureName: 'Mail Box',
     postName: senderFullName,
     familyId: context.familyId,
     memberId: context.senderMemberId,

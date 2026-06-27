@@ -293,7 +293,7 @@ export const discussLike = pgTable("discuss_like", {
 );
 
 
-/*------------------------------- Family Threads Schema ------------------------------ */
+/*------------------------------- Mail Box Schema ------------------------------ */
 export const threadVisibility = pgEnum('visibility', ['public', 'private']);
 export const conversationStatus = pgEnum('status', ['active', 'archived', 'closed']);
 export const postReplyType = pgEnum('type', ['post', 'reply']);
@@ -427,7 +427,7 @@ export const threadTemplate = pgTable("thread_template", {
 });
 
 
-/*-------------------------------- Photo Galleries ------------------------------ */
+/*-------------------------------- Picture Hallway ------------------------------ */
 export const galleryPhoto = pgTable("gallery_photo", {
   id: serial("id").primaryKey(),
   caption: text("caption"),
@@ -555,7 +555,7 @@ export const gamePlayerRound = pgTable("game_player_round", {
     index('game_player_round_game_id_idx').on(table.gameId),
 ]);
 
-/*------------------------------- Poetry Cafe ------------------------------ */
+/*------------------------------- Poetry Nook ------------------------------ */
 //export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
 export const poem = pgTable("poem", {
@@ -758,7 +758,7 @@ export const bookTerm = pgTable("book_term", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-/*------------------------------- Family Foodies ------------------------------ */
+/*------------------------------- The Kitchen ------------------------------ */
 
 export const recipe = pgTable("recipe", {
   id: serial("id").primaryKey(),
@@ -854,7 +854,7 @@ export const recipeTerm = pgTable("recipe_term", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-/*------------------------------- TV Junkies ------------------------------ */
+/*------------------------------- TV Room ------------------------------ */
 
 export const show = pgTable("show", {
   id: serial("id").primaryKey(),
@@ -942,7 +942,7 @@ export const showLike = pgTable("show_like", {
   ]
 );
 
-/*------------------------------- Movie Maniacs ------------------------------ */
+/*------------------------------- Movie Theater ------------------------------ */
 
 export const movie = pgTable("movie", {
   id: serial("id").primaryKey(),
@@ -1028,7 +1028,7 @@ export const movieLike = pgTable("movie_like", {
   ]
 );
 
-/*------------------------------- Music Lovers ------------------------------ */
+/*------------------------------- Music Salon ------------------------------ */
 export const music = pgTable("music", {
   id: serial("id").primaryKey(),
   musicTitle: text("music_title").notNull().unique(),

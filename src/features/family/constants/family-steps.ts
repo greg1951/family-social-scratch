@@ -76,12 +76,12 @@
   export const inviteStatusActive = "active";
   export const inviteStatusSuggested = "suggested"; 
   export const familyFeatures = [
-    { name: 'TV Junkies', description: 'Share your favorite TV shows with your family.' },
-    { name: 'Movie Maniacs', description: 'Discuss and recommend movies with your family.' },
+    { name: 'TV Room', description: 'Share your favorite TV shows with your family.' },
+    { name: 'Movie Theater', description: 'Discuss and recommend movies with your family.' },
     { name: 'Reading Room', description: 'Share and review books with your family.' },
-    { name: 'Family Foodies', description: 'Exchange recipes and cooking tips with your family.' },
-    { name: 'Music Lovers', description: 'Share your favorite music and playlists with your family.' },
-    { name: 'Poetry Cafe', description: 'Share your love of poetry and creative writing with your family.' },    
-    { name: 'Game Scoreboards', description: 'Record and track your family\'s game scores, player stats, and leaderboard.' },
-    { name: 'Family Threads', description: 'Your family message board and picture sharing platform.' },
+    { name: 'The Kitchen', description: 'Exchange recipes and cooking tips with your family.' },
+    { name: 'Music Salon', description: 'Share your favorite music and playlists with your family.' },
+    { name: 'Poetry Nook', description: 'Share your love of poetry and creative writing with your family.' },    
+    { name: 'Game Room', description: 'Record and track your family\'s game scores, player stats, and leaderboard.' },
+    { name: 'Mail Box', description: 'Your family message board and picture sharing platform.' },
   ]

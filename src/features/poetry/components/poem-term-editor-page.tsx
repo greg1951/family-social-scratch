@@ -334,7 +334,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#f1deff]">
-                Family Poetry Cafe
+                Family Poetry Nook
               </p>
               <Link
                 href="/poem-terms"

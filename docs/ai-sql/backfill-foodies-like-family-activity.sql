@@ -1,4 +1,4 @@
--- Backfill missing Family Foodies LIKE_ADDED / LOVE_ADDED records into family_activity.
+-- Backfill missing The Kitchen LIKE_ADDED / LOVE_ADDED records into family_activity.
 -- Safe to run multiple times.
 
 BEGIN;
@@ -17,7 +17,7 @@ SELECT
     WHEN rl.likeness_degree = 2 THEN 'LOVE_ADDED'
     ELSE 'LIKE_ADDED'
   END AS action_type,
-  'Family Foodies' AS feature_name,
+  'The Kitchen' AS feature_name,
   r.recipe_title AS post_name,
   'active' AS status,
   rl.updated_at AS created_at,
@@ -30,7 +30,7 @@ WHERE rl.likeness_degree IN (1, 2)
     SELECT 1
     FROM family_activity fa
     WHERE fa.action_type = CASE WHEN rl.likeness_degree = 2 THEN 'LOVE_ADDED' ELSE 'LIKE_ADDED' END
-      AND fa.feature_name = 'Family Foodies'
+      AND fa.feature_name = 'The Kitchen'
       AND fa.post_name = r.recipe_title
       AND fa.fk_family_id = r.fk_family_id
       AND fa.fk_member_id = rl.fk_member_id

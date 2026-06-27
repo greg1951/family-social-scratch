@@ -1,6 +1,6 @@
-## Plan: Family Threads Schema
+## Plan: Mail Box Schema
 
-This pass defines a production-ready PostgreSQL schema for Family Threads using the existing Drizzle conventions in this codebase. The recommended v1 model uses a conversation table, post table, recipient snapshot/state table, and tag reference/junction pair. It favors immutable audience snapshots, strict private-thread authorization, and per-recipient read/archive state. It also keeps archive metadata fields ready without requiring S3 export in v1.
+This pass defines a production-ready PostgreSQL schema for Mail Box using the existing Drizzle conventions in this codebase. The recommended v1 model uses a conversation table, post table, recipient snapshot/state table, and tag reference/junction pair. It favors immutable audience snapshots, strict private-thread authorization, and per-recipient read/archive state. It also keeps archive metadata fields ready without requiring S3 export in v1.
 
 **Steps**
 1. Phase 1 - Add thread enums aligned to existing enum style: visibility (`private`, `all`), lifecycle status (`open`, `closed`, `archived`), and delivery type (`direct`, `all_snapshot`).
@@ -19,7 +19,7 @@ This pass defines a production-ready PostgreSQL schema for Family Threads using 
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/components/db/schema/family-social-schema.ts` — export barrel that will need to export new thread tables.
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/components/db/sql/queries-family-notifications.ts` — reference pattern for query module structure and per-member state updates.
 - `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/src/components/db/types/family-member.ts` — discriminated-union result style to mirror for thread query/type contracts.
-- `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/docs/insert-option-reference-records.csv` — existing Family Threads notification options already present for later integration.
+- `c:/Users/ghughlett/Projects/my-projects/family-social-scratch/docs/insert-option-reference-records.csv` — existing Mail Box notification options already present for later integration.
 
 **Verification**
 1. Validate schema supports direct private conversation, all-family snapshot conversation, and multiple replies to one parent post.

@@ -105,7 +105,7 @@ As a visitor however, what you will find available is a **link to the videos**, 
 
     - Notice the profile picture of the founder and the little red dot, that indicates the founder has mail. 
 
-    - No, not email, but mail in **Family Threads** which is where the family messages one another, but that is the subject of another video!
+    - No, not email, but mail in **Mail Box** which is where the family messages one another, but that is the subject of another video!
 
 5. The next step is for the founder to send an invitation to Julio Jones, his Costa Rican cousin. This is done by going to the founder's **My Family Account** option.
 

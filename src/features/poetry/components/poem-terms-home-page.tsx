@@ -98,7 +98,7 @@ export function PoemTermsHomePage({ poemTerms, isAdmin }: PoemTermsHomePageProps
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#f1deff]">
-                Family Poetry Cafe
+                Family Poetry Nook
               </p>
               {/* <BackButton /> */ }
               <Link

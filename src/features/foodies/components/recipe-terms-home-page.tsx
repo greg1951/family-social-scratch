@@ -100,7 +100,7 @@ export function RecipeTermsHomePage({ recipeTerms, isAdmin }: RecipeTermsHomePag
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
-                Family Foodies
+                The Kitchen
               </p>
               <Link
                 href="/foodies"

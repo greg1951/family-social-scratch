@@ -565,7 +565,7 @@ export async function savePoetryHomePoem(
     if (!existingPoem) {
       await createFamilyActivityRecord({
         actionType: FAMILY_ACTIVITY_ACTION_TYPES.POST_CREATED,
-        featureName: 'Poetry Cafe',
+        featureName: 'Poetry Nook',
         postName: normalizedTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -761,7 +761,7 @@ export async function togglePoemReaction(
     if (reactionType === 1 || reactionType === 2) {
       await createFamilyReactionActivityRecord({
         reactionType: reactionType === 2 ? 'love' : 'like',
-        featureName: 'Poetry Cafe',
+        featureName: 'Poetry Nook',
         postName: existingPoem.poemTitle,
         familyId: actor.familyId,
         memberId: actor.memberId,
@@ -856,7 +856,7 @@ export async function addPoemComment(
 
   await createFamilyActivityRecord({
     actionType: FAMILY_ACTIVITY_ACTION_TYPES.COMMENT_CREATED,
-    featureName: 'Poetry Cafe',
+    featureName: 'Poetry Nook',
     postName: existingPoem.poemTitle,
     familyId: actor.familyId,
     memberId: actor.memberId,

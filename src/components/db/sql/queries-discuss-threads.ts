@@ -52,17 +52,17 @@ function createDiscussionMemberName(firstName?: string | null, lastName?: string
 function resolveDiscussionFeatureName(targetType: string): string {
 	switch (targetType) {
 		case 'show':
-			return 'TV Junkies';
+			return 'TV Room';
 		case 'movie':
-			return 'Movie Maniacs';
+			return 'Movie Theater';
 		case 'book':
 			return 'Reading Room';
 		case 'poem':
-			return 'Poetry Cafe';
+			return 'Poetry Nook';
 		case 'recipe':
-			return 'Family Foodies';
+			return 'The Kitchen';
 		case 'music':
-			return 'Music Lovers';
+			return 'Music Salon';
 		default:
 			return 'Family Discussions';
 	}

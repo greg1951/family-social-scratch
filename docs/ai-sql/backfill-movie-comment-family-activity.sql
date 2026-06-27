@@ -1,4 +1,4 @@
--- Backfill missing Movie Maniacs COMMENT_CREATED records into family_activity.
+-- Backfill missing Movie Theater COMMENT_CREATED records into family_activity.
 -- Safe to run multiple times.
 
 BEGIN;
@@ -14,7 +14,7 @@ INSERT INTO family_activity (
 )
 SELECT
   'COMMENT_CREATED' AS action_type,
-  'Movie Maniacs' AS feature_name,
+  'Movie Theater' AS feature_name,
   m.movie_title AS post_name,
   'active' AS status,
   COALESCE(mc.created_at, NOW()) AS created_at,
@@ -29,7 +29,7 @@ WHERE mc.is_movie_reviewer = false
     SELECT 1
     FROM family_activity fa
     WHERE fa.action_type = 'COMMENT_CREATED'
-      AND fa.feature_name = 'Movie Maniacs'
+      AND fa.feature_name = 'Movie Theater'
       AND fa.post_name = m.movie_title
       AND fa.fk_family_id = m.fk_family_id
       AND fa.fk_member_id = mc.fk_member_id

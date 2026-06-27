@@ -325,11 +325,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 md:px-10">
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Lovers</p>
+              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <ArrowLeft className="font-app mr-2 size-4" />
-                  Back to Main Page
+                  Go Home
                 </Link>
                 <Link href="/music/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"><Edit3 className="mr-1 size-3.5" />Music Templates</Link>
               </div>

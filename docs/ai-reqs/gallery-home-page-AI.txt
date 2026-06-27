@@ -1,5 +1,5 @@
 BACKGROUND
-- There are five new database tables that were added to support the Photo Galleries feature.
+- There are five new database tables that were added to support the Picture Hallway feature.
 - The tables can be found in "src/components/db/schema/famil-social-schema-tables.ts" with a prefix of "gallery".
 
 App Router Pages

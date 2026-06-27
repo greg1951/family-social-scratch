@@ -149,7 +149,7 @@ export function MovieScrollStrip({
       <CardHeader className="gap-4 border-b border-[#ffe0b5] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.82))] px-5 py-5 sm:px-6">
         <div>
           <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
-            Movie Maniacs
+            Movie Theater
           </p>
           <CardTitle className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">
             { title }

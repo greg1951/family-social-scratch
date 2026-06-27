@@ -313,7 +313,7 @@ These scripts are run in the project directory to populate tables. In the case b
 
 
 # TipTap Headless
-The Poetry Cafe and Family Foodies features will implement a rich text editor. It will be used to a greater degree in the Family Foodies rather than the Poetry Cafe. Saving the content will use a JSON output rather than HTML. 
+The Poetry Nook and The Kitchen features will implement a rich text editor. It will be used to a greater degree in the The Kitchen rather than the Poetry Nook. Saving the content will use a JSON output rather than HTML. 
 
 [TipTap Headless](https://tiptap.dev/product) is a free version of their editor that allows you to build an an RTE into different client (e.g. React) and it supports typescript. As it is headless it will require Tailwindcss to pretty up the RTE interface.
 

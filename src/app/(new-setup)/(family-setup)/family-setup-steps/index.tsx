@@ -987,7 +987,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                             Otherwise, <b>Confirm</b> these setup that will create your new My Family Social site and send invitations to invited members.
                           </p>
                           <p className="text-xs text-neutral-800 mt-2">
-                            You will also be sent an <u>important message</u> in Family Threads, addressed to you as the family founder. However, first you must login using your new credentials and then go to <b>Family Threads</b>.
+                            You will also be sent an <u>important message</u> in Mail Box, addressed to you as the family founder. However, first you must login using your new credentials and then go to <b>Mail Box</b>.
                           </p>
                         </div>
 

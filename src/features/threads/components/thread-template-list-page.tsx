@@ -104,7 +104,7 @@ export function ThreadTemplateListPage({ initialTemplates }: ThreadTemplateListP
                 Manage Templates
               </h1>
               <p className="mt-2 text-sm text-[#e8d7ff]">
-                Create and edit rich text templates for family threads. Use !! delimiters for variables.
+                Create and edit rich text templates for mail box messages. Use !! delimiters for variables.
               </p>
             </div>
             <div className="flex gap-3">
