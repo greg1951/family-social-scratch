@@ -13,6 +13,10 @@ if (!envFileArg) {
 const envFilePath = resolve(process.cwd(), envFileArg);
 const childEnv = { ...process.env };
 
+// Avoid stale shell-level auth host values leaking into local dev runs.
+delete childEnv.AUTH_URL;
+delete childEnv.NEXTAUTH_URL;
+
 async function ensureAppleClientSecret(env) {
   const hasSecret = typeof env.AUTH_APPLE_SECRET === "string" && env.AUTH_APPLE_SECRET.trim().length > 0;
   if (hasSecret) {
