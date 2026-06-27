@@ -1,4 +1,4 @@
-BACKGROUND
+## BACKGROUND
 
 A new game has been added to game_metadata named "Cricket" (American darts).
 
@@ -21,7 +21,7 @@ Reference layout:
   - Mode hints (player mode vs team mode)
 
 
-FUNCTIONAL REQUIREMENTS
+## FUNCTIONAL REQUIREMENTS
 
 1) Game modes
 - Support two modes:
@@ -74,7 +74,7 @@ FUNCTIONAL REQUIREMENTS
 - Allow delete for games users do not want in history.
 
 
-LEADERBOARD AND GAME HISTORY
+## LEADERBOARD AND GAME HISTORY
 
 1) Leaderboard updates
 - Include Cricket in leaderboard views.
@@ -95,7 +95,7 @@ LEADERBOARD AND GAME HISTORY
 - Support loading a historical game in read-only or replay/edit-safe mode per product rules.
 
 
-ACCEPTANCE CRITERIA
+## ACCEPTANCE CRITERIA
 
 - User can create a Cricket game in player or team mode.
 - User can enter marks via 0-3 spinners for each target row.

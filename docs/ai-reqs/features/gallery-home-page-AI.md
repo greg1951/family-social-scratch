@@ -1,4 +1,4 @@
-BACKGROUND
+## BACKGROUND
 - There are five new database tables that were added to support the Picture Hallway feature.
 - The tables can be found in "src/components/db/schema/famil-social-schema-tables.ts" with a prefix of "gallery".
 
@@ -8,7 +8,7 @@ App Router Pages
 - Albums that have been shared by members will be visible on the Family Photo Gallery home page. 
   - This page is located at "src/app/(features)/(galleries)/family-gallery/page.tsx".
 
-REQUIREMENTS
+## REQUIREMENTS
 
 Photo Uploading on S3
 - Members can upload their photos to Amazon S3 for storage.

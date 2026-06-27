@@ -1,15 +1,15 @@
-Background
+## Background
 - S3 credentials are currently configured through environment variables and seeded by script.
 - This model does not scale well for multi-family operations and makes operational updates harder.
 - Credentials are already persisted in `family_s3_credentials` with encrypted access/secret keys, bucket metadata, region, and active status.
 - `S3_CREDENTIALS_MASTER_KEY` remains outside the database and is required to decrypt credential fields.
 
-Goal
+## Goal
 - Make the database (`family_s3_credentials`) the source of truth for runtime S3 configuration.
 - Keep credential secrets encrypted at rest and decrypt only in trusted server code.
 - Support per-family credential selection with exactly one active credential row per family.
 
-Required Application Changes
+## Required Application Changes
 - Refactor S3 client construction paths to load credentials from the database, not `AWS_*` env vars.
 - Introduce a server-side credential lookup layer that:
   - fetches the active row by family id,
@@ -18,12 +18,12 @@ Required Application Changes
 - Preserve `S3_CREDENTIALS_MASTER_KEY` as an environment-only secret.
 - Restrict direct table access to server-only modules; do not expose encrypted or decrypted values to client components.
 
-Access Pattern
+### Access Pattern
 - Primary: load credentials per request using family id.
 - Optional optimization: in-memory cache with short TTL and explicit invalidation on rotate/update.
 - On cache miss or invalidation, reload from database and refresh cache entry.
 
-Security Requirements
+### Security Requirements
 - Do not store `S3_CREDENTIALS_MASTER_KEY` in any database table.
 - Log only non-secret metadata (family id, bucket, region, credential id); never log access keys, encrypted payloads, or decrypted values.
 - Fail closed: if no active credential exists for a family, return a controlled error and do not fall back to global `AWS_*` credentials.
@@ -35,7 +35,7 @@ Migration and Rollout
   - Phase 1: dual-read check (DB first, env fallback for non-production verification).
   - Phase 2: remove env fallback and enforce DB-only credential resolution.
 
-Acceptance Criteria
+### Acceptance Criteria
 - Runtime S3 operations succeed using credentials resolved from `family_s3_credentials`.
 - No production code path requires `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, or `AWS_S3_BUCKET_NAME` for normal operations.
 - `S3_CREDENTIALS_MASTER_KEY` is still required in server environment and never persisted in DB.

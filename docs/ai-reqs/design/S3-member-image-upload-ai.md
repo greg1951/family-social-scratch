@@ -1,4 +1,4 @@
-S3 BACKGROUND
+## S3 BACKGROUND
 - I've done S3 setup on AWS as well as installing s3 packages using npm. 
 - The root env.local has been updated with the AWS API key and secret, as well as the "thosecrazyhughletts" bucket name.
 - The "src/api/s3-upload/router.ts" file contains the S3Client configuration that uses those AWS env properties.
@@ -15,7 +15,7 @@ S3 BACKGROUND
   - The file name format will be named "memberId-zzz0" where "zzz0" is the numeric memberId number, for example, "memberId-63"
 - A component to call the POST for the upload or download has been created in "src/components/s3/S3Manager.tsx" file.
 
-OBJECTIVE
+## OBJECTIVE
 - The purpose of this request is to provide a new form link in the "src/app/(family)/layout.tsx" file in header bar used by the member and founder family functions.
 - The icon to be used could be a suitable icon from "lucide/icons", like "image-plus". You can swap out the change password and 2FA image files for other lucide/icons, to be consistent in appearance.
 - The member image upload form can be added to a new folder in "src/app/(family)/(family-members)/family-image-upload".

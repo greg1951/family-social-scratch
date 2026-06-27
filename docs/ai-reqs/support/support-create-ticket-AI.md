@@ -1,4 +1,4 @@
-Background
+## Background
 
 The app router folders for Support, and the schema to to support it have been created.
 - The schema can be found in the "src/components/db/schema/family-social-schema-tables.ts" file and the tables have a "support" prefix in their names.
@@ -9,7 +9,7 @@ The support page that is relevant to this request is the "open-issue" page
 - It is located at "src/app/(support)/(logged-in)/open-issue/page.tsx". 
 - This page will be used to create a new support ticket. 
 
-Requirements
+## Requirements
 
 The "open-issue" form consists of the following fields:
 - Title: A brief summary of the issue (required)

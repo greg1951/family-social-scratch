@@ -61,3 +61,14 @@ We can use this column to order the FAQs by their sequence number when displayin
 Update the FAQ maintenance page to show the FAQs in the order of their support_faq.seqNo. 
 When adding a new FAQ, the seqNo can be set to the next available number (e.g., max(seqNo) + 1) to ensure it is added to the end of the list. 
 When editing an existing FAQ, the seqNo can be updated to change its position in the list.
+
+--------------------------
+
+In this request you will generate a list-issues page that lists the issues in the supportIssue table. 
+- As defined in the "src/app/(support)/(logged-in)/issues-list/page.tsx" file, only admin members can access this page.
+- The ListIssuesForm must support showing a list of supportIssue entries. 
+- When selected then allow the admin to change the team from L1 to L2 or vise versa.
+- Key entries for the selected issue is the ability for the admin to compose a response that will be inserted into the supportResponse table. 
+- There should be a checkbox that when checked sets the supportResponse.isProposedResolution to true.
+- TipTap editor should be used to formulate the supportResponse.responseJson.
+

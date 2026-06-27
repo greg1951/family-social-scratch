@@ -1,11 +1,11 @@
-BACKGROUND
+## BACKGROUND
 - In this request a home page to be generated for the Family Social "Games" feature. This page is to accessed from the main page for family members who are logged in.
 
 - There are four game tables (gameMetadata, gameState, gamePlayerState, and gamePlayerRound) defined in the src/components/db/schema/family-social-schema-tables.ts file. They have been deployed to the Neon platform using drizzle.
 
 - The database queries against the those table have not been written yet but when written will reside in the src/components/db/sql/queries-game-scoreboard.ts file. Do not generate any database query code to the tables in this request, as the query code will be developed at a later time.
 
-OBJECTIVE
+## OBJECTIVE
 - What is needed now is a main page and layout to be generated into the src/app/(features)/(games) router group that will render the games from the games tables.
 
 - When generating the Games home page follow the same UI layout patterns as used for the movies implementation. As stated before, this home page is accessible only for members who are logged in.
