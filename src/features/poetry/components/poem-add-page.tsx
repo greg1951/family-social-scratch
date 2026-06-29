@@ -16,6 +16,7 @@ import {
   Redo2,
   Save,
   Tags,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
   Undo2,
@@ -26,7 +27,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { savePoetryHomePoemAction } from "@/app/(features)/(poetry)/poetry/actions";
+import { savePoetryHomePoemAction, deletePoetryHomePoemAction } from "@/app/(features)/(poetry)/poetry/actions";
 import {
   createEmptyTipTapDocument,
   parseSerializedTipTapDocument,
@@ -41,6 +42,14 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
@@ -345,7 +354,12 @@ export function PoemAddPage({
 }) {
   const router = useRouter();
   const isEditMode = Boolean(initialPoem);
+  const isOwner = initialPoem && member.memberId === initialPoem.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditMode && member.isFounder && !isOwner;
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [draft, setDraft] = useState<PoemDraft>(() => (
     initialPoem ? createDraftFromPoem(initialPoem) : createEmptyDraft(member)
   ));
@@ -436,6 +450,18 @@ export function PoemAddPage({
     setVerseLineCount(getEditorLineCount(verseEditor));
   }, [verseEditor]);
 
+  useEffect(() => {
+    if (verseEditor) {
+      verseEditor.setEditable(!isFounderModerating);
+    }
+  }, [verseEditor, isFounderModerating]);
+
+  useEffect(() => {
+    if (analysisEditor) {
+      analysisEditor.setEditable(!isFounderModerating);
+    }
+  }, [analysisEditor, isFounderModerating]);
+
   function handleToggleTag(tagId: number, isChecked: boolean) {
     setDraft((currentDraft) => {
       const isAlreadySelected = currentDraft.selectedTagIds.includes(tagId);
@@ -470,10 +496,11 @@ export function PoemAddPage({
     return tagDescriptionText || "No tag description available.";
   }
 
-  function handleSave() {
-    const normalizedTitle = draft.poemTitle.trim();
-    const normalizedPoetName = draft.poetName.trim();
-    const normalizedYear = draft.poemYear.trim();
+  function handleSave(overrideDraft?: PoemDraft) {
+    const currentDraft = overrideDraft || draft;
+    const normalizedTitle = currentDraft.poemTitle.trim();
+    const normalizedPoetName = currentDraft.poetName.trim();
+    const normalizedYear = currentDraft.poemYear.trim();
 
     if (!normalizedTitle) {
       toast.error("Enter a poem name before saving.");
@@ -490,22 +517,22 @@ export function PoemAddPage({
       return;
     }
 
-    if (draft.selectedTagIds.length === 0) {
+    if (currentDraft.selectedTagIds.length === 0) {
       toast.error("Select at least one poem tag before saving.");
       return;
     }
 
     startSaveTransition(async () => {
       const result = await savePoetryHomePoemAction({
-        id: draft.id > 0 ? draft.id : undefined,
+        id: currentDraft.id > 0 ? currentDraft.id : undefined,
         poemTitle: normalizedTitle,
         poetName: normalizedPoetName,
-        poemSource: draft.poemSource,
+        poemSource: currentDraft.poemSource,
         poemYear: Number(normalizedYear),
-        status: draft.status,
-        verseJson: verseEditor ? serializeTipTapDocument(verseEditor.getJSON()) : draft.verseJson,
-        analysisJson: analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : draft.analysisJson,
-        selectedTagIds: draft.selectedTagIds,
+        status: currentDraft.status,
+        verseJson: verseEditor ? serializeTipTapDocument(verseEditor.getJSON()) : currentDraft.verseJson,
+        analysisJson: analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : currentDraft.analysisJson,
+        selectedTagIds: currentDraft.selectedTagIds,
       });
 
       if (!result.success) {
@@ -514,6 +541,24 @@ export function PoemAddPage({
       }
 
       toast.success(result.message);
+      router.push("/poetry");
+    });
+  }
+
+  function handleDelete() {
+    if (!initialPoem?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deletePoetryHomePoemAction({ poemId: initialPoem.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Poem deleted.");
       router.push("/poetry");
     });
   }
@@ -548,26 +593,17 @@ export function PoemAddPage({
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={ () => router.push("/poetry") }
-                disabled={ isSaving }
-                className="rounded-full border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              >
-                <X className="size-4" />
-                Cancel
-              </Button>
-
-              <Button
-                type="button"
-                onClick={ handleSave }
-                disabled={ isSaving }
-                className="rounded-full bg-white text-[#4e2374] hover:bg-[#f6ebff]"
-              >
-                <Save className="size-4" />
-                { isSaving ? "Saving..." : "Save Poem" }
-              </Button>
+              { !isFounderModerating ? (
+                <Button
+                  type="button"
+                  onClick={ () => handleSave() }
+                  disabled={ isSaving || isDeleting }
+                  className="rounded-full bg-white text-[#4e2374] hover:bg-[#f6ebff]"
+                >
+                  <Save className="size-4" />
+                  { isSaving ? "Saving..." : "Save Poem" }
+                </Button>
+              ) : null }
             </div>
           </div>
         </div>
@@ -575,18 +611,83 @@ export function PoemAddPage({
         {/* Poem Metadata */ }
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
           <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-            <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
-              Poem Details
-            </p>
-            <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
-              Poem Information
-            </h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
-              Enter the poem title, the name of the poet, and the year it was written.
-            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
+                  Poem Details
+                </p>
+                <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
+                  Poem Information
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
+                  Enter the poem title, the name of the poet, and the year it was written.
+                </p>
+              </div>
+
+              { isEditMode && canModerate && (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ () => {
+                      const newStatus = draft.status === "archived" ? "published" : "archived";
+                      setDraft((currentDraft) => ({ ...currentDraft, status: newStatus }));
+                      if (isFounderModerating) {
+                        const updatedDraft = { ...draft, status: newStatus };
+                        handleSave(updatedDraft);
+                      }
+                    } }
+                    disabled={ isSaving || isDeleting }
+                    className="rounded-full border-[#d7d0ea] text-[#5d426f]"
+                  >
+                    { draft.status === "archived" ? "Unarchive" : "Archive" }
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={ () => setIsDeleteConfirmOpen(true) }
+                    disabled={ isSaving || isDeleting }
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </Button>
+                  { !isFounderModerating ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={ () => router.push("/poetry") }
+                        disabled={ isSaving }
+                        className="rounded-full border-[#d7d0ea] text-[#6d5384]"
+                      >
+                        <X className="size-4" />
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => handleSave() }
+                        disabled={ isSaving }
+                        className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                      >
+                        <BookOpen className="size-4" />
+                        { isSaving ? "Saving..." : "Save Poem" }
+                      </Button>
+                    </>
+                  ) : null }
+                </div>
+              ) }
+            </div>
           </div>
 
           <div className="space-y-5 px-5 py-5 sm:px-6">
+            { isFounderModerating && (
+              <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-900">
+                <p className="text-sm font-medium">
+                  As the family founder, you can archive this poem if it doesn't follow guidelines. However, only the original author can edit their own posts.
+                </p>
+              </div>
+            ) }
+
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#5d426f]">Poem Title</label>
@@ -594,7 +695,7 @@ export function PoemAddPage({
                   value={ draft.poemTitle }
                   onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, poemTitle: event.target.value })) }
                   placeholder="Enter the poem title"
-                  disabled={ isSaving }
+                  disabled={ isSaving || isFounderModerating }
                   className="border-[#d7d0ea] text-[#43245d]"
                 />
               </div>
@@ -605,7 +706,7 @@ export function PoemAddPage({
                   value={ draft.poetName }
                   onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, poetName: event.target.value })) }
                   placeholder="Enter the poet's name"
-                  disabled={ isSaving }
+                  disabled={ isSaving || isFounderModerating }
                   className="border-[#d7d0ea] text-[#43245d]"
                 />
               </div>
@@ -616,7 +717,7 @@ export function PoemAddPage({
                   value={ draft.poemYear }
                   onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, poemYear: event.target.value })) }
                   placeholder="e.g. 1923"
-                  disabled={ isSaving }
+                  disabled={ isSaving || isFounderModerating }
                   inputMode="numeric"
                   className="border-[#d7d0ea] text-[#43245d]"
                 />
@@ -628,7 +729,7 @@ export function PoemAddPage({
                   value={ draft.poemSource }
                   onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, poemSource: event.target.value })) }
                   placeholder="e.g. Published collection name"
-                  disabled={ isSaving }
+                  disabled={ isSaving || isFounderModerating }
                   className="border-[#d7d0ea] text-[#43245d]"
                 />
               </div>
@@ -771,31 +872,51 @@ export function PoemAddPage({
           </div>
         </div>
 
-        {/* Bottom Save / Cancel */ }
-        <div className="flex justify-end gap-3 pt-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={ () => router.push("/poetry") }
-            disabled={ isSaving }
-            className="rounded-full border-[#d7d0ea] text-[#6d5384]"
-          >
-            <X className="size-4" />
-            Cancel
-          </Button>
+        {/* Bottom Save / Cancel - Only show when not in founder moderating mode */ }
+        { !isFounderModerating && isEditMode && isOwner ? (
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={ () => router.push("/poetry") }
+              disabled={ isSaving }
+              className="rounded-full border-[#d7d0ea] text-[#6d5384]"
+            >
+              <X className="size-4" />
+              Cancel
+            </Button>
 
-          <Button
-            type="button"
-            onClick={ handleSave }
-            disabled={ isSaving }
-            className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
-          >
-            <BookOpen className="size-4" />
-            { isSaving ? "Saving..." : "Save Poem" }
-          </Button>
-        </div>
+            <Button
+              type="button"
+              onClick={ () => handleSave() }
+              disabled={ isSaving }
+              className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
+            >
+              <BookOpen className="size-4" />
+              { isSaving ? "Saving..." : "Save Poem" }
+            </Button>
+          </div>
+        ) : null }
       </div>
 
+      <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+        <DialogContent className="border-red-200 bg-[#f8fcfe] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#4a7388]">
+              This permanently deletes the poem and its discussion thread. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ isSaving || isDeleting }>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

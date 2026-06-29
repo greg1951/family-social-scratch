@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { addShowComment, getShowDetail, saveShow, saveShowTemplate, toggleShowLike } from '@/components/db/sql/queries-tv';
+import { addShowComment, deleteShow, getShowDetail, saveShow, saveShowTemplate, toggleShowLike } from '@/components/db/sql/queries-tv';
 import { AddShowCommentInput, SaveShowInput, SaveShowTemplateInput, ToggleShowLikeInput } from '@/components/db/types/shows';
 
 export async function saveShowAction(input: SaveShowInput) {
@@ -19,6 +19,7 @@ export async function saveShowAction(input: SaveShowInput) {
   const result = await saveShow(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {
@@ -93,6 +94,30 @@ export async function addShowCommentAction(input: AddShowCommentInput) {
 
   if (result.success) {
     revalidatePath('/tv');
+  }
+
+  return result;
+}
+
+export async function deleteShowAction(input: { showId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a show.',
+    };
+  }
+
+  const result = await deleteShow(input.showId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
+  });
+
+  if (result.success) {
+    revalidatePath('/tv');
+    revalidatePath('/tv/add-show');
   }
 
   return result;

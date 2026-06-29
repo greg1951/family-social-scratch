@@ -31,7 +31,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveMovieAction } from "@/app/(features)/(movies)/movies/actions";
+import { deleteMovieAction, saveMovieAction } from "@/app/(features)/(movies)/movies/actions";
 import {
   createEmptyTipTapDocument,
   parseSerializedTipTapDocument,
@@ -40,6 +40,14 @@ import {
 import { MovieRecord, MovieTagOption, MovieTagType, MovieTemplateOption } from "@/components/db/types/movies";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -158,6 +166,8 @@ export function MovieAddPage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [isMounted, setIsMounted] = useState(false);
   const initialTemplateId = useMemo(() => {
     const globalTemplate = movieTemplates.find((template) => template.isGlobalTemplate);
     return globalTemplate ? String(globalTemplate.id) : TEMPLATE_NONE_VALUE;
@@ -189,7 +199,16 @@ export function MovieAddPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [movieImageUrl, setMovieImageUrl] = useState<string | null>(initialMovie?.movieImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialMovie?.movieImageUrl ?? null);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
+  const isOwner = member.memberId === initialMovie?.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditing && member.isFounder && !isOwner;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE ? undefined : movieTemplates.find((template) => String(template.id) === selectedTemplateId),
@@ -308,7 +327,7 @@ export function MovieAddPage({
       setUploadingImage(true);
       const extension = selectedFile.type === "image/png" ? "png" : "jpg";
       const fileName = `memberId-${ member.memberId }-${ slugifyTitle(movieTitle) }.${ extension }`;
-      const signResponse = await fetch("/api/s3-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upload", folder: "movies", fileName, contentType: selectedFile.type }) });
+      const signResponse = await fetch("/api/s3-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upload", folder: "movies", fileName, contentType: selectedFile.type, uploadTransport: "proxy" }) });
       if (!signResponse.ok) {
         throw new Error("Could not create a signed upload URL.");
       }
@@ -352,7 +371,7 @@ export function MovieAddPage({
     return movieTags.filter((tag) => tag.tagType === tagType).sort((leftTag, rightTag) => leftTag.seqNo !== rightTag.seqNo ? leftTag.seqNo - rightTag.seqNo : leftTag.tagName.localeCompare(rightTag.tagName));
   }
 
-  function handleSave() {
+  function handleSave(nextStatus: string = status) {
     if (!editor) {
       toast.error("Editor is still loading.");
       return;
@@ -375,7 +394,7 @@ export function MovieAddPage({
         movieTitle: movieTitle.trim(),
         submitterLikenessDegree: undefined,
         movieJson: serializeTipTapDocument(editor.getJSON()),
-        status,
+        status: nextStatus,
         movieDebutYear: Number(movieDebutYear) || new Date().getFullYear(),
         templateId,
         selectedTagIds,
@@ -415,7 +434,29 @@ export function MovieAddPage({
       }
       toast.success(isEditing ? "Movie updated." : "Movie saved.");
       router.push("/movies");
-      router.refresh();
+    });
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    handleSave(status === "archived" ? "published" : "archived");
+  }
+
+  function handleDelete() {
+    if (!initialMovie?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteMovieAction({ movieId: initialMovie.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Movie deleted.");
+      router.push("/movies");
     });
   }
 
@@ -445,19 +486,38 @@ export function MovieAddPage({
                 <Button type="button" variant="outline" asChild>
                   <Link href="/movies">Cancel</Link>
                 </Button>
-                <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
-                  <Save className="size-4" />
-                  { isSaving ? "Saving..." : isEditing ? "Update Movie" : "Save Movie" }
-                </Button>
+                { isEditing && canModerate ? (
+                  <>
+                    <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage } className="border-[#d8a85b] bg-[#fff7ea] text-[#7b4a00] hover:bg-[#ffe9bb] hover:text-[#7b4a00]">
+                      { status === "archived" ? "Unarchive" : "Archive" }
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage }>
+                      Delete
+                    </Button>
+                  </>
+                ) : null }
+                { !isFounderModerating ? (
+                  <Button type="button" onClick={ () => handleSave() } disabled={ isSaving || uploadingImage }>
+                    <Save className="size-4" />
+                    { isSaving ? "Saving..." : isEditing ? "Update Movie" : "Save Movie" }
+                  </Button>
+                ) : null }
               </div>
             </div>
           </div>
 
+          { isFounderModerating ? (
+            <div className="border-b border-[#f0d9c4] bg-[#fff8f2] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3 rounded-lg border border-[#d8a85b] bg-[#fff7ea] p-3 text-sm text-[#7b4a00]">
+                <span>You are viewing this as Family Founder. Use Archive or Delete to moderate this post.</span>
+              </div>
+            </div>
+          ) : null }
           <div className="grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-title">Movie Title</label>
-                <Input id="movie-title" value={ movieTitle } onChange={ (event) => setMovieTitle(event.target.value) } placeholder="Enter movie title" />
+                <Input id="movie-title" disabled={ isFounderModerating } value={ movieTitle } onChange={ (event) => setMovieTitle(event.target.value) } placeholder="Enter movie title" />
               </div>
               <div className="space-y-3 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
                 <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c2e1a]">
@@ -471,6 +531,7 @@ export function MovieAddPage({
                     <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-image-credit">Image Credit</label>
                     <textarea
                       id="movie-image-credit"
+                      disabled={ isFounderModerating }
                       value={ movieImageCredit }
                       onChange={ (event) => setMovieImageCredit(event.target.value) }
                       placeholder="Title: [Source Name] | Source: [image URL]"
@@ -481,7 +542,7 @@ export function MovieAddPage({
                       <p className="text-xs text-red-600">{ movieImageCreditError }</p>
                     ) : null }
                   </div>
-                  <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage } />
+                  <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage || isFounderModerating } />
                   { imagePreviewUrl ? (
                     <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
                       {/* eslint-disable-next-line @next/next/no-img-element */ }
@@ -509,6 +570,7 @@ export function MovieAddPage({
                     <p className="text-xs text-[#8b5a3c]">Optional. Only IMDb and YouTube URLs are accepted (must be https).</p>
                     <Input
                       id="movie-site-url"
+                      disabled={ isFounderModerating }
                       value={ movieSiteUrl }
                       onChange={ (event) => setMovieSiteUrl(event.target.value) }
                       placeholder="https://www.imdb.com/title/..."
@@ -528,6 +590,7 @@ export function MovieAddPage({
                             type="radio"
                             name="movie-site-background"
                             value={ scheme.value }
+                            disabled={ isFounderModerating }
                             checked={ movieSiteBackground === scheme.value }
                             onChange={ () => setMovieSiteBackground(scheme.value) }
                             className="peer sr-only"
@@ -545,26 +608,38 @@ export function MovieAddPage({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
-                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
-                    <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
-                      { movieTemplates.map((template) => (
-                        <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
-                      )) }
-                    </SelectContent>
-                  </Select>
+                  { isMounted ? (
+                    <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
+                        { movieTemplates.map((template) => (
+                          <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex h-10 items-center rounded-xl border border-[#e8c4a0] bg-white px-3 text-sm text-[#8b5a3c]">
+                      Select template
+                    </div>
+                  ) }
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Status</label>
-                  <Select value={ status } onValueChange={ setStatus }>
-                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  { isMounted ? (
+                    <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="flex h-10 items-center rounded-xl border border-[#e8c4a0] bg-white px-3 text-sm text-[#8b5a3c]">
+                      Select status
+                    </div>
+                  ) }
                 </div>
               </div>
               <div className="space-y-2">
@@ -579,15 +654,21 @@ export function MovieAddPage({
                   { TAG_TYPE_LABELS.map(({ type, label }) => (
                     <div key={ type } className="space-y-2">
                       <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b5a3c]">{ label }</label>
-                      <Select value={ selectedTagsByType[type] ?? "none" } onValueChange={ (value) => setSelectedTagForType(type, value === "none" ? "" : value) }>
-                        <SelectTrigger><SelectValue placeholder={ `Select ${ label.toLowerCase() }` } /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
-                          { getTagOptionsForType(type).map((tag) => (
-                            <SelectItem key={ tag.id } value={ String(tag.id) }>{ tag.tagName }</SelectItem>
-                          )) }
-                        </SelectContent>
-                      </Select>
+                      { isMounted ? (
+                        <Select value={ selectedTagsByType[type] ?? "none" } onValueChange={ (value) => setSelectedTagForType(type, value === "none" ? "" : value) }>
+                          <SelectTrigger><SelectValue placeholder={ `Select ${ label.toLowerCase() }` } /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            { getTagOptionsForType(type).map((tag) => (
+                              <SelectItem key={ tag.id } value={ String(tag.id) }>{ tag.tagName }</SelectItem>
+                            )) }
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="flex h-10 items-center rounded-xl border border-[#e8c4a0] bg-white px-3 text-sm text-[#8b5a3c]">
+                          Select { label.toLowerCase() }
+                        </div>
+                      ) }
                     </div>
                   )) }
                 </div>
@@ -618,6 +699,44 @@ export function MovieAddPage({
             </div>
           </div>
         </div>
+
+        <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+          <DialogContent className="border-[#d8a85b] bg-[#fffaf0] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[#5c2e1a]">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#8b5a3c]">
+                Archiving this movie will hide it from active lists, but the record will remain so you can restore it later.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" onClick={ handleArchive } disabled={ isSaving || isDeleting } className="bg-[#b8581a] text-white hover:bg-[#9d4511]">
+                Archive
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+          <DialogContent className="border-red-200 bg-[#fff9f8] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#8b5a3c]">
+                This permanently deletes the movie and its discussion thread. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ isSaving || isDeleting }>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );

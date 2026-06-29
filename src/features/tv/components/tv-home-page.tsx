@@ -340,7 +340,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       : shows.find((show) => show.id === selectedShow))
     ?? shows[0]
     ?? null;
-  const canEditSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId === member.memberId);
+  const canEditSelectedShow = Boolean(selectedShowBasic && (selectedShowBasic.memberId === member.memberId || member.isFounder));
   const canReactToSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId !== member.memberId);
   const selectedShowThumbsUpCount = selectedShowDetail?.id === selectedShow
     ? selectedShowDetail.thumbsUpCount
@@ -556,7 +556,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       No shows match that search yet.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                       { filteredShows.map((show) => {
                         const isSelected = selectedShow === show.id;
 
@@ -593,7 +593,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                             </div>
 
                             <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#376176]">
-                              <span>S{ show.seasons }</span>
+                              <span>S:{ show.seasons }</span>
                               <span>·</span>
                               <span className="inline-flex items-center gap-1">
                                 <ThumbsUp className="size-3 text-[#2d87a8]" />

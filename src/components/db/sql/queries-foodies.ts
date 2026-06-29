@@ -3,6 +3,7 @@ import { and, asc, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 
 import {
   member,
+  discussThread,
   recipe,
   recipeComment,
   recipeLike,
@@ -576,6 +577,7 @@ export async function saveFoodiesRecipe(
     familyId: number;
     memberId: number;
     isAdmin?: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveFoodiesRecipeReturn> {
   const normalizedTitle = input.recipeTitle.trim();
@@ -612,10 +614,55 @@ export async function saveFoodiesRecipe(
   }
 
   if (existingRecipe && existingRecipe.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: "Only the member who created this recipe can edit it.",
-    };
+    // Allow founders to archive/unarchive recipes, but not edit other fields
+    const isFounderModifyingArchiveStatus = actor.isFounder && 
+      (input.status === 'archived' || (existingRecipe.status === 'archived' && input.status === 'published'));
+    
+    if (!isFounderModifyingArchiveStatus) {
+      return {
+        success: false,
+        message: "Only the member who created this recipe can edit it.",
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedRecipe] = await db
+        .update(recipe)
+        .set({ status: input.status })
+        .where(eq(recipe.id, existingRecipe.id))
+        .returning();
+
+      if (!updatedRecipe) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive recipe with id: ${input.id}`,
+        };
+      }
+
+      // Load the full updated recipe to return
+      const recipes = await loadFoodiesRecipes(actor.familyId);
+      const fullUpdatedRecipe = recipes.find((r) => r.id === updatedRecipe.id);
+
+      if (!fullUpdatedRecipe) {
+        return {
+          success: false,
+          message: `Failed to load updated recipe with id: ${input.id}`,
+        };
+      }
+
+      return {
+        success: true,
+        recipe: fullUpdatedRecipe,
+        message: updatedRecipe.status === "archived" ? "Recipe archived." : "Recipe unarchived.",
+      };
+    } catch (error) {
+      console.error("Error archiving recipe:", error);
+      return {
+        success: false,
+        message: "An error occurred while archiving the recipe.",
+      };
+    }
   }
 
   const duplicateRows = await db
@@ -1464,4 +1511,79 @@ export async function saveRecipeTerm(input: SaveRecipeTermInput): Promise<SaveRe
     },
     message: `Created "${result.term}".`,
   };
+}
+
+export async function deleteRecipeTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const [existingTerm] = await db
+    .select({ id: recipeTerm.id })
+    .from(recipeTerm)
+    .where(eq(recipeTerm.id, id))
+    .limit(1);
+
+  if (!existingTerm) {
+    return {
+      success: false,
+      message: `No recipe term found for id: ${id}`,
+    };
+  }
+
+  try {
+    await db.delete(recipeTerm).where(eq(recipeTerm.id, id));
+
+    return {
+      success: true,
+      message: "Recipe term deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting recipe term",
+    };
+  }
+}
+
+export async function deleteRecipe(
+  recipeId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(recipe.id, recipeId), eq(recipe.familyId, actor.familyId))
+    : and(eq(recipe.id, recipeId), eq(recipe.familyId, actor.familyId), eq(recipe.memberId, actor.memberId));
+
+  const existingRecipe = await db
+    .select({ id: recipe.id })
+    .from(recipe)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingRecipe) {
+    return {
+      success: false,
+      message: `No recipe was found for id: ${recipeId}`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "recipe"), eq(discussThread.targetId, recipeId), eq(discussThread.familyId, actor.familyId)));
+
+    await db
+      .delete(recipe)
+      .where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Recipe deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting recipe",
+    };
+  }
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { addPoemComment, savePoetryHomePoem, togglePoemReaction } from '@/components/db/sql/queries-poetry-cafe';
+import { addPoemComment, savePoetryHomePoem, togglePoemReaction, deletePoem } from '@/components/db/sql/queries-poetry-cafe';
 import { AddPoemCommentInput, SavePoetryHomePoemInput, TogglePoemReactionInput } from '@/components/db/types/poem-verses';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
@@ -20,6 +20,7 @@ export async function savePoetryHomePoemAction(input: SavePoetryHomePoemInput) {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
     isAdmin: memberDetails.isAdmin,
+    isFounder: memberDetails.isFounder,
   });
 
   if (result.success) {
@@ -62,6 +63,28 @@ export async function addPoemCommentAction(input: AddPoemCommentInput) {
   }
 
   const result = await addPoemComment(input.poemId, input.commentText, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePath('/poetry');
+  }
+
+  return result;
+}
+
+export async function deletePoetryHomePoemAction(input: { poemId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a poem.',
+    };
+  }
+
+  const result = await deletePoem(input.poemId, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

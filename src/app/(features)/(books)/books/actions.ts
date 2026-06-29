@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 
-import { addBookComment, saveBooksHomeBook, toggleBookReaction } from '@/components/db/sql/queries-book-besties';
+import { addBookComment, deleteBook, saveBooksHomeBook, toggleBookReaction } from '@/components/db/sql/queries-book-besties';
 import { AddBookCommentInput, SaveBooksHomeBookInput, ToggleBookReactionInput } from '@/components/db/types/books';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 
@@ -20,6 +20,7 @@ export async function saveBooksHomeBookAction(input: SaveBooksHomeBookInput) {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
     isAdmin: memberDetails.isAdmin,
+    isFounder: memberDetails.isFounder,
   });
 
   if (result.success) {
@@ -64,6 +65,29 @@ export async function addBookCommentAction(input: AddBookCommentInput) {
   const result = await addBookComment(input.bookId, input.commentText, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePath('/books');
+  }
+
+  return result;
+}
+
+export async function deleteBooksHomeBookAction(input: { bookId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a book.',
+    };
+  }
+
+  const result = await deleteBook(input.bookId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder,
   });
 
   if (result.success) {

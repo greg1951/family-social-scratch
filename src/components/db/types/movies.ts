@@ -130,6 +130,13 @@ export type SaveMovieReturn =
       message: string;
     };
 
+export type DeleteMovieReturn =
+  | { success: false; message: string }
+  | {
+      success: true;
+      message: string;
+    };
+
 export type SaveMovieTemplateReturn =
   | { success: false; message: string }
   | {

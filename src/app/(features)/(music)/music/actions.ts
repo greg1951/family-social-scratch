@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
 import {
   addMusicComment,
+  deleteMusic,
   getMusicDetail,
   saveMusic,
   saveMusicLyrics,
@@ -32,6 +33,7 @@ export async function saveMusicAction(input: SaveMusicInput) {
   const result = await saveMusic(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {
@@ -129,6 +131,30 @@ export async function addMusicCommentAction(input: AddMusicCommentInput) {
 
   if (result.success) {
     revalidatePath('/music');
+  }
+
+  return result;
+}
+
+export async function deleteMusicAction(input: { musicId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete music.',
+    };
+  }
+
+  const result = await deleteMusic(input.musicId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
+  });
+
+  if (result.success) {
+    revalidatePath('/music');
+    revalidatePath('/music/add-music');
   }
 
   return result;

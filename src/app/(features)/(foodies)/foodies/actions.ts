@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { saveFoodiesRecipe, saveFoodiesTemplate, toggleRecipeLike, addRecipeComment, getFoodiesRecipeDetail } from '@/components/db/sql/queries-foodies';
+import { saveFoodiesRecipe, saveFoodiesTemplate, toggleRecipeLike, addRecipeComment, getFoodiesRecipeDetail, deleteRecipe } from '@/components/db/sql/queries-foodies';
 import { SaveFoodiesRecipeInput, SaveFoodiesTemplateInput, ToggleRecipeLikeInput, AddRecipeCommentInput } from '@/components/db/types/recipes';
 
 export async function saveFoodiesRecipeAction(input: SaveFoodiesRecipeInput) {
@@ -20,6 +20,7 @@ export async function saveFoodiesRecipeAction(input: SaveFoodiesRecipeInput) {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
     isAdmin: memberDetails.isAdmin ?? false,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {
@@ -91,6 +92,29 @@ export async function addRecipeCommentAction(input: AddRecipeCommentInput) {
   const result = await addRecipeComment(input.recipeId, input.commentText, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
+  });
+
+  if (result.success) {
+    revalidatePath('/foodies');
+  }
+
+  return result;
+}
+
+export async function deleteFoodiesRecipeAction(input: { recipeId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a recipe.',
+    };
+  }
+
+  const result = await deleteRecipe(input.recipeId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {

@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { addMovieComment, getMovieDetail, saveMovie, saveMovieTemplate, toggleMovieLike } from '@/components/db/sql/queries-movies';
-import { AddMovieCommentInput, SaveMovieInput, SaveMovieTemplateInput, ToggleMovieLikeInput } from '@/components/db/types/movies';
+import { addMovieComment, deleteMovie, getMovieDetail, saveMovie, saveMovieTemplate, toggleMovieLike } from '@/components/db/sql/queries-movies';
+import { AddMovieCommentInput, DeleteMovieReturn, SaveMovieInput, SaveMovieTemplateInput, ToggleMovieLikeInput } from '@/components/db/types/movies';
 
 export async function saveMovieAction(input: SaveMovieInput) {
   const memberDetails = await getMemberPageDetails();
@@ -19,6 +19,7 @@ export async function saveMovieAction(input: SaveMovieInput) {
   const result = await saveMovie(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {
@@ -93,6 +94,30 @@ export async function addMovieCommentAction(input: AddMovieCommentInput) {
 
   if (result.success) {
     revalidatePath('/movies');
+  }
+
+  return result;
+}
+
+export async function deleteMovieAction(input: { movieId: number }): Promise<DeleteMovieReturn> {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a movie.',
+    };
+  }
+
+  const result = await deleteMovie(input.movieId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
+  });
+
+  if (result.success) {
+    revalidatePath('/movies');
+    revalidatePath('/movies/add-movie');
   }
 
   return result;

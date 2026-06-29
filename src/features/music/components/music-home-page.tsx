@@ -258,8 +258,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
 
   const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? musics[0] ?? null;
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
-  const canEditSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId === member.memberId);
-  const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId === member.memberId && selectedMusicBasic.isSong);
+  const canEditSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder));
+  const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder) && selectedMusicBasic.isSong);
   const canViewLyricsSelectedMusic = Boolean(
     selectedMusicBasic?.isSong
     && selectedMusicDetail?.id === selectedMusic
@@ -443,7 +443,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                       No music posts match that search yet.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                       { filteredMusics.map((music) => {
                         const isSelected = selectedMusic === music.id;
 

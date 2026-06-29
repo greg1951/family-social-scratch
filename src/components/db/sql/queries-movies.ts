@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 
 import {
   member,
+  discussThread,
   movie,
   movieComment,
   movieLike,
@@ -13,6 +14,7 @@ import {
 import { loadDiscussionThreadSummariesByTargetIds, loadDiscussionThreadSummariesForTargetId } from "./queries-discuss-threads";
 import {
   AddMovieCommentReturn,
+  DeleteMovieReturn,
   GetMovieDetailReturn,
   MovieComment,
   MovieDetail,
@@ -44,6 +46,50 @@ import {
 } from "./queries-family-activity";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
+
+export async function deleteMovie(
+  movieId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<DeleteMovieReturn> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(movie.id, movieId), eq(movie.familyId, actor.familyId))
+    : and(eq(movie.id, movieId), eq(movie.familyId, actor.familyId), eq(movie.memberId, actor.memberId));
+
+  const existingMovie = await db
+    .select({ id: movie.id })
+    .from(movie)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingMovie) {
+    return {
+      success: false,
+      message: `No movie was found for id: ${ movieId }`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "movie"), eq(discussThread.targetId, movieId), eq(discussThread.familyId, actor.familyId)));
+
+    await db.delete(movie).where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Movie deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting movie",
+    };
+  }
+}
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -651,6 +697,7 @@ export async function saveMovie(
   actor: {
     familyId: number;
     memberId: number;
+    isFounder?: boolean;
   }
 ): Promise<SaveMovieReturn> {
   const normalizedTitle = input.movieTitle.trim();
@@ -679,10 +726,63 @@ export async function saveMovie(
   }
 
   if (existingMovie && existingMovie.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: "Only the member who created this movie can edit it.",
-    };
+    if (!actor.isFounder) {
+      return {
+        success: false,
+        message: "Only the member who created this movie can edit it.",
+      };
+    }
+
+    // Founders can only change status to/from archived
+    const isArchiveStatusChange =
+      input.status === "archived" || 
+      (existingMovie.status === "archived" && input.status === "published");
+
+    if (!isArchiveStatusChange) {
+      return {
+        success: false,
+        message: "Only the member who created this movie can edit it.",
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedMovie] = await db
+        .update(movie)
+        .set({ status: input.status })
+        .where(eq(movie.id, existingMovie.id))
+        .returning();
+
+      if (!updatedMovie) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive movie with id: ${input.id}`,
+        };
+      }
+
+      // Load the full updated movie to return
+      const movies = await loadMovies(actor.familyId, actor.memberId);
+      const fullUpdatedMovie = movies.find((m) => m.id === updatedMovie.id);
+
+      if (!fullUpdatedMovie) {
+        return {
+          success: false,
+          message: `Failed to load updated movie with id: ${input.id}`,
+        };
+      }
+
+      return {
+        success: true,
+        movie: fullUpdatedMovie,
+        message: updatedMovie.status === "archived" ? "Movie archived." : "Movie unarchived.",
+      };
+    } catch (error) {
+      console.error("Error archiving movie:", error);
+      return {
+        success: false,
+        message: "An error occurred while archiving the movie.",
+      };
+    }
   }
 
   const templates = await loadMovieTemplates(actor.familyId, actor.memberId, {
@@ -702,12 +802,6 @@ export async function saveMovie(
 
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
-  if (!existingMovie && !hasSubmitterLikenessDegree) {
-    return {
-      success: false,
-      message: "Select Like or Love for your own movie post.",
-    };
-  }
 
   const normalizedMovieJson = input.movieJson?.trim();
   const parsedMovieJson = normalizedMovieJson ? parseSerializedTipTapDocument(normalizedMovieJson) : null;
@@ -716,6 +810,19 @@ export async function saveMovie(
     : selectedTemplate.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
 
   try {
+    const movieInsertValues = {
+      movieTitle: normalizedTitle,
+      movieImageCredit: input.movieImageCredit,
+      movieSiteUrl: input.movieSiteUrl ?? null,
+      movieSiteBackground: input.movieSiteBackground ?? "#000000",
+      movieJson: movieJsonToStore,
+      status: input.status,
+      movieImageUrl: input.movieImageUrl ?? null,
+      movieDebutYear: input.movieDebutYear,
+      memberId: actor.memberId,
+      familyId: actor.familyId,
+    };
+
     const [persistedMovie] = input.id
       ? await db
         .update(movie)
@@ -734,18 +841,7 @@ export async function saveMovie(
         .returning()
       : await db
         .insert(movie)
-        .values({
-          movieTitle: normalizedTitle,
-          movieImageCredit: input.movieImageCredit,
-          movieSiteUrl: input.movieSiteUrl ?? null,
-          movieSiteBackground: input.movieSiteBackground ?? "#000000",
-          movieJson: movieJsonToStore,
-          status: input.status,
-          movieImageUrl: input.movieImageUrl ?? null,
-          movieDebutYear: input.movieDebutYear,
-          memberId: actor.memberId,
-          familyId: actor.familyId,
-        })
+        .values(movieInsertValues)
         .returning();
 
     if (!persistedMovie) {

@@ -28,9 +28,9 @@ export default async function AddMoviePage({ searchParams }: { searchParams: Pro
   const movieTags = movieData.success ? movieData.movieTags : [];
   const movieTemplates = movieData.success ? movieData.movieTemplates : [];
 
-  // Only allow editing if the logged-in member is the submitter
+  // Only allow editing if the logged-in member is the submitter or is the founder
   const initialMovie =
-    editMovieResult?.success && editMovieResult.movie.memberId === memberKeyDetails.memberId
+    editMovieResult?.success && (editMovieResult.movie.memberId === memberKeyDetails.memberId || memberKeyDetails.isFounder)
       ? editMovieResult.movie
       : null;
 

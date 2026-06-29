@@ -345,7 +345,7 @@ export function FoodiesHomePage({
   const selectedRecipeOwnerId = recipes.find((recipe) => recipe.id === selectedRecipe)?.memberId ?? null;
   const canEditSelectedRecipe = Boolean(
     selectedRecipeOwnerId !== null
-    && selectedRecipeOwnerId === member.memberId
+    && (selectedRecipeOwnerId === member.memberId || member.isFounder)
   );
   const canReactToSelectedRecipe = Boolean(selectedRecipeBasic && selectedRecipeBasic.memberId !== member.memberId);
 
@@ -896,7 +896,7 @@ export function FoodiesHomePage({
                     No recipes match that search yet.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                     { filteredRecipes.map((recipe) => {
                       const isSelected = selectedRecipe === recipe.id;
 
@@ -911,15 +911,15 @@ export function FoodiesHomePage({
                             `Added by ${ recipe.chef }`,
                           ].join("\n") }
                           className={ [
-                            "w-full rounded-xl border p-2 text-left transition-all duration-200",
+                            "grid w-55 md:w-45 lg:w-45 gap-2 rounded-xl border px-2 py-2 text-left transition-all duration-200",
                             "hover:border-[#cfe8b2] hover:shadow-[0_12px_30px_-26px_rgba(38,54,26,0.8)]",
                             isSelected
                               ? "border-[#cfe8b2] bg-[#f3fce7] shadow-[0_16px_34px_-24px_rgba(38,54,26,0.85)]"
                               : "border-[#dbeacc] bg-white",
                           ].join(" ") }
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="min-w-0 truncate text-[13px] font-semibold text-[#2f4820]">{ recipe.name }</p>
+                          <div className="flex items-start justify-between gap-1">
+                            <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-semibold text-[#2f4820]">{ recipe.name }</p>
                             { recipe.hasDiscussionThread ? (
                               <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#eef9d9] text-[#578c24]" title="Discussion thread available">
                                 <MessageSquare className="size-3" aria-label="Discussion thread available" />

@@ -160,7 +160,7 @@ export function MovieScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-4">
         <div
-          className="grid max-h-800 grid-cols-1 gap-3 overflow-y-auto px-1 pb-1 pt-1 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid max-h-800 grid-cols-2 gap-3 overflow-y-auto px-1 pb-1 pt-1 lg:grid-cols-3"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;

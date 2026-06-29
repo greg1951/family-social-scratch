@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -66,7 +66,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { savePoemTermAction } from "@/app/(features)/(poetry)/poem-terms/actions";
+import { deletePoemTermAction, savePoemTermAction } from "@/app/(features)/(poetry)/poem-terms/actions";
 
 const poemTermFormSchema = z.object({
   term: z.string().trim().min(2, "Enter at least 2 characters for the term."),
@@ -136,10 +136,14 @@ function ToolbarButton({
 export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
   const router = useRouter();
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
   const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
   const [justSaved, setJustSaved] = useState(false);
+  const [isArchiving, startArchiveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const initialEditorContent = getInitialEditorContent(poemTerm?.termJson);
   const form = useForm<PoemTermFormValues>({
     resolver: zodResolver(poemTermFormSchema),
@@ -273,7 +277,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
     setIsLinkDialogOpen(false);
   }
 
-  async function handleSubmit(values: PoemTermFormValues) {
+  async function persistPoemTerm(values: PoemTermFormValues, nextStatus = values.status) {
     if (!editor) {
       toast.error("Editor is still loading. Try again in a moment.", {
         position: "top-center",
@@ -295,7 +299,7 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
     const payload: SavePoemTermInput = {
       id: poemTerm?.id,
       term: values.term,
-      status: values.status,
+      status: nextStatus,
       termJson: validationResult.data,
     };
 
@@ -325,6 +329,42 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
       router.push("/poem-terms");
       router.refresh();
     }
+  }
+
+  async function handleSubmit(values: PoemTermFormValues) {
+    return persistPoemTerm(values);
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    startArchiveTransition(async () => {
+      await persistPoemTerm(form.getValues(), "archived");
+    });
+  }
+
+  function handleDelete() {
+    if (!poemTerm?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deletePoemTermAction({ id: poemTerm.id });
+
+      if (!result.success) {
+        toast.error(result.message, {
+          position: "top-center",
+          duration: 2500,
+        });
+        return;
+      }
+
+      toast.success(result.message, {
+        position: "top-center",
+        duration: 2500,
+      });
+      router.push("/poem-terms");
+    });
   }
 
   return (
@@ -359,6 +399,16 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
               <p className="mt-1 text-sm text-[#f3e8ff]">
                 { isEditing ? poemTerm?.term : "New glossary entry" }
               </p>
+              { isEditing ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                    Archive
+                  </Button>
+                  <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+                    Delete
+                  </Button>
+                </div>
+              ) : null }
             </div>
           </div>
         </div>
@@ -639,6 +689,44 @@ export function PoemTermEditorPage({ poemTerm }: PoemTermEditorPageProps) {
             </Button>
             <Button type="button" onClick={ applyLink }>
               Apply Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+        <DialogContent className="border-[#d7d0ea] bg-[#fcf9ff] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#43245d]">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#77578f]">
+              Archiving this poem term will hide it from active lists, but the record will remain so you can restore it later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" onClick={ handleArchive } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="bg-[#5a2f85] text-white hover:bg-[#47216b]">
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+        <DialogContent className="border-red-200 bg-[#f8fbff] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#77578f]">
+              This permanently deletes the poem term. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

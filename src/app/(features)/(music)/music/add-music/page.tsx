@@ -28,9 +28,9 @@ export default async function AddMusicPage({ searchParams }: { searchParams: Pro
   const musicTags = musicData.success ? musicData.musicTags : [];
   const musicTemplates = musicData.success ? musicData.musicTemplates : [];
 
-  // Only allow editing if the logged-in member is the submitter
+  // Only allow editing if the logged-in member is the submitter or is the founder
   const initialMusic =
-    editMusicResult?.success && editMusicResult.music.memberId === memberKeyDetails.memberId
+    editMusicResult?.success && (editMusicResult.music.memberId === memberKeyDetails.memberId || memberKeyDetails.isFounder)
       ? editMusicResult.music
       : null;
 

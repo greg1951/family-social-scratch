@@ -3,6 +3,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull, ne, or } from "drizzle-orm"
 
 import {
   member,
+  discussThread,
   show,
   showComment,
   showLike,
@@ -47,6 +48,50 @@ import {
 } from "./queries-family-activity";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
+
+export async function deleteShow(
+  showId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(show.id, showId), eq(show.familyId, actor.familyId))
+    : and(eq(show.id, showId), eq(show.familyId, actor.familyId), eq(show.memberId, actor.memberId));
+
+  const existingShow = await db
+    .select({ id: show.id })
+    .from(show)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingShow) {
+    return {
+      success: false,
+      message: `No show was found for id: ${ showId }`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "show"), eq(discussThread.targetId, showId), eq(discussThread.familyId, actor.familyId)));
+
+    await db.delete(show).where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Show deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting show",
+    };
+  }
+}
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -670,6 +715,7 @@ export async function saveShow(
   actor: {
     familyId: number;
     memberId: number;
+    isFounder?: boolean;
   }
 ): Promise<SaveShowReturn> {
   const normalizedTitle = input.showTitle.trim();
@@ -698,10 +744,63 @@ export async function saveShow(
   }
 
   if (existingShow && existingShow.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: "Only the member who created this show can edit it.",
-    };
+    if (!actor.isFounder) {
+      return {
+        success: false,
+        message: "Only the member who created this show can edit it.",
+      };
+    }
+
+    // Founders can only change status to/from archived
+    const isArchiveStatusChange =
+      input.status === "archived" || 
+      (existingShow.status === "archived" && input.status === "published");
+
+    if (!isArchiveStatusChange) {
+      return {
+        success: false,
+        message: "Only the member who created this show can edit it.",
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedShow] = await db
+        .update(show)
+        .set({ status: input.status })
+        .where(eq(show.id, existingShow.id))
+        .returning();
+
+      if (!updatedShow) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive show with id: ${input.id}`,
+        };
+      }
+
+      // Load the full updated show to return
+      const shows = await loadShows(actor.familyId, actor.memberId);
+      const fullUpdatedShow = shows.find((s) => s.id === updatedShow.id);
+
+      if (!fullUpdatedShow) {
+        return {
+          success: false,
+          message: `Failed to load updated show with id: ${input.id}`,
+        };
+      }
+
+      return {
+        success: true,
+        show: fullUpdatedShow,
+        message: updatedShow.status === "archived" ? "Show archived." : "Show unarchived.",
+      };
+    } catch (error) {
+      console.error("Error archiving show:", error);
+      return {
+        success: false,
+        message: "An error occurred while archiving the show.",
+      };
+    }
   }
 
   const templates = await loadShowTemplates(actor.familyId, actor.memberId, {
@@ -721,12 +820,6 @@ export async function saveShow(
 
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
-  if (!existingShow && !hasSubmitterLikenessDegree) {
-    return {
-      success: false,
-      message: "Select Like or Love for your own show post.",
-    };
-  }
 
   const showJsonToStore = input.showJson?.trim() || selectedTemplate.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
 

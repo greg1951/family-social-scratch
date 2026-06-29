@@ -2,6 +2,7 @@ import db from '@/components/db/drizzle';
 import { and, asc, count, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import {
   member,
+  discussThread,
   poemComment,
   poem,
   poemCategoryTag,
@@ -347,6 +348,7 @@ export async function savePoetryHomePoem(
     familyId: number;
     memberId: number;
     isAdmin?: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SavePoetryHomePoemReturn> {
   const normalizedTitle = input.poemTitle.trim();
@@ -435,10 +437,55 @@ export async function savePoetryHomePoem(
   }
 
   if (existingPoem && existingPoem.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: 'Only the poem submitter can save changes to this poem.',
-    };
+    // Allow founders to archive/unarchive poems, but not edit other fields
+    const isFounderModifyingArchiveStatus = actor.isFounder && 
+      (input.status === 'archived' || (existingPoem.status === 'archived' && input.status === 'published'));
+    
+    if (!isFounderModifyingArchiveStatus) {
+      return {
+        success: false,
+        message: 'Only the poem submitter can save changes to this poem.',
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedPoem] = await db
+        .update(poem)
+        .set({ status: input.status })
+        .where(eq(poem.id, existingPoem.id))
+        .returning();
+
+      if (!updatedPoem) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive poem with id: ${ input.id }`,
+        };
+      }
+
+      // Load the full updated poem to return
+      const poems = await loadPoetryHomePoems(actor.familyId, [updatedPoem.id]);
+      const fullUpdatedPoem = poems[0];
+
+      if (!fullUpdatedPoem) {
+        return {
+          success: false,
+          message: `Failed to load updated poem with id: ${ input.id }`,
+        };
+      }
+
+      return {
+        success: true,
+        poem: fullUpdatedPoem,
+        message: updatedPoem.status === 'archived' ? 'Poem archived.' : 'Poem unarchived.',
+      };
+    } catch (error) {
+      console.error('Error archiving poem:', error);
+      return {
+        success: false,
+        message: 'An error occurred while archiving the poem.',
+      };
+    }
   }
 
   const existingVerse = existingPoem
@@ -1028,6 +1075,35 @@ export async function savePoemTerm(input: SavePoemTermInput)
   };
 }
 
+export async function deletePoemTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const [existingTerm] = await db
+    .select({ id: poemTerm.id })
+    .from(poemTerm)
+    .where(eq(poemTerm.id, id))
+    .limit(1);
+
+  if (!existingTerm) {
+    return {
+      success: false,
+      message: `No poem term found for id: ${id}`,
+    };
+  }
+
+  try {
+    await db.delete(poemTerm).where(eq(poemTerm.id, id));
+
+    return {
+      success: true,
+      message: "Poem term deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting poem term",
+    };
+  }
+}
+
 export async function getPoemCategoryWithTags()
   : Promise<PoemCategoryWithTagsReturn> {
   const categoryRows = await db
@@ -1347,4 +1423,58 @@ export async function deletePoemCategory(
     success: true,
     message: `Deleted category "${ existingCategory.categoryName }".`,
   };
+}
+
+export async function deletePoem(
+  poemId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(poem.id, poemId), eq(poem.familyId, actor.familyId))
+    : and(eq(poem.id, poemId), eq(poem.familyId, actor.familyId), eq(poem.memberId, actor.memberId));
+
+  const existingPoem = await db
+    .select({ id: poem.id })
+    .from(poem)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingPoem) {
+    return {
+      success: false,
+      message: `No poem was found for id: ${poemId}`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "poem"), eq(discussThread.targetId, poemId), eq(discussThread.familyId, actor.familyId)));
+
+    await db
+      .delete(poemCategoryTag)
+      .where(eq(poemCategoryTag.poemId, poemId));
+
+    await db
+      .delete(poemVerse)
+      .where(eq(poemVerse.poemId, poemId));
+
+    await db
+      .delete(poem)
+      .where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Poem deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting poem",
+    };
+  }
 }

@@ -30,7 +30,7 @@ export default async function EditShowPage({
     getTvShowById(memberKeyDetails.familyId, parsedShowId, memberKeyDetails.memberId),
   ]);
 
-  if (!showResult.success || showResult.show.memberId !== memberKeyDetails.memberId) {
+  if (!showResult.success || (showResult.show.memberId !== memberKeyDetails.memberId && !memberKeyDetails.isFounder)) {
     redirect("/tv");
   }
 

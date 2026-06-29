@@ -262,7 +262,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const selectedMovieName = finderRows.find((movie) => movie.id === selectedMovie)?.name ?? "";
   const selectedMovieBasic = (selectedMovieDetail?.id === selectedMovie ? selectedMovieDetail : movies.find((movie) => movie.id === selectedMovie)) ?? movies[0] ?? null;
   const canReactToSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId !== member.memberId);
-  const canEditSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId === member.memberId);
+  const canEditSelectedMovie = Boolean(selectedMovieBasic && (selectedMovieBasic.memberId === member.memberId || member.isFounder));
 
   function handleSelectMovie(movieId: number) {
     setSelectedMovie(movieId);
@@ -394,7 +394,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Directory</p>
-                    <span className="inline-flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c] sm:flex-nowrap">
+                    <span className="flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">Movie Finder</h2>
                       <FeatureFaqHelp
                         href="/feature-faq?category=TV%20and%20Movie%20Reviews"
@@ -455,7 +455,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       No movies match that search yet.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                       { filteredMovies.map((movie) => {
                         const isSelected = selectedMovie === movie.id;
 

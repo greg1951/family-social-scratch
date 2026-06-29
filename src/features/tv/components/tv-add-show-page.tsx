@@ -33,7 +33,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveShowAction } from "@/app/(features)/(tv)/tv/actions";
+import { deleteShowAction, saveShowAction } from "@/app/(features)/(tv)/tv/actions";
 import {
   createEmptyTipTapDocument,
   parseSerializedTipTapDocument,
@@ -41,6 +41,14 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { ShowTagOption, ShowTagType, ShowTemplateOption, TvShow } from "@/components/db/types/shows";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -158,6 +166,7 @@ export function TvAddShowPage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const initialTemplateId = useMemo(() => {
     const globalTemplate = showTemplates.find((template) => template.isGlobalTemplate);
 
@@ -198,7 +207,12 @@ export function TvAddShowPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showImageUrl, setShowImageUrl] = useState<string | null>(initialShow?.showImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialShow?.showImageUrl ?? null);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
+  const isOwner = member.memberId === initialShow?.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditing && member.isFounder && !isOwner;
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE
@@ -380,6 +394,7 @@ export function TvAddShowPage({
           folder: "tv",
           fileName,
           contentType: selectedFile.type,
+          uploadTransport: "proxy",
         }),
       });
 
@@ -448,7 +463,7 @@ export function TvAddShowPage({
       });
   }
 
-  function handleSave() {
+  function handleSave(nextStatus: string = status) {
     if (!editor) {
       toast.error("Editor is still loading.");
       return;
@@ -477,7 +492,7 @@ export function TvAddShowPage({
         showTitle: showTitle.trim(),
         submitterLikenessDegree: undefined,
         showJson: serializeTipTapDocument(editor.getJSON()),
-        status,
+        status: nextStatus,
         showFirstYear: Number(showFirstYear) || new Date().getFullYear(),
         showLastYear: Number(showLastYear) || new Date().getFullYear(),
         seasonCount: Number(seasonCount) || 1,
@@ -522,7 +537,29 @@ export function TvAddShowPage({
 
       toast.success(isEditing ? "Show updated." : "Show saved.");
       router.push("/tv");
-      router.refresh();
+    });
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    handleSave(status === "archived" ? "published" : "archived");
+  }
+
+  function handleDelete() {
+    if (!initialShow?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteShowAction({ showId: initialShow.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Show deleted.");
+      router.push("/tv");
     });
   }
 
@@ -577,20 +614,40 @@ export function TvAddShowPage({
                 <Button type="button" variant="outline" asChild>
                   <Link href="/tv">Cancel</Link>
                 </Button>
-                <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
-                  <Save className="size-4" />
-                  { isSaving ? "Saving..." : isEditing ? "Update Show" : "Save Show" }
-                </Button>
+                { isEditing && canModerate ? (
+                  <>
+                    <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage } className="border-[#6ab1c6] bg-[#f2fbff] text-[#28586b] hover:bg-[#dff4fc] hover:text-[#28586b]">
+                      { status === "archived" ? "Unarchive" : "Archive" }
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage }>
+                      Delete
+                    </Button>
+                  </>
+                ) : null }
+                { !isFounderModerating ? (
+                  <Button type="button" onClick={ () => handleSave() } disabled={ isSaving || uploadingImage }>
+                    <Save className="size-4" />
+                    { isSaving ? "Saving..." : isEditing ? "Update Show" : "Save Show" }
+                  </Button>
+                ) : null }
               </div>
             </div>
           </div>
 
+          { isFounderModerating ? (
+            <div className="border-b border-[#d7ebf3] bg-[#f5fbff] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3 rounded-lg border border-[#6ab1c6] bg-[#e8f5fd] p-3 text-sm text-[#28586b]">
+                <span>You are viewing this as Family Founder. Use Archive or Delete to moderate this post.</span>
+              </div>
+            </div>
+          ) : null }
           <div className="grid gap-6 px-5 py-5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-title">Show Title</label>
                 <Input
                   id="show-title"
+                  disabled={ isFounderModerating }
                   value={ showTitle }
                   onChange={ (event) => setShowTitle(event.target.value) }
                   placeholder="Enter show title"
@@ -609,6 +666,7 @@ export function TvAddShowPage({
                     <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-image-credit">Image Credit</label>
                     <textarea
                       id="show-image-credit"
+                      disabled={ isFounderModerating }
                       value={ showImageCredit }
                       onChange={ (event) => setShowImageCredit(event.target.value) }
                       placeholder="Title: [Source Name] | Source: [image URL]"
@@ -624,7 +682,7 @@ export function TvAddShowPage({
                     accept="image/png, image/jpeg"
                     onChange={ handleFileSelection }
                     className="block w-full rounded-md border border-[#d8eef7] bg-white p-2 text-sm"
-                    disabled={ uploadingImage }
+                    disabled={ uploadingImage || isFounderModerating }
                   />
                   { imagePreviewUrl ? (
                     <div className="relative mt-3 overflow-hidden rounded-xl border border-[#d7ebf3] bg-white">
@@ -656,6 +714,7 @@ export function TvAddShowPage({
                     <p className="text-xs text-[#4a7388]">Optional. Only IMDb and YouTube URLs are accepted (must be https).</p>
                     <Input
                       id="show-site-url"
+                      disabled={ isFounderModerating }
                       value={ showSiteUrl }
                       onChange={ (event) => setShowSiteUrl(event.target.value) }
                       placeholder="https://www.imdb.com/title/..."
@@ -675,6 +734,7 @@ export function TvAddShowPage({
                             type="radio"
                             name="show-site-background"
                             value={ scheme.value }
+                            disabled={ isFounderModerating }
                             checked={ showSiteBackground === scheme.value }
                             onChange={ () => setShowSiteBackground(scheme.value) }
                             className="peer sr-only"
@@ -696,6 +756,7 @@ export function TvAddShowPage({
                   <Input
                     id="show-first-year"
                     type="number"
+                    disabled={ isFounderModerating }
                     value={ showFirstYear }
                     onChange={ (event) => setShowFirstYear(event.target.value) }
                   />
@@ -705,6 +766,7 @@ export function TvAddShowPage({
                   <Input
                     id="show-last-year"
                     type="number"
+                    disabled={ isFounderModerating }
                     value={ showLastYear }
                     onChange={ (event) => setShowLastYear(event.target.value) }
                   />
@@ -714,6 +776,7 @@ export function TvAddShowPage({
                   <Input
                     id="show-season-count"
                     type="number"
+                    disabled={ isFounderModerating }
                     value={ seasonCount }
                     onChange={ (event) => setSeasonCount(event.target.value) }
                   />
@@ -723,7 +786,7 @@ export function TvAddShowPage({
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Template</label>
-                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
+                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
                     <SelectTrigger>
                       <SelectValue placeholder="Select template" />
                     </SelectTrigger>
@@ -737,7 +800,7 @@ export function TvAddShowPage({
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Status</label>
-                  <Select value={ status } onValueChange={ setStatus }>
+                  <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
@@ -896,6 +959,44 @@ export function TvAddShowPage({
             </div>
           </div>
         </div>
+
+        <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+          <DialogContent className="border-[#6ab1c6] bg-[#f7fdff] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[#15384a]">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#4a7388]">
+                Archiving this show will hide it from active lists, but the record will remain so you can restore it later.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" onClick={ handleArchive } disabled={ isSaving || isDeleting } className="bg-[#245475] text-white hover:bg-[#12384e]">
+                Archive
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+          <DialogContent className="border-red-200 bg-[#f8fcfe] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#4a7388]">
+                This permanently deletes the show and its discussion thread. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ isSaving || isDeleting }>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );

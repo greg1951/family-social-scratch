@@ -271,7 +271,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { fileName, contentType, action, folder } = await request.json();
+  const { fileName, contentType, action, folder, uploadTransport } = await request.json();
 
   // if (IS_DEV) {
   //   console.info("[api/s3-upload] request", {
@@ -340,7 +340,9 @@ export async function POST(request: Request) {
         ContentType: contentType,
       });
 
-      const url = await getSignedUrl(s3Context.client, command, { expiresIn: 60 });
+      const url = uploadTransport === "proxy"
+        ? `/api/s3-upload?key=${ encodeURIComponent(objectKey) }`
+        : await getSignedUrl(s3Context.client, command, { expiresIn: 60 });
 
       // if (IS_DEV) {
       //   console.info("[api/s3-upload] signed upload URL created", {
@@ -384,5 +386,58 @@ export async function POST(request: Request) {
       errorMessage: error instanceof Error ? error.message : "Unknown error",
     });
     return NextResponse.json({ error: "Failed to generate URL" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  const memberDetails = await getMemberPageDetails();
+  const requestId = crypto.randomUUID();
+
+  if (!memberDetails.isLoggedIn || !memberDetails.familyId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const keyParam = searchParams.get("key");
+  const normalizedObjectKey = extractS3KeyFromValue(keyParam);
+
+  if (!normalizedObjectKey || !isSafeObjectKey(normalizedObjectKey)) {
+    return NextResponse.json({ error: "Invalid object key" }, { status: 400 });
+  }
+
+  const contentType = request.headers.get("content-type") ?? "application/octet-stream";
+
+  if (!["image/png", "image/jpeg", "image/jpg"].includes(contentType)) {
+    return NextResponse.json({ error: "Invalid content type for upload" }, { status: 400 });
+  }
+
+  try {
+    const s3Context = await getS3ClientForFamily(memberDetails.familyId);
+    const body = Buffer.from(await request.arrayBuffer());
+
+    await s3Context.client.send(
+      new PutObjectCommand({
+        Bucket: s3Context.bucketName,
+        Key: normalizedObjectKey,
+        ContentType: contentType,
+        Body: body,
+      })
+    );
+
+    return NextResponse.json({
+      success: true,
+      s3Key: normalizedObjectKey,
+      s3Uri: buildS3Uri(normalizedObjectKey, s3Context.bucketName),
+      fileUrl: buildPublicObjectUrl(normalizedObjectKey, s3Context.bucketName, s3Context.region),
+    });
+  } catch (error) {
+    console.error("[api/s3-upload] failed to proxy upload", {
+      requestId,
+      familyId: memberDetails.familyId,
+      objectKey: normalizedObjectKey,
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+    });
+
+    return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });
   }
 }

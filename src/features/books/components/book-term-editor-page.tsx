@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -39,7 +39,7 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { BookTerm, SaveBookTermInput } from "@/components/db/types/books";
-import { saveBookTermAction } from "@/app/(features)/(books)/book-terms/actions";
+import { deleteBookTermAction, saveBookTermAction } from "@/app/(features)/(books)/book-terms/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -135,10 +135,14 @@ function ToolbarButton({
 export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
   const router = useRouter();
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
   const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
   const [justSaved, setJustSaved] = useState(false);
+  const [isArchiving, startArchiveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const initialEditorContent = getInitialEditorContent(bookTerm?.termJson);
   const form = useForm<BookTermFormValues>({
     resolver: zodResolver(bookTermFormSchema),
@@ -273,7 +277,7 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
     setIsLinkDialogOpen(false);
   }
 
-  async function handleSubmit(values: BookTermFormValues) {
+  async function persistBookTerm(values: BookTermFormValues, nextStatus = values.status) {
     if (!editor) {
       toast.error("Editor is still loading. Try again in a moment.", {
         position: "top-center",
@@ -295,7 +299,7 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
     const payload: SaveBookTermInput = {
       id: bookTerm?.id,
       term: values.term,
-      status: values.status,
+      status: nextStatus,
       termJson: validationResult.data,
     };
 
@@ -325,6 +329,42 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
       router.push("/book-terms");
       router.refresh();
     }
+  }
+
+  async function handleSubmit(values: BookTermFormValues) {
+    return persistBookTerm(values);
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    startArchiveTransition(async () => {
+      await persistBookTerm(form.getValues(), "archived");
+    });
+  }
+
+  function handleDelete() {
+    if (!bookTerm?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteBookTermAction({ id: bookTerm.id });
+
+      if (!result.success) {
+        toast.error(result.message, {
+          position: "top-center",
+          duration: 2500,
+        });
+        return;
+      }
+
+      toast.success(result.message, {
+        position: "top-center",
+        duration: 2500,
+      });
+      router.push("/book-terms");
+    });
   }
 
   return (
@@ -359,6 +399,16 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
               <p className="mt-1 text-sm text-[#e9fbff]">
                 { isEditing ? bookTerm?.term : "New glossary entry" }
               </p>
+              { isEditing ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                    Archive
+                  </Button>
+                  <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+                    Delete
+                  </Button>
+                </div>
+              ) : null }
             </div>
           </div>
         </div>
@@ -540,6 +590,44 @@ export function BookTermEditorPage({ bookTerm }: BookTermEditorPageProps) {
             </Button>
             <Button type="button" onClick={ applyLink }>
               Apply Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+        <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#183746]">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#51707e]">
+              Archiving this book term will hide it from active lists, but the record will remain so you can restore it later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" onClick={ handleArchive } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="bg-[#2c5ead] text-white hover:bg-[#20478a]">
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+        <DialogContent className="border-red-200 bg-[#f8fcfe] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#51707e]">
+              This permanently deletes the book term. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

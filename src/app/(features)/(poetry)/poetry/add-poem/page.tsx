@@ -27,10 +27,10 @@ export default async function AddPoemPage({
 
   const poemTags = poetryData.success ? poetryData.poemTags : [];
 
-  // Only allow editing if the logged-in member is the submitter
+  // Only allow editing if the logged-in member is the submitter or is the founder
   const initialPoem =
     editPoemResult?.success &&
-      editPoemResult.poem.memberId === memberKeyDetails.memberId
+      (editPoemResult.poem.memberId === memberKeyDetails.memberId || memberKeyDetails.isFounder)
       ? editPoemResult.poem
       : null;
 

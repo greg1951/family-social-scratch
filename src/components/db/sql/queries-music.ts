@@ -3,6 +3,7 @@ import { and, asc, desc, eq, inArray, isNull, or } from "drizzle-orm";
 
 import {
   member,
+  discussThread,
   music,
   musicComment,
   musicLike,
@@ -48,6 +49,50 @@ import {
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
+
+export async function deleteMusic(
+  musicId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(music.id, musicId), eq(music.familyId, actor.familyId))
+    : and(eq(music.id, musicId), eq(music.familyId, actor.familyId), eq(music.memberId, actor.memberId));
+
+  const existingMusic = await db
+    .select({ id: music.id })
+    .from(music)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingMusic) {
+    return {
+      success: false,
+      message: `No music post was found for id: ${ musicId }`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "music"), eq(discussThread.targetId, musicId), eq(discussThread.familyId, actor.familyId)));
+
+    await db.delete(music).where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Music deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting music",
+    };
+  }
+}
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -728,6 +773,7 @@ export async function saveMusic(
   actor: {
     familyId: number;
     memberId: number;
+    isFounder?: boolean;
   }
 ): Promise<SaveMusicReturn> {
   const normalizedTitle = input.musicTitle.trim();
@@ -756,10 +802,63 @@ export async function saveMusic(
   }
 
   if (existingMusic && existingMusic.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: "Only the member who created this music can edit it.",
-    };
+    if (!actor.isFounder) {
+      return {
+        success: false,
+        message: "Only the member who created this music can edit it.",
+      };
+    }
+
+    // Founders can only change status to/from archived
+    const isArchiveStatusChange =
+      input.status === "archived" || 
+      (existingMusic.status === "archived" && input.status === "published");
+
+    if (!isArchiveStatusChange) {
+      return {
+        success: false,
+        message: "Only the member who created this music can edit it.",
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedMusic] = await db
+        .update(music)
+        .set({ status: input.status })
+        .where(eq(music.id, existingMusic.id))
+        .returning();
+
+      if (!updatedMusic) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive music with id: ${input.id}`,
+        };
+      }
+
+      // Load the full updated music to return
+      const musics = await loadMusics(actor.familyId, actor.memberId);
+      const fullUpdatedMusic = musics.find((m) => m.id === updatedMusic.id);
+
+      if (!fullUpdatedMusic) {
+        return {
+          success: false,
+          message: `Failed to load updated music with id: ${input.id}`,
+        };
+      }
+
+      return {
+        success: true,
+        music: fullUpdatedMusic,
+        message: updatedMusic.status === "archived" ? "Music archived." : "Music unarchived.",
+      };
+    } catch (error) {
+      console.error("Error archiving music:", error);
+      return {
+        success: false,
+        message: "An error occurred while archiving the music.",
+      };
+    }
   }
 
   const templates = await loadMusicTemplates(actor.familyId, actor.memberId, {

@@ -190,7 +190,7 @@ export default function PoetryHomePage({
 
   const selectedPoem = poemItems.find((poemItem) => poemItem.id === selectedPoemId) ?? null;
   const canEditSelected = selectedPoem
-    ? selectedPoem.memberId === member.memberId
+    ? selectedPoem.memberId === member.memberId || member.isFounder
     : false;
 
   const verseViewer = useEditor({
@@ -671,14 +671,7 @@ export default function PoetryHomePage({
               </div>
             ) : (
               <>
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#f7f1ff,#fcf9ff)] px-4 py-3 text-sm text-[#6d5286]">
-                  <LibraryBig className="size-4 text-[#8154a3]" />
-                  <span className="font-semibold text-[#43245d]">Selected poem:</span>
-                  <span>{ selectedPoem?.poemTitle || "Choose a poem from the list" }</span>
-                  <span className="rounded-full bg-[#f0e6fa] px-3 py-1 text-xs text-[#5f466f]">Viewing as { member.firstName }</span>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredPoems.map((poemItem) => {
                     const isSelected = poemItem.id === selectedPoemId;
 
@@ -688,15 +681,15 @@ export default function PoetryHomePage({
                         type="button"
                         onClick={ () => handleSelectPoem(poemItem.id) }
                         onDoubleClick={ () => handleOpenPoemFromCard(poemItem.id) }
-                        className={ `grid w-full gap-2 rounded-[1.4rem] border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
+                        className={ `grid w-55 md:w-55 lg:w-75 gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#8c62b5] bg-[linear-gradient(135deg,rgba(244,236,255,0.95),rgba(252,248,255,0.95))] shadow-[0_18px_45px_-35px_rgba(80,40,120,0.7)]"
                           : "border-[#e6deef] bg-white hover:border-[#c7b2db] hover:bg-[#fcfaff]"
                           }` }
                       >
                         <div>
                           { expandPoemCards ? (
-                            <div className="flex items-start gap-2">
-                              <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
+                            <div className="flex flex-wrap items-start gap-1">
+                              <p className="min-w-0 break-words line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                               { poemItem.hasClubSession ? (
                                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Club session available">
                                   <MessageSquare className="size-3" aria-label="Club session available" />
@@ -704,39 +697,43 @@ export default function PoetryHomePage({
                               ) : null }
                             </div>
                           ) : (
-                            <p className="wrap-break-word text-base font-bold leading-snug text-[#43245d] sm:text-lg">{ poemItem.poemTitle }</p>
+                            <p className="min-w-0 break-words line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                           ) }
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
                         </div>
                         { expandPoemCards ? (
-                          <div className="flex flex-wrap items-start gap-x-3 gap-y-1.5 sm:gap-x-4 md:items-center md:gap-x-5">
-                            <div className="min-w-26">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poet</p>
-                              <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poetName }</p>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1 sm:gap-x-2 md:gap-x-3">
+                              <div className="min-w-26">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Poet</p>
+                                <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poetName }</p>
+                              </div>
+                              <div className="min-w-18">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Year</p>
+                                <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poemYear || "-" }</p>
+                              </div>
                             </div>
-                            <div className="min-w-18">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Year</p>
-                              <p className="text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.poemYear || "-" }</p>
-                            </div>
-                            <div className="min-w-32 max-w-full">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
-                              <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
-                            </div>
-                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                              <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
-                              { poemItem.dislikeCount }
-                            </div>
-                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                              <ThumbsUp className="size-3 text-[#6e3f98] sm:size-3.5" />
-                              { poemItem.likeCount }
-                            </div>
-                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
-                              <Heart className="size-3 text-[#a86a8e] sm:size-3.5" />
-                              { poemItem.loveCount }
-                            </div>
-                            <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
-                              <MessageSquare className="size-3.5 text-[#7a5a9f] sm:size-4" />
-                              { poemItem.commentCount }
+                            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
+                              <div className="min-w-32 max-w-full">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
+                                <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
+                              </div>
+                              <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                                <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
+                                { poemItem.dislikeCount }
+                              </div>
+                              <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                                <ThumbsUp className="size-3 text-[#6e3f98] sm:size-3.5" />
+                                { poemItem.likeCount }
+                              </div>
+                              <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
+                                <Heart className="size-3 text-[#a86a8e] sm:size-3.5" />
+                                { poemItem.loveCount }
+                              </div>
+                              <div className="inline-flex min-w-18 items-center gap-1.5 text-xs font-semibold text-[#5c446f] sm:text-sm">
+                                <MessageSquare className="size-3.5 text-[#7a5a9f] sm:size-4" />
+                                { poemItem.commentCount }
+                              </div>
                             </div>
                           </div>
                         ) : null }

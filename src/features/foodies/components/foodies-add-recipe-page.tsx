@@ -21,9 +21,9 @@ import {
   Minus,
   Rows2,
   Save,
-  Soup,
   Sparkles,
   Table2,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
@@ -34,15 +34,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveFoodiesRecipeAction } from "@/app/(features)/(foodies)/foodies/actions";
+import { saveFoodiesRecipeAction, deleteFoodiesRecipeAction } from "@/app/(features)/(foodies)/foodies/actions";
 import { FoodiesRecipe, RecipeTagOption, RecipeTagType, RecipeTemplateOption } from "@/components/db/types/recipes";
 import {
   createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import {
   Select,
@@ -151,6 +160,9 @@ export function FoodiesAddRecipePage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const initialTemplateId = useMemo(() => {
     if (initialRecipe?.templateId) {
       const found = recipeTemplates.find((template) => template.id === initialRecipe.templateId);
@@ -197,6 +209,9 @@ export function FoodiesAddRecipePage({
     return serializeTipTapDocument(createEmptyTipTapDocument());
   });
   const isEditing = mode === "edit";
+  const isOwner = initialRecipe && member.memberId === initialRecipe.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditing && member.isFounder && !isOwner;
   const canSelectTemplate = !isEditing;
   const isTemplateDebug = process.env.NODE_ENV !== "production";
 
@@ -353,6 +368,18 @@ export function FoodiesAddRecipePage({
     }
   }, [proTipsEditor, recipeProTipsJson]);
 
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isFounderModerating);
+    }
+  }, [editor, isFounderModerating]);
+
+  useEffect(() => {
+    if (proTipsEditor) {
+      proTipsEditor.setEditable(!isFounderModerating);
+    }
+  }, [proTipsEditor, isFounderModerating]);
+
   useEffect(() => () => {
     revokeBlobUrl(imagePreviewUrl);
   }, [imagePreviewUrl]);
@@ -443,6 +470,7 @@ export function FoodiesAddRecipePage({
           folder: "foodies",
           fileName,
           contentType: selectedFile.type,
+          uploadTransport: "proxy",
         }),
       });
 
@@ -514,6 +542,11 @@ export function FoodiesAddRecipePage({
         return;
       }
 
+      if (isSerializedTipTapDocumentEmpty(recipeProTipsJson)) {
+        toast.error("Add content to the Pro-Tips section before saving.");
+        return;
+      }
+
       const selectedTagIds = Object.values(selectedTagsByType)
         .map((value) => Number(value))
         .filter((value) => Number.isInteger(value) && value > 0);
@@ -547,6 +580,58 @@ export function FoodiesAddRecipePage({
       }
 
       toast.success(result.message);
+      router.push("/foodies");
+      router.refresh();
+    });
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    startSaveTransition(async () => {
+      const newStatus = status === "archived" ? "published" : "archived";
+      const selectedTagIds = Object.values(selectedTagsByType)
+        .map((value) => Number(value))
+        .filter((value) => Number.isInteger(value) && value > 0);
+
+      const result = await saveFoodiesRecipeAction({
+        id: initialRecipe?.id,
+        recipeTitle,
+        recipeShortSummary,
+        prepTimeMins: Number(prepTimeMins || 0),
+        cookTimeMins: Number(cookTimeMins || 0),
+        status: newStatus,
+        submitterLikenessDegree: undefined,
+        recipeImageUrl,
+        recipeJson: serializeTipTapDocument(editor?.getJSON() ?? createEmptyTipTapDocument()),
+        recipeProTipsJson,
+        templateId: selectedTemplate?.id ?? 0,
+        selectedTagIds,
+      });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setStatus(newStatus);
+    });
+  }
+
+  function handleDelete() {
+    if (!initialRecipe?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteFoodiesRecipeAction({ recipeId: initialRecipe.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Recipe deleted.");
       router.push("/foodies");
       router.refresh();
     });
@@ -588,14 +673,52 @@ export function FoodiesAddRecipePage({
 
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)] backdrop-blur">
           <div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6">
-            <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Details</h2>
-            <p className="mt-2 text-sm leading-6 text-[#647a50]">
-              Choose from published templates available to your account, then fill in recipe details and instructions.
-            </p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Details</h2>
+                <p className="mt-2 text-sm leading-6 text-[#647a50]">
+                  Choose from published templates available to your account, then fill in recipe details and instructions.
+                </p>
+              </div>
+
+              { isEditing && canModerate && (
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" asChild className="rounded-full border-[#cadfbb] text-[#2f4820] hover:bg-[#f1f8e4]">
+                    <Link href="/foodies">Cancel</Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ () => setIsArchiveConfirmOpen(true) }
+                    disabled={ isSaving || isDeleting }
+                    className="rounded-full border-[#cadfbb] text-[#2f4820]"
+                  >
+                    { status === "archived" ? "Unarchive" : "Archive" }
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={ () => setIsDeleteConfirmOpen(true) }
+                    disabled={ isSaving || isDeleting }
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </Button>
+                </div>
+              ) }
+            </div>
           </div>
 
           <div className="space-y-6 px-5 py-6 sm:px-6">
-            <fieldset className="grid gap-5 md:grid-cols-3" disabled={ isSaving }>
+            { isFounderModerating && (
+              <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-900">
+                <p className="text-sm font-medium">
+                  As the family founder, you can archive this recipe if it doesn't follow guidelines. However, only the original author can edit their own posts.
+                </p>
+              </div>
+            ) }
+
+            <fieldset className="grid gap-5 md:grid-cols-3" disabled={ isSaving || isFounderModerating }>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeTitle">Recipe title</label>
                 <Input
@@ -1031,26 +1154,63 @@ export function FoodiesAddRecipePage({
             </div>
 
             <div className="flex flex-wrap gap-3 pt-2">
-              <Button type="button" variant="outline" className="border-[#cadfbb]" asChild>
-                <Link href="/foodies">
-                  <Soup className="mr-2 size-4" />
-                  Cancel
-                </Link>
-              </Button>
-
-              <Button
-                type="button"
-                onClick={ handleSubmit }
-                className="bg-[#3f6d23] text-white hover:bg-[#315619]"
-                disabled={ isSaving || uploadingImage }
-              >
-                <Save className="mr-2 size-4" />
-                { isSaving ? "Saving..." : isEditing ? "Update Recipe" : "Save Recipe" }
-              </Button>
+              { !isFounderModerating ? (
+                <Button
+                  type="button"
+                  onClick={ handleSubmit }
+                  className="bg-[#3f6d23] text-white hover:bg-[#315619]"
+                  disabled={ isSaving || uploadingImage }
+                >
+                  <Save className="mr-2 size-4" />
+                  { isSaving ? "Saving..." : isEditing ? "Update Recipe" : "Save Recipe" }
+                </Button>
+              ) : null }
             </div>
           </div>
         </div>
       </div>
+
+      <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+        <DialogContent className="border-[#cadfbb] bg-[#f7fce8] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#2f4820]">
+              { status === "archived" ? "Unarchive Recipe" : "Archive Recipe" }
+            </DialogTitle>
+            <DialogDescription className="text-[#647a50]">
+              { status === "archived"
+                ? "This will restore the recipe to published status and make it visible in the recipe directory."
+                : "This will hide the recipe from the directory. Only the founder can archive recipes." }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ isSaving }>
+              Cancel
+            </Button>
+            <Button type="button" onClick={ handleArchive } disabled={ isSaving } className="bg-[#578c24] text-white hover:bg-[#4a7320]">
+              { status === "archived" ? "Unarchive" : "Archive" }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+        <DialogContent className="border-red-200 bg-[#f8fcfe] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#4a7388]">
+              This permanently deletes the recipe and its discussion thread. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ isSaving || isDeleting }>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -60,7 +60,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { saveRecipeTermAction } from "@/app/(features)/(foodies)/recipe-terms/actions";
+import { deleteRecipeTermAction, saveRecipeTermAction } from "@/app/(features)/(foodies)/recipe-terms/actions";
 
 const recipeTermFormSchema = z.object({
   term: z.string().trim().min(2, "Enter at least 2 characters for the term."),
@@ -154,10 +154,14 @@ function normalizeLinkUrl(value: string): string | null {
 export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) {
   const router = useRouter();
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [linkValue, setLinkValue] = useState("");
   const [linkError, setLinkError] = useState<string | null>(null);
   const [openLinkInNewTab, setOpenLinkInNewTab] = useState(true);
   const [justSaved, setJustSaved] = useState(false);
+  const [isArchiving, startArchiveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const initialEditorContent = getInitialEditorContent(recipeTerm?.termJson);
 
   const form = useForm<RecipeTermFormValues>({
@@ -270,7 +274,7 @@ export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) 
     setIsLinkDialogOpen(false);
   }
 
-  async function handleSubmit(values: RecipeTermFormValues) {
+  async function persistRecipeTerm(values: RecipeTermFormValues, nextStatus = values.status) {
     if (!editor) {
       toast.error("Editor is still loading. Try again in a moment.", {
         position: "top-center",
@@ -292,7 +296,7 @@ export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) 
     const payload: SaveRecipeTermInput = {
       id: recipeTerm?.id,
       term: values.term,
-      status: values.status,
+      status: nextStatus,
       termJson: validationResult.data,
     };
 
@@ -317,6 +321,44 @@ export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) 
       router.push("/recipe-terms");
       router.refresh();
     }
+  }
+
+  async function handleSubmit(values: RecipeTermFormValues) {
+    return persistRecipeTerm(values);
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    startArchiveTransition(async () => {
+      const currentStatus = form.getValues().status;
+      const newStatus = currentStatus === "archived" ? "published" : "archived";
+      await persistRecipeTerm(form.getValues(), newStatus);
+    });
+  }
+
+  function handleDelete() {
+    if (!recipeTerm?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteRecipeTermAction({ id: recipeTerm.id });
+
+      if (!result.success) {
+        toast.error(result.message, {
+          position: "top-center",
+          duration: 2500,
+        });
+        return;
+      }
+
+      toast.success(result.message, {
+        position: "top-center",
+        duration: 2500,
+      });
+      router.push("/recipe-terms");
+    });
   }
 
   return (
@@ -351,6 +393,16 @@ export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) 
               <p className="mt-1 text-sm text-[#f1ffe4]">
                 { isEditing ? recipeTerm?.term : "New glossary entry" }
               </p>
+              { isEditing ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="border-white/35 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+                    Archive
+                  </Button>
+                  <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+                    Delete
+                  </Button>
+                </div>
+              ) : null }
             </div>
           </div>
         </div>
@@ -591,6 +643,44 @@ export function RecipeTermEditorPage({ recipeTerm }: RecipeTermEditorPageProps) 
               className="bg-[#578c24] text-white hover:bg-[#4a7320]"
             >
               Apply Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+        <DialogContent className="border-[#ccdfb9] bg-[#f7fce8] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-[#2f4820]">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#647a50]">
+              Archiving this recipe term will hide it from active lists, but the record will remain so you can restore it later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" onClick={ handleArchive } disabled={ form.formState.isSubmitting || isArchiving || isDeleting } className="bg-[#578c24] text-white hover:bg-[#4a7320]">
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+        <DialogContent className="border-red-200 bg-[#f8fbff] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+            <DialogDescription className="text-[#647a50]">
+              This permanently deletes the recipe term. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ form.formState.isSubmitting || isArchiving || isDeleting }>
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

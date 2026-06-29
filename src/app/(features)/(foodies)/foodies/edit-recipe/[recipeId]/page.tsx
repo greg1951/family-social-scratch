@@ -31,7 +31,7 @@ export default async function EditRecipePage({
     getFoodiesRecipeDetail(memberKeyDetails.familyId, parsedRecipeId, memberKeyDetails.memberId),
   ]);
 
-  if (!recipeResult.success || recipeResult.recipe.memberId !== memberKeyDetails.memberId) {
+  if (!recipeResult.success || (recipeResult.recipe.memberId !== memberKeyDetails.memberId && !memberKeyDetails.isFounder)) {
     redirect("/foodies");
   }
 

@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import {
   addBookCommentAction,
   toggleBookReactionAction,
+  deleteBooksHomeBookAction,
 } from "@/app/(features)/(books)/books/actions";
 import {
   createEmptyTipTapDocument,
@@ -81,6 +82,7 @@ export default function BooksHomePage({
   const router = useRouter();
   const previousBooksRef = useRef(books);
   const [isEngaging, startEngageTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
   const [selectedBookId, setSelectedBookId] = useState<number | null>(books[0]?.id ?? null);
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
@@ -100,7 +102,7 @@ export default function BooksHomePage({
 
   const selectedBook = bookItems.find((bookItem) => bookItem.id === selectedBookId) ?? null;
   const canEditSelected = selectedBook
-    ? selectedBook.memberId === member.memberId
+    ? selectedBook.memberId === member.memberId || member.isFounder
     : false;
 
   const bookDialog = useBookDialog({
@@ -338,6 +340,23 @@ export default function BooksHomePage({
       applyBookRefresh(result.book);
       setCommentText("");
       toast.success(result.message);
+    });
+  }
+
+  function handleDelete() {
+    if (!selectedBook?.id) {
+      return;
+    }
+
+    startDeleteTransition(async () => {
+      const result = await deleteBooksHomeBookAction({ bookId: selectedBook.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Book deleted.");
+      router.push("/books");
     });
   }
 
@@ -593,14 +612,7 @@ export default function BooksHomePage({
               </div>
             ) : (
               <>
-                <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#edf7fb,#f8fdff)] px-4 py-3 text-sm text-[#355161]">
-                  <LibraryBig className="size-4 text-[#3d819b]" />
-                  <span className="font-semibold text-[#183746]">Selected book:</span>
-                  <span>{ selectedBook?.bookTitle || "Choose a book from the list" }</span>
-                  <span className="rounded-full bg-[#ddf0f8] px-3 py-1 text-xs text-[#2a5a6f]">Viewing as { member.firstName }</span>
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;
                     const isAwaitingServerSync = pendingSelectedBookId === bookItem.id && bookDialog.savePhase === "saving";
@@ -611,15 +623,15 @@ export default function BooksHomePage({
                         type="button"
                         onClick={ () => handleSelectBook(bookItem.id) }
                         onDoubleClick={ () => handleOpenBookFromCard(bookItem.id) }
-                        className={ `grid w-full gap-2 rounded-[1.4rem] border px-3 py-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
+                        className={ `grid w-55 md:w-55 lg:w-75 gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#3d819b] bg-[linear-gradient(135deg,rgba(231,247,255,0.95),rgba(248,252,255,0.95))] shadow-[0_18px_45px_-35px_rgba(9,56,82,0.7)]"
                           : "border-[#deeaef] bg-white hover:border-[#a6c6d3] hover:bg-[#fbfdff]"
                           }` }
                       >
                         <div>
                           { expandBookCards ? (
-                            <div className="flex flex-wrap items-center gap-2">
-                              <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
+                            <div className="flex flex-wrap items-start gap-1">
+                              <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#183746] sm:text-sm">{ bookItem.bookTitle }</p>
                               { bookItem.hasClubSession ? (
                                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e4f3fa] text-[#1d6d8f]" title="Club session available">
                                   <MessageSquare className="size-3" aria-label="Club session available" />
@@ -632,43 +644,43 @@ export default function BooksHomePage({
                               ) : null }
                             </div>
                           ) : (
-                            <p className="wrap-break-word text-base font-bold leading-snug text-[#183746] sm:text-lg">{ bookItem.bookTitle }</p>
+                            <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#183746] sm:text-sm">{ bookItem.bookTitle }</p>
                           ) }
                           <p className="mt-1 text-[0.7rem] text-[#6b8a98] sm:text-xs">Created { formatCreatedAt(bookItem.createdAt) }</p>
                         </div>
                         { expandBookCards ? (
-                          <div className="flex flex-wrap items-start gap-x-2.5 gap-y-1.5 sm:gap-x-3 md:items-center md:gap-x-4">
-                            <div className="min-w-26">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Author</p>
-                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.authorName }</p>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex flex-wrap items-start gap-x-1.5 gap-y-1 sm:gap-x-2 md:gap-x-3">
+                              <div className="min-w-26">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Author</p>
+                                <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.authorName }</p>
+                              </div>
+                              <div className="min-w-18">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Year</p>
+                                <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookYear || "-" }</p>
+                              </div>
                             </div>
-                            <div className="min-w-18">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Year</p>
-                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookYear || "-" }</p>
-                            </div>
-                            <div className="min-w-18">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Language</p>
-                              <p className="text-xs font-semibold text-[#355161] sm:text-sm">{ bookItem.bookLanguage }</p>
-                            </div>
-                            <div className="min-w-24 max-w-full">
-                              <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
-                              <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
-                            </div>
-                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                              <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
-                              { bookItem.dislikeCount }
-                            </div>
-                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                              <ThumbsUp className="size-2.5 text-[#1d6d8f] sm:size-3" />
-                              { bookItem.likeCount }
-                            </div>
-                            <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
-                              <Heart className="size-2.5 text-[#c06c4a] sm:size-3" />
-                              { bookItem.loveCount }
-                            </div>
-                            <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#355161] sm:text-xs">
-                              <MessageSquare className="size-3 text-[#3d819b] sm:size-3.5" />
-                              { bookItem.commentCount }
+                            <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
+                              <div className="min-w-24 max-w-full">
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
+                                <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
+                              </div>
+                              <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                                <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
+                                { bookItem.dislikeCount }
+                              </div>
+                              <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                                <ThumbsUp className="size-2.5 text-[#1d6d8f] sm:size-3" />
+                                { bookItem.likeCount }
+                              </div>
+                              <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
+                                <Heart className="size-2.5 text-[#c06c4a] sm:size-3" />
+                                { bookItem.loveCount }
+                              </div>
+                              <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#355161] sm:text-xs">
+                                <MessageSquare className="size-3 text-[#3d819b] sm:size-3.5" />
+                                { bookItem.commentCount }
+                              </div>
                             </div>
                           </div>
                         ) : null }
@@ -694,6 +706,7 @@ export default function BooksHomePage({
         bookDialog={ bookDialog }
         linkDialog={ linkDialog }
         analysisEditor={ analysisEditor }
+        member={ member }
         tags={ {
           selectedBookTags,
           activeBookTags,
@@ -708,6 +721,7 @@ export default function BooksHomePage({
         } }
         save={ {
           onSave: () => bookDialog.handleSave(analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : draft.analysisJson),
+          onDelete: handleDelete,
         } }
         formatCreatedAt={ formatCreatedAt }
       />

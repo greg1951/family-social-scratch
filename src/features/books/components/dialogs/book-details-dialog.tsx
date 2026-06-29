@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
-import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
@@ -8,6 +9,7 @@ import type { BookTagOption } from "@/components/db/types/books";
 import {
   isSerializedTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
+  serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import {
   Accordion,
@@ -21,11 +23,13 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { RichTextField } from "@/features/books/components/book-rich-text-field";
 import { useBookDialog } from "@/features/books/hooks/use-book-dialog";
 import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
@@ -46,12 +50,14 @@ type BookDialogEngagement = {
 
 type BookDialogSave = {
   onSave: () => void;
+  onDelete?: () => void;
 };
 
 type BookDetailsDialogProps = {
   bookDialog: ReturnType<typeof useBookDialog>;
   linkDialog: ReturnType<typeof useLinkDialog>;
   analysisEditor: Editor | null;
+  member: MemberKeyDetails;
   tags: BookDialogTags;
   engagement: BookDialogEngagement;
   save: BookDialogSave;
@@ -91,6 +97,7 @@ export function BookDetailsDialog({
   bookDialog,
   linkDialog,
   analysisEditor,
+  member,
   tags,
   engagement,
   save,
@@ -99,6 +106,18 @@ export function BookDetailsDialog({
   const { draft, setDraft } = bookDialog;
   const { selectedBookTags, activeBookTags } = tags;
   const { isEngaging, canEngage, commentText, setCommentText, onToggleReaction, onAddComment } = engagement;
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  
+  const isEditing = bookDialog.bookDialogMode === "edit";
+  const isOwner = draft.memberId === member.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditing && member.isFounder && !isOwner;
+
+  useEffect(() => {
+    if (analysisEditor) {
+      analysisEditor.setEditable(!isFounderModerating);
+    }
+  }, [analysisEditor, isFounderModerating]);
 
   const tagsByCategory = activeBookTags.reduce((categories, tagOption) => {
     if (!tagOption.bookCategoryId) {
@@ -137,7 +156,8 @@ export function BookDetailsDialog({
   }
 
   return (
-    <Dialog open={ bookDialog.isBookDialogOpen } onOpenChange={ bookDialog.setIsBookDialogOpen }>
+    <>
+      <Dialog open={bookDialog.isBookDialogOpen} onOpenChange={bookDialog.setIsBookDialogOpen}>
       <DialogContent className="border-[#c8d7df] bg-[#f9fdff] sm:max-w-6xl">
         <DialogHeader>
           <DialogTitle className="text-[#183746]">
@@ -170,15 +190,50 @@ export function BookDetailsDialog({
                     <X className="size-4" />
                     Cancel
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={ save.onSave }
-                    disabled={ bookDialog.isSaving }
-                    className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                  >
-                    <Save className="size-4" />
-                    { bookDialog.isSaving ? "Saving..." : "Save Book" }
-                  </Button>
+
+                  { isEditing && canModerate ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={ () => {
+                          const newStatus = draft.status === "archived" ? "published" : "archived";
+                          setDraft((currentDraft) => ({ ...currentDraft, status: newStatus }));
+                          if (isFounderModerating) {
+                            // For founders, create a temporary draft with the new status and save it
+                            const updatedDraft = { ...draft, status: newStatus };
+                            const serializedAnalysis = analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : draft.analysisJson;
+                            bookDialog.handleSave(serializedAnalysis, updatedDraft);
+                          }
+                        } }
+                        disabled={ bookDialog.isSaving }
+                        className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
+                      >
+                        { draft.status === "archived" ? "Unarchive" : "Archive" }
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        onClick={ () => setIsDeleteConfirmOpen(true) }
+                        disabled={ bookDialog.isSaving }
+                      >
+                        <Trash2 className="size-4" />
+                        Delete
+                      </Button>
+                    </>
+                  ) : null }
+
+                  { !isFounderModerating ? (
+                    <Button
+                      type="button"
+                      onClick={ save.onSave }
+                      disabled={ bookDialog.isSaving }
+                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                    >
+                      <Save className="size-4" />
+                      { bookDialog.isSaving ? "Saving..." : "Save Book" }
+                    </Button>
+                  ) : null }
                 </div>
               </div>
             </div>
@@ -203,13 +258,23 @@ export function BookDetailsDialog({
             </div>
 
             { bookDialog.bookDialogMode !== "view" ? (
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <>
+                { isFounderModerating && (
+                  <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-900">
+                    <p className="text-sm font-medium">
+                      As the family founder, you can archive this book if it doesn't follow guidelines. However, only the original author can edit their own posts.
+                    </p>
+                  </div>
+                ) }
+
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#355161]">Book Name</label>
                   <Input
                     value={ draft.bookTitle }
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookTitle: event.target.value })) }
                     placeholder="Enter the book title"
+                    disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>
@@ -219,6 +284,7 @@ export function BookDetailsDialog({
                     value={ draft.authorName }
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, authorName: event.target.value })) }
                     placeholder="Enter the author name"
+                    disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>
@@ -229,6 +295,7 @@ export function BookDetailsDialog({
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookYear: event.target.value })) }
                     placeholder="e.g. 1965"
                     inputMode="numeric"
+                    disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>
@@ -238,6 +305,7 @@ export function BookDetailsDialog({
                     value={ draft.bookLanguage }
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookLanguage: event.target.value })) }
                     placeholder="e.g. English"
+                    disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>
@@ -247,10 +315,12 @@ export function BookDetailsDialog({
                     value={ draft.bookSeriesName }
                     onChange={ (event) => setDraft((currentDraft) => ({ ...currentDraft, bookSeriesName: event.target.value })) }
                     placeholder="Enter optional book series name if book is in a series"
+                    disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
                 </div>
               </div>
+              </>
             ) : null }
           </div>
 
@@ -486,5 +556,25 @@ export function BookDetailsDialog({
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+      <DialogContent className="border-red-200 bg-[#f8fcfe] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+          <DialogDescription className="text-[#4a7388]">
+            This permanently deletes the book and its discussion thread. This cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={() => setIsDeleteConfirmOpen(false)} disabled={bookDialog.isSaving}>
+            Cancel
+          </Button>
+          <Button type="button" variant="destructive" onClick={() => { setIsDeleteConfirmOpen(false); save.onDelete?.(); }} disabled={bookDialog.isSaving}>
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

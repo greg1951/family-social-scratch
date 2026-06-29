@@ -177,12 +177,13 @@ export function useBookDialog({
     setIsBookDialogOpen(false);
   }
 
-  function handleSave(analysisJson: string) {
-    const normalizedTitle = draft.bookTitle.trim();
-    const normalizedAuthorName = draft.authorName.trim();
-    const normalizedLanguage = draft.bookLanguage.trim();
-    const normalizedSeriesName = draft.bookSeriesName.trim();
-    const normalizedYear = draft.bookYear.trim();
+  function handleSave(analysisJson: string, overrideDraft?: BookDraft) {
+    const currentDraft = overrideDraft || draft;
+    const normalizedTitle = currentDraft.bookTitle.trim();
+    const normalizedAuthorName = currentDraft.authorName.trim();
+    const normalizedLanguage = currentDraft.bookLanguage.trim();
+    const normalizedSeriesName = currentDraft.bookSeriesName.trim();
+    const normalizedYear = currentDraft.bookYear.trim();
 
     if (!normalizedTitle) {
       toast.error("Enter a book name before saving.");
@@ -209,7 +210,7 @@ export function useBookDialog({
       return;
     }
 
-    if (draft.selectedTagIds.length < 1) {
+    if (currentDraft.selectedTagIds.length < 1) {
       toast.error("Select at least one book tag before saving.");
       return;
     }
@@ -218,15 +219,15 @@ export function useBookDialog({
 
     startSaveTransition(async () => {
       const result = await saveBooksHomeBookAction({
-        id: draft.id > 0 ? draft.id : undefined,
+        id: currentDraft.id > 0 ? currentDraft.id : undefined,
         bookTitle: normalizedTitle,
         authorName: normalizedAuthorName,
         bookLanguage: normalizedLanguage,
         bookSeriesName: normalizedSeriesName,
         bookYear: Number(normalizedYear),
-        status: draft.status,
+        status: currentDraft.status,
         analysisJson,
-        selectedTagIds: draft.selectedTagIds,
+        selectedTagIds: currentDraft.selectedTagIds,
       });
 
       if (!result.success) {

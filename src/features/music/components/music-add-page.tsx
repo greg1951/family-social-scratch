@@ -30,7 +30,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveMusicAction } from "@/app/(features)/(music)/music/actions";
+import { deleteMusicAction, saveMusicAction } from "@/app/(features)/(music)/music/actions";
 import {
   createEmptyTipTapDocument,
   parseSerializedTipTapDocument,
@@ -38,6 +38,14 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { MusicRecord, MusicTagOption, MusicTagType, MusicTemplateOption } from "@/components/db/types/music";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -126,6 +134,7 @@ export function MusicAddPage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const initialTemplateId = useMemo(() => {
     const globalTemplate = musicTemplates.find((template) => template.isGlobalTemplate);
     return globalTemplate ? String(globalTemplate.id) : TEMPLATE_NONE_VALUE;
@@ -153,7 +162,12 @@ export function MusicAddPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [musicImageUrl, setMusicImageUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
+  const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
+  const isOwner = member.memberId === initialMusic?.memberId;
+  const canModerate = isOwner || member.isFounder;
+  const isFounderModerating = isEditing && member.isFounder && !isOwner;
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE ? undefined : musicTemplates.find((template) => String(template.id) === selectedTemplateId),
@@ -262,7 +276,7 @@ export function MusicAddPage({
       setUploadingImage(true);
       const extension = selectedFile.type === "image/png" ? "png" : "jpg";
       const fileName = `memberId-${ member.memberId }-${ slugifyTitle(musicTitle) }.${ extension }`;
-      const signResponse = await fetch("/api/s3-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upload", folder: "music", fileName, contentType: selectedFile.type }) });
+      const signResponse = await fetch("/api/s3-upload", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "upload", folder: "music", fileName, contentType: selectedFile.type, uploadTransport: "proxy" }) });
       if (!signResponse.ok) {
         throw new Error("Could not create a signed upload URL.");
       }
@@ -306,7 +320,7 @@ export function MusicAddPage({
     return musicTags.filter((tag) => tag.tagType === tagType).sort((leftTag, rightTag) => leftTag.seqNo !== rightTag.seqNo ? leftTag.seqNo - rightTag.seqNo : leftTag.tagName.localeCompare(rightTag.tagName));
   }
 
-  function handleSave() {
+  function handleSave(nextStatus: string = status) {
     if (!editor) {
       toast.error("Editor is still loading.");
       return;
@@ -327,14 +341,36 @@ export function MusicAddPage({
         return;
       }
       const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
-      const result = await saveMusicAction({ id: initialMusic?.id, musicTitle: musicTitle.trim(), artistName: artistName.trim(), submitterLikenessDegree: undefined, musicJson: serializeTipTapDocument(editor.getJSON()), status, isSong, musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null, musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
+      const result = await saveMusicAction({ id: initialMusic?.id, musicTitle: musicTitle.trim(), artistName: artistName.trim(), submitterLikenessDegree: undefined, musicJson: serializeTipTapDocument(editor.getJSON()), status: nextStatus, isSong, musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null, musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
       if (!result.success) {
         toast.error(result.message);
         return;
       }
       toast.success(isEditing ? "Music updated." : "Music saved.");
       router.push("/music");
-      router.refresh();
+    });
+  }
+
+  function handleArchive() {
+    setIsArchiveConfirmOpen(false);
+    handleSave(status === "archived" ? "published" : "archived");
+  }
+
+  function handleDelete() {
+    if (!initialMusic?.id) {
+      return;
+    }
+
+    setIsDeleteConfirmOpen(false);
+    startDeleteTransition(async () => {
+      const result = await deleteMusicAction({ musicId: initialMusic.id });
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success("Music deleted.");
+      router.push("/music");
     });
   }
 
@@ -364,28 +400,47 @@ export function MusicAddPage({
                 <Button type="button" variant="outline" asChild>
                   <Link href="/music">Cancel</Link>
                 </Button>
-                <Button type="button" onClick={ handleSave } disabled={ isSaving || uploadingImage }>
-                  <Save className="size-4" />
-                  { isSaving ? "Saving..." : isEditing ? "Update Music" : "Save Music" }
-                </Button>
+                { isEditing && canModerate ? (
+                  <>
+                    <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage } className="border-[#6ba7d6] bg-[#f2f8fe] text-[#204a6d] hover:bg-[#dfeefe] hover:text-[#204a6d]">
+                      { status === "archived" ? "Unarchive" : "Archive" }
+                    </Button>
+                    <Button type="button" variant="destructive" onClick={ () => setIsDeleteConfirmOpen(true) } disabled={ isSaving || isDeleting || uploadingImage }>
+                      Delete
+                    </Button>
+                  </>
+                ) : null }
+                { !isFounderModerating ? (
+                  <Button type="button" onClick={ () => handleSave() } disabled={ isSaving || uploadingImage }>
+                    <Save className="size-4" />
+                    { isSaving ? "Saving..." : isEditing ? "Update Music" : "Save Music" }
+                  </Button>
+                ) : null }
               </div>
             </div>
           </div>
 
+          { isFounderModerating ? (
+            <div className="border-b border-[#f0d9c4] bg-[#fff8f2] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3 rounded-lg border border-[#d8a85b] bg-[#fff7ea] p-3 text-sm text-[#7b4a00]">
+                <span>You are viewing this as Family Founder. Use Archive or Delete to moderate this post.</span>
+              </div>
+            </div>
+          ) : null }
           <div className="grid gap-6 md:gap-2 px-3 py-3 sm:px-6 md:grid-cols-2">
             <div className="space-y-4">
               <div className="">
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-title">Music Title</label>
-                <Input id="music-title" value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter music title" />
+                <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter music title" />
               </div>
               <div className="width-full">
                 <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="artist-name">Artist Name</label>
-                <Input id="artist-name" value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder="Enter artist name" maxLength={ 100 } />
+                <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder="Enter artist name" maxLength={ 100 } />
               </div>
               <div className="grid gap-1 md:grid-cols-2 py-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
-                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId }>
+                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
                     <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
@@ -397,7 +452,7 @@ export function MusicAddPage({
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Status</label>
-                  <Select value={ status } onValueChange={ setStatus }>
+                  <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
                     <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="draft">Draft</SelectItem>
@@ -410,7 +465,7 @@ export function MusicAddPage({
               <div className="grid gap-1 sm:grid-cols-2 py-2">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Type</label>
-                  <Select value={ isSong ? "song" : "album" } onValueChange={ (value) => setIsSong(value === "song") }>
+                  <Select value={ isSong ? "song" : "album" } onValueChange={ (value) => setIsSong(value === "song") } disabled={ isFounderModerating }>
                     <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="song">Song</SelectItem>
@@ -420,12 +475,12 @@ export function MusicAddPage({
                 </div>
                 <div className="space-y-1">
                   <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-year">Debut Year</label>
-                  <Input id="music-year" type="number" value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } className="w-30" />
+                  <Input id="music-year" type="number" disabled={ isFounderModerating } value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } className="w-30" />
                 </div>
               </div>
               <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
                 <label className="text-sm font-semibold text-[#5c2e1a]">Music Image</label>
-                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage } />
+                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage || isFounderModerating } />
                 { imagePreviewUrl ? (
                   <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */ }
@@ -492,6 +547,44 @@ export function MusicAddPage({
             </div>
           </div>
         </div>
+
+        <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>
+          <DialogContent className="border-[#6ba7d6] bg-[#f7fbff] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-[#203b66]">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#4e6f92]">
+                Archiving this music post will hide it from active lists, but the record will remain so you can restore it later.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsArchiveConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" onClick={ handleArchive } disabled={ isSaving || isDeleting } className="bg-[#2c5ead] text-white hover:bg-[#20478a]">
+                Archive
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>
+          <DialogContent className="border-red-200 bg-[#f8fbff] sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-red-700">Are you sure?</DialogTitle>
+              <DialogDescription className="text-[#4e6f92]">
+                This permanently deletes the music post and its discussion thread. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={ () => setIsDeleteConfirmOpen(false) } disabled={ isSaving || isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={ handleDelete } disabled={ isSaving || isDeleting }>
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </section>
   );

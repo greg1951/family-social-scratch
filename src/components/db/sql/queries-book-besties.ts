@@ -1,6 +1,6 @@
 import db from '@/components/db/drizzle';
 import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
-import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference } from "../schema/family-social-schema-tables";
+import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference, discussThread } from "../schema/family-social-schema-tables";
 import {
   AddBookCommentReturn,
   Book,
@@ -273,6 +273,7 @@ export async function saveBooksHomeBook(
     familyId: number;
     memberId: number;
     isAdmin?: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveBooksHomeBookReturn> {
   const normalizedTitle = input.bookTitle.trim();
@@ -354,10 +355,64 @@ export async function saveBooksHomeBook(
   }
 
   if (existingBook && existingBook.memberId !== actor.memberId) {
-    return {
-      success: false,
-      message: 'Only the book submitter can save changes to this book.',
-    };
+    // Allow founders to archive/unarchive books ONLY
+    if (!actor.isFounder) {
+      return {
+        success: false,
+        message: 'Only the book submitter can save changes to this book.',
+      };
+    }
+
+    // Founders can only change status to/from archived
+    const isArchiveStatusChange =
+      input.status === 'archived' || 
+      (existingBook.status === 'archived' && input.status === 'published');
+
+    if (!isArchiveStatusChange) {
+      return {
+        success: false,
+        message: 'Only the book submitter can save changes to this book.',
+      };
+    }
+
+    // For founders doing archive/unarchive, only update status field
+    try {
+      const [updatedBook] = await db
+        .update(book)
+        .set({ status: input.status })
+        .where(eq(book.id, existingBook.id))
+        .returning();
+
+      if (!updatedBook) {
+        return {
+          success: false,
+          message: `Failed to archive/unarchive book with id: ${ input.id }`,
+        };
+      }
+
+      // Load the full updated book to return
+      const fullUpdatedBooks = await loadBooksHomeBooks(actor.familyId, [updatedBook.id]);
+      const fullUpdatedBook = fullUpdatedBooks[0];
+
+      if (!fullUpdatedBook) {
+        return {
+          success: false,
+          message: `Failed to load updated book with id: ${ input.id }`,
+        };
+      }
+
+      return {
+        success: true,
+        book: fullUpdatedBook,
+        message: updatedBook.status === 'archived' ? 'Book archived.' : 'Book unarchived.',
+      };
+    } catch (error) {
+      console.error('Error archiving book:', error);
+      return {
+        success: false,
+        message: 'An error occurred while archiving the book.',
+      };
+    }
   }
 
   const existingAnalysis = existingBook
@@ -1248,6 +1303,81 @@ export async function saveBookTerm(input: SaveBookTermInput)
       createdAt: result.createdAt as Date,
     },
   };
+}
+
+export async function deleteBookTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const [existingTerm] = await db
+    .select({ id: bookTerm.id })
+    .from(bookTerm)
+    .where(eq(bookTerm.id, id))
+    .limit(1);
+
+  if (!existingTerm) {
+    return {
+      success: false,
+      message: `No book term found for id: ${id}`,
+    };
+  }
+
+  try {
+    await db.delete(bookTerm).where(eq(bookTerm.id, id));
+
+    return {
+      success: true,
+      message: "Book term deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting book term",
+    };
+  }
+}
+
+export async function deleteBook(
+  bookId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const permissionCheck = actor.isFounder
+    ? and(eq(book.id, bookId), eq(book.familyId, actor.familyId))
+    : and(eq(book.id, bookId), eq(book.familyId, actor.familyId), eq(book.memberId, actor.memberId));
+
+  const existingBook = await db
+    .select({ id: book.id })
+    .from(book)
+    .where(permissionCheck)
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingBook) {
+    return {
+      success: false,
+      message: `No book was found for id: ${bookId}`,
+    };
+  }
+
+  try {
+    await db
+      .delete(discussThread)
+      .where(and(eq(discussThread.targetType, "book"), eq(discussThread.targetId, bookId), eq(discussThread.familyId, actor.familyId)));
+
+    await db
+      .delete(book)
+      .where(permissionCheck);
+
+    return {
+      success: true,
+      message: "Book deleted.",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting book",
+    };
+  }
 }
 
 
