@@ -32,6 +32,12 @@
 - [Component Code Size](#component-code-size)
   - [Hook Extraction](#hook-extraction)
   - [Hook Extraction versus Separate Routes](#hook-extraction-versus-separate-routes)
+- [PWA Implementation Inventory](#pwa-implementation-inventory)
+  - [Core App and Platform Files](#core-app-and-platform-files)
+  - [PWA UI Components](#pwa-ui-components)
+  - [Offline Queue and Sync Infrastructure](#offline-queue-and-sync-infrastructure)
+  - [Server-side Idempotency for Replay Safety](#server-side-idempotency-for-replay-safety)
+  - [Feature Upload Consistency Work](#feature-upload-consistency-work)
 
 ---
 # Overview
@@ -579,3 +585,34 @@ The data is simple enough that a dialog doesn't feel cramped
 For the Books feature specifically:
 
 The book form (title, author, year, language, analysis, tags) is meaningfully simpler than the Movie form. A book dialog fits naturally. The current UX — select a book from the directory, click View or Edit, interact in a dialog, return to the directory — is a coherent workflow that a separate route would actually interrupt. You'd navigate away, save, and come back to a page that has lost your scroll position and search state.
+
+# PWA Implementation Inventory
+
+## Core App and Platform Files
+- `src/app/manifest.ts`: Web app manifest served as /manifest.webmanifest. Current icon uses /images/pwa-phone-logo.png at 512x512.
+- `src/app/layout.tsx`: Global metadata includes applicationName, manifest, appleWebApp, and viewport themeColor; mounts PwaRegister.
+- `public/sw.js`: Service worker precaches /offline and app logo, handles navigation requests with offline fallback.
+- `src/app/offline/page.tsx`: Offline fallback route shown when navigation fails offline.
+- `next.config.ts`: Headers for /sw.js and /manifest.webmanifest with no-cache behavior.
+
+## PWA UI Components
+- `src/components/pwa/pwa-register.tsx`: Registers service worker in secure contexts and supports staged enablement via NEXT_PUBLIC_PWA_ENABLED.
+- `src/components/pwa/install-prompt.tsx`: Handles beforeinstallprompt flow and iOS install guidance UI.
+- `src/components/pwa/sync-status-banner.tsx`: Shows online or offline state, queue count, and manual Sync now action.
+- `src/app/(family)/layout.tsx`: Renders InstallPrompt and SyncStatusBanner in the family shell.
+
+## Offline Queue and Sync Infrastructure
+- `src/lib/pwa-background-sync.ts`: LocalStorage-backed queue store, queue update events, sync-now event dispatch, queue metrics, and client request id generation.
+- Queue coverage includes:
+  - Foodies recipe save and recipe comments
+  - Gallery selected album sync, album comments, and album updates
+  - Cross-feature comments (books, movies, music, poetry, tv)
+  - Discussion initial posts
+
+## Server-side Idempotency for Replay Safety
+- `src/components/db/schema/family-social-schema-tables.ts` and `src/components/db/schema/family-social-schema.ts`: Adds and exports `pwaMutationRequest` table.
+- `docs/sql-scripts/create-pwa-mutation-request-table.sql`: Migration script for pwa_mutation_request table.
+- Query modules use clientRequestId plus pwaMutationRequest insert with conflict-ignore semantics to avoid duplicate writes on replay.
+
+## Feature Upload Consistency Work
+- Image upload surfaces now align on PNG/JPEG-only policy and proxy upload transport in foodies, galleries, tv, movies, music, threads, and member image upload manager.
