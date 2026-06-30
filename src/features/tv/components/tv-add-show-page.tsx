@@ -349,7 +349,7 @@ export function TvAddShowPage({
       return;
     }
 
-    if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
       toast.error("Only PNG and JPEG image files are supported.");
       event.target.value = "";
       return;

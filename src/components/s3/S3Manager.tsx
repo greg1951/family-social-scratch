@@ -129,7 +129,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       return;
     }
 
-    const isValidType = ["image/png", "image/jpeg", "image/jpg"].includes(file.type);
+    const isValidType = ["image/png", "image/jpeg"].includes(file.type);
     if (!isValidType) {
       toast.error("Only PNG and JPEG image files are supported.");
       e.target.value = "";
@@ -169,6 +169,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
           folder: "members",
           fileName,
           contentType: selectedFile.type,
+          uploadTransport: "proxy",
         }),
       });
 

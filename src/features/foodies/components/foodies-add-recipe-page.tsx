@@ -898,8 +898,7 @@ export function FoodiesAddRecipePage({
                 <input
                   id="recipeImage"
                   type="file"
-                  accept="image/*"
-                  capture="environment"
+                  accept="image/png, image/jpeg"
                   className="block w-full rounded-md border border-[#cadfbb] bg-white p-2 text-sm"
                   onChange={ handleFileSelection }
                   disabled={ uploadingImage }

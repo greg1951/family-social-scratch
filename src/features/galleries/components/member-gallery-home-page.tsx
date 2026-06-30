@@ -202,8 +202,7 @@ function PhotoScrollStrip({
         <input
           ref={ fileInputRef }
           type="file"
-          accept="image/*"
-          capture="environment"
+          accept="image/png, image/jpeg"
           multiple
           className="hidden"
           onChange={ (e) => {
@@ -1430,6 +1429,7 @@ export default function MemberGalleryHomePage({
             folder: "galleries",
             fileName: safeName,
             contentType: file.type,
+            uploadTransport: "proxy",
           }),
         });
 

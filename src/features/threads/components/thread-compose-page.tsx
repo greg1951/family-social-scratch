@@ -243,7 +243,7 @@ export function ThreadComposePage({
     const validFiles: File[] = [];
 
     for (const file of pickedFiles) {
-      if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+      if (!["image/png", "image/jpeg"].includes(file.type)) {
         toast.error(`Unsupported file type for ${ file.name }. Only PNG and JPEG are allowed.`);
         continue;
       }
@@ -288,6 +288,7 @@ export function ThreadComposePage({
           folder: "threads",
           fileName,
           contentType: file.type,
+          uploadTransport: "proxy",
         }),
       });
 
@@ -594,7 +595,7 @@ export function ThreadComposePage({
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7b5ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#6e3f90]">
                 <ImagePlus className="size-3.5" />
                 Add Images
-                <input type="file" accept="image/png,image/jpeg,image/jpg" multiple className="hidden" onChange={ handleFileSelection } />
+                <input type="file" accept="image/png, image/jpeg" multiple className="hidden" onChange={ handleFileSelection } />
               </label>
             </div>
 
