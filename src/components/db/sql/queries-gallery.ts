@@ -8,6 +8,7 @@ import {
   galleryAlbumPhoto,
   galleryAlbumPhotoLike,
   galleryAlbumComment,
+  pwaMutationRequest,
 } from "../schema/family-social-schema-tables";
 import {
   createFamilyActivityRecord,
@@ -336,6 +337,25 @@ export async function addGalleryAlbumComment(
       return { success: false, message: "Album not found or not shared." };
     }
 
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: "gallery.addAlbumComment",
+          entityType: "gallery_album",
+          entityId: input.albumId,
+          familyId: ctx.familyId,
+          memberId: ctx.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      return { success: true };
+    }
+
     await db.insert(galleryAlbumComment).values({
       albumId: input.albumId,
       memberId: ctx.memberId,
@@ -530,6 +550,55 @@ export async function createGalleryAlbum(
   ctx: MemberContext
 ): Promise<CreateAlbumReturn> {
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: "gallery.createAlbum",
+          familyId: ctx.familyId,
+          memberId: ctx.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      const [existingRequest] = await db
+        .select({ entityId: pwaMutationRequest.entityId })
+        .from(pwaMutationRequest)
+        .where(eq(pwaMutationRequest.requestKey, input.clientRequestId))
+        .limit(1);
+
+      if (!existingRequest?.entityId) {
+        return { success: false, message: "Album request already exists, but the saved album could not be resolved." };
+      }
+
+      const [existingAlbum] = await db
+        .select()
+        .from(galleryAlbum)
+        .where(and(eq(galleryAlbum.id, existingRequest.entityId), eq(galleryAlbum.memberId, ctx.memberId)))
+        .limit(1);
+
+      if (!existingAlbum) {
+        return { success: false, message: "Album request already exists, but the saved album could not be loaded." };
+      }
+
+      return {
+        success: true,
+        album: {
+          id: existingAlbum.id,
+          albumName: existingAlbum.albumName,
+          albumDescription: existingAlbum.albumDescription,
+          isShared: existingAlbum.isShared,
+          isLiked: existingAlbum.isLiked,
+          updatedAt: existingAlbum.updatedAt ?? new Date(),
+          photoCount: 0,
+          coverPhotoUrl: null,
+        },
+      };
+    }
+
     const [album] = await db
       .insert(galleryAlbum)
       .values({
@@ -542,6 +611,16 @@ export async function createGalleryAlbum(
 
     if (!album) {
       return { success: false, message: "Failed to create album" };
+    }
+
+    if (input.clientRequestId) {
+      await db
+        .update(pwaMutationRequest)
+        .set({
+          entityType: "gallery_album",
+          entityId: album.id,
+        })
+        .where(eq(pwaMutationRequest.requestKey, input.clientRequestId));
     }
 
     await createFamilyActivityRecord({
@@ -588,6 +667,25 @@ export async function updateGalleryAlbum(
   ctx: MemberContext
 ): Promise<UpdateAlbumReturn> {
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: "gallery.updateAlbum",
+          entityType: "gallery_album",
+          entityId: input.id,
+          familyId: ctx.familyId,
+          memberId: ctx.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      return { success: true };
+    }
+
     const [existingAlbum] = await db
       .select({ isShared: galleryAlbum.isShared })
       .from(galleryAlbum)

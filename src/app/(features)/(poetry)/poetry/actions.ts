@@ -62,7 +62,7 @@ export async function addPoemCommentAction(input: AddPoemCommentInput) {
     };
   }
 
-  const result = await addPoemComment(input.poemId, input.commentText, {
+  const result = await addPoemComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

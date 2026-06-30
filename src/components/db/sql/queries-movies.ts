@@ -9,6 +9,7 @@ import {
   movieLike,
   movieTag,
   movieTagReference,
+  pwaMutationRequest,
   movieTemplate,
 } from "../schema/family-social-schema-tables";
 import { loadDiscussionThreadSummariesByTargetIds, loadDiscussionThreadSummariesForTargetId } from "./queries-discuss-threads";
@@ -1132,14 +1133,17 @@ export async function toggleMovieLike(
 }
 
 export async function addMovieComment(
-  movieId: number,
-  commentText: string,
+  input: {
+    movieId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddMovieCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const commentJson = parsedComment.success
@@ -1160,18 +1164,50 @@ export async function addMovieComment(
     };
   }
 
-  const selectedMovie = await loadMovieDetail(actor.familyId, movieId, actor.memberId);
+  const selectedMovie = await loadMovieDetail(actor.familyId, input.movieId, actor.memberId);
 
   if (!selectedMovie) {
     return {
       success: false,
-      message: `No movie was found for id: ${movieId}`,
+      message: `No movie was found for id: ${input.movieId}`,
     };
   }
 
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: 'movies.addMovieComment',
+          entityType: 'movie',
+          entityId: input.movieId,
+          familyId: actor.familyId,
+          memberId: actor.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      const existingUpdatedMovie = await loadMovieDetail(actor.familyId, input.movieId, actor.memberId);
+
+      if (!existingUpdatedMovie) {
+        return {
+          success: false,
+          message: 'Movie comment was already submitted, but the movie could not be reloaded.',
+        };
+      }
+
+      return {
+        success: true,
+        movie: existingUpdatedMovie,
+        message: 'Comment already synced.',
+      };
+    }
+
     await db.insert(movieComment).values({
-      movieId,
+      movieId: input.movieId,
       memberId: actor.memberId,
       commentJson,
       ismovieReviewer: false,
@@ -1186,7 +1222,7 @@ export async function addMovieComment(
       memberId: actor.memberId,
     });
 
-    const updatedMovie = await loadMovieDetail(actor.familyId, movieId, actor.memberId);
+    const updatedMovie = await loadMovieDetail(actor.familyId, input.movieId, actor.memberId);
 
     if (!updatedMovie) {
       return {

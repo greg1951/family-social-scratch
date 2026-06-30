@@ -89,7 +89,7 @@ export async function addRecipeCommentAction(input: AddRecipeCommentInput) {
     };
   }
 
-  const result = await addRecipeComment(input.recipeId, input.commentText, {
+  const result = await addRecipeComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

@@ -35,6 +35,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import {
+  clearQueuedFoodiesRecipeComment,
+  createClientRequestId,
+  getPwaSyncNowEventName,
+  isBrowserOnline,
+  queueFoodiesRecipeComment,
+  readQueuedFoodiesRecipeComments,
+} from "@/lib/pwa-background-sync";
 import { FoodiesScrollStrip } from "@/features/foodies/components/foodies-scroll-strip";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
@@ -284,6 +292,46 @@ export function FoodiesHomePage({
   const [selectedRecipe, setSelectedRecipe] = useState(recipeFinderRows[0]?.id ?? 0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
+  useEffect(() => {
+    const flushQueuedRecipeComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFoodiesRecipeComments();
+
+      for (const queuedComment of queuedComments) {
+        const result = await addRecipeCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFoodiesRecipeComment(queuedComment.payload.clientRequestId);
+        }
+
+        if (selectedRecipe === queuedComment.payload.recipeId) {
+          setSelectedRecipeDetail(result.recipe);
+        }
+      }
+    };
+
+    void flushQueuedRecipeComments();
+
+    const handleOnline = () => {
+      void flushQueuedRecipeComments();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener(getPwaSyncNowEventName(), handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
+    };
+  }, [selectedRecipe]);
+
   const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
   const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
 
@@ -406,12 +454,48 @@ export function FoodiesHomePage({
     }
 
     startEngageTransition(async () => {
-      const result = await addRecipeCommentAction({
+      const clientRequestId = createClientRequestId("foodies-comment");
+      const payload = {
         recipeId: selectedRecipeBasic.id,
         commentText: normalizedComment,
-      });
+        clientRequestId,
+      };
+      const result = await addRecipeCommentAction(payload);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFoodiesRecipeComment({
+            payload,
+            recipeTitle: selectedRecipeBasic.recipeTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+
+          setSelectedRecipeDetail((currentRecipe) => {
+            if (!currentRecipe || currentRecipe.id !== selectedRecipeBasic.id) {
+              return currentRecipe;
+            }
+
+            return {
+              ...currentRecipe,
+              commentCount: currentRecipe.commentCount + 1,
+              recipeComments: [
+                {
+                  id: Date.now(),
+                  createdAt: new Date(),
+                  commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+                  commentJson: normalizedComment,
+                },
+                ...currentRecipe.recipeComments,
+              ],
+            };
+          });
+
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

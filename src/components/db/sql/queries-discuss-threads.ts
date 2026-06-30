@@ -16,6 +16,7 @@ import {
 	member,
 	movie,
 	music,
+	pwaMutationRequest,
 	poem,
 	recipe,
 	show,
@@ -612,6 +613,7 @@ export interface AddInitialPostInput {
 	threadId: number;
 	summary: string;
 	contentJson: string;
+	clientRequestId?: string;
 }
 
 export type AddInitialPostReturn =
@@ -673,6 +675,42 @@ export async function addInitialDiscussionPost(
 	}
 
 	// Check if thread already has posts
+	const duplicateRequest = input.clientRequestId
+		? await db
+			.insert(pwaMutationRequest)
+			.values({
+				requestKey: input.clientRequestId,
+				mutationName: 'discussion.addInitialPost',
+				entityType: 'discussion_thread',
+				entityId: input.threadId,
+				familyId: actor.familyId,
+				memberId: actor.memberId,
+			})
+			.onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+			.returning({ id: pwaMutationRequest.id })
+		: [{ id: 0 }];
+
+	if (input.clientRequestId && duplicateRequest.length === 0) {
+		const existingInitialPostRows = await db
+			.select({ id: discussPostReply.id })
+			.from(discussPostReply)
+			.where(
+				and(
+					eq(discussPostReply.discussThreadId, input.threadId),
+					eq(discussPostReply.postReplyType, 'post')
+				)
+			)
+			.limit(1);
+
+		if (existingInitialPostRows[0]) {
+			return {
+				success: true,
+				postId: existingInitialPostRows[0].id,
+				message: 'Discussion post already synced.',
+			};
+		}
+	}
+
 	const existingPostsRows = await db
 		.select({ id: discussPostReply.id })
 		.from(discussPostReply)

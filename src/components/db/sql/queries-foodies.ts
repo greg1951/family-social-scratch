@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 import {
   member,
   discussThread,
+  pwaMutationRequest,
   recipe,
   recipeComment,
   recipeLike,
@@ -1316,14 +1317,17 @@ export async function toggleRecipeLike(
 }
 
 export async function addRecipeComment(
-  recipeId: number,
-  commentText: string,
+  input: {
+    recipeId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddRecipeCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const commentJson = parsedComment.success
@@ -1347,7 +1351,7 @@ export async function addRecipeComment(
   const existingRecipe = await db
     .select()
     .from(recipe)
-    .where(and(eq(recipe.familyId, actor.familyId), eq(recipe.id, recipeId), ne(recipe.status, "template")))
+    .where(and(eq(recipe.familyId, actor.familyId), eq(recipe.id, input.recipeId), ne(recipe.status, "template")))
     .then((rows) => rows[0] ?? null);
 
   if (!existingRecipe) {
@@ -1358,10 +1362,42 @@ export async function addRecipeComment(
   }
 
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: "foodies.addRecipeComment",
+          entityType: "recipe",
+          entityId: input.recipeId,
+          familyId: actor.familyId,
+          memberId: actor.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      const existingRecipeDetail = await loadFoodiesRecipeDetail(actor.familyId, input.recipeId, actor.memberId);
+
+      if (!existingRecipeDetail) {
+        return {
+          success: false,
+          message: "Recipe comment was already submitted, but the recipe could not be reloaded.",
+        };
+      }
+
+      return {
+        success: true,
+        recipe: existingRecipeDetail,
+        message: "Comment already synced.",
+      };
+    }
+
     await db
       .insert(recipeComment)
       .values({
-        recipeId,
+        recipeId: input.recipeId,
         memberId: actor.memberId,
         commentJson,
         isRecipeProTip: false,
@@ -1375,7 +1411,7 @@ export async function addRecipeComment(
       memberId: actor.memberId,
     });
 
-    const updatedRecipe = await loadFoodiesRecipeDetail(actor.familyId, recipeId, actor.memberId);
+    const updatedRecipe = await loadFoodiesRecipeDetail(actor.familyId, input.recipeId, actor.memberId);
 
     if (!updatedRecipe) {
       return {

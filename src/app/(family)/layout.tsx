@@ -1,21 +1,15 @@
 import Link from "next/link";
 import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 
-import MainDropMenu from "@/components/common/main-dropmenu";
 import BackButton from "@/components/common/back-button";
-import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
-import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
+import InstallPrompt from "@/components/pwa/install-prompt";
+import SyncStatusBanner from "@/components/pwa/sync-status-banner";
 
 export default async function TrialLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const memberAvatarDetails = await getCurrentMemberAvatarDetails();
-  const unreadThreadCount = memberAvatarDetails.isLoggedIn
-    ? await getUnreadThreadCountForRecipient(memberAvatarDetails.memberId)
-    : 0;
-
   return (
     <div className="font-app min-h-screen bg-[radial-gradient(circle_at_top,#ffffff_0%,#f5fbff_34%,#dff6ff_100%)] text-[#10364a]">
       <div className="absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(89,205,247,0.28),rgba(255,255,255,0))]" />
@@ -88,6 +82,11 @@ export default async function TrialLayout({
             </div> */}
           </div>
         </header>
+
+        <div className="space-y-3 px-1 pt-4">
+          <SyncStatusBanner />
+          <InstallPrompt />
+        </div>
 
         <main className="flex flex-1 items-start justify-center px-1 py-6 md:px-0 md:py-8">
           { children }

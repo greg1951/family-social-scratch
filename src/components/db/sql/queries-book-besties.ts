@@ -1,6 +1,6 @@
 import db from '@/components/db/drizzle';
 import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
-import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference, discussThread } from "../schema/family-social-schema-tables";
+import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference, discussThread, pwaMutationRequest } from "../schema/family-social-schema-tables";
 import {
   AddBookCommentReturn,
   Book,
@@ -716,14 +716,17 @@ export async function toggleBookReaction(
 }
 
 export async function addBookComment(
-  bookId: number,
-  commentText: string,
+  input: {
+    bookId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddBookCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const content = parsedComment.success
@@ -748,7 +751,7 @@ export async function addBookComment(
   const existingBook = await db
     .select()
     .from(book)
-    .where(and(eq(book.id, bookId), eq(book.familyId, actor.familyId)))
+    .where(and(eq(book.id, input.bookId), eq(book.familyId, actor.familyId)))
     .then((rows) => rows[0] ?? null);
 
   if (!existingBook) {
@@ -758,10 +761,42 @@ export async function addBookComment(
     };
   }
 
+  const duplicateRequest = input.clientRequestId
+    ? await db
+      .insert(pwaMutationRequest)
+      .values({
+        requestKey: input.clientRequestId,
+        mutationName: 'books.addBookComment',
+        entityType: 'book',
+        entityId: input.bookId,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      })
+      .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+      .returning({ id: pwaMutationRequest.id })
+    : [{ id: 0 }];
+
+  if (input.clientRequestId && duplicateRequest.length === 0) {
+    const [existingUpdatedBook] = await loadBooksHomeBooks(actor.familyId, [input.bookId], actor.memberId);
+
+    if (!existingUpdatedBook) {
+      return {
+        success: false,
+        message: 'Book comment was already submitted, but the book could not be reloaded.',
+      };
+    }
+
+    return {
+      success: true,
+      book: existingUpdatedBook,
+      message: 'Comment already synced.',
+    };
+  }
+
   await db
     .insert(bookComment)
     .values({
-      bookId,
+      bookId: input.bookId,
       memberId: actor.memberId,
       isBookAnalysis: false,
       commentJson,
@@ -775,7 +810,7 @@ export async function addBookComment(
     memberId: actor.memberId,
   });
 
-  const [updatedBook] = await loadBooksHomeBooks(actor.familyId, [bookId], actor.memberId);
+  const [updatedBook] = await loadBooksHomeBooks(actor.familyId, [input.bookId], actor.memberId);
 
   if (!updatedBook) {
     return {

@@ -3,6 +3,7 @@ import { and, asc, count, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import {
   member,
   discussThread,
+  pwaMutationRequest,
   poemComment,
   poem,
   poemCategoryTag,
@@ -837,14 +838,17 @@ export async function togglePoemReaction(
 }
 
 export async function addPoemComment(
-  poemId: number,
-  commentText: string,
+  input: {
+    poemId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddPoemCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const content = parsedComment.success
@@ -869,7 +873,7 @@ export async function addPoemComment(
   const existingPoem = await db
     .select()
     .from(poem)
-    .where(and(eq(poem.id, poemId), eq(poem.familyId, actor.familyId)))
+    .where(and(eq(poem.id, input.poemId), eq(poem.familyId, actor.familyId)))
     .then((rows) => rows[0] ?? null);
 
   if (!existingPoem) {
@@ -882,13 +886,45 @@ export async function addPoemComment(
   const existingVerse = await db
     .select()
     .from(poemVerse)
-    .where(eq(poemVerse.poemId, poemId))
+    .where(eq(poemVerse.poemId, input.poemId))
     .then((rows) => rows[0] ?? null);
 
   if (!existingVerse) {
     return {
       success: false,
       message: 'The selected poem has no saved verse to comment on yet.',
+    };
+  }
+
+  const duplicateRequest = input.clientRequestId
+    ? await db
+      .insert(pwaMutationRequest)
+      .values({
+        requestKey: input.clientRequestId,
+        mutationName: 'poetry.addPoemComment',
+        entityType: 'poem',
+        entityId: input.poemId,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+      })
+      .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+      .returning({ id: pwaMutationRequest.id })
+    : [{ id: 0 }];
+
+  if (input.clientRequestId && duplicateRequest.length === 0) {
+    const [existingUpdatedPoem] = await loadPoetryHomePoems(actor.familyId, [input.poemId], actor.memberId);
+
+    if (!existingUpdatedPoem) {
+      return {
+        success: false,
+        message: 'Poem comment was already submitted, but the poem could not be reloaded.',
+      };
+    }
+
+    return {
+      success: true,
+      poem: existingUpdatedPoem,
+      message: 'Comment already synced.',
     };
   }
 
@@ -909,7 +945,7 @@ export async function addPoemComment(
     memberId: actor.memberId,
   });
 
-  const [updatedPoem] = await loadPoetryHomePoems(actor.familyId, [poemId], actor.memberId);
+  const [updatedPoem] = await loadPoetryHomePoems(actor.familyId, [input.poemId], actor.memberId);
 
   if (!updatedPoem) {
     return {

@@ -124,7 +124,7 @@ export async function addMusicCommentAction(input: AddMusicCommentInput) {
     };
   }
 
-  const result = await addMusicComment(input.musicId, input.commentText, {
+  const result = await addMusicComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

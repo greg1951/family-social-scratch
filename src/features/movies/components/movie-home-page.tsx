@@ -40,6 +40,7 @@ import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { MovieScrollStrip } from "@/features/movies/components/movie-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 function formatDate(value: Date) {
@@ -138,6 +139,46 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [selectedMovie, setSelectedMovie] = useState(visibleMovies[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
+
+  useEffect(() => {
+    const flushQueuedMovieComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFeatureComments().filter((item) => item.kind === "movie");
+
+      for (const queuedComment of queuedComments) {
+        const result = await addMovieCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFeatureComment(queuedComment.payload.clientRequestId);
+        }
+
+        if (selectedMovie === queuedComment.payload.movieId) {
+          setSelectedMovieDetail(result.movie);
+        }
+      }
+    };
+
+    void flushQueuedMovieComments();
+
+    const handleSync = () => {
+      void flushQueuedMovieComments();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  }, [selectedMovie]);
 
   const latestMovies = [...visibleMovies]
     .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
@@ -309,8 +350,26 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     }
 
     startEngageTransition(async () => {
-      const result = await addMovieCommentAction({ movieId: selectedMovieBasic.id, commentText: normalizedComment });
+      const payload = {
+        movieId: selectedMovieBasic.id,
+        commentText: normalizedComment,
+        clientRequestId: createClientRequestId("movie-comment"),
+      };
+      const result = await addMovieCommentAction(payload);
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFeatureComment({
+            kind: "movie",
+            payload,
+            itemTitle: selectedMovieBasic.movieTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

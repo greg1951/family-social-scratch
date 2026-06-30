@@ -21,6 +21,7 @@ import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 
 import {
   addBookCommentAction,
@@ -293,6 +294,44 @@ export default function BooksHomePage({
     }
   }
 
+  useEffect(() => {
+    const flushQueuedBookComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFeatureComments().filter((item) => item.kind === "book");
+
+      for (const queuedComment of queuedComments) {
+        const result = await addBookCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFeatureComment(queuedComment.payload.clientRequestId);
+        }
+
+        applyBookRefresh(result.book);
+      }
+    };
+
+    void flushQueuedBookComments();
+
+    const handleSync = () => {
+      void flushQueuedBookComments();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  }, [member, draft.id]);
+
   function handleToggleReaction(reactionType: -1 | 1 | 2) {
     if (!selectedBook) {
       return;
@@ -332,12 +371,27 @@ export default function BooksHomePage({
     }
 
     startEngageTransition(async () => {
-      const result = await addBookCommentAction({
+      const payload = {
         bookId: selectedBook.id,
         commentText: normalizedComment,
-      });
+        clientRequestId: createClientRequestId("book-comment"),
+      };
+      const result = await addBookCommentAction(payload);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFeatureComment({
+            kind: "book",
+            payload,
+            itemTitle: selectedBook.bookTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

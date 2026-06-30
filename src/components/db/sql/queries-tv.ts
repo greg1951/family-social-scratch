@@ -4,6 +4,7 @@ import { and, asc, desc, eq, ilike, inArray, isNull, ne, or } from "drizzle-orm"
 import {
   member,
   discussThread,
+  pwaMutationRequest,
   show,
   showComment,
   showLike,
@@ -1210,14 +1211,17 @@ export async function toggleShowLike(
 }
 
 export async function addShowComment(
-  showId: number,
-  commentText: string,
+  input: {
+    showId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddShowCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const commentJson = parsedComment.success
@@ -1241,7 +1245,7 @@ export async function addShowComment(
   const existingShow = await db
     .select()
     .from(show)
-    .where(and(eq(show.familyId, actor.familyId), eq(show.id, showId), ne(show.status, "template")))
+    .where(and(eq(show.familyId, actor.familyId), eq(show.id, input.showId), ne(show.status, "template")))
     .then((rows) => rows[0] ?? null);
 
   if (!existingShow) {
@@ -1252,10 +1256,42 @@ export async function addShowComment(
   }
 
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: 'tv.addShowComment',
+          entityType: 'show',
+          entityId: input.showId,
+          familyId: actor.familyId,
+          memberId: actor.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      const existingUpdatedShow = await loadShowDetail(actor.familyId, input.showId, actor.memberId);
+
+      if (!existingUpdatedShow) {
+        return {
+          success: false,
+          message: 'Comment was already submitted, but the show could not be reloaded.',
+        };
+      }
+
+      return {
+        success: true,
+        show: existingUpdatedShow,
+        message: 'Comment already synced.',
+      };
+    }
+
     await db
       .insert(showComment)
       .values({
-        showId,
+        showId: input.showId,
         memberId: actor.memberId,
         commentJson,
         isShowReviewer: false,
@@ -1269,7 +1305,7 @@ export async function addShowComment(
       memberId: actor.memberId,
     });
 
-    const updatedShow = await loadShowDetail(actor.familyId, showId, actor.memberId);
+    const updatedShow = await loadShowDetail(actor.familyId, input.showId, actor.memberId);
 
     if (!updatedShow) {
       return {

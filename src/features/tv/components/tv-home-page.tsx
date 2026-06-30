@@ -40,6 +40,7 @@ import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 
@@ -279,6 +280,46 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const [showSelectionRevision, setShowSelectionRevision] = useState(0);
   const deferredSearchValue = useDeferredValue(searchValue);
 
+  useEffect(() => {
+    const flushQueuedShowComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFeatureComments().filter((item) => item.kind === "show");
+
+      for (const queuedComment of queuedComments) {
+        const result = await addShowCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFeatureComment(queuedComment.payload.clientRequestId);
+        }
+
+        if (selectedShow === queuedComment.payload.showId) {
+          setSelectedShowDetail(result.show);
+        }
+      }
+    };
+
+    void flushQueuedShowComments();
+
+    const handleSync = () => {
+      void flushQueuedShowComments();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  }, [selectedShow]);
+
   const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
   const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
 
@@ -411,12 +452,27 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     }
 
     startEngageTransition(async () => {
-      const result = await addShowCommentAction({
+      const payload = {
         showId: selectedShowBasic.id,
         commentText: normalizedComment,
-      });
+        clientRequestId: createClientRequestId("show-comment"),
+      };
+      const result = await addShowCommentAction(payload);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFeatureComment({
+            kind: "show",
+            payload,
+            itemTitle: selectedShowBasic.showTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

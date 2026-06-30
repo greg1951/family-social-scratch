@@ -61,6 +61,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import {
+  clearQueuedFoodiesRecipeSave,
+  getPwaSyncNowEventName,
+  isBrowserOnline,
+  queueFoodiesRecipeSave,
+  readQueuedFoodiesRecipeSave,
+} from "@/lib/pwa-background-sync";
 
 const TAG_TYPE_LABELS: Array<{ type: RecipeTagType; label: string }> = [
   { type: "cuisine", label: "Cuisine" },
@@ -380,6 +387,44 @@ export function FoodiesAddRecipePage({
     }
   }, [proTipsEditor, isFounderModerating]);
 
+  useEffect(() => {
+    const flushQueuedRecipeSave = async () => {
+      const queuedSave = readQueuedFoodiesRecipeSave();
+
+      if (!queuedSave || !isBrowserOnline()) {
+        return;
+      }
+
+      const result = await saveFoodiesRecipeAction(queuedSave.payload);
+
+      if (!result.success) {
+        return;
+      }
+
+      clearQueuedFoodiesRecipeSave();
+      toast.success(queuedSave.successMessage);
+
+      if (queuedSave.redirectTo) {
+        router.push(queuedSave.redirectTo);
+        router.refresh();
+      }
+    };
+
+    void flushQueuedRecipeSave();
+
+    const handleOnline = () => {
+      void flushQueuedRecipeSave();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener(getPwaSyncNowEventName(), handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
+    };
+  }, [router]);
+
   useEffect(() => () => {
     revokeBlobUrl(imagePreviewUrl);
   }, [imagePreviewUrl]);
@@ -530,6 +575,43 @@ export function FoodiesAddRecipePage({
     setSelectedFile(file);
   }
 
+  async function saveFoodiesRecipeWithFallback(payload: Parameters<typeof saveFoodiesRecipeAction>[0], successMessage: string, redirectTo: string | null) {
+    try {
+      const result = await saveFoodiesRecipeAction(payload);
+
+      if (result.success) {
+        clearQueuedFoodiesRecipeSave();
+        return result;
+      }
+
+      if (!isBrowserOnline()) {
+        queueFoodiesRecipeSave({
+          payload,
+          successMessage,
+          redirectTo,
+          queuedAt: new Date().toISOString(),
+        });
+        toast.message(successMessage);
+        return { success: true as const, message: successMessage };
+      }
+
+      return result;
+    } catch {
+      if (!isBrowserOnline()) {
+        queueFoodiesRecipeSave({
+          payload,
+          successMessage,
+          redirectTo,
+          queuedAt: new Date().toISOString(),
+        });
+        toast.message(successMessage);
+        return { success: true as const, message: successMessage };
+      }
+
+      throw new Error("Recipe save failed.");
+    }
+  }
+
   function handleSubmit() {
     startSaveTransition(async () => {
       if (!editor) {
@@ -559,7 +641,7 @@ export function FoodiesAddRecipePage({
         return;
       }
 
-      const result = await saveFoodiesRecipeAction({
+      const result = await saveFoodiesRecipeWithFallback({
         id: initialRecipe?.id,
         recipeTitle,
         recipeShortSummary,
@@ -572,7 +654,7 @@ export function FoodiesAddRecipePage({
         recipeProTipsJson,
         templateId: selectedTemplate.id,
         selectedTagIds,
-      });
+      }, "Recipe changes saved locally. They will sync when you are back online.", "/foodies");
 
       if (!result.success) {
         toast.error(result.message);
@@ -593,7 +675,7 @@ export function FoodiesAddRecipePage({
         .map((value) => Number(value))
         .filter((value) => Number.isInteger(value) && value > 0);
 
-      const result = await saveFoodiesRecipeAction({
+      const result = await saveFoodiesRecipeWithFallback({
         id: initialRecipe?.id,
         recipeTitle,
         recipeShortSummary,
@@ -606,7 +688,7 @@ export function FoodiesAddRecipePage({
         recipeProTipsJson,
         templateId: selectedTemplate?.id ?? 0,
         selectedTagIds,
-      });
+      }, "Recipe changes saved locally. They will sync when you are back online.", null);
 
       if (!result.success) {
         toast.error(result.message);
@@ -713,7 +795,7 @@ export function FoodiesAddRecipePage({
             { isFounderModerating && (
               <div className="rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-900">
                 <p className="text-sm font-medium">
-                  As the family founder, you can archive this recipe if it doesn't follow guidelines. However, only the original author can edit their own posts.
+                  As the family founder, you can archive this recipe if it does not follow guidelines. However, only the original author can edit their own posts.
                 </p>
               </div>
             ) }
@@ -816,7 +898,8 @@ export function FoodiesAddRecipePage({
                 <input
                   id="recipeImage"
                   type="file"
-                  accept="image/png, image/jpeg"
+                  accept="image/*"
+                  capture="environment"
                   className="block w-full rounded-md border border-[#cadfbb] bg-white p-2 text-sm"
                   onChange={ handleFileSelection }
                   disabled={ uploadingImage }

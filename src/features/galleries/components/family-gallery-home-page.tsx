@@ -15,6 +15,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import {
+  clearQueuedGalleryAlbumComment,
+  createClientRequestId,
+  getPwaSyncNowEventName,
+  isBrowserOnline,
+  queueGalleryAlbumComment,
+  readQueuedGalleryAlbumComments,
+} from "@/lib/pwa-background-sync";
 import type { GalleryPhotoItem, SharedAlbumListItem } from "@/components/db/types/gallery";
 import type { MemberKeyDetails } from "@/features/family/types/family-steps";
 import {
@@ -425,9 +433,46 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSavingComment, setIsSavingComment] = useState(false);
+
+  useEffect(() => {
+    const flushQueuedGalleryComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedGalleryAlbumComments();
+
+      for (const queuedComment of queuedComments) {
+        const result = await addGalleryAlbumCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedGalleryAlbumComment(queuedComment.payload.clientRequestId);
+        }
+      }
+    };
+
+    void flushQueuedGalleryComments();
+
+    const handleOnline = () => {
+      void flushQueuedGalleryComments();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener(getPwaSyncNowEventName(), handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
+    };
+  }, []);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalAlbums(sharedAlbums);
   }, [sharedAlbums]);
 
@@ -474,19 +519,57 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
       return;
     }
 
+    const trimmedComment = commentText.trim();
+
     if (!commentText.trim()) {
       toast.error("Enter a comment before saving.");
       return;
     }
 
     setIsSavingComment(true);
-    const result = await addGalleryAlbumCommentAction({
+    const payload = {
       albumId: selectedAlbumRecord.id,
-      commentText,
-    });
+      commentText: trimmedComment,
+      clientRequestId: createClientRequestId("gallery-comment"),
+    };
+    const result = await addGalleryAlbumCommentAction(payload);
     setIsSavingComment(false);
 
     if (!result.success) {
+      if (!isBrowserOnline()) {
+        queueGalleryAlbumComment({
+          payload,
+          albumName: selectedAlbumRecord.albumName,
+          commenterName: `${ _member.firstName } ${ _member.lastName }`.trim(),
+          queuedAt: new Date().toISOString(),
+        });
+
+        const newComment = {
+          id: Date.now(),
+          albumId: selectedAlbumRecord.id,
+          memberId: _member.memberId,
+          memberName: `${ _member.firstName } ${ _member.lastName }`.trim(),
+          commentText: trimmedComment,
+          createdAt: new Date(),
+        };
+
+        setLocalAlbums((prev) => prev.map((album) => {
+          if (album.id !== selectedAlbumRecord.id) {
+            return album;
+          }
+
+          return {
+            ...album,
+            commentCount: album.commentCount + 1,
+            comments: [newComment, ...album.comments],
+          };
+        }));
+
+        setCommentText("");
+        toast.message("Comment saved locally. It will sync when you are back online.");
+        return;
+      }
+
       toast.error(result.message);
       return;
     }
@@ -496,7 +579,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
       albumId: selectedAlbumRecord.id,
       memberId: _member.memberId,
       memberName: `${ _member.firstName } ${ _member.lastName }`.trim(),
-      commentText: commentText.trim(),
+      commentText: trimmedComment,
       createdAt: new Date(),
     };
 

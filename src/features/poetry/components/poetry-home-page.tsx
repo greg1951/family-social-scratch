@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import type { Club } from "@/components/db/types/clubs";
 
 type PoemDraft = {
@@ -179,6 +180,7 @@ export default function PoetryHomePage({
   useEffect(() => {
     const nextPoemItems = poems.map((poemRecord) => createDraftFromPoem(poemRecord, member));
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPoemItems(nextPoemItems);
     setSelectedPoemId((currentSelectedPoemId) => {
       if (currentSelectedPoemId && nextPoemItems.some((poemItem) => poemItem.id === currentSelectedPoemId)) {
@@ -242,6 +244,7 @@ export default function PoetryHomePage({
     verseViewer.commands.setContent(getEditorDocument(selectedPoem?.verseJson));
     const editorText = verseViewer.getText({ blockSeparator: "\n" });
     const nextLines = editorText.trim().length === 0 ? [""] : editorText.split("\n");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVerseLines(nextLines);
     setVerseLineCount(nextLines.length);
   }, [selectedPoem?.id, selectedPoem?.verseJson, verseViewer]);
@@ -306,6 +309,7 @@ export default function PoetryHomePage({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedPoemId(filteredPoems[0].id);
   }, [filteredPoems, selectedPoemId]);
 
@@ -369,6 +373,45 @@ export default function PoetryHomePage({
     setSelectedPoemId(updatedDraft.id);
   }
 
+  useEffect(() => {
+    const flushQueuedPoemComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFeatureComments().filter((item) => item.kind === "poem");
+
+      for (const queuedComment of queuedComments) {
+        const result = await addPoemCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFeatureComment(queuedComment.payload.clientRequestId);
+        }
+
+        applyPoemRefresh(result.poem);
+      }
+    };
+
+    void flushQueuedPoemComments();
+
+    const handleSync = () => {
+      void flushQueuedPoemComments();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [member]);
+
   function handleToggleReaction(reactionType: -1 | 1 | 2) {
     if (!selectedPoem) {
       return;
@@ -408,12 +451,27 @@ export default function PoetryHomePage({
     }
 
     startEngageTransition(async () => {
-      const result = await addPoemCommentAction({
+      const payload = {
         poemId: selectedPoem.id,
         commentText: normalizedComment,
-      });
+        clientRequestId: createClientRequestId("poem-comment"),
+      };
+      const result = await addPoemCommentAction(payload);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFeatureComment({
+            kind: "poem",
+            payload,
+            itemTitle: selectedPoem.poemTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

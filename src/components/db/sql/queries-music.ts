@@ -10,6 +10,7 @@ import {
   musicLyrics,
   musicTag,
   musicTagReference,
+  pwaMutationRequest,
   musicTemplate,
 } from "../schema/family-social-schema-tables";
 import {
@@ -1334,14 +1335,17 @@ export async function toggleMusicLike(
 }
 
 export async function addMusicComment(
-  musicId: number,
-  commentText: string,
+  input: {
+    musicId: number;
+    commentText: string;
+    clientRequestId?: string;
+  },
   actor: {
     familyId: number;
     memberId: number;
   }
 ): Promise<AddMusicCommentReturn> {
-  const normalizedComment = commentText.trim();
+  const normalizedComment = input.commentText.trim();
 
   const parsedComment = parseSerializedTipTapDocument(normalizedComment);
   const commentJson = parsedComment.success
@@ -1362,25 +1366,57 @@ export async function addMusicComment(
     };
   }
 
-  const selectedMusic = await loadMusicDetail(actor.familyId, musicId, actor.memberId);
+  const selectedMusic = await loadMusicDetail(actor.familyId, input.musicId, actor.memberId);
 
   if (!selectedMusic) {
     return {
       success: false,
-      message: `No music was found for id: ${musicId}`,
+      message: `No music was found for id: ${input.musicId}`,
     };
   }
 
   try {
+    const duplicateRequest = input.clientRequestId
+      ? await db
+        .insert(pwaMutationRequest)
+        .values({
+          requestKey: input.clientRequestId,
+          mutationName: 'music.addMusicComment',
+          entityType: 'music',
+          entityId: input.musicId,
+          familyId: actor.familyId,
+          memberId: actor.memberId,
+        })
+        .onConflictDoNothing({ target: pwaMutationRequest.requestKey })
+        .returning({ id: pwaMutationRequest.id })
+      : [{ id: 0 }];
+
+    if (input.clientRequestId && duplicateRequest.length === 0) {
+      const existingUpdatedMusic = await loadMusicDetail(actor.familyId, input.musicId, actor.memberId);
+
+      if (!existingUpdatedMusic) {
+        return {
+          success: false,
+          message: 'Music comment was already submitted, but the music could not be reloaded.',
+        };
+      }
+
+      return {
+        success: true,
+        music: existingUpdatedMusic,
+        message: 'Comment already synced.',
+      };
+    }
+
     await db.insert(musicComment).values({
-      musicId,
+      musicId: input.musicId,
       memberId: actor.memberId,
       commentJson,
       isMusicReviewer: false,
       createdAt: new Date(),
     });
 
-    const updatedMusic = await loadMusicDetail(actor.familyId, musicId, actor.memberId);
+    const updatedMusic = await loadMusicDetail(actor.familyId, input.musicId, actor.memberId);
 
     if (!updatedMusic) {
       return {

@@ -152,6 +152,20 @@ export const familyActivity = pgTable("family_activity", {
 
 ]);
 
+export const pwaMutationRequest = pgTable("pwa_mutation_request", {
+  id: serial("id").primaryKey(),
+  requestKey: text("request_key").notNull().unique(),
+  mutationName: text("mutation_name").notNull(),
+  entityType: text("entity_type"),
+  entityId: integer("entity_id"),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index('pwa_mutation_request_family_id_idx').on(table.familyId),
+  index('pwa_mutation_request_member_id_idx').on(table.memberId),
+]);
+
 export const familyS3Credentials = pgTable("family_s3_credentials", {
   id: serial("id").primaryKey(),
   encryptedAccessKey: text("encrypted_access_key").notNull(),

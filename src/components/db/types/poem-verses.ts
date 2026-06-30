@@ -115,6 +115,7 @@ export type TogglePoemReactionReturn =
 export interface AddPoemCommentInput {
   poemId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type AddPoemCommentReturn =

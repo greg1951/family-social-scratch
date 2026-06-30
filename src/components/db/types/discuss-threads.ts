@@ -74,6 +74,7 @@ export interface AddInitialPostInput {
 	threadId: number;
 	summary: string;
 	contentJson: string;
+  clientRequestId?: string;
 }
 
 export type AddInitialPostReturn =

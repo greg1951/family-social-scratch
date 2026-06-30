@@ -87,7 +87,7 @@ export async function addMovieCommentAction(input: AddMovieCommentInput) {
     };
   }
 
-  const result = await addMovieComment(input.movieId, input.commentText, {
+  const result = await addMovieComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

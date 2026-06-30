@@ -109,6 +109,7 @@ export type ToggleBookReactionReturn =
 export interface AddBookCommentInput {
   bookId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type AddBookCommentReturn =

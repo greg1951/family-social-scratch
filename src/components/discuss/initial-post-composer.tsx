@@ -14,8 +14,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { addInitialDiscussionPostAction } from "@/components/discuss/discussion-actions";
 import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
+import { clearQueuedDiscussionInitialPost, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueDiscussionInitialPost, readQueuedDiscussionInitialPosts } from "@/lib/pwa-background-sync";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 const TiptapRenderer = dynamic(() => import("./tiptap-renderer"), { ssr: false });
@@ -32,6 +33,44 @@ export default function InitialPostComposer({
   const router = useRouter();
   const [isSubmitting, startSubmitTransition] = useTransition();
   const [caption, setCaption] = useState("");
+
+  useEffect(() => {
+    const flushQueuedDiscussionPosts = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedPosts = readQueuedDiscussionInitialPosts();
+
+      for (const queuedPost of queuedPosts) {
+        const result = await addInitialDiscussionPostAction(queuedPost.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedPost.payload.clientRequestId) {
+          clearQueuedDiscussionInitialPost(queuedPost.payload.clientRequestId);
+        }
+      }
+
+      router.refresh();
+    };
+
+    void flushQueuedDiscussionPosts();
+
+    const handleSync = () => {
+      void flushQueuedDiscussionPosts();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  }, [router]);
 
   const editor = useEditor({
     extensions: [
@@ -74,14 +113,28 @@ export default function InitialPostComposer({
     const contentJson = serializeTipTapDocument(editor.getJSON() as JSONContent);
 
     startSubmitTransition(async () => {
-      const result = await addInitialDiscussionPostAction({
+      const payload = {
         threadId,
         summary,
         contentJson,
         revalidatePaths,
-      });
+        clientRequestId: createClientRequestId("discussion-initial-post"),
+      };
+      const result = await addInitialDiscussionPostAction(payload);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueDiscussionInitialPost({
+            payload,
+            threadTopic,
+            queuedAt: new Date().toISOString(),
+          });
+          setCaption("");
+          editor.commands.setContent(createEmptyTipTapDocument() as JSONContent);
+          toast.message("Discussion post saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

@@ -136,6 +136,7 @@ export interface ToggleMusicLikeInput {
 export interface AddMusicCommentInput {
   musicId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type SaveMusicReturn =

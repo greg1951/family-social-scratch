@@ -62,7 +62,7 @@ export async function addBookCommentAction(input: AddBookCommentInput) {
     };
   }
 
-  const result = await addBookComment(input.bookId, input.commentText, {
+  const result = await addBookComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

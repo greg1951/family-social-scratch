@@ -120,6 +120,7 @@ export interface ToggleMovieLikeInput {
 export interface AddMovieCommentInput {
   movieId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type SaveMovieReturn =

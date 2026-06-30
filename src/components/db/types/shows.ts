@@ -123,6 +123,7 @@ export interface ToggleShowLikeInput {
 export interface AddShowCommentInput {
   showId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type SaveShowReturn =

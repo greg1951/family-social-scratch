@@ -80,6 +80,7 @@ export type SetGalleryPhotoReactionReturn =
 export interface AddGalleryAlbumCommentInput {
   albumId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type AddGalleryAlbumCommentReturn =
@@ -143,6 +144,7 @@ export interface CreateAlbumInput {
   albumName: string;
   albumDescription: string | null;
   isShared: boolean;
+  clientRequestId?: string;
 }
 
 export interface UpdateAlbumInput {
@@ -150,6 +152,7 @@ export interface UpdateAlbumInput {
   albumName: string;
   albumDescription: string | null;
   isShared: boolean;
+  clientRequestId?: string;
 }
 
 export interface AddPhotoToAlbumInput {

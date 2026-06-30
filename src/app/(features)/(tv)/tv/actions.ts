@@ -87,7 +87,7 @@ export async function addShowCommentAction(input: AddShowCommentInput) {
     };
   }
 
-  const result = await addShowComment(input.showId, input.commentText, {
+  const result = await addShowComment(input, {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
   });

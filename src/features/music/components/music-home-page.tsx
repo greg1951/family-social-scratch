@@ -38,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 
@@ -137,6 +138,46 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const [selectedMusic, setSelectedMusic] = useState(visibleMusics[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
+
+  useEffect(() => {
+    const flushQueuedMusicComments = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedComments = readQueuedFeatureComments().filter((item) => item.kind === "music");
+
+      for (const queuedComment of queuedComments) {
+        const result = await addMusicCommentAction(queuedComment.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedComment.payload.clientRequestId) {
+          clearQueuedFeatureComment(queuedComment.payload.clientRequestId);
+        }
+
+        if (selectedMusic === queuedComment.payload.musicId) {
+          setSelectedMusicDetail(result.music);
+        }
+      }
+    };
+
+    void flushQueuedMusicComments();
+
+    const handleSync = () => {
+      void flushQueuedMusicComments();
+    };
+
+    window.addEventListener("online", handleSync);
+    window.addEventListener(getPwaSyncNowEventName(), handleSync);
+
+    return () => {
+      window.removeEventListener("online", handleSync);
+      window.removeEventListener(getPwaSyncNowEventName(), handleSync);
+    };
+  }, [selectedMusic]);
 
   const latestMusics = [...visibleMusics]
     .sort((leftMusic, rightMusic) => +new Date(rightMusic.updatedAt) - +new Date(leftMusic.updatedAt))
@@ -310,8 +351,26 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     }
 
     startEngageTransition(async () => {
-      const result = await addMusicCommentAction({ musicId: selectedMusicBasic.id, commentText: normalizedComment });
+      const payload = {
+        musicId: selectedMusicBasic.id,
+        commentText: normalizedComment,
+        clientRequestId: createClientRequestId("music-comment"),
+      };
+      const result = await addMusicCommentAction(payload);
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueFeatureComment({
+            kind: "music",
+            payload,
+            itemTitle: selectedMusicBasic.musicTitle,
+            commenterName: `${ member.firstName } ${ member.lastName }`.trim(),
+            queuedAt: new Date().toISOString(),
+          });
+          setCommentText("");
+          toast.message("Comment saved locally. It will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

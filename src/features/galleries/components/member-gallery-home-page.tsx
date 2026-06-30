@@ -11,7 +11,6 @@ import {
   Share2,
   Trash2,
   Upload,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
@@ -47,6 +46,17 @@ import type {
   MemberPhotoItem,
 } from "@/components/db/types/gallery";
 import type { MemberKeyDetails } from "@/features/family/types/family-steps";
+import {
+  clearQueuedGallerySelectedAlbumSync,
+  clearQueuedGalleryAlbumUpdate,
+  createClientRequestId,
+  getPwaSyncNowEventName,
+  isBrowserOnline,
+  queueGalleryAlbumUpdate,
+  readQueuedGalleryAlbumUpdates,
+  queueGallerySelectedAlbumSync,
+  readQueuedGallerySelectedAlbumSync,
+} from "@/lib/pwa-background-sync";
 
 // ── S3 image component ────────────────────────────────────────────────────────
 
@@ -192,7 +202,8 @@ function PhotoScrollStrip({
         <input
           ref={ fileInputRef }
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/*"
+          capture="environment"
           multiple
           className="hidden"
           onChange={ (e) => {
@@ -506,6 +517,7 @@ function AddAlbumDialog({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues({
       albumName: "",
       albumDescription: "",
@@ -709,6 +721,7 @@ function EditAlbumDialog({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlbumName(album.albumName);
     setAlbumDescription(album.albumDescription ?? "");
     setIsShared(album.isShared);
@@ -891,6 +904,7 @@ function EditAlbumPhotoDialog({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues({
       caption: photo.caption ?? "",
       albumPhotoDescription: photo.albumPhotoDescription ?? "",
@@ -1064,10 +1078,96 @@ export default function MemberGalleryHomePage({
   const [isBusy, setIsBusy] = useState(false);
   const [pendingAddPhotos, setPendingAddPhotos] = useState<MemberPhotoItem[]>([]);
   const [pendingRemoveAlbumPhotos, setPendingRemoveAlbumPhotos] = useState<GalleryPhotoItem[]>([]);
-  const [isSavingAlbumChanges, setIsSavingAlbumChanges] = useState(false);
-
   const hasPendingSelectedAlbumChanges = Boolean(selectedAlbum)
     && (pendingAddPhotos.length > 0 || pendingRemoveAlbumPhotos.length > 0);
+
+  useEffect(() => {
+    const flushQueuedAlbumSync = async () => {
+      const queuedSync = readQueuedGallerySelectedAlbumSync();
+
+      if (!queuedSync || !isBrowserOnline()) {
+        return;
+      }
+
+      let addedCount = 0;
+      let removedCount = 0;
+
+      for (const photo of queuedSync.pendingAddPhotos) {
+        const addResult = await addPhotoToAlbumAction({
+          albumId: queuedSync.albumId,
+          photoId: photo.id,
+          caption: photo.caption,
+        });
+
+        if (addResult.success) {
+          addedCount += 1;
+        }
+      }
+
+      for (const albumPhoto of queuedSync.pendingRemoveAlbumPhotos) {
+        const removeResult = await removePhotoFromAlbumAction(albumPhoto.id);
+
+        if (removeResult.success) {
+          removedCount += 1;
+        }
+      }
+
+      if (addedCount > 0 || removedCount > 0) {
+        clearQueuedGallerySelectedAlbumSync();
+        toast.success("Queued album changes synced.");
+      }
+    };
+
+    void flushQueuedAlbumSync();
+
+    const handleOnline = () => {
+      void flushQueuedAlbumSync();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener(getPwaSyncNowEventName(), handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const flushQueuedAlbumUpdates = async () => {
+      if (!isBrowserOnline()) {
+        return;
+      }
+
+      const queuedUpdates = readQueuedGalleryAlbumUpdates();
+
+      for (const queuedUpdate of queuedUpdates) {
+        const result = await updateGalleryAlbumAction(queuedUpdate.payload);
+
+        if (!result.success) {
+          continue;
+        }
+
+        if (queuedUpdate.payload.clientRequestId) {
+          clearQueuedGalleryAlbumUpdate(queuedUpdate.payload.clientRequestId);
+        }
+      }
+    };
+
+    void flushQueuedAlbumUpdates();
+
+    const handleOnline = () => {
+      void flushQueuedAlbumUpdates();
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener(getPwaSyncNowEventName(), handleOnline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
+    };
+  }, []);
 
   function resetPendingSelectedAlbumChanges() {
     setPendingAddPhotos([]);
@@ -1080,7 +1180,35 @@ export default function MemberGalleryHomePage({
       return true;
     }
 
-    setIsSavingAlbumChanges(true);
+    if (!isBrowserOnline()) {
+      queueGallerySelectedAlbumSync({
+        albumId: selectedAlbum.id,
+        pendingAddPhotos: pendingAddPhotos.map((photo) => ({
+          id: photo.id,
+          caption: photo.caption,
+          photoYear: photo.photoYear,
+          photoImageUrl: photo.photoImageUrl,
+          fileName: photo.fileName,
+          createdAt: photo.createdAt instanceof Date ? photo.createdAt.toISOString() : new Date(photo.createdAt).toISOString(),
+          isInAlbum: photo.isInAlbum,
+        })),
+        pendingRemoveAlbumPhotos: pendingRemoveAlbumPhotos.map((photo) => ({
+          id: photo.id,
+          photoId: photo.photoId,
+          caption: photo.caption,
+          photoImageUrl: photo.photoImageUrl,
+          albumPhotoDescription: photo.albumPhotoDescription,
+          seqNo: photo.seqNo,
+        })),
+        queuedAt: new Date().toISOString(),
+      });
+
+      setPendingAddPhotos([]);
+      setPendingRemoveAlbumPhotos([]);
+      toast.message("Album changes saved locally. They will sync when you are back online.");
+      return true;
+    }
+
     setIsBusy(true);
 
     let addedCount = 0;
@@ -1142,6 +1270,8 @@ export default function MemberGalleryHomePage({
         return false;
       }
 
+      clearQueuedGallerySelectedAlbumSync();
+
       if (addedCount > 0 || removedCount > 0) {
         toast.success("Album changes saved.");
       }
@@ -1149,7 +1279,6 @@ export default function MemberGalleryHomePage({
       return true;
     } finally {
       setIsBusy(false);
-      setIsSavingAlbumChanges(false);
     }
   }
 
@@ -1512,8 +1641,9 @@ export default function MemberGalleryHomePage({
     }));
 
     return [...currentAlbumPhotos, ...pendingAddedAlbumPhotos];
-  }, [albumPhotos, member.firstName, member.lastName, member.memberId, pendingAddPhotos, pendingRemoveAlbumPhotos, selectedAlbum]);
+  }, [albumPhotos, member.firstName, member.lastName, member.memberId, pendingAddPhotos, pendingRemoveAlbumPhotos, selectedAlbum, unallocatedPhotos]);
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const visibleUnallocatedPhotos = useMemo(() => {
     const basePhotos = unallocatedPhotos.filter((photo) => !photo.isInAlbum);
 
@@ -1620,16 +1750,57 @@ export default function MemberGalleryHomePage({
     setIsBusy(true);
 
     startTransition(async () => {
-      const result = await updateGalleryAlbumAction({
+      const payload = {
         id: editTarget.id,
         albumName: values.albumName,
         albumDescription: values.albumDescription || null,
         isShared: values.isShared,
-      });
+        clientRequestId: createClientRequestId("gallery-update-album"),
+      };
+      const result = await updateGalleryAlbumAction(payload);
 
       setIsBusy(false);
 
       if (!result.success) {
+        if (!isBrowserOnline()) {
+          queueGalleryAlbumUpdate({
+            payload,
+            albumName: values.albumName,
+            queuedAt: new Date().toISOString(),
+          });
+
+          setAlbums((prev) => prev.map((album) => {
+            if (album.id !== editTarget.id) {
+              return album;
+            }
+
+            return {
+              ...album,
+              albumName: values.albumName,
+              albumDescription: values.albumDescription || null,
+              isShared: values.isShared,
+            };
+          }));
+
+          setSelectedAlbum((current) => {
+            if (!current || current.id !== editTarget.id) {
+              return current;
+            }
+
+            return {
+              ...current,
+              albumName: values.albumName,
+              albumDescription: values.albumDescription || null,
+              isShared: values.isShared,
+            };
+          });
+
+          setIsEditAlbumOpen(false);
+          setEditTarget(null);
+          toast.message("Album details saved locally. They will sync when you are back online.");
+          return;
+        }
+
         toast.error(result.message);
         return;
       }

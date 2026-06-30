@@ -11,6 +11,7 @@ export {
   optionReference, 
   familyInvitation,
   familyActivity,
+  pwaMutationRequest,
   featureReference,
   familyFeatureConfig,
   book,

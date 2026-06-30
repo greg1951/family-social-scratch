@@ -193,6 +193,7 @@ export type ToggleRecipeLikeReturn =
 export interface AddRecipeCommentInput {
   recipeId: number;
   commentText: string;
+  clientRequestId?: string;
 }
 
 export type AddRecipeCommentReturn =
