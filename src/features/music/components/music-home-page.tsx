@@ -125,6 +125,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -132,11 +133,12 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-  const [selectedMusic, setSelectedMusic] = useState(musics[0]?.id ?? 0);
+  const visibleMusics = musics.filter((music) => music.status === "published" || (includeArchived && music.status === "archived"));
+  const [selectedMusic, setSelectedMusic] = useState(visibleMusics[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
 
-  const latestMusics = [...musics]
+  const latestMusics = [...visibleMusics]
     .sort((leftMusic, rightMusic) => +new Date(rightMusic.updatedAt) - +new Date(leftMusic.updatedAt))
     .slice(0, 8)
     .map((music) => ({
@@ -155,7 +157,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       imageAlt: `${ music.musicTitle } music image`,
     }));
 
-  const topRatedMusics = [...musics]
+  const topRatedMusics = [...visibleMusics]
     .filter((music) => (music.thumbsUpCount + music.loveCount) > 0)
     .sort((leftMusic, rightMusic) => {
       const leftScore = leftMusic.thumbsUpCount + leftMusic.loveCount;
@@ -191,7 +193,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     ? "bg-[linear-gradient(135deg,#4f7fd6,#2C5EAD)]"
     : "bg-[linear-gradient(135deg,#7aa0dd,#4a6fae)]";
 
-  const finderRows = musics.map((music) => ({
+  const finderRows = visibleMusics.map((music) => ({
     id: music.id,
     name: music.musicTitle,
     updatedAt: music.updatedAt,
@@ -256,7 +258,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     };
   }, [selectedMusic]);
 
-  const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? musics[0] ?? null;
+  const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? visibleMusics[0] ?? null;
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
   const canEditSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder));
   const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder) && selectedMusicBasic.isSong);
@@ -406,7 +408,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   {/* <div className="rounded-full border border-[#c8d9f3] bg-[#edf4ff] px-4 py-2 text-sm font-semibold text-[#4a6fae]">{ filteredMusics.length } music posts found</div> */ }
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-3 py-2 text-xs font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Filter with Discussion Threads</label></div>
+                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-3 py-2 text-xs font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Include Archived</label><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-3 py-2 text-xs font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Show Discussions</label></div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div className="space-y-1">

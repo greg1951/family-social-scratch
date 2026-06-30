@@ -13,6 +13,12 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { BookTerm } from "@/components/db/types/books";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import FeatureFaqHelp from "@/components/common/feature-faq-help";
@@ -83,13 +89,11 @@ function BookTermPreview({ termJson, expanded = false }: { termJson?: string; ex
 }
 
 export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps) {
-  const [selectedTermId, setSelectedTermId] = useState<number | null>(bookTerms[0]?.id ?? null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredTerms = bookTerms.filter((term) =>
     term.term.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const selectedTerm = bookTerms.find((term) => term.id === selectedTermId) ?? null;
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -127,14 +131,9 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
                 tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
               /> */}
               { isAdmin ? (
-                <>
-                  <Button type="button" variant="outline" asChild disabled={ !selectedTerm } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#9dd8f0] bg-[#f4fcff] px-3 text-xs font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746] disabled:opacity-50">
-                    <Link href={ selectedTerm ? `/book-terms/manage?id=${ selectedTerm.id }` : "#" }><PenSquare className="size-3.5" />Edit Term</Link>
-                  </Button>
                   <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#9dd8f0] bg-[#f4fcff] px-3 text-xs font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746]">
                     <Link href="/book-terms/manage"><Plus className="size-3.5" />Add Term</Link>
                   </Button>
-                </>
               ) : null }
             </div>
           </div>
@@ -148,73 +147,61 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)]">
-              <div className="border-b border-[#d9e5ea] md:border-b-0 md:border-r">
-                <div className="border-b border-[#d9e5ea] px-3 py-2.5">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#6f9cb0]" />
-                    <Input
-                      type="search"
-                      placeholder="Search terms…"
-                      value={ searchQuery }
-                      onChange={ (e) => setSearchQuery(e.target.value) }
-                      className="h-8 rounded-full border-[#c8d7df] bg-white pl-8 pr-7 text-xs text-[#183746] placeholder:text-[#99b5c0] focus-visible:ring-[#3d819b]"
-                    />
-                    { searchQuery ? (
-                      <button
-                        type="button"
-                        onClick={ () => setSearchQuery("") }
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full text-[#6f9cb0] hover:text-[#3d819b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b]"
-                        aria-label="Clear search"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    ) : null }
-                  </div>
-                </div>
-                <div className="max-h-144 divide-y divide-[#edf4f7] overflow-auto">
-                  { filteredTerms.length === 0 ? (
-                    <p className="px-5 py-4 text-sm text-[#6f9cb0]">No terms match your search.</p>
+            <div className="px-5 py-5 sm:px-6">
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6f9cb0]" />
+                  <Input
+                    type="search"
+                    placeholder="Search terms..."
+                    value={ searchQuery }
+                    onChange={ (e) => setSearchQuery(e.target.value) }
+                    className="h-10 rounded-full border-[#c8d7df] bg-white pl-10 pr-10 text-sm text-[#183746] placeholder:text-[#99b5c0] focus-visible:ring-[#3d819b]"
+                  />
+                  { searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={ () => setSearchQuery("") }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full text-[#6f9cb0] hover:text-[#3d819b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b]"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-4" />
+                    </button>
                   ) : null }
-                  { filteredTerms.map((term) => {
-                    const isSelected = term.id === selectedTermId;
-
-                    return (
-                      <button
-                        key={ term.id }
-                        type="button"
-                        onClick={ () => setSelectedTermId(term.id) }
-                        className={ [
-                          "flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3d819b]",
-                          isSelected ? "bg-[#ebf5f9]" : "bg-white hover:bg-[#f5fafe]",
-                        ].join(" ") }
-                      >
-                        <span className={ ["text-sm font-semibold", isSelected ? "text-[#183746]" : "text-[#2a5d73]"].join(" ") }>
-                          { term.term }
-                        </span>
-                        { isSelected ? (
-                          <span className="shrink-0 rounded-full bg-[#3d819b] px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white">
-                            Selected
-                          </span>
-                        ) : null }
-                      </button>
-                    );
-                  }) }
                 </div>
               </div>
 
-              <div className="p-5">
-                { selectedTerm ? (
-                  <div>
-                    <p className="mb-3 text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">{ selectedTerm.term }</p>
-                    <BookTermPreview termJson={ selectedTerm.termJson } expanded />
-                  </div>
-                ) : (
-                  <div className="flex min-h-48 items-center justify-center rounded-2xl border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
-                    <p className="text-sm">Select a term from the list to view its definition.</p>
-                  </div>
-                ) }
-              </div>
+              { filteredTerms.length === 0 ? (
+                <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
+                  <p className="text-sm">No terms match your search.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  { filteredTerms.map((term) => (
+                    <article key={ term.id } className="rounded-2xl border border-[#d9e5ea] bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <p className="text-base font-bold text-[#183746]">{ term.term }</p>
+                        { isAdmin ? (
+                          <Button type="button" variant="outline" asChild className="h-7 rounded-full border-[#9dd8f0] bg-[#f4fcff] px-2 text-[0.65rem] font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746]">
+                            <Link href={ `/book-terms/manage?id=${ term.id }` }><PenSquare className="size-3" />Edit</Link>
+                          </Button>
+                        ) : null }
+                      </div>
+
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value={ `term-${ term.id }` } className="border-b-0">
+                          <AccordionTrigger className="py-2 text-sm font-semibold text-[#3d819b] hover:no-underline">
+                            Definition
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <BookTermPreview termJson={ term.termJson } expanded />
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </article>
+                  )) }
+                </div>
+              ) }
             </div>
           ) }
         </div>

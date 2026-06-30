@@ -84,10 +84,11 @@ export default function BooksHomePage({
   const [isEngaging, startEngageTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
-  const [selectedBookId, setSelectedBookId] = useState<number | null>(books[0]?.id ?? null);
+  const [selectedBookId, setSelectedBookId] = useState<number | null>(books.find((bookRecord) => bookRecord.status === "published")?.id ?? books[0]?.id ?? null);
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandBookCards, setExpandBookCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
@@ -197,14 +198,18 @@ export default function BooksHomePage({
 
   const linkDialog = useLinkDialog(analysisEditor);
 
+  const visibleBookItems = useMemo(() => (
+    bookItems.filter((bookItem) => bookItem.status === "published" || (includeArchived && bookItem.status === "archived"))
+  ), [bookItems, includeArchived]);
+
   const directoryBooks = useMemo(() => {
     if (directoryMode === "latest") {
-      return [...bookItems].sort((leftBook, rightBook) => (
+      return [...visibleBookItems].sort((leftBook, rightBook) => (
         new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
       ));
     }
 
-    return bookItems
+    return visibleBookItems
       .filter((bookItem) => (bookItem.likeCount + bookItem.loveCount) > 0)
       .sort((leftBook, rightBook) => {
         const rightScore = rightBook.likeCount + rightBook.loveCount;
@@ -216,7 +221,7 @@ export default function BooksHomePage({
 
         return new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime();
       });
-  }, [directoryMode, bookItems]);
+  }, [directoryMode, visibleBookItems]);
 
   const filteredBooks = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
@@ -470,6 +475,15 @@ export default function BooksHomePage({
                         className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
                       />
                       <span className="font-semibold">Top Rated Books</span>
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                      <input
+                        type="checkbox"
+                        checked={ includeArchived }
+                        onChange={ (event) => setIncludeArchived(event.target.checked) }
+                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                      />
+                      Include Archived
                     </label>
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
                       <input

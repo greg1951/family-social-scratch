@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils, X } from "lucide-react";
+import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -187,21 +187,25 @@ function RecipeProTipViewer({ proTipJson }: { proTipJson: string }) {
 export function FoodiesHomePage({
   recipes,
   member,
-  isAdmin,
+  isAdmin: _isAdmin,
 }: {
   recipes: FoodiesRecipe[];
   member: MemberKeyDetails;
   isAdmin: boolean;
 }) {
+  void _isAdmin;
+
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
   const [recipeStripMode, setRecipeStripMode] = useState<"latest" | "top-rated">("latest");
   const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
+  const [includeArchived, setIncludeArchived] = useState(false);
 
-  const selectedRecipeRecord = recipes[0] ?? null;
-  const latestRecipeRecords = [...recipes]
+  const visibleRecipes = recipes.filter((recipe) => recipe.status === "published" || (includeArchived && recipe.status === "archived"));
+
+  const latestRecipeRecords = [...visibleRecipes]
     .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
     .slice(0, 8);
 
@@ -220,7 +224,7 @@ export function FoodiesHomePage({
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
 
-  const topRatedRecipes = [...recipes]
+  const topRatedRecipes = [...visibleRecipes]
     .filter((recipe) => (recipe.thumbsUpCount + recipe.loveCount) > 0)
     .sort((leftRecipe, rightRecipe) => {
       const leftScore = leftRecipe.thumbsUpCount + leftRecipe.loveCount;
@@ -256,7 +260,7 @@ export function FoodiesHomePage({
     ? "bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
     : "bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]";
 
-  const recipeFinderRows = recipes.map((recipe) => ({
+  const recipeFinderRows = visibleRecipes.map((recipe) => ({
     id: recipe.id,
     name: recipe.recipeTitle,
     updatedAt: recipe.updatedAt,
@@ -853,11 +857,20 @@ export function FoodiesHomePage({
                 <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#ccdfb9] bg-white px-3 py-2 text-xs font-semibold text-[#4f6f36]">
                   <input
                     type="checkbox"
+                    checked={ includeArchived }
+                    onChange={ (event) => setIncludeArchived(event.target.checked) }
+                    className="size-4 border-[#9fc487] text-[#578c24]"
+                  />
+                  Include Archived
+                </label>
+                <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#ccdfb9] bg-white px-3 py-2 text-xs font-semibold text-[#4f6f36]">
+                  <input
+                    type="checkbox"
                     checked={ filterWithDiscussionThreads }
                     onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
                     className="size-4 border-[#9fc487] text-[#578c24]"
                   />
-                  Filter with Discussion Threads
+                  Show Discussions
                 </label>
               </div>
 

@@ -189,8 +189,11 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const [commentText, setCommentText] = useState("");
   const [isViewShowOpen, setIsViewShowOpen] = useState(false);
   const [showStripMode, setShowStripMode] = useState<"latest" | "top-rated">("latest");
+  const [includeArchived, setIncludeArchived] = useState(false);
 
-  const latestShowRecords = [...shows]
+  const visibleShows = shows.filter((show) => show.status === "published" || (includeArchived && show.status === "archived"));
+
+  const latestShowRecords = [...visibleShows]
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8);
 
@@ -210,7 +213,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     hasDiscussionThread: show.hasDiscussionThread,
   }));
 
-  const topRatedShows = [...shows]
+  const topRatedShows = [...visibleShows]
     .filter((show) => (show.thumbsUpCount + show.loveCount) > 0)
     .sort((leftShow, rightShow) => {
       const leftScore = leftShow.thumbsUpCount + leftShow.loveCount;
@@ -248,7 +251,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     ? "bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
     : "bg-[linear-gradient(135deg,#ffdbae,#ffc4c8)]";
 
-  const showFinderRows = shows.map((show) => ({
+  const showFinderRows = visibleShows.map((show) => ({
     id: show.id,
     name: show.showTitle,
     updatedAt: show.updatedAt,
@@ -506,11 +509,20 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                   <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c9e2ec] bg-white px-3 py-2 text-xs font-semibold text-[#24536a]">
                     <input
                       type="checkbox"
+                      checked={ includeArchived }
+                      onChange={ (event) => setIncludeArchived(event.target.checked) }
+                      className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                    />
+                    Include Archived
+                  </label>
+                  <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c9e2ec] bg-white px-3 py-2 text-xs font-semibold text-[#24536a]">
+                    <input
+                      type="checkbox"
                       checked={ filterWithDiscussionThreads }
                       onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
                       className="size-4 border-[#8ec6df] text-[#2d87a8]"
                     />
-                    Filter with Discussion Threads
+                    Show Discussions
                   </label>
                 </div>
 

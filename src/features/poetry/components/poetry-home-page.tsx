@@ -164,9 +164,10 @@ export default function PoetryHomePage({
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [poemItems, setPoemItems] = useState(() => poems.map((poemRecord) => createDraftFromPoem(poemRecord, member)));
-  const [selectedPoemId, setSelectedPoemId] = useState<number | null>(poems[0]?.id ?? null);
+  const [selectedPoemId, setSelectedPoemId] = useState<number | null>(poems.find((poemRecord) => poemRecord.status === "published")?.id ?? poems[0]?.id ?? null);
   const [commentText, setCommentText] = useState("");
   const [searchValue, setSearchValue] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandPoemCards, setExpandPoemCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("latest");
@@ -253,14 +254,18 @@ export default function PoetryHomePage({
     analysisViewer.commands.setContent(getEditorDocument(selectedPoem?.analysisJson));
   }, [analysisViewer, selectedPoem?.analysisJson, selectedPoem?.id]);
 
+  const visiblePoemItems = useMemo(() => (
+    poemItems.filter((poemItem) => poemItem.status === "published" || (includeArchived && poemItem.status === "archived"))
+  ), [poemItems, includeArchived]);
+
   const directoryPoems = useMemo(() => {
     if (directoryMode === "latest") {
-      return [...poemItems].sort((leftPoem, rightPoem) => (
+      return [...visiblePoemItems].sort((leftPoem, rightPoem) => (
         new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
       ));
     }
 
-    return poemItems
+    return visiblePoemItems
       .filter((poemItem) => (poemItem.likeCount + poemItem.loveCount) > 0)
       .sort((leftPoem, rightPoem) => {
         const rightScore = rightPoem.likeCount + rightPoem.loveCount;
@@ -272,7 +277,7 @@ export default function PoetryHomePage({
 
         return new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime();
       });
-  }, [directoryMode, poemItems]);
+  }, [directoryMode, visiblePoemItems]);
 
   const filteredPoems = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
@@ -533,6 +538,15 @@ export default function PoetryHomePage({
                     <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
                       <input
                         type="checkbox"
+                        checked={ includeArchived }
+                        onChange={ (event) => setIncludeArchived(event.target.checked) }
+                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                      />
+                      Include Archived
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                      <input
+                        type="checkbox"
                         checked={ filterWithClubSessions }
                         onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
                         className="size-4 border-[#b79ad1] text-[#6e3f98]"
@@ -689,7 +703,7 @@ export default function PoetryHomePage({
                         <div>
                           { expandPoemCards ? (
                             <div className="flex flex-wrap items-start gap-1">
-                              <p className="min-w-0 break-words line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
+                              <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                               { poemItem.hasClubSession ? (
                                 <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#efe6fb] text-[#6e3f98]" title="Club session available">
                                   <MessageSquare className="size-3" aria-label="Club session available" />
@@ -697,7 +711,7 @@ export default function PoetryHomePage({
                               ) : null }
                             </div>
                           ) : (
-                            <p className="min-w-0 break-words line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
+                            <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                           ) }
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
                         </div>

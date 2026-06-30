@@ -126,6 +126,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [isViewMovieOpen, setIsViewMovieOpen] = useState(false);
   const [movieStripMode, setMovieStripMode] = useState<"latest" | "top-rated">("latest");
   const [searchValue, setSearchValue] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -133,11 +134,12 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-  const [selectedMovie, setSelectedMovie] = useState(movies[0]?.id ?? 0);
+  const visibleMovies = movies.filter((movie) => movie.status === "published" || (includeArchived && movie.status === "archived"));
+  const [selectedMovie, setSelectedMovie] = useState(visibleMovies[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const deferredSearchValue = useDeferredValue(searchValue);
 
-  const latestMovies = [...movies]
+  const latestMovies = [...visibleMovies]
     .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
     .slice(0, 8)
     .map((movie) => ({
@@ -156,7 +158,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       movieSiteBackground: movie.movieSiteBackground ?? "#000000",
     }));
 
-  const topRatedMovies = [...movies]
+  const topRatedMovies = [...visibleMovies]
     .filter((movie) => (movie.thumbsUpCount + movie.loveCount) > 0)
     .sort((leftMovie, rightMovie) => {
       const leftScore = leftMovie.thumbsUpCount + leftMovie.loveCount;
@@ -194,7 +196,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     ? "bg-[linear-gradient(135deg,#ffb366,#ff8866)]"
     : "bg-[linear-gradient(135deg,#ffa84d,#ff9933)]";
 
-  const finderRows = movies.map((movie) => ({
+  const finderRows = visibleMovies.map((movie) => ({
     id: movie.id,
     name: movie.movieTitle,
     updatedAt: movie.updatedAt,
@@ -260,7 +262,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   }, [selectedMovie]);
 
   const selectedMovieName = finderRows.find((movie) => movie.id === selectedMovie)?.name ?? "";
-  const selectedMovieBasic = (selectedMovieDetail?.id === selectedMovie ? selectedMovieDetail : movies.find((movie) => movie.id === selectedMovie)) ?? movies[0] ?? null;
+  const selectedMovieBasic = (selectedMovieDetail?.id === selectedMovie ? selectedMovieDetail : movies.find((movie) => movie.id === selectedMovie)) ?? visibleMovies[0] ?? null;
   const canReactToSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId !== member.memberId);
   const canEditSelectedMovie = Boolean(selectedMovieBasic && (selectedMovieBasic.memberId === member.memberId || member.isFounder));
 
@@ -412,7 +414,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                   {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div> */ }
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by movie, genre, adjective, channel, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search movies" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-3 py-2 text-xs font-semibold text-[#8b5a3c]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#d4a574] text-[#b8581a]" />Filter with Discussion Threads</label></div>
+                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by movie, genre, adjective, channel, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search movies" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-3 py-2 text-xs font-semibold text-[#8b5a3c]"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-4 border-[#d4a574] text-[#b8581a]" />Include Archived</label><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-3 py-2 text-xs font-semibold text-[#8b5a3c]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#d4a574] text-[#b8581a]" />Show Discussions</label></div>
 
                 <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div className="space-y-1">
