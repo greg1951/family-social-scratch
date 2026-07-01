@@ -69,6 +69,7 @@ export {
   showTemplate,
   showTagReference,
   showTag,
+  supportEnvironment,
   supportFamily,
   supportIssue,
   supportResponse,

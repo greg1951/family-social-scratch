@@ -1,8 +1,9 @@
 'use server';
 
 import { updateFamilyInviteToken } from "@/components/db/sql/queries-family-invite";
+import { getSupportEnvironmentByPneumonic } from "@/components/db/sql/queries-support";
 import { UpdateInviteTokenInput } from "../../features/family/types/family-steps";
-import { familySocialEmail, familySocialHostReference } from "../../features/family/constants/family-steps";
+import { familySocialEmail } from "../../features/family/constants/family-steps";
 import MemberInviteEmail from "./templates/member-invite-email";
 import React from "react";
 import { randomBytes } from "crypto";
@@ -16,6 +17,26 @@ export const sendFamilyInviteEmails = async (
   familyInvites: Extract<InsertInvitesReturn, { success: true }>['invites'], 
   familyName: string, 
   founderDetails:FounderDetails ) => {
+
+  const appEnv = process.env.APP_ENV?.trim().toLowerCase();
+  if (!appEnv) {
+    console.error("sendFamilyInviteEmails: APP_ENV was not provided.");
+    return {
+      error: true,
+      message: "Unable to send invite emails because APP_ENV is not configured."
+    };
+  }
+
+  const supportEnvironment = await getSupportEnvironmentByPneumonic(appEnv);
+  if (!supportEnvironment) {
+    console.error(`sendFamilyInviteEmails: APP_ENV '${ appEnv }' is not configured in supportEnvironment.`);
+    return {
+      error: true,
+      message: `Unable to send invite emails because APP_ENV '${ appEnv }' was not found in supportEnvironment.`
+    };
+  }
+
+  const effectiveUrl = `https://${ supportEnvironment.envPneumonic }.${ supportEnvironment.websiteDomain }`;
 
                                               
   if (familyInvites) {
@@ -35,7 +56,7 @@ export const sendFamilyInviteEmails = async (
         }
       };
 
-      const registerLink=`${familySocialHostReference}/family-member-registration?token=${memberInviteToken}`; 
+      const registerLink=`${effectiveUrl}/family-member-registration?token=${memberInviteToken}`; 
   
       const sendResult = await resend.emails.send({
         from: familySocialEmail,
@@ -46,6 +67,7 @@ export const sendFamilyInviteEmails = async (
             founderName: `${founderDetails.firstName} ${founderDetails.lastName}`, 
             inviteFounderMessage: invite.inviteFounderMessage!,
             familyName: familyName,
+            siteUrl: effectiveUrl,
             link: registerLink, 
           }),
       });

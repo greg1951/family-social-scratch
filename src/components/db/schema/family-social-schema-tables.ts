@@ -1141,6 +1141,20 @@ export const musicLike = pgTable("music_like", {
 );
 
 /*------------------------------- Support ------------------------------ */
+export const supportEnvironment = pgTable("support_environment", {
+  id: serial("id").primaryKey(),
+  envPneumonic: text("env_pneumonic").notNull().unique(),
+  websiteDomain: text("website_domain").notNull().default("my-family-social.com"),
+  isAvailable: boolean("is_available").notNull().default(true),
+  bypassUrl: text("bypass_url"),
+  supportEmail: text("support_email"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index('support_env_id_idx').on(table.id),
+  ]
+);
+
 export const supportFamily = pgTable("support_family", {
   id: serial("id").primaryKey(),
   familyName: text("family_name").notNull().unique(),

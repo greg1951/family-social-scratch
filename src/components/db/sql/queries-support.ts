@@ -4,6 +4,7 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import {
 	member,
+	supportEnvironment,
 	supportAttachment,
 	supportFamily,
 	supportIssue,
@@ -14,15 +15,21 @@ import {
 } from "@/components/db/schema/family-social-schema-tables";
 import {
 	createSupportIssueSchema,
+	SUPPORT_ENV_PNEUMONICS,
 	createSupportResponseSchema,
 	type CreateSupportIssueContext,
 	type CreateSupportIssueInput,
 	type CreateSupportIssueResult,
 	type CreateSupportResponseInput,
 	type CreateSupportResponseResult,
+	type SupportEnvPneumonic,
+	type SupportEnvironmentListItem,
 	type SupportAttachmentDraft,
 	type SupportIssueDetail,
 	type SupportIssueListItem,
+	type UpsertSupportEnvironmentInput,
+	type UpsertSupportEnvironmentResult,
+	upsertSupportEnvironmentSchema,
 	type UpdateIssueTeamResult,
 } from "@/components/db/types/support";
 import {
@@ -31,6 +38,14 @@ import {
 	serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { createThreadConversationWithInitialPost } from "@/components/db/sql/queries-thread-convos";
+
+function normalizeSupportEnvPneumonic(value: string): SupportEnvPneumonic {
+	if (SUPPORT_ENV_PNEUMONICS.includes(value as SupportEnvPneumonic)) {
+		return value as SupportEnvPneumonic;
+	}
+
+	return "prod";
+}
 
 function formatValidationMessage(input: CreateSupportIssueInput): string {
 	const parsed = createSupportIssueSchema.safeParse(input);
@@ -313,6 +328,156 @@ export async function createSupportIssue(
 		issueId: createdIssue.id,
 		message: "Your issue has been created and will be reviewed by the support team.",
 		assignedSupportPersonName,
+	};
+}
+
+// ─── Environments ────────────────────────────────────────────────────────────
+
+export async function getSupportEnvironmentList(): Promise<SupportEnvironmentListItem[]> {
+	const rows = await db
+		.select({
+			id: supportEnvironment.id,
+			envPneumonic: supportEnvironment.envPneumonic,
+			websiteDomain: supportEnvironment.websiteDomain,
+			isAvailable: supportEnvironment.isAvailable,
+			bypassUrl: supportEnvironment.bypassUrl,
+			supportEmail: supportEnvironment.supportEmail,
+			updatedAt: supportEnvironment.updatedAt,
+		})
+		.from(supportEnvironment)
+		.orderBy(asc(supportEnvironment.envPneumonic));
+
+	return rows.map((row) => ({
+		id: row.id,
+		envPneumonic: normalizeSupportEnvPneumonic(row.envPneumonic),
+		websiteDomain: row.websiteDomain,
+		isAvailable: row.isAvailable,
+		bypassUrl: row.bypassUrl,
+		supportEmail: row.supportEmail,
+		updatedAt: row.updatedAt,
+	}));
+}
+
+export async function getSupportEnvironmentByPneumonic(
+	envPneumonic: string,
+): Promise<SupportEnvironmentListItem | null> {
+	const normalizedPneumonic = envPneumonic.trim().toLowerCase();
+
+	const [row] = await db
+		.select({
+			id: supportEnvironment.id,
+			envPneumonic: supportEnvironment.envPneumonic,
+			websiteDomain: supportEnvironment.websiteDomain,
+			isAvailable: supportEnvironment.isAvailable,
+			bypassUrl: supportEnvironment.bypassUrl,
+			supportEmail: supportEnvironment.supportEmail,
+			updatedAt: supportEnvironment.updatedAt,
+		})
+		.from(supportEnvironment)
+		.where(eq(supportEnvironment.envPneumonic, normalizedPneumonic))
+		.limit(1);
+
+	if (!row) {
+		return null;
+	}
+
+	return {
+		id: row.id,
+		envPneumonic: normalizeSupportEnvPneumonic(row.envPneumonic),
+		websiteDomain: row.websiteDomain,
+		isAvailable: row.isAvailable,
+		bypassUrl: row.bypassUrl,
+		supportEmail: row.supportEmail,
+		updatedAt: row.updatedAt,
+	};
+}
+
+export async function upsertSupportEnvironment(
+	input: UpsertSupportEnvironmentInput,
+): Promise<UpsertSupportEnvironmentResult> {
+	const parsedInput = upsertSupportEnvironmentSchema.safeParse(input);
+
+	if (!parsedInput.success) {
+		const firstIssue = parsedInput.error.issues[0];
+		return {
+			success: false,
+			message: firstIssue?.message ?? "Unable to save support environment.",
+		};
+	}
+
+	const normalizedBypassUrl = parsedInput.data.bypassUrl?.trim() || null;
+	const normalizedSupportEmail = parsedInput.data.supportEmail?.trim() || null;
+
+	const [existingEnvironment] = await db
+		.select({ id: supportEnvironment.id })
+		.from(supportEnvironment)
+		.where(eq(supportEnvironment.envPneumonic, parsedInput.data.envPneumonic))
+		.limit(1);
+
+	if (existingEnvironment && existingEnvironment.id !== parsedInput.data.id) {
+		return {
+			success: false,
+			message: `Environment ${ parsedInput.data.envPneumonic } already exists.`,
+		};
+	}
+
+	const values = {
+		envPneumonic: parsedInput.data.envPneumonic,
+		websiteDomain: parsedInput.data.websiteDomain.trim(),
+		isAvailable: parsedInput.data.isAvailable,
+		bypassUrl: normalizedBypassUrl,
+		supportEmail: normalizedSupportEmail,
+		updatedAt: new Date(),
+	};
+
+	const [savedRow] = parsedInput.data.id
+		? await db
+			.update(supportEnvironment)
+			.set(values)
+			.where(eq(supportEnvironment.id, parsedInput.data.id))
+			.returning({
+				id: supportEnvironment.id,
+				envPneumonic: supportEnvironment.envPneumonic,
+				websiteDomain: supportEnvironment.websiteDomain,
+				isAvailable: supportEnvironment.isAvailable,
+				bypassUrl: supportEnvironment.bypassUrl,
+				supportEmail: supportEnvironment.supportEmail,
+				updatedAt: supportEnvironment.updatedAt,
+			})
+		: await db
+			.insert(supportEnvironment)
+			.values(values)
+			.returning({
+				id: supportEnvironment.id,
+				envPneumonic: supportEnvironment.envPneumonic,
+				websiteDomain: supportEnvironment.websiteDomain,
+				isAvailable: supportEnvironment.isAvailable,
+				bypassUrl: supportEnvironment.bypassUrl,
+				supportEmail: supportEnvironment.supportEmail,
+				updatedAt: supportEnvironment.updatedAt,
+			});
+
+	if (!savedRow) {
+		return {
+			success: false,
+			message: "Unable to save support environment.",
+		};
+	}
+
+	return {
+		success: true,
+		environment: {
+			id: savedRow.id,
+			envPneumonic: normalizeSupportEnvPneumonic(savedRow.envPneumonic),
+			websiteDomain: savedRow.websiteDomain,
+			isAvailable: savedRow.isAvailable,
+			bypassUrl: savedRow.bypassUrl,
+			supportEmail: savedRow.supportEmail,
+			updatedAt: savedRow.updatedAt,
+		},
+		message: parsedInput.data.id
+			? `Environment ${ parsedInput.data.envPneumonic } updated.`
+			: `Environment ${ parsedInput.data.envPneumonic } created.`,
 	};
 }
 

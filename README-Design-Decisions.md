@@ -38,6 +38,7 @@
   - [Offline Queue and Sync Infrastructure](#offline-queue-and-sync-infrastructure)
   - [Server-side Idempotency for Replay Safety](#server-side-idempotency-for-replay-safety)
   - [Feature Upload Consistency Work](#feature-upload-consistency-work)
+- [Setting up My Family Social on Safari](#setting-up-my-family-social-on-safari)
 
 ---
 # Overview
@@ -616,3 +617,23 @@ The book form (title, author, year, language, analysis, tags) is meaningfully si
 
 ## Feature Upload Consistency Work
 - Image upload surfaces now align on PNG/JPEG-only policy and proxy upload transport in foodies, galleries, tv, movies, music, threads, and member image upload manager.
+
+# Setting up My Family Social on Safari
+
+- If you have Chrome on the iPhone then the installation of the PWA app is just a matter of selecting `Install` from the browser URL.
+
+- If you're stuck with Safari then the steps below will get it done.
+
+  1. Add https://dev.my-family-social.com to Safari and open
+  2. Wait till app responds (could be 5-30 seconds)
+  3. Down at the bottom, click on the three dots
+  4. Click on the Share button
+  5. If you see Add to Home Screen, select that
+  6. Otherwise
+     i.   scroll all the way to the bottom
+     ii.  select Edit Actions
+     iii. In the Safari list, select Add to Home Screen
+     iv.  If you see Copy action, remove it.
+  7. Back on the Share screen, click on the +Add to Home Screen to add it.
+  8. Open My Family Social app on your home screen and login.
+

@@ -91,6 +91,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
+                    <Link href="/env-list">
+                      Environment List
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Link href="/faq">
                       FAQ
                     </Link>

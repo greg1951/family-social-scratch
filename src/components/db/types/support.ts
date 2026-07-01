@@ -7,6 +7,84 @@ export type ErrorReturnType = {
   message?: string;
 };
 
+export const SUPPORT_ENV_PNEUMONICS = ["local", "dev", "qa", "stage", "trial", "prod"] as const;
+
+export type SupportEnvPneumonic = typeof SUPPORT_ENV_PNEUMONICS[number];
+
+export const upsertSupportEnvironmentSchema = z
+  .object({
+    id: z.number().int().positive().optional(),
+    envPneumonic: z.enum(SUPPORT_ENV_PNEUMONICS, {
+      message: "Environment pneumonic is required.",
+    }),
+    websiteDomain: z
+      .string()
+      .trim()
+      .min(1, "Website domain is required.")
+      .max(255, "Website domain must be 255 characters or fewer."),
+    isAvailable: z.boolean().default(true),
+    bypassUrl: z
+      .string()
+      .trim()
+      .max(500, "Bypass URL must be 500 characters or fewer.")
+      .nullable()
+      .optional(),
+    supportEmail: z
+      .string()
+      .trim()
+      .email("Support email must be a valid email address.")
+      .max(320, "Support email must be 320 characters or fewer.")
+      .nullable()
+      .optional(),
+  })
+  .superRefine((value, ctx) => {
+    const normalizedBypassUrl = value.bypassUrl?.trim() ?? "";
+
+    if (!value.isAvailable && normalizedBypassUrl.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["bypassUrl"],
+        message: "Bypass URL is required when the environment is not available.",
+      });
+      return;
+    }
+
+    if (normalizedBypassUrl.length > 0) {
+      const parsedUrl = z.string().url().safeParse(normalizedBypassUrl);
+      if (!parsedUrl.success) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["bypassUrl"],
+          message: "Bypass URL must be a valid URL.",
+        });
+      }
+    }
+  });
+
+export type UpsertSupportEnvironmentFormInput = z.input<typeof upsertSupportEnvironmentSchema>;
+export type UpsertSupportEnvironmentInput = z.infer<typeof upsertSupportEnvironmentSchema>;
+
+export type SupportEnvironmentListItem = {
+  id: number;
+  envPneumonic: SupportEnvPneumonic;
+  websiteDomain: string;
+  isAvailable: boolean;
+  bypassUrl: string | null;
+  supportEmail: string | null;
+  updatedAt: Date | null;
+};
+
+export type UpsertSupportEnvironmentResult =
+  | {
+      success: true;
+      environment: SupportEnvironmentListItem;
+      message: string;
+    }
+  | {
+      success: false;
+      message: string;
+    };
+
 export const SUPPORT_ISSUE_CATEGORIES = [
   "Technical Issue",
   "General Inquiry",

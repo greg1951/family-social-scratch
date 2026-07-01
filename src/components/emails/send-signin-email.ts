@@ -5,6 +5,7 @@ import MemberSigninEmail from "./templates/member-signin-email";
 import React from "react";
 import { Resend } from 'resend';
 import { getInvitebyInviteEmail } from "../db/sql/queries-family-invite";
+import { getSupportEnvironmentByPneumonic } from "@/components/db/sql/queries-support";
 import { FounderDetails } from "@/features/family/types/family-members";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -12,6 +13,26 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export const sendLoginInstructionsEmail = async (
     inviteEmail: string, 
     founderDetails:FounderDetails ) => {
+
+  const appEnv = process.env.APP_ENV?.trim().toLowerCase();
+  if (!appEnv) {
+    console.error("sendLoginInstructionsEmail: APP_ENV was not provided.");
+    return {
+      error: true,
+      message: "Unable to send login instructions because APP_ENV is not configured."
+    };
+  }
+
+  const supportEnvironment = await getSupportEnvironmentByPneumonic(appEnv);
+  if (!supportEnvironment) {
+    console.error(`sendLoginInstructionsEmail: APP_ENV '${ appEnv }' is not configured in supportEnvironment.`);
+    return {
+      error: true,
+      message: `Unable to send login instructions because APP_ENV '${ appEnv }' was not found in supportEnvironment.`
+    };
+  }
+
+  const effectiveUrl = `https://${ supportEnvironment.envPneumonic }.${ supportEnvironment.websiteDomain }`;
                                               
   if (inviteEmail) {
     const userInfo = await getInvitebyInviteEmail(inviteEmail);
@@ -26,7 +47,8 @@ export const sendLoginInstructionsEmail = async (
         { memberName: userInfo.firstName, 
           founderName: `${founderDetails.firstName} ${founderDetails.lastName}`, 
           familyName: founderDetails.familyName,
-          link: `${process.env.NEXT_PUBLIC_BASE_URL}/login` }),
+          siteUrl: effectiveUrl,
+          link: `${effectiveUrl}/login` }),
     });
     
     if (!sendResult) {

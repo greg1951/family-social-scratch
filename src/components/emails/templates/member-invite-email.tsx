@@ -30,8 +30,15 @@ const emailTailwindConfig = {
   },
 };
 
-export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessage, familyName, link }
-  : { memberName: string, founderName: string, inviteFounderMessage: string, familyName: string, link: string }) => (
+export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessage, familyName, siteUrl, link }
+  : {
+    memberName: string;
+    founderName: string;
+    inviteFounderMessage: string;
+    familyName: string;
+    siteUrl: string;
+    link: string;
+  }) => (
   <Html>
     <Head />
     <Tailwind config={ emailTailwindConfig }>
@@ -45,7 +52,7 @@ export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessag
                 style={ { width: '150px', paddingLeft: '12px', paddingRight: '8px' } }
               >
                 <Img
-                  src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
+                  src={`${siteUrl}/images/emails/MyFamilySocial-Logo.jpg`}
                   alt='My Family Social logo'
                   width='150'
                   height='150'
@@ -72,21 +79,20 @@ export const MemberInviteEmail = ({ memberName, founderName, inviteFounderMessag
                   exchange food recipes, and more in a private and secure environment.
                 </Text>
                 <Text className='m-0 font-app text-base leading-6 pt-2'>
-                  You have questions? We have answers! Check out our <a href="https://kbgfamilysocial.com/faq" className='text-brandButton'>FAQ</a> page to learn more about My Family Social and how it can help your family stay connected and share special moments together.
+                  You have questions? We have answers! Check out our <a href={`${siteUrl}/faq`} className='text-brandButton'>Videos</a> page to learn more about My Family Social and how it can help your family stay connected and share special moments together.
                 </Text>
               </Column>
-              <Column align='center' valign='middle' style={ { width: '180px', paddingTop: '8px' } }>
-                <Text className='m-0 text-center'>
-                  <Button
-                    href="https://kbgfamilysocial.com"
-                    className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
-                  >
-                    Visit My Family Social
-                  </Button>
+          </Row>
+          </Section>
+          <Section style={ { width: '700px' } }>
+            <Row>
+              <Column align='left' valign='top' style={ { width: '180px', paddingTop: '8px' } }>
+                <Text className='m-0 font-app text-base leading-6 pt-2'>
+                  Until you register most of the links are not active. However, you can still access the videos to find out more about My Family Social and what it has to offer.
                 </Text>
               </Column>
             </Row>
-          </Section>
+            </Section>
           <Section style={ { width: '700px' } }>
             <Row>
               <Column align='left' valign='top'>

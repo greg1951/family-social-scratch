@@ -30,8 +30,14 @@ const emailTailwindConfig = {
   },
 };
 
-export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
-  : { memberName: string, founderName: string, familyName: string, link: string }) => (
+export const MemberSigninEmail = ({ memberName, founderName, familyName, siteUrl, link }
+  : {
+    memberName: string;
+    founderName: string;
+    familyName: string;
+    siteUrl: string;
+    link: string;
+  }) => (
   <Html>
 
     <Head />
@@ -49,7 +55,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                 style={ { width: '150px', paddingLeft: '12px', paddingRight: '8px' } }
               >
                 <Img
-                  src='https://kbgfamilysocial.com/images/emails/MyFamilySocial-Logo.jpg'
+                  src={`${siteUrl}/images/emails/MyFamilySocial-Logo.jpg`}
                   alt='My Family Social logo'
                   width='150'
                   height='150'
@@ -58,8 +64,10 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               </Column>
               <Column align='left' valign='middle'>
                 <Text className='m-0 mb-4 font-app text-base leading-7'>
-                  Welcome to the <b>{ familyName }</b> family, { memberName }! Here you&apos;ll find some
-                  information about how to sign in and get started.
+                  Welcome to the <b>{ familyName }</b> family, { memberName }! Here you&apos;ll find some information about how to sign in and get started.
+                </Text>
+                <Text className='m-0 mb-4 font-app text-base leading-7'>
+                  When you registered you provided a password. The password can always be used to sign in. However, if you registered with a Google or Apple email account, you should use that method to sign in.
                 </Text>
               </Column>
             </Row>
@@ -68,13 +76,10 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
             <Row>
               <Column align='left' valign='top'>
                 <Text className='m-0 font-app pt-2 text-left text-base leading-6'>
-                  As shown in the login snippet below, there are <u>three fields</u> required to sign in:
-                  your <i>email address</i>, the <i>password</i> you created during registration,
-                  and the <i>family name</i>.
+                  Make note of your family name: <b>{ familyName }</b>. You must enter it exactly this way (including the capitalization) to sign in. (There are no spaces allowed in the name either.)
                 </Text>
                 <Text className='m-0 font-app pt-2 text-left text-base leading-6'>
-                  Make note of your family name: <b>{ familyName }</b>. It must be entered exactly this way when you sign in,
-                  including the capitalization.
+                  If you are using a Social login for Google or Apple, then proceed to the buttons to sign in with Google or Apple. Otherwise, use your email address and password you registered with to sign in.
                 </Text>
               </Column>
             </Row>
@@ -82,7 +87,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               <Column align='center'
                 valign='top'
                 style={ { width: '620px', paddingRight: '20px' } }>
-                <Img src='https://kbgfamilysocial.com/images/emails/login-email-fields.jpg'
+                <Img src={`${siteUrl}/images/emails/login-email-fields.jpg`}
                   alt='Login Email Fields'
                   width='400'
                   height='300' />
@@ -103,7 +108,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
               <Column align='center'
                 valign='top'
                 style={ { width: '620px', paddingRight: '20px' } }>
-                <Img src='https://kbgfamilysocial.com/images/emails/login-need-help.jpg'
+                <Img src={`${siteUrl}/images/emails/login-need-help.jpg`}
                   alt='Login Need Help'
                   width='400'
                   height='300' />
@@ -122,7 +127,7 @@ export const MemberSigninEmail = ({ memberName, founderName, familyName, link }
                 valign='top'
                 style={ { width: '180px', paddingTop: '8px' } }>
                 <Text className='m-0 text-center'>
-                  <Button href="https://kbgfamilysocial.com/login"
+                  <Button href={ link }
                     className='font-app inline-block rounded-full bg-brandButton px-5 py-3 font-extrabold text-white no-underline'
                   >
                     My Family Social Login
