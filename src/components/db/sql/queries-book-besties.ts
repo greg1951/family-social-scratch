@@ -1,6 +1,7 @@
 import db from '@/components/db/drizzle';
 import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
-import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference, discussThread, pwaMutationRequest } from "../schema/family-social-schema-tables";
+import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, discussThread, pwaMutationRequest } from "../schema/family-social-schema-tables";
+import { bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference } from "../schema/global-schema-tables";
 import {
   AddBookCommentReturn,
   Book,

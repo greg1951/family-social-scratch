@@ -4,6 +4,9 @@ import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import {
 	member,
+	
+} from "@/components/db/schema/family-social-schema-tables";
+import {
 	supportEnvironment,
 	supportAttachment,
 	supportFamily,
@@ -12,7 +15,7 @@ import {
 	supportPersonIssue,
 	supportResponse,
 	supportTeam,
-} from "@/components/db/schema/family-social-schema-tables";
+} from "@/components/db/schema/global-schema-tables";
 import {
 	createSupportIssueSchema,
 	SUPPORT_ENV_PNEUMONICS,

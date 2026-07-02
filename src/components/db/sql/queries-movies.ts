@@ -8,10 +8,10 @@ import {
   movieComment,
   movieLike,
   movieTag,
-  movieTagReference,
   pwaMutationRequest,
   movieTemplate,
 } from "../schema/family-social-schema-tables";
+import { movieTagReference } from "../schema/global-schema-tables";
 import { loadDiscussionThreadSummariesByTargetIds, loadDiscussionThreadSummariesForTargetId } from "./queries-discuss-threads";
 import {
   AddMovieCommentReturn,

@@ -9,9 +9,9 @@ import {
   showComment,
   showLike,
   showTag,
-  showTagReference,
   showTemplate,
 } from "../schema/family-social-schema-tables";
+import { showTagReference } from "../schema/global-schema-tables";
 import {
   loadDiscussionThreadSummariesByTargetIds,
   loadDiscussionThreadSummariesForTargetId,

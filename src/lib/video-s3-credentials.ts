@@ -1,5 +1,5 @@
 import db from "@/components/db/drizzle";
-import { videoS3Credentials } from "@/components/db/schema/family-social-schema-tables";
+import { videoS3Credentials } from "@/components/db/schema/global-schema-tables";
 import { decryptS3Value } from "@/lib/s3-encryption";
 import { desc, eq } from "drizzle-orm";
 

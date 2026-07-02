@@ -8,11 +8,9 @@ import {
   poem,
   poemCategoryTag,
   poemLike,
-  poemTerm,
   poemVerse,
-  poemCategoryReference,
-  poemCategoryTagReference,
 } from "../schema/family-social-schema-tables";
+import { poemTerm, poemCategoryReference, poemCategoryTagReference } from "../schema/global-schema-tables";
 import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,

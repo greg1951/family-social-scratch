@@ -8,7 +8,7 @@ import {
   videoS3Credentials,
   videoTag,
   videoTagReference,
-} from "@/components/db/schema/family-social-schema-tables";
+} from "@/components/db/schema/global-schema-tables";
 import { serializedTipTapDocumentSchema } from "@/components/db/types/poem-term-validation";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";

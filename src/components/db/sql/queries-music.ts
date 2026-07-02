@@ -9,10 +9,10 @@ import {
   musicLike,
   musicLyrics,
   musicTag,
-  musicTagReference,
   pwaMutationRequest,
   musicTemplate,
 } from "../schema/family-social-schema-tables";
+import { musicTagReference } from "../schema/global-schema-tables";
 import {
   AddMusicCommentReturn,
   GetMusicDetailReturn,

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 
 import db from "@/components/db/drizzle";
-import { video } from "@/components/db/schema/family-social-schema-tables";
+import { video } from "@/components/db/schema/global-schema-tables";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
 

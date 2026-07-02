@@ -1,8 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 
-const DEFAULT_FAMILY_SOCIAL_DATABASE_URL = "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=verify-full&channel_binding=require";
-
 function normalizeDatabaseUrl(connectionString: string): string {
 	const normalizedUrl = new URL(connectionString);
 	const sslMode = normalizedUrl.searchParams.get("sslmode");
@@ -14,10 +12,13 @@ function normalizeDatabaseUrl(connectionString: string): string {
 	return normalizedUrl.toString();
 }
 
-const familySocialDatabaseUrl = normalizeDatabaseUrl(
-	process.env.FAMILY_SOCIAL_DATABASE_URL ?? DEFAULT_FAMILY_SOCIAL_DATABASE_URL
-);
-const sql = neon(familySocialDatabaseUrl);
-const db = drizzle(sql);
+const familySocialDatabaseUrl = process.env.FAMILY_SOCIAL_DATABASE_URL;
 
-export default db; 
+if (!familySocialDatabaseUrl) {
+	throw new Error("FAMILY_SOCIAL_DATABASE_URL is required.");
+}
+
+const sql = neon(normalizeDatabaseUrl(familySocialDatabaseUrl));
+export const db = drizzle(sql);
+
+export default db;

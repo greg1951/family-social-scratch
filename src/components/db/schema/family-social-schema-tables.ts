@@ -1,8 +1,12 @@
 // ...existing code...
-import { serial, index, boolean, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
+import { pgSchema, serial, index, boolean, pgEnum, foreignKey, unique } from "drizzle-orm/pg-core";
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
+import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, movieTagReference, musicTagReference } from "./global-schema-tables"; 
+export const familySchema = pgSchema('family_schema');
+
+
 
 export const familyStatus = pgEnum('status', ['trial', 'active', 'expired']);
 export const inviteStatus = pgEnum('status', ['invited', 'joined', 'resend', 'declined']);
@@ -22,7 +26,7 @@ import type { AdapterAccount } from "@auth/core/adapters"
 
 
 /*------------------------------- OAuth Schema ------------------------------ */
-export const accounts = pgTable("account",
+export const accounts = familySchema.table("account",
   {
     userId: integer("userId")
       .notNull()
@@ -45,7 +49,7 @@ export const accounts = pgTable("account",
   })
 )
 
-export const verificationTokens = pgTable(
+export const verificationTokens = familySchema.table(
   "verificationToken",
   {
     identifier: text("identifier").notNull(),
@@ -57,7 +61,7 @@ export const verificationTokens = pgTable(
   })
 )
 
-export const sessions = pgTable("session", {
+export const sessions = familySchema.table("session", {
   sessionToken: text("sessionToken").primaryKey().notNull(),
   userId: integer("userId")
     .notNull()
@@ -67,7 +71,7 @@ export const sessions = pgTable("session", {
 
 
 /* Table below is a hybrid using the original user table with addition OAuth columns */
-export const user = pgTable("user", {
+export const user = familySchema.table("user", {
   id: serial("id").primaryKey(),
   name: text("name"), 
   emailVerified: timestamp("emailVerified", { mode: "date" }),
@@ -83,7 +87,7 @@ export const user = pgTable("user", {
 });
 
 /*------------------------------- Essential Family Schema ------------------------------ */
-export const passwordReset = pgTable("password_reset", {
+export const passwordReset = familySchema.table("password_reset", {
   id: serial("id").primaryKey(),
   userId: integer("fk_user_id").notNull().references(() => user.id, {onDelete: "cascade"}).unique(),
   token: text("token").notNull(),
@@ -92,7 +96,7 @@ export const passwordReset = pgTable("password_reset", {
   index('reset_token_idx').on(table.token),
 ]);
 
-export const family = pgTable("family", {
+export const family = familySchema.table("family", {
   id: serial("id").primaryKey(),
   name: text("family_name").notNull().unique(),
   status: text("status").notNull().default("trial"),
@@ -100,7 +104,7 @@ export const family = pgTable("family", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const familyInvitation = pgTable("family_invitation", {
+export const familyInvitation = familySchema.table("family_invitation", {
   id: serial("id").primaryKey(),
   email: text("invited_email").notNull(),
   firstName: text("first_name").notNull(),
@@ -118,7 +122,7 @@ export const familyInvitation = pgTable("family_invitation", {
   index('invite_token_idx').on(table.inviteToken),
 ]);
 
-export const featureReference = pgTable("feature_reference", {
+export const featureReference = familySchema.table("feature_reference", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description"),
@@ -126,7 +130,7 @@ export const featureReference = pgTable("feature_reference", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const familyFeatureConfig = pgTable("family_feature_config", {
+export const familyFeatureConfig = familySchema.table("family_feature_config", {
   id: serial("id").primaryKey(),
   isSelected: boolean("is_selected").notNull().default(false),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
@@ -137,7 +141,7 @@ export const familyFeatureConfig = pgTable("family_feature_config", {
   index('family_feature_config_feature_id_idx').on(table.featureId),
 ]);
 
-export const familyActivity = pgTable("family_activity", {
+export const familyActivity = familySchema.table("family_activity", {
   id: serial("id").primaryKey(),
   actionType: text("action_type").notNull(),
   featureName: text("feature_name").notNull(),
@@ -152,7 +156,7 @@ export const familyActivity = pgTable("family_activity", {
 
 ]);
 
-export const pwaMutationRequest = pgTable("pwa_mutation_request", {
+export const pwaMutationRequest = familySchema.table("pwa_mutation_request", {
   id: serial("id").primaryKey(),
   requestKey: text("request_key").notNull().unique(),
   mutationName: text("mutation_name").notNull(),
@@ -166,7 +170,7 @@ export const pwaMutationRequest = pgTable("pwa_mutation_request", {
   index('pwa_mutation_request_member_id_idx').on(table.memberId),
 ]);
 
-export const familyS3Credentials = pgTable("family_s3_credentials", {
+export const familyS3Credentials = familySchema.table("family_s3_credentials", {
   id: serial("id").primaryKey(),
   encryptedAccessKey: text("encrypted_access_key").notNull(),
   encryptedSecretKey: text("encrypted_secret_key").notNull(),
@@ -180,7 +184,7 @@ export const familyS3Credentials = pgTable("family_s3_credentials", {
   index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
 ]);
 
-export const member = pgTable("member", {
+export const member = familySchema.table("member", {
   id: serial("id").primaryKey(),
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
@@ -199,14 +203,14 @@ export const member = pgTable("member", {
   index('member_email_idx').on(table.email),
 ]);
 
-export const memberOption = pgTable("member_option", {
+export const memberOption = familySchema.table("member_option", {
   id: serial("id").primaryKey(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   optionId: integer("fk_option_id").notNull().references(() => optionReference.id, {onDelete: 'cascade'}),
   isSelected: boolean("is_selected").notNull().default(false),
 });
 
-export const optionReference = pgTable("option_reference", {
+export const optionReference = familySchema.table("option_reference", {
   id: serial("id").primaryKey(),
   optionName: text("option_name").notNull(),
   category: text("category").notNull().default("feature"),
@@ -215,7 +219,7 @@ export const optionReference = pgTable("option_reference", {
 });
 
 /*------------------------------- Club Schema ------------------------------ */
-export const club = pgTable("club", {
+export const club = familySchema.table("club", {
   id: serial("id").primaryKey(),
   status: text("status").notNull().default("active"),
   clubName: text("club_name").notNull().default(""),
@@ -228,7 +232,7 @@ export const club = pgTable("club", {
     index('club_club_founder_id_idx').on(table.clubFounderId),
 ]);
 
-export const club_session = pgTable("club_session", {
+export const club_session = familySchema.table("club_session", {
   id: serial("id").primaryKey(),
   status: text("status").notNull().default("active"),
   startedAt: timestamp("created_at").defaultNow(),
@@ -244,7 +248,7 @@ export const club_session = pgTable("club_session", {
 ]);
 
 /*------------------------------- Discussion Thread Schema ------------------------------ */
-export const discussThread = pgTable("discuss_thread", {
+export const discussThread = familySchema.table("discuss_thread", {
   id: serial("id").primaryKey(),
   discussTopic: text("title").notNull(),
   status: text("status").notNull().default("active"),
@@ -263,7 +267,7 @@ export const discussThread = pgTable("discuss_thread", {
     index('discuss_thread_target_id_idx').on(table.targetId, table.targetType),
 ]);
 
-export const discussPostReply = pgTable("discuss_post_reply", {
+export const discussPostReply = familySchema.table("discuss_post_reply", {
   id: serial("id").primaryKey(),
   postReplyType: text("post_reply_type").notNull().default("post"),
   summary: text("summary").notNull(),
@@ -292,7 +296,7 @@ export const discussPostReply = pgTable("discuss_post_reply", {
     index('discuss_post_reply_author_created_idx').on(table.authorMemberId),
   ]);
 
-export const discussLike = pgTable("discuss_like", {
+export const discussLike = familySchema.table("discuss_like", {
   id: serial("id").primaryKey(),
   discussPostId: integer("fk_discuss_post_id").notNull().references(() => discussPostReply.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
@@ -317,7 +321,7 @@ export const tagName = pgEnum('tag_name', [
   'founder', 'member', 'admin', 'suggestion', 'bug', 'question', 'other',
 ]);
 
-export const threadTagReference = pgTable("thread_tag_reference", {
+export const threadTagReference = familySchema.table("thread_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull(),
   tagDesc: text("tag_description"),
@@ -327,7 +331,7 @@ export const threadTagReference = pgTable("thread_tag_reference", {
 });
 
 
-export const threadConversationTag = pgTable("thread_conversation_tag", {
+export const threadConversationTag = familySchema.table("thread_conversation_tag", {
   id: serial("id").primaryKey(),
   tagId: integer("fk_tag_id").notNull().references(() => threadTagReference.id, {onDelete: 'cascade'}),
   conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
@@ -336,7 +340,7 @@ export const threadConversationTag = pgTable("thread_conversation_tag", {
     index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
 ]);
 
-export const threadConversation = pgTable("thread_conversation", {
+export const threadConversation = familySchema.table("thread_conversation", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   visibility: text("visibility").notNull().default("private"),
@@ -358,7 +362,7 @@ export const threadConversation = pgTable("thread_conversation", {
     index('thread_conversation_sender_created_idx').on(table.senderMemberId, table.createdAt),
 ]);
 
-export const threadPostReply = pgTable("thread_post_reply", {
+export const threadPostReply = familySchema.table("thread_post_reply", {
   id: serial("id").primaryKey(),
   conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
   authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
@@ -389,7 +393,7 @@ export const threadPostReply = pgTable("thread_post_reply", {
     unique('thread_post_reply_conversation_seq_uq').on(table.conversationId, table.seqNo),
 ]);
 
-export const threadPostAttachment = pgTable("thread_post_attachment", {
+export const threadPostAttachment = familySchema.table("thread_post_attachment", {
   id: serial("id").primaryKey(),
   postId: integer("fk_post_id").notNull().references(() => threadPostReply.id, { onDelete: 'cascade' }),
   attachmentType: text("attachment_type").notNull().default("image"),
@@ -405,7 +409,7 @@ export const threadPostAttachment = pgTable("thread_post_attachment", {
     index('thread_post_attachment_object_key_idx').on(table.s3ObjectKey),
 ]);
 
-export const threadRecipientState = pgTable("thread_recipient_state", {
+export const threadRecipientState = familySchema.table("thread_recipient_state", {
   id: serial("id").primaryKey(),
   conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
   recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
@@ -430,7 +434,7 @@ export const threadRecipientState = pgTable("thread_recipient_state", {
     unique('thread_recipient_state_conversation_recipient_uq').on(table.conversationId, table.recipientMemberId),
 ]);
 
-export const threadTemplate = pgTable("thread_template", {
+export const threadTemplate = familySchema.table("thread_template", {
   id: serial("id").primaryKey(),
   templateName: text("template_name").notNull().default("").unique(),
   templateCategory: text("template_category").notNull().default("thread"),
@@ -442,7 +446,7 @@ export const threadTemplate = pgTable("thread_template", {
 
 
 /*-------------------------------- Picture Hallway ------------------------------ */
-export const galleryPhoto = pgTable("gallery_photo", {
+export const galleryPhoto = familySchema.table("gallery_photo", {
   id: serial("id").primaryKey(),
   caption: text("caption"),
   photoYear: integer("photo_year").notNull().default(0),
@@ -457,7 +461,7 @@ export const galleryPhoto = pgTable("gallery_photo", {
     index('gallery_photo_member_id_idx').on(table.memberId),
 ]);
 
-export const galleryAlbum = pgTable("gallery_album", {
+export const galleryAlbum = familySchema.table("gallery_album", {
   id: serial("id").primaryKey(),
   caption: text("caption"),
   albumName: text("album_name").notNull(),
@@ -471,7 +475,7 @@ export const galleryAlbum = pgTable("gallery_album", {
     index('gallery_album_member_id_idx').on(table.memberId),
 ]);
 
-export const galleryAlbumPhoto = pgTable("gallery_album_photo", {
+export const galleryAlbumPhoto = familySchema.table("gallery_album_photo", {
   id: serial("id").primaryKey(),
   caption: text("caption"),
   albumPhotoDescription: text("album_photo_description"),
@@ -487,7 +491,7 @@ export const galleryAlbumPhoto = pgTable("gallery_album_photo", {
     index('gallery_album_photo_album_id_idx').on(table.albumId),
 ]);
 
-export const galleryAlbumPhotoLike = pgTable("gallery_album_photo_like", {
+export const galleryAlbumPhotoLike = familySchema.table("gallery_album_photo_like", {
   id: serial("id").primaryKey(),
   likeType: integer("like_type").notNull().default(1), // 1 = like (thumbs up), 2 = love (heart)
   albumPhotoId: integer("fk_gallery_album_photo_id").notNull().references(() => galleryAlbumPhoto.id, { onDelete: 'cascade' }),
@@ -500,7 +504,7 @@ export const galleryAlbumPhotoLike = pgTable("gallery_album_photo_like", {
   ]
 );
 
-export const galleryAlbumComment = pgTable("gallery_album_photo_comment", {
+export const galleryAlbumComment = familySchema.table("gallery_album_photo_comment", {
   id: serial("id").primaryKey(),
   commentText: text("comment_text").notNull().default(""),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
@@ -516,7 +520,7 @@ export const galleryAlbumComment = pgTable("gallery_album_photo_comment", {
 /*------------------------------- Games Scoreboard ------------------------------ */
 //export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
 
-export const gameMetadata = pgTable("game_metadata", {
+export const gameMetadata = familySchema.table("game_metadata", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   highOrLo: text("high_or_lo").notNull().default("high"),
@@ -529,7 +533,7 @@ export const gameMetadata = pgTable("game_metadata", {
   supportsTeams: boolean("supports_teams").notNull().default(false),
 });
 
-export const gameState = pgTable("game_state", {
+export const gameState = familySchema.table("game_state", {
   id: serial("id").primaryKey(),
   gameTitle: text("game_title").notNull().unique(),
   status: text("status").notNull().default("active"),
@@ -543,7 +547,7 @@ export const gameState = pgTable("game_state", {
     index('game_state_family_id_idx').on(table.familyId),
 ]);
 
-export const gamePlayerState = pgTable("game_player_state", {
+export const gamePlayerState = familySchema.table("game_player_state", {
   id: serial("id").primaryKey(),
   playPosition: integer("play_position"),
   status: text("status").notNull().default("active"),
@@ -556,7 +560,7 @@ export const gamePlayerState = pgTable("game_player_state", {
 ]);
 
 
-export const gamePlayerRound = pgTable("game_player_round", {
+export const gamePlayerRound = familySchema.table("game_player_round", {
   id: serial("id").primaryKey(),
   roundNo: integer("round_no").notNull().default(1),
   roundScore: integer("round_score").notNull().default(0),
@@ -572,7 +576,7 @@ export const gamePlayerRound = pgTable("game_player_round", {
 /*------------------------------- Poetry Nook ------------------------------ */
 //export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
-export const poem = pgTable("poem", {
+export const poem = familySchema.table("poem", {
   id: serial("id").primaryKey(),
   poemTitle: text("poem_title").notNull().unique(),
   poetName: text("poet_name").notNull().default("Anonymous"),
@@ -589,7 +593,7 @@ export const poem = pgTable("poem", {
   ]
 );
 
-export const poemVerse = pgTable("poem_verse", {
+export const poemVerse = familySchema.table("poem_verse", {
   id: serial("id").primaryKey(),
   verseJson: text("verse_json").notNull().default("{}"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -600,7 +604,7 @@ export const poemVerse = pgTable("poem_verse", {
   ]
 );
 
-export const poemComment = pgTable("poem_comment", {
+export const poemComment = familySchema.table("poem_comment", {
   id: serial("id").primaryKey(),
   isPoemAnalysis: boolean("is_poem_analysis").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -614,23 +618,8 @@ export const poemComment = pgTable("poem_comment", {
   ]
 );
 
-export const poemCategoryReference = pgTable("poem_category_reference", {
-  id: serial("id").primaryKey(),
-  categoryName: text("category_name").notNull().default(""),
-  categoryDesc: text("category_description"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-
-export const poemCategoryTagReference = pgTable("poem_category_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagJson: text("tag_json").notNull().default("{}"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  poemCategoryId: integer("fk_poem_category_id").notNull().references(() => poemCategoryReference.id, {onDelete: 'cascade'}),
-});
-
-export const poemCategoryTag = pgTable("poem_category_tag", {
+export const poemCategoryTag = familySchema.table("poem_category_tag", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
   tagReferenceId: integer("fk_tag_id").notNull().references(() => poemCategoryTagReference.id, {onDelete: 'cascade'}),
@@ -641,7 +630,7 @@ export const poemCategoryTag = pgTable("poem_category_tag", {
   ]
 );
 
-export const poemLike = pgTable("poem_like", {
+export const poemLike = familySchema.table("poem_like", {
   id: serial("id").primaryKey(),
   poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
@@ -655,20 +644,11 @@ export const poemLike = pgTable("poem_like", {
   ]
 );
 
-export const poemTerm = pgTable("poem_term", {
-  id: serial("id").primaryKey(),
-  term: text("term").notNull().default(""),
-  termCategory: text("term_category").notNull().default("definition"),
-  termJson: text("term_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 
 /*------------------------------- Reading Room ------------------------------ */
 //export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
-export const book = pgTable("book", {
+export const book = familySchema.table("book", {
   id: serial("id").primaryKey(),
   bookTitle: text("book_title").notNull().unique(),
   authorName: text("author_name").notNull().default("anonymous"),
@@ -686,7 +666,7 @@ export const book = pgTable("book", {
   ]
 );
 
-export const bookComment = pgTable("book_comment", {
+export const bookComment = familySchema.table("book_comment", {
   id: serial("id").primaryKey(),
   isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -700,23 +680,8 @@ export const bookComment = pgTable("book_comment", {
   ]
 );
 
-export const bookCategoryReference = pgTable("book_category_reference", {
-  id: serial("id").primaryKey(),
-  categoryName: text("category_name").notNull().default(""),
-  categoryDesc: text("category_description"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-
-export const bookCategoryTagReference = pgTable("book_category_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagJson: text("tag_json").notNull().default("{}"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  bookCategoryId: integer("fk_book_category_id").notNull().references(() => bookCategoryReference.id, {onDelete: 'cascade'}),
-});
-
-export const bookCategoryTag = pgTable("book_category_tag", {
+export const bookCategoryTag = familySchema.table("book_category_tag", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
   tagReferenceId: integer("fk_tag_id").notNull().references(() => bookCategoryTagReference.id, {onDelete: 'cascade'}),
@@ -749,7 +714,7 @@ export const bookCategoryTag = pgTable("book_category_tag", {
 //   ]
 // );
 
-export const bookLike = pgTable("book_like", {
+export const bookLike = familySchema.table("book_like", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
@@ -763,18 +728,10 @@ export const bookLike = pgTable("book_like", {
   ]
 );
 
-export const bookTerm = pgTable("book_term", {
-  id: serial("id").primaryKey(),
-  term: text("term").notNull().default(""),
-  termCategory: text("term_category").notNull().default("definition"),
-  termJson: text("term_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
 
 /*------------------------------- The Kitchen ------------------------------ */
 
-export const recipe = pgTable("recipe", {
+export const recipe = familySchema.table("recipe", {
   id: serial("id").primaryKey(),
   recipeTitle: text("recipe_title").notNull().unique(),
   recipeShortSummary: text("recipe_short_summary").notNull().default(""),
@@ -795,7 +752,7 @@ export const recipe = pgTable("recipe", {
   ]
 );
 
-export const recipeComment = pgTable("recipe_comment", {
+export const recipeComment = familySchema.table("recipe_comment", {
   id: serial("id").primaryKey(),
   isRecipeProTip: boolean("is_recipe_pro_tip").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -809,7 +766,7 @@ export const recipeComment = pgTable("recipe_comment", {
   ]
 );
 
-export const recipeTemplate = pgTable("recipe_template", {
+export const recipeTemplate = familySchema.table("recipe_template", {
   id: serial("id").primaryKey(),
   templateName: text("template_name").notNull().default("").unique(),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
@@ -826,7 +783,7 @@ export const recipeTemplate = pgTable("recipe_template", {
   ]
 );
 
-export const recipeTagReference = pgTable("recipe_tag_reference", {
+export const recipeTagReference = familySchema.table("recipe_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),
   tagDesc: text("tag_description"),
@@ -836,7 +793,7 @@ export const recipeTagReference = pgTable("recipe_tag_reference", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const recipeTag = pgTable("recipe_tag", {
+export const recipeTag = familySchema.table("recipe_tag", {
   id: serial("id").primaryKey(),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
   tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
@@ -847,7 +804,7 @@ export const recipeTag = pgTable("recipe_tag", {
   ]
 );
 
-export const recipeLike = pgTable("recipe_like", {
+export const recipeLike = familySchema.table("recipe_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, { onDelete: 'cascade' }),
@@ -860,7 +817,7 @@ export const recipeLike = pgTable("recipe_like", {
   ]
 );
 
-export const recipeTerm = pgTable("recipe_term", {
+export const recipeTerm = familySchema.table("recipe_term", {
   id: serial("id").primaryKey(),
   term: text("term").notNull().default(""),
   termJson: text("term_json").notNull().default("{}"),
@@ -870,7 +827,7 @@ export const recipeTerm = pgTable("recipe_term", {
 
 /*------------------------------- TV Room ------------------------------ */
 
-export const show = pgTable("show", {
+export const show = familySchema.table("show", {
   id: serial("id").primaryKey(),
   showTitle: text("show_title").notNull().unique(),
   showImageCredit: text("show_image_credit").notNull().default(""),
@@ -892,7 +849,7 @@ export const show = pgTable("show", {
   ]
 );
 
-export const showComment = pgTable("show_comment", {
+export const showComment = familySchema.table("show_comment", {
   id: serial("id").primaryKey(),
   isShowReviewer: boolean("is_show_reviewer").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -906,7 +863,7 @@ export const showComment = pgTable("show_comment", {
   ]
 );
 
-export const showTemplate = pgTable("show_template", {
+export const showTemplate = familySchema.table("show_template", {
   id: serial("id").primaryKey(),
   templateName: text("template_name").notNull().default("").unique(),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
@@ -922,17 +879,8 @@ export const showTemplate = pgTable("show_template", {
   ]
 );
 
-export const showTagReference = pgTable("show_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("global"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-export const showTag = pgTable("show_tag", {
+export const showTag = familySchema.table("show_tag", {
   id: serial("id").primaryKey(),
   showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
   tagId: integer("fk_tag_id").notNull().references(() => showTagReference.id, {onDelete: 'cascade'}),
@@ -943,7 +891,7 @@ export const showTag = pgTable("show_tag", {
   ]
 );
 
-export const showLike = pgTable("show_like", {
+export const showLike = familySchema.table("show_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   showId: integer("fk_show_id").notNull().references(() => show.id, { onDelete: 'cascade' }),
@@ -958,7 +906,7 @@ export const showLike = pgTable("show_like", {
 
 /*------------------------------- Movie Theater ------------------------------ */
 
-export const movie = pgTable("movie", {
+export const movie = familySchema.table("movie", {
   id: serial("id").primaryKey(),
   movieTitle: text("movie_title").notNull().unique(),
   movieImageCredit: text("movie_image_credit").notNull().default(""),
@@ -978,7 +926,7 @@ export const movie = pgTable("movie", {
   ]
 );
 
-export const movieComment = pgTable("movie_comment", {
+export const movieComment = familySchema.table("movie_comment", {
   id: serial("id").primaryKey(),
   ismovieReviewer: boolean("is_movie_reviewer").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -992,7 +940,7 @@ export const movieComment = pgTable("movie_comment", {
   ]
 );
 
-export const movieTemplate = pgTable("movie_template", {
+export const movieTemplate = familySchema.table("movie_template", {
   id: serial("id").primaryKey(),
   templateName: text("template_name").notNull().default("").unique(),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
@@ -1008,17 +956,8 @@ export const movieTemplate = pgTable("movie_template", {
   ]
 );
 
-export const movieTagReference = pgTable("movie_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("global"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-export const movieTag = pgTable("movie_tag", {
+export const movieTag = familySchema.table("movie_tag", {
   id: serial("id").primaryKey(),
   movieId: integer("fk_movie_id").notNull().references(() => movie.id, {onDelete: 'cascade'}),
   tagId: integer("fk_tag_id").notNull().references(() => movieTagReference.id, {onDelete: 'cascade'}),
@@ -1029,7 +968,7 @@ export const movieTag = pgTable("movie_tag", {
   ]
 );
 
-export const movieLike = pgTable("movie_like", {
+export const movieLike = familySchema.table("movie_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   movieId: integer("fk_movie_id").notNull().references(() => movie.id, { onDelete: 'cascade' }),
@@ -1043,7 +982,7 @@ export const movieLike = pgTable("movie_like", {
 );
 
 /*------------------------------- Music Salon ------------------------------ */
-export const music = pgTable("music", {
+export const music = familySchema.table("music", {
   id: serial("id").primaryKey(),
   musicTitle: text("music_title").notNull().unique(),
   artistName: text("artist_name").notNull().default(""),
@@ -1062,7 +1001,7 @@ export const music = pgTable("music", {
   ]
 );
 
-export const musicComment = pgTable("music_comment", {
+export const musicComment = familySchema.table("music_comment", {
   id: serial("id").primaryKey(),
   isMusicReviewer: boolean("is_music_reviewer").notNull().default(false),
   commentJson: text("comment_json").notNull().default("{}"),
@@ -1076,7 +1015,7 @@ export const musicComment = pgTable("music_comment", {
   ]
 );
 
-export const musicLyrics = pgTable("music_lyrics", {
+export const musicLyrics = familySchema.table("music_lyrics", {
   id: serial("id").primaryKey(),
   lyricsJson: text("lyrics_json").notNull().default("{}"),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1090,7 +1029,7 @@ export const musicLyrics = pgTable("music_lyrics", {
   ]
 );
 
-export const musicTemplate = pgTable("music_template", {
+export const musicTemplate = familySchema.table("music_template", {
   id: serial("id").primaryKey(),
   templateName: text("template_name").notNull().default("").unique(),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
@@ -1106,17 +1045,8 @@ export const musicTemplate = pgTable("music_template", {
   ]
 );
 
-export const musicTagReference = pgTable("music_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("genre"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
 
-export const musicTag = pgTable("music_tag", {
+export const musicTag = familySchema.table("music_tag", {
   id: serial("id").primaryKey(),
   musicId: integer("fk_music_id").notNull().references(() => music.id, {onDelete: 'cascade'}),
   tagId: integer("fk_tag_id").notNull().references(() => musicTagReference.id, {onDelete: 'cascade'}),
@@ -1127,7 +1057,7 @@ export const musicTag = pgTable("music_tag", {
   ]
 );
 
-export const musicLike = pgTable("music_like", {
+export const musicLike = familySchema.table("music_like", {
   id: serial("id").primaryKey(),
   likenessDegree: integer("likeness_degree").notNull().default(-1),
   musicId: integer("fk_music_id").notNull().references(() => music.id, { onDelete: 'cascade' }),
@@ -1137,175 +1067,5 @@ export const musicLike = pgTable("music_like", {
   (table) => [
     index("music_like_music_id_idx").on(table.musicId),
     index("music_like_member_id_idx").on(table.memberId),
-  ]
-);
-
-/*------------------------------- Support ------------------------------ */
-export const supportEnvironment = pgTable("support_environment", {
-  id: serial("id").primaryKey(),
-  envPneumonic: text("env_pneumonic").notNull().unique(),
-  websiteDomain: text("website_domain").notNull().default("my-family-social.com"),
-  isAvailable: boolean("is_available").notNull().default(true),
-  bypassUrl: text("bypass_url"),
-  supportEmail: text("support_email"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-},
-  (table) => [
-    index('support_env_id_idx').on(table.id),
-  ]
-);
-
-export const supportFamily = pgTable("support_family", {
-  id: serial("id").primaryKey(),
-  familyName: text("family_name").notNull().unique(),
-  databaseUrl: text("database_url"),
-  dbOwner: text("db_owner"),
-  dbCredential: text("db_credential"),
-  status: text("status").notNull().default("trial"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-},
-  (table) => [
-    index('support_family_id_idx').on(table.id),
-  ]
-);
-
-export const supportIssue = pgTable("support_issue", {
-  id: serial("id").primaryKey(),
-  issueType: text("issue_type").notNull().default("question"),
-  issueTitle: text("issue_title"),
-  issueJson: text("issue_json").notNull().default("{}"),
-  priority: text("priority").notNull().default("low"),
-  status: text("status").notNull().default("open"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
-  supportFamilyId: integer("fk_support_family_id").references(() => supportFamily.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('support_issue_id_idx').on(table.id),
-    index('support_issue_family_id_idx').on(table.supportFamilyId),
-    index('support_issue_member_id_idx').on(table.memberId),
-  ]
-);
-
-export const supportResponse = pgTable("support_response", {
-  id: serial("id").primaryKey(),
-  responseType: text("response_type").notNull().default("general"),
-  isProposedSolution: boolean("is_proposed_solution").notNull().default(false),
-  wasAccepted: boolean("was_accepted").notNull().default(false),
-  status: text("status").notNull().default("open"),
-  responseJson: text("response_json").notNull().default("{}"),
-  emailSentAt: timestamp("email_sent_at"),
-  threadSentAt: timestamp("thread_sent_at"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  supportIssueId: integer("fk_support_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('support_response_id_idx').on(table.id),
-  ]
-);
-
-export const supportAttachment = pgTable("support_attachment", {
-  id: serial("id").primaryKey(),
-  attachmentType: text("attachment_type").notNull().default("image"),
-  attachmentJson: text("attachment_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  supportIssueId: integer("fk_support_issue_id").notNull().references(() => supportIssue.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('support_attachment_id_idx').on(table.id),
-  ]
-);
-
-export const supportTeam = pgTable("support_team", {
-  id: serial("id").primaryKey(),
-  teamName: text("team_name").notNull().unique(),
-  supportLevel: text("support_level").notNull().default("L1"),
-  isAdmin: boolean("is_admin").notNull().default(false),
-  status: text("status").notNull().default("active"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-},
-  (table) => [
-    index('support_team_id_idx').on(table.id),
-  ]
-);
-
-export const supportPerson = pgTable("support_person", {
-  id: serial("id").primaryKey(),
-  firstName: text("first_name").notNull().default(""),
-  lastName: text("last_name").notNull().default(""),
-  email: text("email").notNull().unique(),
-  status: text("status").notNull().default("active"),
-  managesTeam: boolean("manages_team").notNull().default(false),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  supportTeamId: integer("fk_support_team_id").references(() => supportTeam.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('support_person_id_idx').on(table.id),
-    index('support_person_team_id_idx').on(table.supportTeamId),
-  ]
-);
-
-export const supportPersonIssue = pgTable("support_person_issue", {
-  id: serial("id").primaryKey(),
-  createdAt: timestamp("created_at").defaultNow(),
-  supportIssueId: integer("fk_support_issue_id").references(() => supportIssue.id, {onDelete: 'cascade'}),
-  supportPersonId: integer("fk_support_person_id").references(() => supportPerson.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('support_person_issue_id_idx').on(table.id),
-    index('support_person_issue_issue_id_idx').on(table.supportIssueId),
-    index('support_person_issue_person_id_idx').on(table.supportPersonId),
-  ]
-);
-
-
-/*------------------------------- Video Schema ------------------------------ */
-export const videoS3Credentials = pgTable("video_s3_credentials", {
-  id: serial("id").primaryKey(),
-  encryptedAccessKey: text("encrypted_access_key").notNull(),
-  encryptedSecretKey: text("encrypted_secret_key").notNull(),
-  bucketName: text("bucket_name").notNull(),
-  region: text("region").notNull().default("us-east-2"),  
-  isActive: boolean("is_active").notNull().default(true),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const video = pgTable("video", {
-  id: serial("id").primaryKey(),
-  videoName: text("video_name").notNull().default(""),
-  faqPageSeqNo: integer("faq_page_seq_no").notNull().default(1),
-  videoJson: text("video_json").notNull().default("{}"),
-  version: integer("version").notNull().default(1),
-  status: text("status").notNull().default("draft"),
-  link: text("link").notNull().default(""),
-  durationMinutes: integer("duration_seconds").notNull().default(0),
-  videoUrl: text("video_url"),
-  seqNo: integer("seq_no").notNull().default(1),
-  caption: text("caption").notNull().default("Overview"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  videoS3Id: integer("fk_video_s3_id").notNull().references(() => videoS3Credentials.id, {onDelete: 'set null'}),
-},
-  (table) => [
-    index('video_s3_id_idx').on(table.videoS3Id),
-  ]
-);
-
-export const videoTagReference = pgTable("video_tag_reference", {
-  id: serial("id").primaryKey(),
-  category: text("category").notNull().default("general"),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  seqNo: integer("seq_no").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const videoTag = pgTable("video_tag", {
-  id: serial("id").primaryKey(),
-  videoId: integer("fk_video_id").notNull().references(() => video.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => videoTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('video_tag_video_id_idx').on(table.videoId),
-    index('video_tag_tag_id_idx').on(table.tagId),
   ]
 );
