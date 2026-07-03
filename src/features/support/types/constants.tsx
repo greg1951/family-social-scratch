@@ -60,7 +60,7 @@ export const generalFaqItems = [
             <ul className="list-disc ml-6 mt-2">
               <li>Confirm your first and last name.</li>
               <li>The <i>nick name</i> and <i>cell phone</i> fields are optional. You can change them after registration. </li>
-              <li>The two password fields <b>must be filled in</b>. The passwords must match and must be at least 5 characters long.</li>
+              <li>The two password fields <b>must be filled in</b>. The passwords must match and be at least 8 characters with at least one uppercase letter, one number, and one special character.</li>
             </ul>
             <p><b>Tip:</b> Unhide the passwords when you are entering them and validate they are the same and it's something you can remember.</p>
           </span>

@@ -174,7 +174,16 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       });
 
       if (!signRes.ok) {
-        throw new Error("Could not create a signed upload URL.");
+        let message = "Could not create a signed upload URL.";
+        try {
+          const errorBody = await signRes.json();
+          if (typeof errorBody?.error === "string" && errorBody.error.trim()) {
+            message = `${message} ${errorBody.error}`;
+          }
+        } catch {
+          // Ignore JSON parse failures and keep base message.
+        }
+        throw new Error(message);
       }
 
       const { url, fileUrl, s3Key, signedContentType } = await signRes.json();

@@ -71,10 +71,11 @@ export async function insertMember(memberArg: RegistrationMemberDetails)
 : Promise<InsertMemberReturn> {
 
   // console.log("insertMember-> member: ", memberArg);
+  const normalizedEmail = String(memberArg.email ?? "").trim().toLowerCase();
 
   try {
     const [insertResult] = await db.insert(member).values({
-      email: memberArg.email as string,
+      email: normalizedEmail,
       firstName: memberArg.firstName as string,
       lastName: memberArg.lastName as string,
       nickName: memberArg.nickName as string | undefined,
@@ -115,13 +116,14 @@ export async function insertUser(userArg: InsertUserInput)
 : Promise<InsertUserReturn> {
 
     // console.log("insertUser-> user: ", userArg);
+    const normalizedEmail = String(userArg.email ?? "").trim().toLowerCase();
     const password = userArg.password as string;
     const hashedPassword = await hashUserPassword(password);
 
 
     try {
       const [insertResult] = await db.insert(user).values({
-        email: userArg.email as string,
+        email: normalizedEmail,
         password: hashedPassword as string,
         memberId: userArg.memberId as number,
         familyId: userArg.familyId as number,

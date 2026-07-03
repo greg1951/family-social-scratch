@@ -225,7 +225,7 @@ export default function LoginForm() {
                         <FormItem>
                           <FormLabel className="font-extrabold text-sm md:text-base">Password</FormLabel>
                           <FormControl>
-                            <Input { ...field } type={ showPassword ? "text" : "password" } placeholder="At least 5 characters" className="text-xs" />
+                            <Input { ...field } type={ showPassword ? "text" : "password" } placeholder="8+ chars, uppercase, number, special" className="text-xs" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>

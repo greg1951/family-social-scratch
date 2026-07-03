@@ -1,5 +1,11 @@
 import type { ReactNode } from "react";
+import FeatureProfileMenu from "@/components/common/feature-profile-menu";
 
 export default function TvLayout({ children }: { children: ReactNode }) {
-  return children;
+  return (
+    <div className="relative">
+      <FeatureProfileMenu />
+      { children }
+    </div>
+  );
 }

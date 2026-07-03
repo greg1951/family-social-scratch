@@ -1,6 +1,5 @@
 'use client';
 
-import { updateFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
 import { GetFamilyFeatureConfigReturn } from "@/components/db/types/family-member";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +10,7 @@ import { ArrowRight, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import z from "zod";
+import { updateFeatures } from "./actions";
 
 const formSchema = FeatureConfigFormSchema;
 
@@ -46,7 +46,7 @@ export default function FounderFeaturesForm({
   } = form;
 
   const handleFormSubmit = async (data: FormValues) => {
-    const updateResult = await updateFamilyFeatureConfig({
+    const updateResult = await updateFeatures({
       featureConfigFormValues: data,
       featureConfigDirtyFields: dirtyFields,
     });

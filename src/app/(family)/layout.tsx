@@ -2,14 +2,17 @@ import Link from "next/link";
 import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 
 import BackButton from "@/components/common/back-button";
-import InstallPrompt from "@/components/pwa/install-prompt";
-import SyncStatusBanner from "@/components/pwa/sync-status-banner";
+import MemberAvatar from "@/components/common/member-avatar";
+import SyncStatusConsole from "@/components/pwa/sync-status-console";
+import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
 
 export default async function TrialLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const memberAvatarDetails = await getCurrentMemberAvatarDetails();
+
   return (
     <div className="font-app min-h-screen bg-[radial-gradient(circle_at_top,#ffffff_0%,#f5fbff_34%,#dff6ff_100%)] text-[#10364a]">
       <div className="absolute inset-x-0 top-0 h-72 bg-[linear-gradient(180deg,rgba(89,205,247,0.28),rgba(255,255,255,0))]" />
@@ -67,25 +70,23 @@ export default async function TrialLayout({
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-[linear-gradient(180deg,rgba(255,255,255,0),rgba(255,255,255,0.2))]" />
             </div> */}
 
-            {/* <div className="flex items-start justify-end md:pt-1 md:self-start">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-white/60 bg-white/75 text-[#005472] shadow-[0_10px_40px_-18px_rgba(0,84,114,0.65)] backdrop-blur">
-                <MainDropMenu
-                  firstName={ memberAvatarDetails.firstName }
-                  email={ memberAvatarDetails.email }
-                  sessionFound={ memberAvatarDetails.isLoggedIn }
-                  isFounder={ memberAvatarDetails.isFounder }
-                  isAdmin={ memberAvatarDetails.isAdmin }
-                  memberImageUrl={ memberAvatarDetails.memberImageUrl }
-                  unreadThreadCount={ unreadThreadCount }
-                />
-              </div>
-            </div> */}
+            <div className="flex items-start justify-end md:pt-1 md:self-start">
+              { memberAvatarDetails.isLoggedIn ? (
+                <div className="inline-flex items-center justify-center rounded-full border border-white/60 bg-white/75 p-1.5 text-[#005472] shadow-[0_10px_40px_-18px_rgba(0,84,114,0.65)] backdrop-blur">
+                  <MemberAvatar
+                    imageUrl={ memberAvatarDetails.memberImageUrl }
+                    firstName={ memberAvatarDetails.firstName }
+                    lastName={ memberAvatarDetails.lastName }
+                    sizeClassName="h-20 w-20"
+                  />
+                </div>
+              ) : null}
+            </div>
           </div>
         </header>
 
-        <div className="space-y-3 px-1 pt-4">
-          <SyncStatusBanner />
-          <InstallPrompt />
+        <div className="px-1 pt-4">
+          <SyncStatusConsole />
         </div>
 
         <main className="flex flex-1 items-start justify-center px-1 py-6 md:px-0 md:py-8">

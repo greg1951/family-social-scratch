@@ -53,33 +53,32 @@ export async function getS3ClientForFamily(familyId: number): Promise<FamilyS3Cl
   try {
     s3Creds = await getActiveS3CredentialForFamily(familyId);
   } catch (error) {
-    const canUseEnvFallback = process.env.NODE_ENV !== "production";
-    if (canUseEnvFallback) {
-      const fallback = getEnvFallbackContext();
-      if (fallback) {
-        console.warn("[s3-client-factory] using non-production env fallback credentials", {
-          familyId,
-          region: fallback.region,
-          bucketName: fallback.bucketName,
-        });
+    const fallback = getEnvFallbackContext();
+    if (fallback) {
+      console.warn("[s3-client-factory] using env fallback credentials", {
+        familyId,
+        nodeEnv: process.env.NODE_ENV,
+        region: fallback.region,
+        bucketName: fallback.bucketName,
+      });
 
-        const fallbackContext: CachedS3ClientContext = {
-          ...fallback,
-          expiresAt: now + CACHE_TTL_MS,
-        };
-        familyS3ClientCache.set(familyId, fallbackContext);
+      const fallbackContext: CachedS3ClientContext = {
+        ...fallback,
+        expiresAt: now + CACHE_TTL_MS,
+      };
+      familyS3ClientCache.set(familyId, fallbackContext);
 
-        return {
-          client: fallbackContext.client,
-          bucketName: fallbackContext.bucketName,
-          region: fallbackContext.region,
-        };
-      }
+      return {
+        client: fallbackContext.client,
+        bucketName: fallbackContext.bucketName,
+        region: fallbackContext.region,
+      };
     }
 
     console.error("[s3-client-factory] failed to resolve family S3 credentials", {
       familyId,
       hasMasterKey: Boolean(process.env.S3_CREDENTIALS_MASTER_KEY),
+      hasEnvFallback: Boolean(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_S3_BUCKET_NAME),
       usedEnvFallback: false,
       errorMessage: error instanceof Error ? error.message : "Unknown error",
     });

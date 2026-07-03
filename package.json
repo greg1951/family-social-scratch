@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node ./scripts/run-next-with-env.mjs",
     "dev:google-local": "node ./scripts/run-next-with-env.mjs .env.google-local --hostname 0.0.0.0 --port 3000 --experimental-https --experimental-https-key ./local.my-family-social.com-key.pem --experimental-https-cert ./local.my-family-social.com.pem",
     "dev:apple-local": "node ./scripts/run-next-with-env.mjs .env.apple-local --hostname 0.0.0.0 --port 3000 --experimental-https --experimental-https-key ./local.my-family-social.com-key.pem --experimental-https-cert ./local.my-family-social.com.pem",
     "dev:https-local": "next dev --hostname 0.0.0.0 --port 3000 --experimental-https --experimental-https-key ./local.my-family-social.com-key.pem --experimental-https-cert ./local.my-family-social.com.pem",

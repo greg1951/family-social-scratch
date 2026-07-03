@@ -8,12 +8,9 @@ import { getAllFamilyMembers, getFamilyFounderDetails, getJoinedFamilyMembersFor
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { CurrentFamilyMember, FounderDetails, NewFamilyInvite, RemovableFamilyMember } from "@/features/family/types/family-members";
-import { Sparkles } from "lucide-react";
 import FounderAccountTabs from "./founder-tabs";
 import { toast } from "sonner";
 import { getFounderDetails } from "@/features/family/services/get-founder-details";
-import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
-import MemberAvatar from "@/components/common/member-avatar";
 import PublicHelpMenu from "@/components/common/public-help-menu";
 import FounderFaqHelp from "@/components/common/founder-faq-help";
 import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
@@ -77,17 +74,13 @@ export default async function FamilyMyAccountPage({
     memberNotificationsResult,
     featureConfigResult,
     currentMembersResult,
-    memberImageResult,
     joinedMembersResult,
   ] = await Promise.all([
     getMemberNotifications(memberKeyDetails.memberId),
     getFamilyFeatureConfig(memberKeyDetails.familyId),
     getAllFamilyMembers(memberKeyDetails.familyId),
-    getMemberImageDetailsByMemberId(memberKeyDetails.memberId),
     getJoinedFamilyMembersForRemoval(memberKeyDetails.familyId),
   ]);
-
-  const memberImageUrl = memberImageResult.success ? memberImageResult.memberImageUrl : null;
 
 
   const notifications = memberNotificationsResult.success
@@ -146,36 +139,25 @@ export default async function FamilyMyAccountPage({
     <main className="font-app min-h-[90vh] max-w-screen bg-linear-to-b from-white to-slate-50 px-4 py-2 sm:px-6 md:px-8">
       <div className="mx-auto w-full max-w-4xl">
         <Card className="w-full overflow-hidden border-white/70 bg-white/82 pt-0 shadow-[0_28px_90px_-50px_rgba(16,54,74,0.75)] backdrop-blur">
-          <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 text-center shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
-            <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/65 bg-white/55 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.24em] text-[#005472] shadow-sm backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5" />
-              Founder Dashboard
-            </div>
-            <div className="mt-3 flex justify-center">
-              <MemberAvatar
-                imageUrl={ memberImageUrl }
-                firstName={ founderDetails.firstName }
-                lastName={ founderDetails.lastName }
-                sizeClassName="h-20 w-20"
-              />
-            </div>
-            <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
-              My Family Account
-            </CardTitle>
-            <CardDescription className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[#315363]">
-              <div className="flex items-start justify-end md:pt-1 md:self-start">
-                <span className="inline-flex items-center gap-2 text-sm text-[#5f7987]">
-                  <p>Manage the <b>{ memberKeyDetails.familyName }</b> family settings here</p>
-                  <FounderFaqHelp
-                    href="/founder-faq"
-                    buttonClassName=" border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
-                    iconClassName="text-[#5f7987]"
-                    tooltipClassName="bg-[#315363] text-[#ecf9ff]"
-                  />
-                </span>
+          <CardHeader className="rounded-[1.35rem] bg-[linear-gradient(135deg,#59cdf7_0%,#9de4fe_45%,#fff2d8_100%)] px-6 pb-5 pt-5 shadow-[inset_0_-1px_0_rgba(255,255,255,0.45)]">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+              <div>
+                <CardTitle className="text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
+                  My Family Account
+                </CardTitle>
+                <CardDescription className="mt-2 max-w-2xl text-sm leading-6 text-[#315363]">
+                  <span className="inline-flex items-center gap-2 text-sm text-[#5f7987]">
+                    <span>Manage the <b>{ memberKeyDetails.familyName }</b> family settings here</span>
+                    <FounderFaqHelp
+                      href="/founder-faq"
+                      buttonClassName=" border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                      iconClassName="text-[#5f7987]"
+                      tooltipClassName="bg-[#315363] text-[#ecf9ff]"
+                    />
+                  </span>
+                </CardDescription>
               </div>
-
-            </CardDescription>
+            </div>
           </CardHeader>
 
           <CardContent className="pt-1">

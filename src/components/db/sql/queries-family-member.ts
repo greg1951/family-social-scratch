@@ -350,7 +350,7 @@ export async function getAllFamilyMembers(familyId: number)
 export async function getFamilyFounderDetails(familyId:number)
   :(Promise<GetFounderDetailsReturn>) {
 
-  const [selectResult] = await db.select(
+  let [selectResult] = await db.select(
     {
       firstName: member.firstName,
       lastName: member.lastName,
@@ -365,11 +365,62 @@ export async function getFamilyFounderDetails(familyId:number)
       familyName: family.name,
     })
     .from(family)
-      .leftJoin(member, eq(family.id, member.familyId))
+      .innerJoin(member, eq(family.id, member.familyId))
         .where(and(
           eq(family.id, familyId),
           eq(member.isFounder, true),
         ));
+
+  if (!selectResult) {
+    // Backward-compatible fallback: treat an admin member as founder if none are flagged.
+    [selectResult] = await db.select(
+      {
+        firstName: member.firstName,
+        lastName: member.lastName,
+        nickName: member.nickName,
+        birthday: member.birthday,
+        cellPhone: member.cellPhone,
+        isFounder: member.isFounder,
+        status: member.status,
+        memberId: member.id,
+        email: member.email,
+        familyId: family.id,
+        familyName: family.name,
+      })
+      .from(family)
+        .innerJoin(member, eq(family.id, member.familyId))
+          .where(and(
+            eq(family.id, familyId),
+            eq(member.isAdmin, true),
+            eq(member.isGuest, false),
+          ))
+          .orderBy(asc(member.id));
+  }
+
+  if (!selectResult) {
+    // Last-resort fallback: use the first non-guest member for family context.
+    [selectResult] = await db.select(
+      {
+        firstName: member.firstName,
+        lastName: member.lastName,
+        nickName: member.nickName,
+        birthday: member.birthday,
+        cellPhone: member.cellPhone,
+        isFounder: member.isFounder,
+        status: member.status,
+        memberId: member.id,
+        email: member.email,
+        familyId: family.id,
+        familyName: family.name,
+      })
+      .from(family)
+        .innerJoin(member, eq(family.id, member.familyId))
+          .where(and(
+            eq(family.id, familyId),
+            eq(member.isGuest, false),
+          ))
+          .orderBy(asc(member.id));
+  }
 
   if (!selectResult) {
     return {

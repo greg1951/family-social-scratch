@@ -8,6 +8,7 @@ type MemberAvatarProps = {
   firstName?: string;
   lastName?: string;
   sizeClassName?: string;
+  chromeClassName?: string;
 };
 
 function getInitials(firstName?: string, lastName?: string) {
@@ -22,6 +23,7 @@ export default function MemberAvatar({
   firstName,
   lastName,
   sizeClassName = "h-16 w-16",
+  chromeClassName,
 }: MemberAvatarProps) {
   const [signedImageUrl, setSignedImageUrl] = useState<string | null>(null);
   const initials = getInitials(firstName, lastName);
@@ -86,7 +88,7 @@ export default function MemberAvatar({
   }, [imageUrl]);
 
   return (
-    <div className={ `relative inline-flex ${ sizeClassName } items-center justify-center overflow-hidden rounded-full border border-white/70 bg-white shadow-sm` }>
+    <div className={ `relative inline-flex ${ sizeClassName } items-center justify-center overflow-hidden rounded-full border border-white/70 bg-white shadow-sm ${ chromeClassName ?? "" }` }>
       { hasImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img

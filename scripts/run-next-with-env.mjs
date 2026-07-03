@@ -3,15 +3,35 @@ import { resolve } from "node:path";
 import { spawn } from "node:child_process";
 import { SignJWT, importPKCS8 } from "jose";
 
-const [, , envFileArg, ...nextArgs] = process.argv;
+const [, , ...cliArgs] = process.argv;
+const firstArg = cliArgs[0];
+const hasExplicitEnvFile = Boolean(firstArg) && !String(firstArg).startsWith("-");
+const envFileArg = hasExplicitEnvFile ? firstArg : undefined;
+const nextArgs = hasExplicitEnvFile ? cliArgs.slice(1) : cliArgs;
+const childEnv = { ...process.env };
 
-if (!envFileArg) {
-  console.error("Missing env file argument.");
-  process.exit(1);
+function resolvePreferredEnvFile(explicitEnvFile) {
+  if (explicitEnvFile) {
+    return resolve(process.cwd(), explicitEnvFile);
+  }
+
+  const candidates = [
+    ".env.google-local",
+    ".env.local",
+    ".env.development.local",
+    ".env.development",
+    ".env",
+  ];
+
+  const found = candidates.find((candidate) => existsSync(resolve(process.cwd(), candidate)));
+  if (!found) {
+    return null;
+  }
+
+  return resolve(process.cwd(), found);
 }
 
-const envFilePath = resolve(process.cwd(), envFileArg);
-const childEnv = { ...process.env };
+const envFilePath = resolvePreferredEnvFile(envFileArg);
 
 // Avoid stale shell-level auth host values leaking into local dev runs.
 delete childEnv.AUTH_URL;
@@ -48,7 +68,9 @@ async function ensureAppleClientSecret(env) {
   env.AUTH_APPLE_SECRET = token;
 }
 
-if (existsSync(envFilePath)) {
+if (envFilePath && existsSync(envFilePath)) {
+  const envFileName = envFilePath.replace(`${process.cwd()}\\`, "");
+  console.log(`Loading env vars from ${envFileName}`);
   const envContent = readFileSync(envFilePath, "utf8");
 
   for (const rawLine of envContent.split(/\r?\n/)) {
@@ -74,9 +96,19 @@ if (existsSync(envFilePath)) {
 
     childEnv[key] = value;
   }
-} else {
+} else if (envFileArg) {
   console.warn(`${envFileArg} not found. Continuing without it.`);
+} else {
+  console.warn("No env file found. Continuing with existing process environment only.");
 }
+
+const hasFamilySocialDatabaseUrl = typeof childEnv.FAMILY_SOCIAL_DATABASE_URL === "string" && childEnv.FAMILY_SOCIAL_DATABASE_URL.trim().length > 0;
+const hasDatabaseUrl = typeof childEnv.DATABASE_URL === "string" && childEnv.DATABASE_URL.trim().length > 0;
+console.log("DB env diagnostics", {
+  nodeEnv: childEnv.NODE_ENV ?? null,
+  hasFamilySocialDatabaseUrl,
+  hasDatabaseUrl,
+});
 
 await ensureAppleClientSecret(childEnv);
 

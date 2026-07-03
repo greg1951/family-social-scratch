@@ -1,6 +1,5 @@
 'use client';
 
-import { updateMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { GetMemberNotificationsReturn } from "@/components/db/types/family-member";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,6 +10,7 @@ import { useForm } from "react-hook-form";
 import z from "zod";
 import { useRouter } from "next/navigation";
 import { ArrowRight, BellRing, RotateCcw } from "lucide-react";
+import { updateNotifications } from "./actions";
 
 const formSchema = NotificationsFormSchema;
 
@@ -36,7 +36,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
   const { formState: { isDirty, dirtyFields } } = form;
 
   const handleFormSubmit = async (data: z.infer<typeof formSchema>) => {
-    const notificationUpdateResult = await updateMemberNotifications({
+    const notificationUpdateResult = await updateNotifications({
       notificationFormValues: data,
       notificationDirtyFields: dirtyFields,
     });

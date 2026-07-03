@@ -377,15 +377,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ url, s3Key: objectKey });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("[api/s3-upload] failed to generate signed URL", {
       requestId,
       action,
       familyId: memberDetails.familyId,
       fileName,
       folder,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      errorMessage,
     });
-    return NextResponse.json({ error: "Failed to generate URL" }, { status: 500 });
+    return NextResponse.json({ error: `Failed to generate URL: ${errorMessage}` }, { status: 500 });
   }
 }
 

@@ -185,6 +185,7 @@ export type ThreadConversationDetail = {
   recipientStateId: number | null;
   readAt: Date | null;
   archivedAt: Date | null;
+  conversationArchivedAt: Date | null;
   posts: ThreadConversationDetailPost[];
 };
 

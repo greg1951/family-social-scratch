@@ -1,6 +1,6 @@
 "use server";
 
-import { count, eq, and } from 'drizzle-orm';
+import { count, eq, and, sql } from 'drizzle-orm';
 import { member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
@@ -16,10 +16,11 @@ import { findRegisteredFamily } from './queries-family-member';
 
 /* Validate the user exists in the user table */
 export async function isUserRegistered(email: string) {
+  const normalizedEmail = email.trim().toLowerCase();
   const result = await db
     .select({count: count()})
     .from(user)
-    .where(eq(user.email, email)); 
+    .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
   
   if (result[0].count > 0)
     return true;
@@ -33,11 +34,12 @@ export async function isUserRegistered(email: string) {
 */
 export async function insertRegisteredUser(email: string, password: string, familyId: number)
 : Promise<RegisteredReturnType> {
+  const normalizedEmail = email.trim().toLowerCase();
     const hashedPassword = hashUserPassword(password);
 
     // console.warn('queries-user->insertRegisteredUser->THE member_id IS HARD-CODED HERE!')
     const [insertResult] = await db.insert(user).values({
-      email: email,
+      email: normalizedEmail,
       password: hashedPassword,
       familyId: familyId,
       // memberId: 1, // I made it optional in the schema
@@ -55,12 +57,13 @@ export async function insertRegisteredUser(email: string, password: string, fami
 
 export async function updateUserPassword(email: string, password: string) 
 : Promise<ErrorReturnType> {
+  const normalizedEmail = email.trim().toLowerCase();
   const hashedPassword = hashUserPassword(password);
   let returnedResult;
   try {
       await db.update(user)
         .set({password: hashedPassword})
-        .where(eq(user.email,email))
+        .where(sql`lower(${user.email}) = ${normalizedEmail}`)
       ;
       returnedResult = {
         error: false,
@@ -80,6 +83,8 @@ export async function updateUserPassword(email: string, password: string)
 /* This function is used by the Auth.js Credentials provider */
 export async function getFullUserCredsByEmail(email: string, family: string)
   : Promise<GetFullUserCredsReturnType> {
+
+  const normalizedEmail = email.trim().toLowerCase();
  
   try {
     const findFamilyResult = await findRegisteredFamily(family);
@@ -100,7 +105,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
       .from(user)
       .where(
         and(
-          eq(user.email, email),
+          sql`lower(${user.email}) = ${normalizedEmail}`,
           eq(user.familyId, findFamilyResult.familyId as number)
         )
       ); 
@@ -138,6 +143,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
 /* Retrieve user credential info by email */
 export async function getUserByEmail(email: string) 
   : Promise<UserPasswordReturnType>  {
+  const normalizedEmail = email.trim().toLowerCase();
   const [selectedUser] = await db
     .select({
       id: user.id,
@@ -145,7 +151,7 @@ export async function getUserByEmail(email: string)
       memberId: user.memberId,
     })
     .from(user)
-    .where(eq(user.email, email)); 
+    .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
 
     if (!selectedUser) 
       return {
@@ -178,6 +184,7 @@ export async function getUserByEmail(email: string)
 /* Retrieve only user 2FA info */
 export async function getUser2fa(email: string) 
   : Promise<GetUser2faReturnType>  {
+  const normalizedEmail = email.trim().toLowerCase();
   const [selectedUser] = await db
     .select({
       id: user.id,
@@ -185,7 +192,7 @@ export async function getUser2fa(email: string)
       isActivated: user.twoFactorActivated
     })
     .from(user)
-    .where(eq(user.email, email)); 
+    .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
 
   if (!user) 
     return {
@@ -203,10 +210,11 @@ export async function getUser2fa(email: string)
 /* Update user's 2FA secret */
 export async function updateUser2faSecret(args: Update2faSecretRecordType) 
   : Promise<ErrorReturnType>  {
+  const normalizedEmail = args.email.trim().toLowerCase();
   const updateResult = await db
     .update(user)
     .set({twoFactorSecret: args.secret})
-    .where(eq(user.email, args.email)); 
+    .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
 
   if (!updateResult) 
     return {
@@ -223,10 +231,12 @@ export async function updateUser2faSecret(args: Update2faSecretRecordType)
 export async function updateUser2faActivated(args: Update2faActivatedRecordType) 
   : Promise<ErrorReturnType>  {
 
+  const normalizedEmail = args.email.trim().toLowerCase();
+
   const updateResult = await db
     .update(user)
     .set({twoFactorActivated: args.isActivated})
-    .where(eq(user.email, args.email)); 
+    .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
 
   if (!updateResult) 
     return {

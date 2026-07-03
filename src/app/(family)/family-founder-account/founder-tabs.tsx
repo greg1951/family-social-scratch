@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import MemberActivitySummaryChart from "@/components/charts/family/member-activity-summary-chart";
-import { MemberDashboardActivitySummary } from "@/components/db/sql/queries-family-activity";
+import type { MemberDashboardActivitySummary } from "@/components/db/sql/queries-family-activity";
 
 type TabValue = "profile" | "notifications" | "features" | "current-family" | "new-family" | "activity";
 

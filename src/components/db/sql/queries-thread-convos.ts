@@ -838,6 +838,7 @@ export async function getThreadConversationDetail(
       recipientStateId: threadRecipientState.id,
       readAt: threadRecipientState.readAt,
       archivedAt: threadRecipientState.archivedAt,
+      conversationArchivedAt: threadConversation.archivedAt,
     })
     .from(threadConversation)
     .leftJoin(
@@ -971,6 +972,7 @@ export async function getThreadConversationDetail(
       recipientStateId: conversationRow.recipientStateId,
       readAt: conversationRow.readAt,
       archivedAt: conversationRow.archivedAt,
+      conversationArchivedAt: conversationRow.conversationArchivedAt,
       posts: postRows.map((postRow) => ({
         id: postRow.id,
         conversationId: postRow.conversationId,

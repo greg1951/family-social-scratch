@@ -2,6 +2,7 @@ import FamilyGalleryHomePage from "@/features/galleries/components/family-galler
 import { redirect } from "next/navigation";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { getFamilyGalleryData } from "@/components/db/sql/queries-gallery";
+import FeatureProfileMenu from "@/components/common/feature-profile-menu";
 
 
 export default async function FamilyGalleryPage() {
@@ -15,9 +16,12 @@ export default async function FamilyGalleryPage() {
   const sharedAlbums = galleryData.success ? galleryData.sharedAlbums : [];
 
   return (
-    <FamilyGalleryHomePage
-      sharedAlbums={ sharedAlbums }
-      member={ memberKeyDetails }
-    />
+    <div className="relative">
+      <FeatureProfileMenu />
+      <FamilyGalleryHomePage
+        sharedAlbums={ sharedAlbums }
+        member={ memberKeyDetails }
+      />
+    </div>
   );
 }

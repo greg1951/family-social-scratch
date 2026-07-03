@@ -20,8 +20,8 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
   else title = `${ firstName }'s Settings`
 
   const tileClasses = [
-    "relative grid place-items-center h-8 w-8 md:h-14 md:w-14 rounded-2xl border border-sky-200/80",
-    "bg-gradient-to-b from-white/90 to-sky-100/70 shadow-[0_6px_14px_rgba(1,98,151,0.2)]",
+    "relative grid place-items-center h-8 w-8 md:h-14 md:w-14 rounded-2xl border border-white/45",
+    "bg-white/18 backdrop-blur-sm shadow-[0_6px_14px_rgba(1,98,151,0.2)]",
     "transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_20px_rgba(1,98,151,0.28)]"
   ].join(" ");
 
@@ -42,6 +42,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                 firstName={ firstName }
                 lastName=""
                 sizeClassName="h-8 w-8 md:h-14 md:w-14"
+                chromeClassName="border-white/45 bg-white/12 shadow-none backdrop-blur"
               />
             ) : (
               <SettingsIcon className="h-6 w-6 md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110" />
@@ -101,6 +102,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem>
+                    <Link href="/open-issue">
+                      Open Support Issue
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
                     <Link href="/threads/thread-template">
                       Edit Templates
                     </Link>
@@ -123,7 +129,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                 </DropdownMenuGroup>
               </>
             ) }
-            { !isFounder && (
+            { !isAdmin && (
               <>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 
 import {
   addThreadReplyAction,
+  archiveSenderThreadAction,
   updateThreadReplyAction,
   updateThreadArchiveStateAction,
   updateThreadReadStateAction,
@@ -249,7 +250,11 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
   });
 
   const hasRecipientState = Boolean(conversation.recipientStateId);
-  const isArchived = Boolean(conversation.archivedAt);
+  const isSender = conversation.senderMemberId === currentMemberId;
+  const canArchive = hasRecipientState || isSender;
+  const isArchived = hasRecipientState
+    ? Boolean(conversation.archivedAt)
+    : Boolean(conversation.conversationArchivedAt);
   const isRead = Boolean(conversation.readAt);
 
   useEffect(() => {
@@ -270,16 +275,21 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
   }, [conversation.id, conversation.readAt, hasRecipientState, router]);
 
   function handleArchiveToggle() {
-    if (!hasRecipientState) {
-      toast.error("Only recipients can archive this thread.");
+    if (!canArchive) {
+      toast.error("You cannot archive this thread.");
       return;
     }
 
     startSaveTransition(async () => {
-      const result = await updateThreadArchiveStateAction({
-        conversationId: conversation.id,
-        shouldArchive: !isArchived,
-      });
+      const result = hasRecipientState
+        ? await updateThreadArchiveStateAction({
+            conversationId: conversation.id,
+            shouldArchive: !isArchived,
+          })
+        : await archiveSenderThreadAction({
+            conversationId: conversation.id,
+            shouldArchive: !isArchived,
+          });
 
       if (!result.success) {
         toast.error(result.message);
@@ -423,7 +433,7 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
   return (
     <>
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        { hasRecipientState && (
+        { canArchive && (
           <Button
             type="button"
             size="sm"

@@ -250,8 +250,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       async authorize(credentials) {
         // const { token, email, family, password } = credentials as CustomCredentials;
 
+        const normalizedEmail = String(credentials.email ?? "").trim().toLowerCase();
+
         const authRecord:AuthRecord = {
-          email: credentials.email as string,
+          email: normalizedEmail,
           family: credentials.family as string,
           password: credentials.password as string,
           token: credentials.token as string,
