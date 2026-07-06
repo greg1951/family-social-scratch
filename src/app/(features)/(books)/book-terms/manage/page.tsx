@@ -17,7 +17,9 @@ export default async function ManageBookTermPage({
     redirect("/");
   }
 
-  if (!memberKeyDetails.isAdmin) {
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
+
+  if (!canManageTerms) {
     redirect("/book-terms");
   }
 

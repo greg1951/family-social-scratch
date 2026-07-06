@@ -1,5 +1,5 @@
 import db from "@/components/db/drizzle";
-import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, or } from "drizzle-orm";
 
 import {
   member,
@@ -47,6 +47,7 @@ import {
 } from "./queries-family-activity";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
+const GLOBAL_TEMPLATE_FAMILY_ID = 1;
 
 export async function deleteMovie(
   movieId: number,
@@ -127,22 +128,24 @@ function toTemplateOption(row: {
   memberId: number | null;
   familyId: number | null;
 }): MovieTemplateOption {
+  const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
   return {
     id: row.id,
     templateName: row.templateName,
-    isGlobalTemplate: row.isGlobalTemplate,
+    isGlobalTemplate: isFamilyGlobalTemplate,
     status: row.status,
     templateJson: row.templateJson,
     memberId: row.memberId,
     familyId: row.familyId,
-    label: row.isGlobalTemplate ? `${row.templateName} (Global)` : row.templateName,
+    label: isFamilyGlobalTemplate ? `${row.templateName} (Global)` : row.templateName,
   };
 }
 
 async function ensureGlobalMovieTemplate(
-  familyId: number,
-  memberId: number
-): Promise<MovieTemplateOption> {
+  memberId: number,
+  canManageGlobalTemplate: boolean
+): Promise<MovieTemplateOption | null> {
   const [familyGlobalTemplate] = await db
     .select({
       id: movieTemplate.id,
@@ -154,40 +157,26 @@ async function ensureGlobalMovieTemplate(
       familyId: movieTemplate.familyId,
     })
     .from(movieTemplate)
-    .where(and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, familyId)))
+    .where(and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)))
     .orderBy(asc(movieTemplate.id));
 
   if (familyGlobalTemplate) {
     return toTemplateOption(familyGlobalTemplate);
   }
 
-  const [sharedGlobalTemplate] = await db
-    .select({
-      id: movieTemplate.id,
-      templateName: movieTemplate.templateName,
-      isGlobalTemplate: movieTemplate.isGlobalTemplate,
-      status: movieTemplate.status,
-      templateJson: movieTemplate.templateJson,
-      memberId: movieTemplate.memberId,
-      familyId: movieTemplate.familyId,
-    })
-    .from(movieTemplate)
-    .where(and(eq(movieTemplate.isGlobalTemplate, true), isNull(movieTemplate.familyId)))
-    .orderBy(asc(movieTemplate.id));
-
-  if (sharedGlobalTemplate) {
-    return toTemplateOption(sharedGlobalTemplate);
+  if (!canManageGlobalTemplate) {
+    return null;
   }
 
   const [createdTemplate] = await db
     .insert(movieTemplate)
     .values({
-      templateName: `__global-movie-${familyId}`,
+      templateName: `__global-movie-${GLOBAL_TEMPLATE_FAMILY_ID}`,
       isGlobalTemplate: true,
       status: "published",
       templateJson: createDefaultMovieTemplateJson(),
       memberId,
-      familyId,
+      familyId: GLOBAL_TEMPLATE_FAMILY_ID,
     })
     .returning({
       id: movieTemplate.id,
@@ -236,16 +225,17 @@ async function loadMovieTemplates(
   }
 ): Promise<MovieTemplateOption[]> {
   const { includeDraft, includeGlobal, ensureGlobalTemplate = false } = options;
+  const canManageGlobalTemplate = familyId === GLOBAL_TEMPLATE_FAMILY_ID && ensureGlobalTemplate;
 
   const fallbackTemplate = ensureGlobalTemplate
-    ? await ensureGlobalMovieTemplate(familyId, memberId)
+    ? await ensureGlobalMovieTemplate(memberId, canManageGlobalTemplate)
     : null;
 
   const whereCondition = includeGlobal
     ? and(
       or(
         eq(movieTemplate.familyId, familyId),
-        and(eq(movieTemplate.isGlobalTemplate, true), isNull(movieTemplate.familyId))
+        and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
       ),
       includeDraft ? undefined : eq(movieTemplate.status, "published")
     )
@@ -293,13 +283,15 @@ async function loadMovieTemplateManagementRecords(
   actorMemberId: number,
   actorIsAdmin: boolean
 ): Promise<MovieTemplateRecord[]> {
-  if (actorIsAdmin) {
-    await ensureGlobalMovieTemplate(familyId, actorMemberId);
+  const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
+  if (canManageGlobalTemplate) {
+    await ensureGlobalMovieTemplate(actorMemberId, true);
   }
 
   const whereCondition = or(
     eq(movieTemplate.familyId, familyId),
-    and(eq(movieTemplate.isGlobalTemplate, true), isNull(movieTemplate.familyId))
+    and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
   );
 
   const templateRows = await db
@@ -334,20 +326,21 @@ async function loadMovieTemplateManagementRecords(
   );
 
   return templateRows.map((row) => {
-    const canEdit = row.isGlobalTemplate
-      ? actorIsAdmin
+    const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+    const canEdit = isFamilyGlobalTemplate
+      ? canManageGlobalTemplate
       : row.memberId === actorMemberId;
 
     return {
       id: row.id,
       templateName: row.templateName,
       status: row.status,
-      isGlobalTemplate: row.isGlobalTemplate,
+      isGlobalTemplate: isFamilyGlobalTemplate,
       templateJson: row.templateJson,
       memberId: row.memberId,
       familyId: row.familyId,
       updatedAt: row.updatedAt ?? new Date(),
-      ownerName: row.isGlobalTemplate
+      ownerName: isFamilyGlobalTemplate
         ? "Global Template"
         : memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
       canEdit,
@@ -649,13 +642,15 @@ export async function getMoviesHomePageData(
   isAdmin = false
 ): Promise<MovieHomePageDataReturn> {
   try {
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
     const [movies, movieTags, movieTemplates] = await Promise.all([
       loadMovies(familyId, memberId),
       loadMovieTagOptions(),
       loadMovieTemplates(familyId, memberId, {
         includeDraft: false,
         includeGlobal: true,
-        ensureGlobalTemplate: isAdmin,
+        ensureGlobalTemplate: canManageGlobalTemplate,
       }),
     ]);
 
@@ -679,7 +674,8 @@ export async function getMovieTemplateManagementData(
   isAdmin: boolean
 ): Promise<MovieTemplateManagementDataReturn> {
   try {
-    const templates = await loadMovieTemplateManagementRecords(familyId, memberId, isAdmin);
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+    const templates = await loadMovieTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
 
     return {
       success: true,
@@ -924,6 +920,7 @@ export async function saveMovieTemplate(
     isAdmin: boolean;
   }
 ): Promise<SaveMovieTemplateReturn> {
+  const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
   const normalizedName = input.templateName.trim();
   const normalizedStatus = input.status.trim().toLowerCase();
   const normalizedJson = input.templateJson.trim();
@@ -955,7 +952,7 @@ export async function saveMovieTemplate(
     ? await db
       .select()
       .from(movieTemplate)
-      .where(and(eq(movieTemplate.id, input.id), eq(movieTemplate.familyId, actor.familyId)))
+      .where(eq(movieTemplate.id, input.id))
       .then((rows) => rows[0] ?? null)
     : null;
 
@@ -967,9 +964,10 @@ export async function saveMovieTemplate(
   }
 
   if (existingTemplate) {
-    const canEditExisting = existingTemplate.isGlobalTemplate
-      ? actor.isAdmin
-      : existingTemplate.memberId === actor.memberId;
+    const isFamilyGlobalTemplate = existingTemplate.isGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+    const canEditExisting = isFamilyGlobalTemplate
+      ? canManageGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID
+      : existingTemplate.memberId === actor.memberId && existingTemplate.familyId === actor.familyId;
 
     if (!canEditExisting) {
       return {
@@ -989,7 +987,7 @@ export async function saveMovieTemplate(
           templateJson: normalizedJson,
           updatedAt: new Date(),
         })
-        .where(and(eq(movieTemplate.id, input.id), eq(movieTemplate.familyId, actor.familyId)))
+        .where(eq(movieTemplate.id, input.id))
         .returning()
       : await db
         .insert(movieTemplate)
@@ -1010,7 +1008,7 @@ export async function saveMovieTemplate(
       };
     }
 
-    const templates = await loadMovieTemplateManagementRecords(actor.familyId, actor.memberId, actor.isAdmin);
+    const templates = await loadMovieTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
     const savedTemplate = templates.find((template) => template.id === persistedTemplate.id);
 
     if (!savedTemplate) {

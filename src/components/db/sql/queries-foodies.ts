@@ -59,6 +59,8 @@ const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "dietary",
   "meal_time",
 ];
+const GLOBAL_TEMPLATE_FAMILY_ID = 1;
+const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -105,9 +107,9 @@ function isEmptyRecipeProTipComment(commentJson: string) {
 }
 
 async function ensureGlobalRecipeTemplate(
-  familyId: number,
-  memberId: number
-): Promise<RecipeTemplateOption> {
+  memberId: number,
+  canManageGlobalTemplate: boolean
+): Promise<RecipeTemplateOption | null> {
   const [existingTemplate] = await db
     .select({
       id: recipeTemplate.id,
@@ -119,7 +121,7 @@ async function ensureGlobalRecipeTemplate(
       familyId: recipeTemplate.familyId,
     })
     .from(recipeTemplate)
-    .where(and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, familyId)))
+    .where(and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)))
     .orderBy(asc(recipeTemplate.id));
 
   if (existingTemplate) {
@@ -135,16 +137,20 @@ async function ensureGlobalRecipeTemplate(
     };
   }
 
+  if (!canManageGlobalTemplate) {
+    return null;
+  }
+
   const defaultTemplateJson = createDefaultRecipeTemplateJson();
   const [createdTemplate] = await db
     .insert(recipeTemplate)
     .values({
-      templateName: `__global-${familyId}`,
+      templateName: `__global-${GLOBAL_TEMPLATE_FAMILY_ID}`,
       isGlobalTemplate: true,
       status: "published",
       templateJson: defaultTemplateJson,
       memberId,
-      familyId,
+      familyId: GLOBAL_TEMPLATE_FAMILY_ID,
     })
     .returning();
 
@@ -195,11 +201,17 @@ async function loadRecipeTemplates(
 ): Promise<RecipeTemplateOption[]> {
   const { includeDraft, includeGlobal, ensureGlobalTemplate = false } = options;
   const isTemplateDebug = process.env.NODE_ENV !== "production";
+  const canManageGlobalTemplate = familyId === GLOBAL_TEMPLATE_FAMILY_ID && ensureGlobalTemplate;
   const defaultTemplate = includeGlobal && ensureGlobalTemplate
-    ? await ensureGlobalRecipeTemplate(familyId, memberId)
+    ? await ensureGlobalRecipeTemplate(memberId, canManageGlobalTemplate)
     : null;
   const whereCondition = and(
-    eq(recipeTemplate.familyId, familyId),
+    includeGlobal
+      ? or(
+        eq(recipeTemplate.familyId, familyId),
+        and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+      )
+      : eq(recipeTemplate.familyId, familyId),
     includeDraft
       ? undefined
       : includeGlobal
@@ -292,11 +304,16 @@ async function loadFoodiesTemplateManagementRecords(
   actorMemberId: number,
   actorIsAdmin: boolean
 ): Promise<FoodiesTemplateRecord[]> {
-  if (actorIsAdmin) {
-    await ensureGlobalRecipeTemplate(familyId, actorMemberId);
+  const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
+  if (canManageGlobalTemplate) {
+    await ensureGlobalRecipeTemplate(actorMemberId, true);
   }
 
-  const whereCondition = eq(recipeTemplate.familyId, familyId);
+  const whereCondition = or(
+    eq(recipeTemplate.familyId, familyId),
+    and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+  );
 
   const templateRows = await db
     .select({
@@ -331,7 +348,7 @@ async function loadFoodiesTemplateManagementRecords(
 
   return templateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
-      ? actorIsAdmin
+      ? canManageGlobalTemplate
       : row.memberId === actorMemberId;
 
     return {
@@ -513,6 +530,7 @@ export async function getFoodiesHomePageData(
   isAdmin = false
 ): Promise<FoodiesHomePageDataReturn> {
   try {
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const isTemplateDebug = process.env.NODE_ENV !== "production";
     const [recipes, recipeTags, recipeTemplates] = await Promise.all([
       loadFoodiesRecipes(familyId),
@@ -520,7 +538,7 @@ export async function getFoodiesHomePageData(
       loadRecipeTemplates(familyId, memberId, {
         includeDraft: false,
         includeGlobal: true,
-        ensureGlobalTemplate: isAdmin,
+        ensureGlobalTemplate: canManageGlobalTemplate,
       }),
     ]);
 
@@ -558,7 +576,8 @@ export async function getFoodiesTemplateManagementData(
   isAdmin: boolean
 ): Promise<FoodiesTemplateManagementDataReturn> {
   try {
-    const templates = await loadFoodiesTemplateManagementRecords(familyId, memberId, isAdmin);
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+    const templates = await loadFoodiesTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
 
     return {
       success: true,
@@ -581,6 +600,7 @@ export async function saveFoodiesRecipe(
     isFounder?: boolean;
   }
 ): Promise<SaveFoodiesRecipeReturn> {
+  const canManageGlobalTemplate = (actor.isAdmin ?? false) && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
   const normalizedTitle = input.recipeTitle.trim();
   const normalizedSummary = input.recipeShortSummary.trim();
   const normalizedStatus = input.status.trim() || "draft";
@@ -685,7 +705,7 @@ export async function saveFoodiesRecipe(
   const templates = await loadRecipeTemplates(actor.familyId, actor.memberId, {
     includeDraft: false,
     includeGlobal: true,
-    ensureGlobalTemplate: actor.isAdmin ?? false,
+    ensureGlobalTemplate: canManageGlobalTemplate,
   });
   const selectedTemplate = templates.find((template) => template.id === input.templateId);
 
@@ -918,6 +938,7 @@ export async function saveFoodiesTemplate(
     isAdmin: boolean;
   }
 ): Promise<SaveFoodiesTemplateReturn> {
+  const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
   const normalizedName = input.templateName.trim();
   const normalizedStatus = input.status.trim().toLowerCase();
   const normalizedJson = input.templateJson.trim();
@@ -948,7 +969,7 @@ export async function saveFoodiesTemplate(
     ? await db
       .select()
       .from(recipeTemplate)
-      .where(and(eq(recipeTemplate.id, input.id), eq(recipeTemplate.familyId, actor.familyId)))
+      .where(eq(recipeTemplate.id, input.id))
       .then((rows) => rows[0] ?? null)
     : null;
 
@@ -960,14 +981,14 @@ export async function saveFoodiesTemplate(
   }
 
   if (existingTemplate) {
-    if (existingTemplate.isGlobalTemplate && !actor.isAdmin) {
+    if (existingTemplate.isGlobalTemplate && (!canManageGlobalTemplate || existingTemplate.familyId !== GLOBAL_TEMPLATE_FAMILY_ID)) {
       return {
         success: false,
-        message: "Only an admin can edit the global template.",
+        message: "Only the family 1 admin can edit global templates.",
       };
     }
 
-    if (!existingTemplate.isGlobalTemplate && existingTemplate.memberId !== actor.memberId) {
+    if (!existingTemplate.isGlobalTemplate && (existingTemplate.memberId !== actor.memberId || existingTemplate.familyId !== actor.familyId)) {
       return {
         success: false,
         message: "You can only edit templates you created.",
@@ -1019,7 +1040,7 @@ export async function saveFoodiesTemplate(
         })
         .returning();
 
-    const templates = await loadFoodiesTemplateManagementRecords(actor.familyId, actor.memberId, actor.isAdmin);
+    const templates = await loadFoodiesTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
     const savedTemplateRecord = templates.find((template) => template.id === savedTemplate.id);
 
     if (!savedTemplateRecord) {
@@ -1473,7 +1494,17 @@ export async function getRecipeTermById(id: number): Promise<GetRecipeTermReturn
   };
 }
 
-export async function saveRecipeTerm(input: SaveRecipeTermInput): Promise<SaveRecipeTermReturn> {
+export async function saveRecipeTerm(
+  input: SaveRecipeTermInput,
+  actor: { familyId: number; isAdmin: boolean }
+): Promise<SaveRecipeTermReturn> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain recipe terms.",
+    };
+  }
+
   const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
 
   if (!parsedTermJson.success) {
@@ -1549,7 +1580,17 @@ export async function saveRecipeTerm(input: SaveRecipeTermInput): Promise<SaveRe
   };
 }
 
-export async function deleteRecipeTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+export async function deleteRecipeTerm(
+  id: number,
+  actor: { familyId: number; isAdmin: boolean }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain recipe terms.",
+    };
+  }
+
   const [existingTerm] = await db
     .select({ id: recipeTerm.id })
     .from(recipeTerm)

@@ -12,7 +12,8 @@ export default async function ManageRecipeTermPage({
   const memberKeyDetails = await getMemberPageDetails();
 
   if (!memberKeyDetails.isLoggedIn) redirect("/");
-  if (!memberKeyDetails.isAdmin) redirect("/foodies");
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
+  if (!canManageTerms) redirect("/foodies");
 
   const { id } = await searchParams;
   const recipeTermId = id ? Number(id) : undefined;

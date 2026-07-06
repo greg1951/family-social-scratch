@@ -52,6 +52,8 @@ import {
 import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
+const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
+
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
 
@@ -1025,8 +1027,18 @@ export async function getPoemTermById(id: number)
   };
 }
 
-export async function savePoemTerm(input: SavePoemTermInput)
+export async function savePoemTerm(
+  input: SavePoemTermInput,
+  actor: { familyId: number; isAdmin: boolean }
+)
   : Promise<SavePoemTermReturn> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain poem terms.",
+    };
+  }
+
   const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
 
   if (!parsedTermJson.success) {
@@ -1109,7 +1121,17 @@ export async function savePoemTerm(input: SavePoemTermInput)
   };
 }
 
-export async function deletePoemTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+export async function deletePoemTerm(
+  id: number,
+  actor: { familyId: number; isAdmin: boolean }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain poem terms.",
+    };
+  }
+
   const [existingTerm] = await db
     .select({ id: poemTerm.id })
     .from(poemTerm)

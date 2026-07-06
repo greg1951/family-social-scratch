@@ -1,5 +1,5 @@
 import db from "@/components/db/drizzle";
-import { and, asc, desc, eq, ilike, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, ne, or } from "drizzle-orm";
 
 import {
   member,
@@ -49,6 +49,7 @@ import {
 } from "./queries-family-activity";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
+const GLOBAL_TEMPLATE_FAMILY_ID = 1;
 
 export async function deleteShow(
   showId: number,
@@ -142,9 +143,9 @@ function toTemplateOption(row: {
 }
 
 async function ensureGlobalShowTemplate(
-  familyId: number,
-  memberId: number
-): Promise<ShowTemplateOption> {
+  memberId: number,
+  canManageGlobalTemplate: boolean
+): Promise<ShowTemplateOption | null> {
   const [familyGlobalTemplate] = await db
     .select({
       id: showTemplate.id,
@@ -156,40 +157,26 @@ async function ensureGlobalShowTemplate(
       familyId: showTemplate.familyId,
     })
     .from(showTemplate)
-    .where(and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, familyId)))
+    .where(and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)))
     .orderBy(asc(showTemplate.id));
 
   if (familyGlobalTemplate) {
     return toTemplateOption(familyGlobalTemplate);
   }
 
-  const [sharedGlobalTemplate] = await db
-    .select({
-      id: showTemplate.id,
-      templateName: showTemplate.templateName,
-      isGlobalTemplate: showTemplate.isGlobalTemplate,
-      status: showTemplate.status,
-      templateJson: showTemplate.templateJson,
-      memberId: showTemplate.memberId,
-      familyId: showTemplate.familyId,
-    })
-    .from(showTemplate)
-    .where(and(eq(showTemplate.isGlobalTemplate, true), isNull(showTemplate.familyId)))
-    .orderBy(asc(showTemplate.id));
-
-  if (sharedGlobalTemplate) {
-    return toTemplateOption(sharedGlobalTemplate);
+  if (!canManageGlobalTemplate) {
+    return null;
   }
 
   const [createdTemplate] = await db
     .insert(showTemplate)
     .values({
-      templateName: `__global-tv-${familyId}`,
+      templateName: `__global-tv-${GLOBAL_TEMPLATE_FAMILY_ID}`,
       isGlobalTemplate: true,
       status: "published",
       templateJson: createDefaultShowTemplateJson(),
       memberId,
-      familyId,
+      familyId: GLOBAL_TEMPLATE_FAMILY_ID,
     })
     .returning({
       id: showTemplate.id,
@@ -238,16 +225,17 @@ async function loadShowTemplates(
   }
 ): Promise<ShowTemplateOption[]> {
   const { includeDraft, includeGlobal, ensureGlobalTemplate = false } = options;
+  const canManageGlobalTemplate = familyId === GLOBAL_TEMPLATE_FAMILY_ID && ensureGlobalTemplate;
 
   const fallbackTemplate = ensureGlobalTemplate
-    ? await ensureGlobalShowTemplate(familyId, memberId)
+    ? await ensureGlobalShowTemplate(memberId, canManageGlobalTemplate)
     : null;
 
   const whereCondition = includeGlobal
     ? and(
       or(
         eq(showTemplate.familyId, familyId),
-        and(eq(showTemplate.isGlobalTemplate, true), isNull(showTemplate.familyId))
+        and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
       ),
       includeDraft ? undefined : eq(showTemplate.status, "published")
     )
@@ -295,13 +283,16 @@ async function loadShowTemplateManagementRecords(
   actorMemberId: number,
   actorIsAdmin: boolean
 ): Promise<ShowTemplateRecord[]> {
-  if (actorIsAdmin) {
-    await ensureGlobalShowTemplate(familyId, actorMemberId);
+  const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
+  if (canManageGlobalTemplate) {
+    await ensureGlobalShowTemplate(actorMemberId, true);
   }
 
-  const whereCondition = actorIsAdmin
-    ? eq(showTemplate.familyId, familyId)
-    : and(eq(showTemplate.familyId, familyId), eq(showTemplate.isGlobalTemplate, false));
+  const whereCondition = or(
+    eq(showTemplate.familyId, familyId),
+    and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+  );
 
   const templateRows = await db
     .select({
@@ -336,7 +327,7 @@ async function loadShowTemplateManagementRecords(
 
   return templateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
-      ? actorIsAdmin
+      ? canManageGlobalTemplate
       : row.memberId === actorMemberId;
 
     return {
@@ -667,13 +658,15 @@ export async function getTvHomePageData(
   isAdmin = false
 ): Promise<TvHomePageDataReturn> {
   try {
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+
     const [shows, showTags, showTemplates] = await Promise.all([
       loadShows(familyId, memberId),
       loadShowTagOptions(),
       loadShowTemplates(familyId, memberId, {
         includeDraft: false,
         includeGlobal: true,
-        ensureGlobalTemplate: isAdmin,
+        ensureGlobalTemplate: canManageGlobalTemplate,
       }),
     ]);
 
@@ -697,7 +690,8 @@ export async function getTvTemplateManagementData(
   isAdmin: boolean
 ): Promise<TvTemplateManagementDataReturn> {
   try {
-    const templates = await loadShowTemplateManagementRecords(familyId, memberId, isAdmin);
+    const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
+    const templates = await loadShowTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
 
     return {
       success: true,
@@ -940,6 +934,7 @@ export async function saveShowTemplate(
     isAdmin: boolean;
   }
 ): Promise<SaveShowTemplateReturn> {
+  const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
   const normalizedName = input.templateName.trim();
   const normalizedStatus = input.status.trim().toLowerCase();
   const normalizedJson = input.templateJson.trim();
@@ -971,7 +966,7 @@ export async function saveShowTemplate(
     ? await db
       .select()
       .from(showTemplate)
-      .where(and(eq(showTemplate.id, input.id), eq(showTemplate.familyId, actor.familyId)))
+      .where(eq(showTemplate.id, input.id))
       .then((rows) => rows[0] ?? null)
     : null;
 
@@ -983,14 +978,14 @@ export async function saveShowTemplate(
   }
 
   if (existingTemplate) {
-    if (existingTemplate.isGlobalTemplate && !actor.isAdmin) {
+    if (existingTemplate.isGlobalTemplate && (!canManageGlobalTemplate || existingTemplate.familyId !== GLOBAL_TEMPLATE_FAMILY_ID)) {
       return {
         success: false,
-        message: "Only an admin can edit the global template.",
+        message: "Only the family 1 admin can edit global templates.",
       };
     }
 
-    if (!existingTemplate.isGlobalTemplate && existingTemplate.memberId !== actor.memberId) {
+    if (!existingTemplate.isGlobalTemplate && (existingTemplate.memberId !== actor.memberId || existingTemplate.familyId !== actor.familyId)) {
       return {
         success: false,
         message: "You can only edit templates you created.",
@@ -1042,7 +1037,7 @@ export async function saveShowTemplate(
         })
         .returning();
 
-    const templates = await loadShowTemplateManagementRecords(actor.familyId, actor.memberId, actor.isAdmin);
+    const templates = await loadShowTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
     const savedTemplateRecord = templates.find((template) => template.id === savedTemplate.id);
 
     if (!savedTemplateRecord) {

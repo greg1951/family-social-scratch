@@ -13,11 +13,12 @@ export default async function PoemTermsPage() {
   const poemTermsResult = await getPoemTerms();
 
   const poemTerms = poemTermsResult.success ? poemTermsResult.poemTerms : [];
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
 
   return (
     <PoemTermsHomePage
       poemTerms={ poemTerms }
-      isAdmin={ memberKeyDetails.isAdmin ?? false }
+      isAdmin={ canManageTerms }
     />
   );
 }

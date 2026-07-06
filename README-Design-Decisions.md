@@ -2,6 +2,7 @@
 - [Database Design](#database-design)
   - [Family Social Schema](#family-social-schema)
   - [Family Social Queries](#family-social-queries)
+  - [The Drizzle Push](#the-drizzle-push)
 - [State Management](#state-management)
 - [Typescript](#typescript)
 - [Discriminated Unions](#discriminated-unions)
@@ -67,6 +68,13 @@ The ERD to support the login and family registration process is shown below (not
 ## Family Social Queries
 
 The queries related to authentication reside in `@/features/auth/components/db` and have a `queries-` prefix. 
+
+## The Drizzle Push
+
+As there two separate schemas, there are two separate schema files. As shown below, the `npx drizzle-kit push` command must then reference the relevant schema config file.
+
+- **family_schema**: `npx drizzle-kit push --config=./drizzle-family.config.ts`
+- **global_schema**: `npx drizzle-kit push --config=./drizzle-global.config.ts`
 
 # State Management
 

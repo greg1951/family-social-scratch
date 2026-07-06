@@ -41,6 +41,8 @@ import {
 import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
+const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
+
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
 
@@ -1257,8 +1259,18 @@ export async function getBookTermById(id: number)
   };
 }
 
-export async function saveBookTerm(input: SaveBookTermInput)
+export async function saveBookTerm(
+  input: SaveBookTermInput,
+  actor: { familyId: number; isAdmin: boolean }
+)
   : Promise<SaveBookTermReturn> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain book terms.",
+    };
+  }
+
   const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
 
   if (!parsedTermJson.success) {
@@ -1341,7 +1353,17 @@ export async function saveBookTerm(input: SaveBookTermInput)
   };
 }
 
-export async function deleteBookTerm(id: number): Promise<{ success: false; message: string } | { success: true; message: string }> {
+export async function deleteBookTerm(
+  id: number,
+  actor: { familyId: number; isAdmin: boolean }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
+    return {
+      success: false,
+      message: "Only the family 1 admin can maintain book terms.",
+    };
+  }
+
   const [existingTerm] = await db
     .select({ id: bookTerm.id })
     .from(bookTerm)

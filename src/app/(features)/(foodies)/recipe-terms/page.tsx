@@ -13,11 +13,12 @@ export default async function RecipeTermsPage() {
 
   const recipeTermsResult = await getRecipeTerms();
   const recipeTerms = recipeTermsResult.success ? recipeTermsResult.recipeTerms : [];
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
 
   return (
     <RecipeTermsHomePage
       recipeTerms={ recipeTerms }
-      isAdmin={ memberKeyDetails.isAdmin ?? false }
+      isAdmin={ canManageTerms }
     />
   );
 }

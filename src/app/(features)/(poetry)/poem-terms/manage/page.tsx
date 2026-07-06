@@ -17,7 +17,9 @@ export default async function ManagePoemTermPage({
     redirect("/");
   }
 
-  if (!memberKeyDetails.isAdmin) {
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
+
+  if (!canManageTerms) {
     redirect("/poem-terms");
   }
 

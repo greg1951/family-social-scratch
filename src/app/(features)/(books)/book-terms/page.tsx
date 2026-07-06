@@ -13,11 +13,12 @@ export default async function BookTermsPage() {
 
   const bookTermsResult = await getBookTerms();
   const bookTerms = bookTermsResult.success ? bookTermsResult.bookTerms : [];
+  const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
 
   return (
     <BookTermsHomePage
       bookTerms={ bookTerms }
-      isAdmin={ memberKeyDetails.isAdmin ?? false }
+      isAdmin={ canManageTerms }
     />
   );
 }

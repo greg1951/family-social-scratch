@@ -45,28 +45,35 @@ export async function saveMusicAction(input: SaveMusicInput) {
 }
 
 export async function saveMusicTemplateAction(input: SaveMusicTemplateInput) {
-  const memberDetails = await getMemberPageDetails();
+  try {
+    const memberDetails = await getMemberPageDetails();
 
-  if (!memberDetails.isLoggedIn) {
+    if (!memberDetails.isLoggedIn) {
+      return {
+        success: false as const,
+        message: 'You must be signed in to manage music templates.',
+      };
+    }
+
+    const result = await saveMusicTemplate(input, {
+      familyId: memberDetails.familyId,
+      memberId: memberDetails.memberId,
+      isAdmin: memberDetails.isAdmin ?? false,
+    });
+
+    if (result.success) {
+      revalidatePath('/music');
+      revalidatePath('/music/add-music');
+      revalidatePath('/music/templates');
+    }
+
+    return result;
+  } catch (error) {
     return {
       success: false as const,
-      message: 'You must be signed in to manage music templates.',
+      message: error instanceof Error ? error.message : 'Error saving music template',
     };
   }
-
-  const result = await saveMusicTemplate(input, {
-    familyId: memberDetails.familyId,
-    memberId: memberDetails.memberId,
-    isAdmin: memberDetails.isAdmin ?? false,
-  });
-
-  if (result.success) {
-    revalidatePath('/music');
-    revalidatePath('/music/add-music');
-    revalidatePath('/music/templates');
-  }
-
-  return result;
 }
 
 export async function saveMusicLyricsAction(input: SaveMusicLyricsInput) {

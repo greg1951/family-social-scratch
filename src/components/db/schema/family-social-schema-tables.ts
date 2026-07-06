@@ -865,7 +865,7 @@ export const showComment = familySchema.table("show_comment", {
 
 export const showTemplate = familySchema.table("show_template", {
   id: serial("id").primaryKey(),
-  templateName: text("template_name").notNull().default("").unique(),
+  templateName: text("template_name").notNull().default(""),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
@@ -942,7 +942,7 @@ export const movieComment = familySchema.table("movie_comment", {
 
 export const movieTemplate = familySchema.table("movie_template", {
   id: serial("id").primaryKey(),
-  templateName: text("template_name").notNull().default("").unique(),
+  templateName: text("template_name").notNull().default(""),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
@@ -1031,7 +1031,7 @@ export const musicLyrics = familySchema.table("music_lyrics", {
 
 export const musicTemplate = familySchema.table("music_template", {
   id: serial("id").primaryKey(),
-  templateName: text("template_name").notNull().default("").unique(),
+  templateName: text("template_name").notNull().default(""),
   isGlobalTemplate: boolean("is_global_template").notNull().default(false),
   templateJson: text("template_json").notNull().default("{}"),
   status: text("status").notNull().default("draft"),
