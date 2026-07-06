@@ -14,6 +14,12 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { RecipeTerm } from "@/components/db/types/recipes";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
@@ -85,13 +91,11 @@ function RecipeTermPreview({ termJson, expanded = false }: { termJson?: string; 
 }
 
 export function RecipeTermsHomePage({ recipeTerms, isAdmin }: RecipeTermsHomePageProps) {
-  const [selectedTermId, setSelectedTermId] = useState<number | null>(recipeTerms[0]?.id ?? null);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredTerms = recipeTerms.filter((term) =>
     term.term.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const selectedTerm = recipeTerms.find((term) => term.id === selectedTermId) ?? null;
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -129,14 +133,9 @@ export function RecipeTermsHomePage({ recipeTerms, isAdmin }: RecipeTermsHomePag
                 tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
               />
               { isAdmin ? (
-                <>
-                  <Button type="button" variant="outline" asChild disabled={ !selectedTerm } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50">
-                    <Link href={ selectedTerm ? `/recipe-terms/manage?id=${ selectedTerm.id }` : "#" }><PenSquare className="size-3.5" />Edit Term</Link>
-                  </Button>
-                  <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]">
-                    <Link href="/recipe-terms/manage"><Plus className="size-3.5" />Add Term</Link>
-                  </Button>
-                </>
+                <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]">
+                  <Link href="/recipe-terms/manage"><Plus className="size-3.5" />Add Term</Link>
+                </Button>
               ) : null }
             </div>
           </div>
@@ -150,73 +149,61 @@ export function RecipeTermsHomePage({ recipeTerms, isAdmin }: RecipeTermsHomePag
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-[minmax(0,0.4fr)_minmax(0,0.6fr)]">
-              <div className="border-b border-[#dbeacc] md:border-b-0 md:border-r">
-                <div className="border-b border-[#dbeacc] px-3 py-2.5">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-[#9fd46a]" />
-                    <Input
-                      type="search"
-                      placeholder="Search terms…"
-                      value={ searchQuery }
-                      onChange={ (e) => setSearchQuery(e.target.value) }
-                      className="h-8 rounded-full border-[#cfe8b2] bg-white pl-8 pr-7 text-xs text-[#2f4820] placeholder:text-[#9fba80] focus-visible:ring-[#4f7a2a]"
-                    />
-                    { searchQuery ? (
-                      <button
-                        type="button"
-                        onClick={ () => setSearchQuery("") }
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full text-[#9fd46a] hover:text-[#4f7a2a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f7a2a]"
-                        aria-label="Clear search"
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    ) : null }
-                  </div>
-                </div>
-                <div className="max-h-144 divide-y divide-[#ecf5e0] overflow-auto">
-                  { filteredTerms.length === 0 ? (
-                    <p className="px-5 py-4 text-sm text-[#9fba80]">No terms match your search.</p>
+            <div className="px-5 py-5 sm:px-6">
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#9fd46a]" />
+                  <Input
+                    type="search"
+                    placeholder="Search terms..."
+                    value={ searchQuery }
+                    onChange={ (e) => setSearchQuery(e.target.value) }
+                    className="h-10 rounded-full border-[#cfe8b2] bg-white pl-10 pr-10 text-sm text-[#2f4820] placeholder:text-[#9fba80] focus-visible:ring-[#4f7a2a]"
+                  />
+                  { searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={ () => setSearchQuery("") }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full text-[#9fd46a] hover:text-[#4f7a2a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f7a2a]"
+                      aria-label="Clear search"
+                    >
+                      <X className="size-4" />
+                    </button>
                   ) : null }
-                  { filteredTerms.map((term) => {
-                    const isSelected = term.id === selectedTermId;
-
-                    return (
-                      <button
-                        key={ term.id }
-                        type="button"
-                        onClick={ () => setSelectedTermId(term.id) }
-                        className={ [
-                          "flex w-full items-center justify-between gap-3 px-5 py-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4f7a2a]",
-                          isSelected ? "bg-[#edf7dc]" : "bg-white hover:bg-[#f7fdf0]",
-                        ].join(" ") }
-                      >
-                        <span className={ ["text-sm font-semibold", isSelected ? "text-[#2f4820]" : "text-[#415d2c]"].join(" ") }>
-                          { term.term }
-                        </span>
-                        { isSelected ? (
-                          <span className="shrink-0 rounded-full bg-[#4f7a2a] px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.18em] text-white">
-                            Selected
-                          </span>
-                        ) : null }
-                      </button>
-                    );
-                  }) }
                 </div>
               </div>
 
-              <div className="p-5">
-                { selectedTerm ? (
-                  <div>
-                    <p className="mb-3 text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">{ selectedTerm.term }</p>
-                    <RecipeTermPreview termJson={ selectedTerm.termJson } expanded />
-                  </div>
-                ) : (
-                  <div className="flex min-h-48 items-center justify-center rounded-2xl border border-dashed border-[#dbeacc] bg-[#f7fdf0] px-6 py-10 text-center text-[#647a50]">
-                    <p className="text-sm">Select a term from the list to view its definition.</p>
-                  </div>
-                ) }
-              </div>
+              { filteredTerms.length === 0 ? (
+                <div className="rounded-[1.5rem] border border-dashed border-[#dbeacc] bg-[#f7fdf0] px-6 py-10 text-center text-[#647a50]">
+                  <p className="text-sm">No terms match your search.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                  { filteredTerms.map((term) => (
+                    <article key={ term.id } className="rounded-2xl border border-[#ccdfb9] bg-white p-4 shadow-sm">
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <p className="text-base font-bold text-[#2f4820]">{ term.term }</p>
+                        { isAdmin ? (
+                          <Button type="button" variant="outline" asChild className="h-7 rounded-full border-[#cfe8b2] bg-[#f7fce8] px-2 text-[0.65rem] font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]">
+                            <Link href={ `/recipe-terms/manage?id=${ term.id }` }><PenSquare className="size-3" />Edit</Link>
+                          </Button>
+                        ) : null }
+                      </div>
+
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value={ `term-${ term.id }` } className="border-b-0">
+                          <AccordionTrigger className="py-2 text-sm font-semibold text-[#4f7a2a] hover:no-underline">
+                            Definition
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <RecipeTermPreview termJson={ term.termJson } expanded />
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </article>
+                  )) }
+                </div>
+              ) }
             </div>
           ) }
         </div>

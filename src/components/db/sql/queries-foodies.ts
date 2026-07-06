@@ -133,7 +133,7 @@ async function ensureGlobalRecipeTemplate(
       templateJson: existingTemplate.templateJson,
       memberId: existingTemplate.memberId,
       familyId: existingTemplate.familyId,
-      label: `${existingTemplate.templateName} (Global)`,
+      label: existingTemplate.templateName,
     };
   }
 
@@ -162,7 +162,7 @@ async function ensureGlobalRecipeTemplate(
     templateJson: createdTemplate.templateJson,
     memberId: createdTemplate.memberId,
     familyId: createdTemplate.familyId,
-    label: `${createdTemplate.templateName} (Global)`,
+    label: createdTemplate.templateName,
   };
 }
 
@@ -270,7 +270,7 @@ async function loadRecipeTemplates(
       templateJson: row.templateJson,
       memberId: row.memberId,
       familyId: row.familyId,
-      label: row.isGlobalTemplate ? `${row.templateName} (Global)` : row.templateName,
+      label: row.templateName,
     });
   }
 

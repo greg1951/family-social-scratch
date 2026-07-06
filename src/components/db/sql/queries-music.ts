@@ -141,7 +141,7 @@ function toTemplateOption(row: {
     templateJson: row.templateJson,
     memberId: row.memberId,
     familyId: row.familyId,
-    label: isFamilyGlobalTemplate ? `${row.templateName} (Global)` : row.templateName,
+    label: row.templateName,
   };
 }
 
