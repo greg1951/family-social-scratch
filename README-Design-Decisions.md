@@ -278,7 +278,7 @@ Neon let's you export data from the database tables (one at a time) but the impo
 2. Set the Windows path to reference the bin directory in the installation folder (`"C:\Program Files\PostgreSQL\18\bin"`).
 3. Run the following psql command to connect to the family social database:
 
-   `psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"`
+   `psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-lively-firefly-ad96dejd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"`
 
     **Note**: important to use double-quotes after the `psql` keyword.
 
@@ -293,7 +293,7 @@ Neon let's you export data from the database tables (one at a time) but the impo
 6. To execute a script from PostgreSql bin directory (`C:\Program Files\PostgreSQL\18\bin`):
 
     ```bash
-    psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-holy-violet-adh5ugnk-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" -f "C:\Users\ghughlett\Projects\my-projects\family-social-scratch\docs\ai-sql\family-activity-action-type-taxonomy.sql"
+    psql "postgresql://neondb_owner:npg_WPqkC3FVwH6X@ep-lively-firefly-ad96dejd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require" -f "C:\Users\gregh\Projects\family-social-scratch\docs\sql-scripts\backfill-discuss-family-activity.sql"
     ```
 
   **Note**: The taxonomy script normalizes `family_activity.action_type` values and should not reference an `activity_name` column (that column does not exist in the current schema).

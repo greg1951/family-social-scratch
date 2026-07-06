@@ -31,34 +31,34 @@ WITH discussion_targets AS (
       CASE dt.target_type WHEN 'music' THEN mu.music_title END,
       dt.title
     ) AS post_name
-  FROM discuss_thread dt
-  LEFT JOIN show s
+  FROM family_schema.discuss_thread dt
+  LEFT JOIN family_schema.show s
     ON dt.target_type = 'show'
    AND s.id = dt.fk_target_id
    AND s.fk_family_id = dt.fk_family_id
-  LEFT JOIN movie mv
+  LEFT JOIN family_schema.movie mv
     ON dt.target_type = 'movie'
    AND mv.id = dt.fk_target_id
    AND mv.fk_family_id = dt.fk_family_id
-  LEFT JOIN book b
+  LEFT JOIN family_schema.book b
     ON dt.target_type = 'book'
    AND b.id = dt.fk_target_id
    AND b.fk_family_id = dt.fk_family_id
-  LEFT JOIN poem p
+  LEFT JOIN family_schema.poem p
     ON dt.target_type = 'poem'
    AND p.id = dt.fk_target_id
    AND p.fk_family_id = dt.fk_family_id
-  LEFT JOIN recipe r
+  LEFT JOIN family_schema.recipe r
     ON dt.target_type = 'recipe'
    AND r.id = dt.fk_target_id
    AND r.fk_family_id = dt.fk_family_id
-  LEFT JOIN music mu
+  LEFT JOIN family_schema.music mu
     ON dt.target_type = 'music'
    AND mu.id = dt.fk_target_id
    AND mu.fk_family_id = dt.fk_family_id
 ),
 insert_discuss_start AS (
-  INSERT INTO family_activity (
+  INSERT INTO family_schema.family_activity (
     action_type,
     feature_name,
     post_name,
@@ -79,7 +79,7 @@ insert_discuss_start AS (
   WHERE t.fk_post_member_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1
-      FROM family_activity fa
+      FROM family_schema.family_activity fa
       WHERE fa.action_type = 'DISCUSS_START'
         AND fa.feature_name = t.feature_name
         AND fa.post_name = t.post_name
@@ -90,7 +90,7 @@ insert_discuss_start AS (
   RETURNING 1
 ),
 insert_discuss_reply AS (
-  INSERT INTO family_activity (
+  INSERT INTO family_schema.family_activity (
     action_type,
     feature_name,
     post_name,
@@ -107,14 +107,14 @@ insert_discuss_reply AS (
     dpr.created_at,
     t.fk_family_id,
     dpr.fk_author_member_id
-  FROM discuss_post_reply dpr
+  FROM family_schema.discuss_post_reply dpr
   INNER JOIN discussion_targets t
     ON t.discuss_thread_id = dpr.fk_discuss_thread_id
   WHERE lower(dpr.post_reply_type) = 'reply'
     AND dpr.fk_author_member_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1
-      FROM family_activity fa
+      FROM family_schema.family_activity fa
       WHERE fa.action_type = 'DISCUSS_REPLY'
         AND fa.feature_name = t.feature_name
         AND fa.post_name = t.post_name
@@ -124,7 +124,7 @@ insert_discuss_reply AS (
     )
   RETURNING 1
 )
-INSERT INTO family_activity (
+INSERT INTO family_schema.family_activity (
   action_type,
   feature_name,
   post_name,
@@ -141,15 +141,15 @@ SELECT
   dl.created_at,
   t.fk_family_id,
   dl.fk_member_id
-FROM discuss_like dl
-INNER JOIN discuss_post_reply dpr
+FROM family_schema.discuss_like dl
+INNER JOIN family_schema.discuss_post_reply dpr
   ON dpr.id = dl.fk_discuss_post_id
 INNER JOIN discussion_targets t
   ON t.discuss_thread_id = dpr.fk_discuss_thread_id
 WHERE dl.fk_member_id IS NOT NULL
   AND NOT EXISTS (
     SELECT 1
-    FROM family_activity fa
+    FROM family_schema.family_activity fa
     WHERE fa.action_type = 'DISCUSS_REACT'
       AND fa.feature_name = t.feature_name
       AND fa.post_name = t.post_name

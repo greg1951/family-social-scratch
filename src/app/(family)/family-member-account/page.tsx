@@ -54,11 +54,11 @@ export default async function FamilyMemberAccount({
   }
 
   const now = new Date();
-  const defaultStartDate = new Date(now);
-  defaultStartDate.setMonth(defaultStartDate.getMonth() - 1);
   const params = await searchParams;
-  const startDate = parseDate(params.startDate, defaultStartDate);
   const endDate = parseDate(params.endDate, now);
+  const defaultStartDate = new Date(endDate);
+  defaultStartDate.setMonth(defaultStartDate.getMonth() - 3);
+  const startDate = parseDate(params.startDate, defaultStartDate);
   const startDateValue = toDateTimeLocalValue(startDate);
   const endDateValue = toDateTimeLocalValue(endDate);
 
