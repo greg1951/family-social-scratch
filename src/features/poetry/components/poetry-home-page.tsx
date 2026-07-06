@@ -1016,34 +1016,6 @@ export default function PoetryHomePage({
                       { (selectedPoem.loveCount ?? 0).toLocaleString() }
                     </span>
                   </div>
-
-                  { selectedPoem.memberId !== member.memberId ? (
-                    <div className="space-y-2">
-                      <label className="text-sm font-semibold text-[#5d426f]" htmlFor="poem-comment-input">Add Comment</label>
-                      <div id="poem-comment-input">
-                        <TipTapCommentEditor
-                        value={ commentText }
-                        onChange={ setCommentText }
-                        placeholder="What stood out to you in this poem?"
-                        disabled={ isEngaging }
-                        toolbarClassName="border-[#d7d0ea] bg-[#f7f1ff]"
-                        editorClassName="border-[#d7d0ea] text-[#43245d]"
-                        buttonClassName="border-[#d8b5ff] text-[#5d426f]"
-                        activeButtonClassName="border-[#8c62b5] bg-[#efe6fb] text-[#43245d]"
-                      />
-                      </div>
-                      <div className="flex justify-end">
-                        <Button
-                          type="button"
-                          onClick={ handleAddComment }
-                          disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
-                          className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
-                        >
-                          Post Comment
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null }
                 </div>
 
                 <div className="space-y-2">
@@ -1062,6 +1034,34 @@ export default function PoetryHomePage({
                     ))
                   ) }
                 </div>
+
+                { selectedPoem.memberId !== member.memberId ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#5d426f]" htmlFor="poem-comment-input">Add Comment</label>
+                    <div id="poem-comment-input">
+                      <TipTapCommentEditor
+                        value={ commentText }
+                        onChange={ setCommentText }
+                        placeholder="What stood out to you in this poem?"
+                        disabled={ isEngaging }
+                        toolbarClassName="border-[#d7d0ea] bg-[#f7f1ff]"
+                        editorClassName="border-[#d7d0ea] text-[#43245d]"
+                        buttonClassName="border-[#d8b5ff] text-[#5d426f]"
+                        activeButtonClassName="border-[#8c62b5] bg-[#efe6fb] text-[#43245d]"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={ handleAddComment }
+                        disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                        className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                      >
+                        Post Comment
+                      </Button>
+                    </div>
+                  </div>
+                ) : null }
               </div>
             </div>
           ) : null }

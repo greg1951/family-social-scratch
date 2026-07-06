@@ -386,6 +386,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     ?? null;
   const canEditSelectedShow = Boolean(selectedShowBasic && (selectedShowBasic.memberId === member.memberId || member.isFounder));
   const canReactToSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId !== member.memberId);
+  const canCommentOnSelectedShow = canReactToSelectedShow;
   const selectedShowThumbsUpCount = selectedShowDetail?.id === selectedShow
     ? selectedShowDetail.thumbsUpCount
     : canReactToSelectedShow
@@ -441,6 +442,11 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
 
   function handleAddComment() {
     if (!selectedShowBasic) {
+      return;
+    }
+
+    if (!canCommentOnSelectedShow) {
+      toast.error("You cannot comment on your own show posting.");
       return;
     }
 
@@ -834,67 +840,12 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[1.4rem] border border-[#d7ebf3] bg-[#f5fbff] p-4">
-                      <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Family Comments</p>
-                        <p className="text-xs text-[#5f7987]">Share your thoughts about this show with your family.</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-comment-input">
-                          Add Comment
-                        </label>
-                        <div id="show-comment-input">
-                          <TipTapCommentEditor
-                          value={ commentText }
-                          onChange={ setCommentText }
-                          placeholder="What did you think about this show?"
-                          disabled={ !selectedShowBasic || isEngaging }
-                          toolbarClassName="border-[#d7ebf3] bg-[#eef8fd]"
-                          editorClassName="border-[#d7ebf3] text-[#15384a]"
-                          buttonClassName="border-[#c9e2ec] text-[#24536a]"
-                          activeButtonClassName="border-[#2d87a8] bg-[#dff2f9] text-[#15384a]"
-                        />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            onClick={ handleAddComment }
-                            disabled={ !selectedShowBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
-                            className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
-                          >
-                            Post Comment
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        { selectedShowDetail?.id === selectedShow && selectedShowDetail.showComments.length === 0 ? (
-                          <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-white px-3 py-2 text-sm text-[#5f7987]">
-                            No comments yet. Be the first family member to add one.
-                          </p>
-                        ) : selectedShowDetail?.id !== selectedShow ? (
-                          <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-white px-3 py-2 text-sm text-[#5f7987]">
-                            Loading comments...
-                          </p>
-                        ) : (
-                          (selectedShowDetail?.showComments ?? []).map((comment) => (
-                            <article key={ comment.id } className="rounded-2xl border border-[#d7ebf3] bg-white px-3 py-3 text-sm text-[#3f6576]">
-                              <TiptapRenderer contentJson={ comment.commentJson } />
-                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4f7384]">
-                                { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
-                              </p>
-                            </article>
-                          ))
-                        ) }
-                      </div>
-                    </div>
                   </>
                 ) : (
                   <div className="rounded-[1.5rem] border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-6 py-10 text-center text-[#5f7987]">
                     <MessageSquareText className="mx-auto mb-3 size-10 text-[#6ea8be]" />
-                    <p className="text-lg font-semibold text-[#15384a]">Select a show to view comments.</p>
-                    <p className="mt-2 text-sm">Choose a show from the finder list to see and post family comments.</p>
+                    <p className="text-lg font-semibold text-[#15384a]">Select a show to react and discuss.</p>
+                    <p className="mt-2 text-sm">Choose a show from the finder list to react and browse discussions.</p>
                   </div>
                 ) }
               </div>
@@ -1027,6 +978,64 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#d7ebf3] bg-[#f5fbff] p-4">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Family Comments</p>
+                  <p className="text-xs text-[#5f7987]">Share your thoughts about this show with your family.</p>
+                </div>
+
+                <div className="space-y-2">
+                  { selectedShowDetail?.id === selectedShow && selectedShowDetail.showComments.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-white px-3 py-2 text-sm text-[#5f7987]">
+                      No comments yet. Be the first family member to add one.
+                    </p>
+                  ) : selectedShowDetail?.id !== selectedShow ? (
+                    <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-white px-3 py-2 text-sm text-[#5f7987]">
+                      Loading comments...
+                    </p>
+                  ) : (
+                    (selectedShowDetail?.showComments ?? []).map((comment) => (
+                      <article key={ comment.id } className="rounded-2xl border border-[#d7ebf3] bg-white px-3 py-3 text-sm text-[#3f6576]">
+                        <TiptapRenderer contentJson={ comment.commentJson } />
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4f7384]">
+                          { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
+                        </p>
+                      </article>
+                    ))
+                  ) }
+                </div>
+
+                { canCommentOnSelectedShow ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-comment-input-dialog">
+                      Add Comment
+                    </label>
+                    <div id="show-comment-input-dialog">
+                      <TipTapCommentEditor
+                        value={ commentText }
+                        onChange={ setCommentText }
+                        placeholder="What did you think about this show?"
+                        disabled={ !selectedShowBasic || isEngaging }
+                        toolbarClassName="border-[#d7ebf3] bg-[#eef8fd]"
+                        editorClassName="border-[#d7ebf3] text-[#15384a]"
+                        buttonClassName="border-[#c9e2ec] text-[#24536a]"
+                        activeButtonClassName="border-[#2d87a8] bg-[#dff2f9] text-[#15384a]"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={ handleAddComment }
+                        disabled={ !selectedShowBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                        className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
+                      >
+                        Post Comment
+                      </Button>
+                    </div>
+                  </div>
+                ) : null }
               </div>
             </div>
           ) : null }

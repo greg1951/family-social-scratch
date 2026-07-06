@@ -301,6 +301,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
 
   const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? visibleMusics[0] ?? null;
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
+  const canCommentOnSelectedMusic = canReactToSelectedMusic;
   const canEditSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder));
   const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder) && selectedMusicBasic.isSong);
   const canViewLyricsSelectedMusic = Boolean(
@@ -341,6 +342,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
 
   function handleAddComment() {
     if (!selectedMusicBasic) {
+      return;
+    }
+
+    if (!canCommentOnSelectedMusic) {
+      toast.error("You cannot comment on your own music posting.");
       return;
     }
 
@@ -659,7 +665,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
               </div>
             ) : null }
 
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)]"><div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#4a6fae]">React to this music and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMusicBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#526a8f] text-white hover:bg-[#415674]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMusicDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#2C5EAD] text-white hover:bg-[#244b8a]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#4a6fae] text-white hover:bg-[#3b5e93]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMusic ? <p className="text-xs text-[#4a6fae]">You cannot react to your own music. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#526a8f]"><ThumbsDown className="size-4 text-[#526a8f]" />{ (selectedMusicDetail?.noRatingCount ?? selectedMusicBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#2C5EAD]"><ThumbsUp className="size-4 text-[#2C5EAD]" />{ (selectedMusicDetail?.thumbsUpCount ?? selectedMusicBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#4f6aa1]"><Heart className="size-4 fill-[#5b7fd0] text-[#5b7fd0]" />{ (selectedMusicDetail?.loveCount ?? selectedMusicBasic?.loveCount ?? 0).toLocaleString() }</span></div></div><div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Comments</p><p className="text-xs text-[#4a6fae]">Share your thoughts about this music with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#203b66]" htmlFor="music-comment-input">Add Comment</label><div id="music-comment-input"><TipTapCommentEditor value={ commentText } onChange={ setCommentText } placeholder="What did you think about this music?" disabled={ !selectedMusicBasic || isEngaging } toolbarClassName="border-[#c8d9f3] bg-[#edf4ff]" editorClassName="border-[#c8d9f3] text-[#203b66]" buttonClassName="border-[#b8cff2] text-[#2C5EAD]" activeButtonClassName="border-[#2C5EAD] bg-[#dbe8ff] text-[#203b66]" /></div><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMusicBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) } className="rounded-full bg-[#2C5EAD] text-white hover:bg-[#244b8a]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">No comments yet. Be the first family member to add one.</p> : selectedMusicDetail?.id !== selectedMusic ? <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">Loading comments...</p> : (selectedMusicDetail?.musicComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#c8d9f3] bg-white px-3 py-3 text-sm text-[#4a6fae]"><TiptapRenderer contentJson={ comment.commentJson } /><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4a6fae]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#c8d9f3] bg-[#f7fbff] px-6 py-10 text-center text-[#4a6fae]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#2C5EAD]" /><p className="text-lg font-semibold text-[#203b66]">Select a music to view comments.</p><p className="mt-2 text-sm">Choose a music from the finder list to see and post family comments.</p></div> }</div></div>
+            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)]"><div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#4a6fae]">React to this music and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMusicBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#526a8f] text-white hover:bg-[#415674]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMusicDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#2C5EAD] text-white hover:bg-[#244b8a]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic } className="rounded-full bg-[#4a6fae] text-white hover:bg-[#3b5e93]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMusicDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMusic ? <p className="text-xs text-[#4a6fae]">You cannot react to your own music. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#526a8f]"><ThumbsDown className="size-4 text-[#526a8f]" />{ (selectedMusicDetail?.noRatingCount ?? selectedMusicBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#2C5EAD]"><ThumbsUp className="size-4 text-[#2C5EAD]" />{ (selectedMusicDetail?.thumbsUpCount ?? selectedMusicBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#4f6aa1]"><Heart className="size-4 fill-[#5b7fd0] text-[#5b7fd0]" />{ (selectedMusicDetail?.loveCount ?? selectedMusicBasic?.loveCount ?? 0).toLocaleString() }</span></div></div><div className="hidden space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Comments</p><p className="text-xs text-[#4a6fae]">Share your thoughts about this music with your family.</p></div><div className="space-y-2"><label className="text-sm font-semibold text-[#203b66]" htmlFor="music-comment-input">Add Comment</label><div id="music-comment-input"><TipTapCommentEditor value={ commentText } onChange={ setCommentText } placeholder="What did you think about this music?" disabled={ !selectedMusicBasic || isEngaging } toolbarClassName="border-[#c8d9f3] bg-[#edf4ff]" editorClassName="border-[#c8d9f3] text-[#203b66]" buttonClassName="border-[#b8cff2] text-[#2C5EAD]" activeButtonClassName="border-[#2C5EAD] bg-[#dbe8ff] text-[#203b66]" /></div><div className="flex justify-end"><Button type="button" onClick={ handleAddComment } disabled={ !selectedMusicBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) } className="rounded-full bg-[#2C5EAD] text-white hover:bg-[#244b8a]">Post Comment</Button></div></div><div className="space-y-2">{ selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">No comments yet. Be the first family member to add one.</p> : selectedMusicDetail?.id !== selectedMusic ? <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">Loading comments...</p> : (selectedMusicDetail?.musicComments ?? []).map((comment) => <article key={ comment.id } className="rounded-2xl border border-[#c8d9f3] bg-white px-3 py-3 text-sm text-[#4a6fae]"><TiptapRenderer contentJson={ comment.commentJson } /><p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4a6fae]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p></article>) }</div></div></> : <div className="rounded-[1.5rem] border border-dashed border-[#c8d9f3] bg-[#f7fbff] px-6 py-10 text-center text-[#4a6fae]"><MessageSquareText className="mx-auto mb-3 size-10 text-[#2C5EAD]" /><p className="text-lg font-semibold text-[#203b66]">Select a music to view comments.</p><p className="mt-2 text-sm">Choose a music from the finder list to see and post family comments.</p></div> }</div></div>
           </div>
         </div>
       </div>
@@ -697,6 +703,56 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-3 space-y-3 text-sm text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMusicBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMusicBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMusicBasic.musicDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Type:</span> { selectedMusicBasic.isSong ? "Song" : "Album" }</p><p><span className="font-semibold text-[#5c2e1a]">Genre:</span> { selectedMusicBasic.tagNamesByType.genre?.[0] ?? "Unknown" }</p><p><span className="font-semibold text-[#5c2e1a]">Sub Genre:</span> { selectedMusicBasic.tagNamesByType.subGenre?.[0] ?? "Unknown" }</p></div></div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-1"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMusicDetail?.noRatingCount ?? selectedMusicBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMusicDetail?.thumbsUpCount ?? selectedMusicBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-1 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMusicDetail?.loveCount ?? selectedMusicBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-1"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMusicDetail?.commentCount ?? selectedMusicBasic.commentCount ?? 0 }</span></div></div>
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p>
+                  <p className="text-xs text-[#8b5a3c]">Share your thoughts about this music with your family.</p>
+                </div>
+
+                <div className="space-y-2">
+                  { selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p>
+                  ) : selectedMusicDetail?.id !== selectedMusic ? (
+                    <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p>
+                  ) : (
+                    (selectedMusicDetail?.musicComments ?? []).map((comment) => (
+                      <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]">
+                        <TiptapRenderer contentJson={ comment.commentJson } />
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p>
+                      </article>
+                    ))
+                  ) }
+                </div>
+
+                { canCommentOnSelectedMusic ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-comment-input-dialog">Add Comment</label>
+                    <div id="music-comment-input-dialog">
+                      <TipTapCommentEditor
+                        value={ commentText }
+                        onChange={ setCommentText }
+                        placeholder="What did you think about this music?"
+                        disabled={ !selectedMusicBasic || isEngaging }
+                        toolbarClassName="border-[#f0d9c4] bg-[#fff1e8]"
+                        editorClassName="border-[#f0d9c4] text-[#5c2e1a]"
+                        buttonClassName="border-[#e8c4a0] text-[#7b3306]"
+                        activeButtonClassName="border-[#b8581a] bg-[#fde7d5] text-[#5c2e1a]"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={ handleAddComment }
+                        disabled={ !selectedMusicBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                        className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]"
+                      >
+                        Post Comment
+                      </Button>
+                    </div>
+                  </div>
+                ) : null }
               </div>
             </div>
           ) : null }

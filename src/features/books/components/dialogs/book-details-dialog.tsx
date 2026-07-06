@@ -505,34 +505,6 @@ export function BookDetailsDialog({
                     { (draft.loveCount ?? 0).toLocaleString() }
                   </span>
                 </div>
-
-                { canEngage ? (
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
-                    <div id="book-comment-input">
-                      <TipTapCommentEditor
-                      value={ commentText }
-                      onChange={ setCommentText }
-                      placeholder="What stood out to you about this book?"
-                      disabled={ isEngaging }
-                      toolbarClassName="border-[#c8d7df] bg-[#edf7fb]"
-                      editorClassName="border-[#c8d7df] text-[#183746]"
-                      buttonClassName="border-[#b9ccd5] text-[#355161]"
-                      activeButtonClassName="border-[#0f5c78] bg-[#d9edf5] text-[#183746]"
-                    />
-                    </div>
-                    <div className="flex justify-end">
-                      <Button
-                        type="button"
-                        onClick={ onAddComment }
-                        disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
-                        className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                      >
-                        Post Comment
-                      </Button>
-                    </div>
-                  </div>
-                ) : null }
               </div>
 
               <div className="space-y-2">
@@ -551,6 +523,34 @@ export function BookDetailsDialog({
                   ))
                 ) }
               </div>
+
+              { canEngage ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#355161]" htmlFor="book-comment-input">Add Comment</label>
+                  <div id="book-comment-input">
+                    <TipTapCommentEditor
+                      value={ commentText }
+                      onChange={ setCommentText }
+                      placeholder="What stood out to you about this book?"
+                      disabled={ isEngaging }
+                      toolbarClassName="border-[#c8d7df] bg-[#edf7fb]"
+                      editorClassName="border-[#c8d7df] text-[#183746]"
+                      buttonClassName="border-[#b9ccd5] text-[#355161]"
+                      activeButtonClassName="border-[#0f5c78] bg-[#d9edf5] text-[#183746]"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      type="button"
+                      onClick={ onAddComment }
+                      disabled={ isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                    >
+                      Post Comment
+                    </Button>
+                  </div>
+                </div>
+              ) : null }
             </div>
           ) : null }
         </div>

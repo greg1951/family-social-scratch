@@ -400,6 +400,7 @@ export function FoodiesHomePage({
     && (selectedRecipeOwnerId === member.memberId || member.isFounder)
   );
   const canReactToSelectedRecipe = Boolean(selectedRecipeBasic && selectedRecipeBasic.memberId !== member.memberId);
+  const canCommentOnSelectedRecipe = canReactToSelectedRecipe;
 
   function handleSelectRecipe(recipeId: number) {
     setCommentText("");
@@ -443,6 +444,11 @@ export function FoodiesHomePage({
 
   function handleAddComment() {
     if (!selectedRecipeBasic) {
+      return;
+    }
+
+    if (!canCommentOnSelectedRecipe) {
+      toast.error("You cannot comment on your own recipe posting.");
       return;
     }
 
@@ -1194,61 +1200,6 @@ export function FoodiesHomePage({
                       </div>
                     </div>
 
-                    <div className="space-y-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] p-4">
-                      <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Family Comments</p>
-                        <p className="text-xs text-[#647a50]">Share your thoughts on this recipe with your family.</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-semibold text-[#2f4820]" htmlFor="recipe-comment-input">
-                          Add Comment
-                        </label>
-                        <div id="recipe-comment-input">
-                          <TipTapCommentEditor
-                          value={ commentText }
-                          onChange={ setCommentText }
-                          placeholder="What do you think about this recipe?"
-                          disabled={ !selectedRecipeBasic || isEngaging }
-                          toolbarClassName="border-[#dbeacc] bg-[#f0f9df]"
-                          editorClassName="border-[#dbeacc] text-[#2f4820]"
-                          buttonClassName="border-[#cfe8b2] text-[#476232]"
-                          activeButtonClassName="border-[#578c24] bg-[#e5f7cb] text-[#2f4820]"
-                        />
-                        </div>
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            onClick={ handleAddComment }
-                            disabled={ !selectedRecipeBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
-                            className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
-                          >
-                            Post Comment
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        { selectedRecipeDetail?.id === selectedRecipe && selectedRecipeDetail.recipeComments.length === 0 ? (
-                          <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
-                            No comments yet. Be the first family member to add one.
-                          </p>
-                        ) : selectedRecipeDetail?.id !== selectedRecipe ? (
-                          <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
-                            Loading comments...
-                          </p>
-                        ) : (
-                          (selectedRecipeDetail?.recipeComments ?? []).map((comment) => (
-                            <article key={ comment.id } className="rounded-2xl border border-[#dbeacc] bg-white px-3 py-3 text-sm text-[#4e6640]">
-                              <TiptapRenderer contentJson={ comment.commentJson } />
-                              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
-                                { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
-                              </p>
-                            </article>
-                          ))
-                        ) }
-                      </div>
-                    </div>
                   </>
                 ) : (
                   <div className="rounded-[1.5rem] border border-dashed border-[#dbeacc] bg-[#faf8ff] px-6 py-10 text-center text-[#647a50]">
@@ -1355,6 +1306,64 @@ export function FoodiesHomePage({
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#cadfbb] bg-white p-4">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Family Comments</p>
+                  <p className="text-xs text-[#647a50]">Share your thoughts on this recipe with your family.</p>
+                </div>
+
+                <div className="space-y-2">
+                  { selectedRecipeDetail?.id === selectedRecipe && selectedRecipeDetail.recipeComments.length === 0 ? (
+                    <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
+                      No comments yet. Be the first family member to add one.
+                    </p>
+                  ) : selectedRecipeDetail?.id !== selectedRecipe ? (
+                    <p className="rounded-2xl border border-dashed border-[#dbeacc] bg-white px-3 py-2 text-sm text-[#647a50]">
+                      Loading comments...
+                    </p>
+                  ) : (
+                    (selectedRecipeDetail?.recipeComments ?? []).map((comment) => (
+                      <article key={ comment.id } className="rounded-2xl border border-[#dbeacc] bg-white px-3 py-3 text-sm text-[#4e6640]">
+                        <TiptapRenderer contentJson={ comment.commentJson } />
+                        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
+                          { comment.commenterName } · { formatCreatedAt(comment.createdAt) }
+                        </p>
+                      </article>
+                    ))
+                  ) }
+                </div>
+
+                { canCommentOnSelectedRecipe ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#2f4820]" htmlFor="recipe-comment-input-dialog">
+                      Add Comment
+                    </label>
+                    <div id="recipe-comment-input-dialog">
+                      <TipTapCommentEditor
+                        value={ commentText }
+                        onChange={ setCommentText }
+                        placeholder="What do you think about this recipe?"
+                        disabled={ !selectedRecipeBasic || isEngaging }
+                        toolbarClassName="border-[#dbeacc] bg-[#f0f9df]"
+                        editorClassName="border-[#dbeacc] text-[#2f4820]"
+                        buttonClassName="border-[#cfe8b2] text-[#476232]"
+                        activeButtonClassName="border-[#578c24] bg-[#e5f7cb] text-[#2f4820]"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        onClick={ handleAddComment }
+                        disabled={ !selectedRecipeBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                        className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
+                      >
+                        Post Comment
+                      </Button>
+                    </div>
+                  </div>
+                ) : null }
               </div>
             </div>
           ) : null }
