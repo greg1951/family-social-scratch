@@ -119,6 +119,15 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
     });
   }
 
+  function handleGoBack() {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push('/');
+  }
+
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -129,13 +138,14 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
                 Book & Poetry Clubs
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
-                <Link
-                  href="/"
+                <button
+                  type="button"
+                  onClick={ handleGoBack }
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0f7ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Back to Main Page
-                </Link>
+                  Go Back
+                </button>
               </div>
 
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
