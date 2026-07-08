@@ -327,8 +327,8 @@ function AlbumFinder({
         ) }
       </div>
 
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div className="space-y-1">
+      <div className="flex flex-row flex-nowrap items-end gap-2">
+        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
           <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
             Start Date
           </label>
@@ -340,7 +340,7 @@ function AlbumFinder({
             className="h-9 rounded-xl border-[#cee1bc] bg-white px-2 text-xs text-[#355427]"
           />
         </div>
-        <div className="space-y-1">
+        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
           <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
             End Date
           </label>
@@ -649,7 +649,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
           ) : (
             <>
               <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
-                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:order-2">
+                <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur order-2 md:order-2">
                   <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                       <div>
@@ -679,7 +679,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                   </div>
                 </div>
 
-                <div className="min-w-0 md:order-1">
+                <div className="min-w-0 order-1 md:order-1">
                   <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur md:max-h-[68vh] xl:max-h-[76vh]">
                     <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">

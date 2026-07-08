@@ -189,7 +189,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const [selectedShowDetail, setSelectedShowDetail] = useState<TvShowDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewShowOpen, setIsViewShowOpen] = useState(false);
-  const [showStripMode, setShowStripMode] = useState<"latest" | "top-rated">("latest");
+  const [showType, setShowType] = useState<"all" | "latest" | "top-rated">("all");
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const visibleShows = shows.filter((show) => show.status === "published" || (includeArchived && show.status === "archived"));
@@ -203,6 +203,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
     id: show.id,
     name: show.showTitle,
     date: formatShortDate(show.updatedAt),
+    submitterName: show.submitterName,
     submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
@@ -231,6 +232,8 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       kind: "top-rated" as const,
       id: show.id,
       name: show.showTitle,
+      date: formatShortDate(show.updatedAt),
+      submitterName: show.submitterName,
       submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
       noRating: show.noRatingCount,
       thumbsUp: show.thumbsUpCount,
@@ -243,14 +246,36 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       hasDiscussionThread: show.hasDiscussionThread,
     }));
 
-  const stripItems = showStripMode === "latest" ? latestShows : topRatedShows;
-  const stripTitle = showStripMode === "latest" ? "Latest TV Shows" : "Top Rated TV Shows";
-  const stripDescription = showStripMode === "latest"
-    ? "Latest shows first, based on added date."
-    : "Top rated shows based on total likes and loves.";
-  const stripAccentClassName = showStripMode === "latest"
-    ? "bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
-    : "bg-[linear-gradient(135deg,#ffdbae,#ffc4c8)]";
+  const allShows = [...visibleShows]
+    .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
+    .map((show) => ({
+      kind: "all" as const,
+      id: show.id,
+      name: show.showTitle,
+      date: formatShortDate(show.updatedAt),
+      submitterName: show.submitterName,
+      submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      commentsCount: show.commentCount,
+      thumbsUp: show.thumbsUpCount,
+      love: show.loveCount,
+      imageSrc: show.showImageUrl ?? null,
+      imageAlt: `${ show.showTitle } show image`,
+      showSiteUrl: show.showSiteUrl ?? null,
+      showSiteBackground: show.showSiteBackground,
+      hasDiscussionThread: show.hasDiscussionThread,
+    }));
+
+  const stripTitle = showType === "all" ? "All TV Shows" : showType === "latest" ? "Latest TV Shows" : "Top Rated TV Shows";
+  const stripDescription = showType === "all"
+    ? "All shows first, ordered by the most recently updated."
+    : showType === "latest"
+      ? "Latest shows first, based on added date."
+      : "Top rated shows based on total likes and loves.";
+  const stripAccentClassName = showType === "all"
+    ? "bg-[linear-gradient(135deg,#c6edf7,#fff6db)]"
+    : showType === "latest"
+      ? "bg-[linear-gradient(135deg,#b5e6f5,#fff3ce)]"
+      : "bg-[linear-gradient(135deg,#ffdbae,#ffc4c8)]";
 
   const showFinderRows = visibleShows.map((show) => ({
     id: show.id,
@@ -349,6 +374,86 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
       .toLowerCase()
       .includes(query);
   });
+
+  const filteredShowIds = new Set(filteredShows.map((show) => show.id));
+
+  const filteredLatestShows = [...visibleShows]
+    .filter((show) => filteredShowIds.has(show.id))
+    .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
+    .slice(0, 8)
+    .map((show) => ({
+      kind: "latest" as const,
+      id: show.id,
+      name: show.showTitle,
+      date: formatShortDate(show.updatedAt),
+      submitterName: show.submitterName,
+      submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      commentsCount: show.commentCount,
+      thumbsUp: show.thumbsUpCount,
+      love: show.loveCount,
+      imageSrc: show.showImageUrl ?? null,
+      imageAlt: `${ show.showTitle } show image`,
+      showSiteUrl: show.showSiteUrl ?? null,
+      showSiteBackground: show.showSiteBackground,
+      hasDiscussionThread: show.hasDiscussionThread,
+    }));
+
+  const filteredTopRatedShows = [...visibleShows]
+    .filter((show) => filteredShowIds.has(show.id) && (show.thumbsUpCount + show.loveCount) > 0)
+    .sort((leftShow, rightShow) => {
+      const leftScore = leftShow.thumbsUpCount + leftShow.loveCount;
+      const rightScore = rightShow.thumbsUpCount + rightShow.loveCount;
+
+      if (leftScore !== rightScore) {
+        return rightScore - leftScore;
+      }
+
+      return +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt);
+    })
+    .slice(0, 8)
+    .map((show) => ({
+      kind: "top-rated" as const,
+      id: show.id,
+      name: show.showTitle,
+      date: formatShortDate(show.updatedAt),
+      submitterName: show.submitterName,
+      submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      noRating: show.noRatingCount,
+      thumbsUp: show.thumbsUpCount,
+      love: show.loveCount,
+      commentsCount: show.commentCount,
+      imageSrc: show.showImageUrl ?? null,
+      imageAlt: `${ show.showTitle } show image`,
+      showSiteUrl: show.showSiteUrl ?? null,
+      showSiteBackground: show.showSiteBackground,
+      hasDiscussionThread: show.hasDiscussionThread,
+    }));
+
+  const filteredAllShows = [...visibleShows]
+    .filter((show) => filteredShowIds.has(show.id))
+    .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
+    .map((show) => ({
+      kind: "all" as const,
+      id: show.id,
+      name: show.showTitle,
+      date: formatShortDate(show.updatedAt),
+      submitterName: show.submitterName,
+      submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      commentsCount: show.commentCount,
+      thumbsUp: show.thumbsUpCount,
+      love: show.loveCount,
+      imageSrc: show.showImageUrl ?? null,
+      imageAlt: `${ show.showTitle } show image`,
+      showSiteUrl: show.showSiteUrl ?? null,
+      showSiteBackground: show.showSiteBackground,
+      hasDiscussionThread: show.hasDiscussionThread,
+    }));
+
+  const stripItems = showType === "all"
+    ? filteredAllShows
+    : showType === "latest"
+      ? filteredLatestShows
+      : filteredTopRatedShows;
 
   useEffect(() => {
     if (!selectedShow) {
@@ -525,10 +630,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[1.05fr_0.95fr] md:gap-6">
-          <div className="min-w-0 space-y-6">
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
-              <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-5 py-5 sm:px-6">
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
+            <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-5 py-5 sm:px-6">
+              <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
@@ -542,54 +647,50 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
-                      <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View Show</Button>
-                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a]"><Link href="/tv/add-show"><Plus className="size-3.5" />Add Show</Link></Button>
-                      <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Show</Button>
+                      <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View</Button>
+                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a]"><Link href="/tv/add-show"><Plus className="size-3.5" />Add</Link></Button>
+                      <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50"><Edit3 className="size-3.5" />Edit</Button>
                     </div>
-                    {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">
-                      Search by show title, tags, channel, or family member and pick what to watch next.
-                    </p> */}
                   </div>
 
-                  {/* <div className="rounded-full border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm font-semibold text-[#24536a]">
-                    { filteredShows.length } shows found
-                  </div> */}
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center gap-3">
-                  <div className="relative min-w-[16rem] flex-1">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
+                  <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72">
                     <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#5f7987]" />
                     <Input
                       type="search"
                       value={ searchValue }
                       onChange={ (event) => setSearchValue(event.target.value) }
                       placeholder="Search by show, genre, adjective, channel, or family member"
-                      className="h-12 rounded-full border-[#c9e2ec] bg-white pl-11 pr-4 text-sm text-[#15384a] shadow-sm"
+                      className="h-12 w-full rounded-full border-[#c9e2ec] bg-white pl-11 pr-4 text-sm text-[#15384a] shadow-sm"
                       aria-label="Search TV shows"
                     />
                   </div>
-                  <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c9e2ec] bg-white px-3 py-2 text-xs font-semibold text-[#24536a]">
-                    <input
-                      type="checkbox"
-                      checked={ includeArchived }
-                      onChange={ (event) => setIncludeArchived(event.target.checked) }
-                      className="size-4 border-[#8ec6df] text-[#2d87a8]"
-                    />
-                    Include Archived
-                  </label>
-                  <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c9e2ec] bg-white px-3 py-2 text-xs font-semibold text-[#24536a]">
-                    <input
-                      type="checkbox"
-                      checked={ filterWithDiscussionThreads }
-                      onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                      className="size-4 border-[#8ec6df] text-[#2d87a8]"
-                    />
-                    Show Discussions
-                  </label>
+                  <div className="flex flex-row flex-nowrap items-center gap-2">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-2.5 py-2 text-sm font-semibold text-[#24536a]">
+                      <input
+                        type="checkbox"
+                        checked={ includeArchived }
+                        onChange={ (event) => setIncludeArchived(event.target.checked) }
+                        className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                      />
+                      Archived
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-2.5 py-2 text-sm font-semibold text-[#24536a]">
+                      <input
+                        type="checkbox"
+                        checked={ filterWithDiscussionThreads }
+                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                      />
+                      Discussions
+                    </label>
+                  </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div className="space-y-1">
+                <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end">
+                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
                       Start Date
                     </label>
@@ -598,10 +699,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       value={ startDate }
                       max={ endDate || undefined }
                       onChange={ (event) => setStartDate(event.target.value) }
-                      className="h-9 rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                      className="h-9 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
                       End Date
                     </label>
@@ -610,108 +711,90 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       value={ endDate }
                       min={ startDate || undefined }
                       onChange={ (event) => setEndDate(event.target.value) }
-                      className="h-9 rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                      className="h-9 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
                     />
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="px-4 py-4 sm:px-6 sm:py-5">
-                {/* <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#eff9fd,#f9fdff)] px-4 py-3 text-sm text-[#376176]">
-                  <Tv className="size-4 text-[#2a819d]" />
-                  <span className="font-semibold text-[#17384b]">Selected show:</span>
-                  <span>{ selectedShowName || "Choose a show from the list" }</span>
-                  <span className="rounded-full bg-[#e8f5fd] px-3 py-1 text-xs text-[#24536a]">Viewing as { member.firstName }</span>
-                </div> */}
+            <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-3 text-sm text-[#376176]">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Show Type</p>
+              <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-type"
+                    value="all"
+                    checked={ showType === "all" }
+                    onChange={ () => setShowType("all") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  All
+                </label>
 
-                <div className="max-h-[68vh] overflow-y-auto pr-0.5">
-                  { filteredShows.length === 0 ? (
-                    <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-white px-4 py-8 text-center text-sm text-[#5f7987]">
-                      No shows match that search yet.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-                      { filteredShows.map((show) => {
-                        const isSelected = selectedShow === show.id;
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-type"
+                    value="latest"
+                    checked={ showType === "latest" }
+                    onChange={ () => setShowType("latest") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Latest
+                </label>
 
-                        return (
-                          <button
-                            key={ show.id }
-                            type="button"
-                            onClick={ () => handleSelectShow(show.id) }
-                            onDoubleClick={ () => handleOpenShowFromCard(show.id) }
-                            title={ [
-                              `${ show.genre } • ${ show.adjective } • ${ show.channel }`,
-                              `Added by ${ show.addedBy }`,
-                            ].join("\n") }
-                            className={ [
-                              "w-full rounded-xl border p-2 text-left transition-all duration-200",
-                              "hover:border-[#b9d9e7] hover:shadow-[0_12px_30px_-26px_rgba(24,77,103,0.8)]",
-                              isSelected
-                                ? "border-[#8ec6df] bg-[#edf8ff] shadow-[0_16px_34px_-24px_rgba(24,77,103,0.85)]"
-                                : "border-[#d7ebf3] bg-white",
-                            ].join(" ") }
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="min-w-0 truncate text-[13px] font-semibold text-[#17384b]">{ show.name }</p>
-                              { show.hasDiscussionThread ? (
-                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#dff2f9] text-[#2d87a8]" title="Discussion thread available">
-                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
-                                </span>
-                              ) : null }
-                            </div>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+                  <input
+                    type="radio"
+                    name="tv-show-type"
+                    value="top-rated"
+                    checked={ showType === "top-rated" }
+                    onChange={ () => setShowType("top-rated") }
+                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                  />
+                  Top Rated
+                </label>
+              </div>
+            </div>
 
-                            <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#5f7987]">
-                              <Tv className="size-3 shrink-0" />
-                              <span className="truncate">{ show.channel }</span>
-                            </div>
+            <div className="px-4 py-4 sm:px-6 sm:py-5">
+              { stripItems.length === 0 ? (
+                <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-white px-4 py-8 text-center text-sm text-[#5f7987]">
+                  No shows match that search yet.
+                </div>
+              ) : (
+                <TvScrollStrip
+                  title={ stripTitle }
+                  description={ stripDescription }
+                  items={ stripItems }
+                  accentClassName={ stripAccentClassName }
+                  selectedShowId={ selectedShow }
+                  onSelectShow={ handleSelectShow }
+                  onOpenShow={ handleOpenShowFromCard }
+                />
+              ) }
+            </div>
+          </div>
 
-                            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#376176]">
-                              <span>S:{ show.seasons }</span>
-                              <span>·</span>
-                              <span className="inline-flex items-center gap-1">
-                                <ThumbsUp className="size-3 text-[#2d87a8]" />
-                                { show.thumbsUp }
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <Heart className="size-3 text-[#cf3f7f]" />
-                                { show.love }
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <MessageSquareText className="size-3 text-[#2d87a8]" />
-                                { show.comments }
-                              </span>
-                            </div>
-
-                            <p className="mt-1 truncate text-[10px] text-[#6d8998]">
-                              { show.addedBy } · { formatShortDate(show.updatedAt) }
-                            </p>
-                          </button>
-                        );
-                      }) }
-                    </div>
-                  ) }
+          <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
+            <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(236,249,255,0.86))] px-5 py-5 sm:px-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
+                    Show Reactions
+                  </p>
+                  <p className="mt-2 max-w-2xl text-xs leading-6 text-[#5f7987]">
+                    React to this show and post comments your family can see.
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)]">
-              <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(236,249,255,0.86))] px-5 py-5 sm:px-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
-                      Show Reactions
-                    </p>
-                    <p className="mt-2 max-w-2xl text-xs leading-6 text-[#5f7987]">
-                      React to this show and post comments your family can see.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-5 px-5 py-5 sm:px-6">
-                { selectedShowBasic ? (
-                  <>
+            <div className="space-y-5 px-5 py-5 sm:px-6">
+              { selectedShowBasic ? (
+                <>
                     <div className="space-y-3 rounded-[1.4rem] border border-[#d7ebf3] bg-[#f5fbff] p-4">
                       <div className="flex flex-wrap items-center gap-3">
                         <Button
@@ -748,150 +831,17 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                           { selectedShowLoveCount.toLocaleString() }
                         </span>
                       </div>
-
-                      <div className="space-y-3 rounded-4xl border border-[#d7ebf3] bg-white p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
-                              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
-                              <FeatureFaqHelp
-                                href="/feature-faq?category=Discussion%20Groups"
-                                buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
-                                iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
-                                tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
-                              />
-                            </div>
-                            <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
-                          </div>
-                          <StartDiscussionDialog
-                            targetType="show"
-                            targetId={ selectedShowBasic.id }
-                            topicLabel={ `${ selectedShowBasic.showTitle } Discussion ${ (selectedShowDetail?.id === selectedShow
-                              ? selectedShowDetail.discussionThreads.length
-                              : 0) + 1 }` }
-                            revalidatePaths={ ["/tv"] }
-                            onSuccessRoute="/tv/discussions/:threadId"
-                            disabled={ isEngaging || selectedShowDetail?.id !== selectedShow }
-                            triggerLabel="Add Discussion"
-                            triggerClassName="rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]"
-                          />
-                        </div>
-
-                        { selectedShowDetail?.id !== selectedShow ? (
-                          <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-2 text-sm text-[#5f7987]">
-                            Loading discussion threads...
-                          </p>
-                        ) : selectedShowDetail.discussionThreads.length === 0 ? (
-                          <div className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-3 text-sm text-[#5f7987]">
-                            <p>No discussion threads have been added for this show yet.</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            { selectedShowDetail.discussionThreads.map((discussionThread) => (
-                              <article key={ discussionThread.id } className="rounded-2xl border border-[#d7ebf3] bg-[#f8fcff] px-4 py-4 text-sm text-[#3f6576] shadow-sm">
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="min-w-0 space-y-1 flex-1">
-                                    <p className="text-base font-bold leading-snug text-[#15384a]">{ discussionThread.discussTopic }</p>
-                                    <p className="text-xs uppercase tracking-[0.16em] text-[#4f7384]">
-                                      { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
-                                    </p>
-                                  </div>
-
-                                  <div className="flex flex-wrap items-center gap-3 shrink-0">
-                                    { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
-                                      <div className="flex flex-wrap items-center gap-2">
-                                        { discussionThread.dislikeCount > 0 && (
-                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#efebe8] px-2 py-1 text-[0.65rem] font-semibold text-[#4f433d]">
-                                            <ThumbsDown className="size-3" />
-                                            { discussionThread.dislikeCount }
-                                          </span>
-                                        ) }
-                                        { discussionThread.likeCount > 0 && (
-                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f4fb] px-2 py-1 text-[0.65rem] font-semibold text-[#1f5a70]">
-                                            <ThumbsUp className="size-3" />
-                                            { discussionThread.likeCount }
-                                          </span>
-                                        ) }
-                                        { discussionThread.loveCount > 0 && (
-                                          <span className="inline-flex items-center gap-1 rounded-full bg-[#fde4ee] px-2 py-1 text-[0.65rem] font-semibold text-[#aa3368]">
-                                            <Heart className="size-3 fill-current" />
-                                            { discussionThread.loveCount }
-                                          </span>
-                                        ) }
-                                      </div>
-                                    ) : null }
-
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      asChild
-                                      className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
-                                    >
-                                      <Link href={ `/tv/discussions/${ discussionThread.id }` }>
-                                        View
-                                      </Link>
-                                    </Button>
-                                  </div>
-                                </div>
-                              </article>
-                            )) }
-                          </div>
-                        ) }
-                      </div>
                     </div>
 
-                  </>
-                ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-6 py-10 text-center text-[#5f7987]">
-                    <MessageSquareText className="mx-auto mb-3 size-10 text-[#6ea8be]" />
-                    <p className="text-lg font-semibold text-[#15384a]">Select a show to react and discuss.</p>
-                    <p className="mt-2 text-sm">Choose a show from the finder list to react and browse discussions.</p>
-                  </div>
-                ) }
-              </div>
+                </>
+              ) : (
+                <div className="rounded-[1.5rem] border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-6 py-10 text-center text-[#5f7987]">
+                  <MessageSquareText className="mx-auto mb-3 size-10 text-[#6ea8be]" />
+                  <p className="text-lg font-semibold text-[#15384a]">Select a show to react and discuss.</p>
+                  <p className="mt-2 text-sm">Choose a show from the finder list to react and browse discussions.</p>
+                </div>
+              ) }
             </div>
-          </div>
-          <div className="min-w-0 space-y-4">
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-3 backdrop-blur sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
-                Show Type
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2.5">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
-                  <input
-                    type="radio"
-                    name="tv-show-strip-mode"
-                    value="latest"
-                    checked={ showStripMode === "latest" }
-                    onChange={ () => setShowStripMode("latest") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
-                  />
-                  Latest TV Shows
-                </label>
-
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold text-[#15384a] transition hover:bg-[#f1f8fb]">
-                  <input
-                    type="radio"
-                    name="tv-show-strip-mode"
-                    value="top-rated"
-                    checked={ showStripMode === "top-rated" }
-                    onChange={ () => setShowStripMode("top-rated") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
-                  />
-                  Top Rated TV Shows
-                </label>
-              </div>
-            </div>
-
-            <TvScrollStrip
-              title={ stripTitle }
-              description={ stripDescription }
-              items={ stripItems }
-              accentClassName={ stripAccentClassName }
-              selectedShowId={ selectedShow }
-              onSelectShow={ handleSelectShow }
-              onOpenShow={ handleOpenShowFromCard }
-            />
           </div>
         </div>
       </div>
@@ -1036,6 +986,96 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                     </div>
                   </div>
                 ) : null }
+
+                <div className="space-y-3 rounded-4xl border border-[#d7ebf3] bg-white p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Discussion Threads</p>
+                        <FeatureFaqHelp
+                          href="/feature-faq?category=Discussion%20Groups"
+                          buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
+                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
+                          tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
+                        />
+                      </div>
+                      <p className="text-xs text-[#5f7987]">Follow the conversation that belongs to this show.</p>
+                    </div>
+                    <StartDiscussionDialog
+                      targetType="show"
+                      targetId={ selectedShowBasic.id }
+                      topicLabel={ `${ selectedShowBasic.showTitle } Discussion ${ (selectedShowDetail?.id === selectedShow
+                        ? selectedShowDetail.discussionThreads.length
+                        : 0) + 1 }` }
+                      revalidatePaths={ ["/tv"] }
+                      onSuccessRoute="/tv/discussions/:threadId"
+                      disabled={ isEngaging || selectedShowDetail?.id !== selectedShow }
+                      triggerLabel="Add Discussion"
+                      triggerClassName="rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]"
+                    />
+                  </div>
+
+                  { selectedShowDetail?.id !== selectedShow ? (
+                    <p className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-2 text-sm text-[#5f7987]">
+                      Loading discussion threads...
+                    </p>
+                  ) : selectedShowDetail.discussionThreads.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-[#d7ebf3] bg-[#f8fcff] px-3 py-3 text-sm text-[#5f7987]">
+                      <p>No discussion threads have been added for this show yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      { selectedShowDetail.discussionThreads.map((discussionThread) => (
+                        <article key={ discussionThread.id } className="rounded-2xl border border-[#d7ebf3] bg-[#f8fcff] px-4 py-4 text-sm text-[#3f6576] shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 space-y-1 flex-1">
+                              <p className="text-base font-bold leading-snug text-[#15384a]">{ discussionThread.discussTopic }</p>
+                              <p className="text-xs uppercase tracking-[0.16em] text-[#4f7384]">
+                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 shrink-0">
+                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  { discussionThread.dislikeCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#efebe8] px-2 py-1 text-[0.65rem] font-semibold text-[#4f433d]">
+                                      <ThumbsDown className="size-3" />
+                                      { discussionThread.dislikeCount }
+                                    </span>
+                                  ) }
+                                  { discussionThread.likeCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f4fb] px-2 py-1 text-[0.65rem] font-semibold text-[#1f5a70]">
+                                      <ThumbsUp className="size-3" />
+                                      { discussionThread.likeCount }
+                                    </span>
+                                  ) }
+                                  { discussionThread.loveCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fde4ee] px-2 py-1 text-[0.65rem] font-semibold text-[#aa3368]">
+                                      <Heart className="size-3 fill-current" />
+                                      { discussionThread.loveCount }
+                                    </span>
+                                  ) }
+                                </div>
+                              ) : null }
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="shrink-0 rounded-full border-[#c9e2ec] bg-white px-4 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9]"
+                              >
+                                <Link href={ `/tv/discussions/${ discussionThread.id }` }>
+                                  View
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </article>
+                      )) }
+                    </div>
+                  ) }
+                </div>
               </div>
             </div>
           ) : null }

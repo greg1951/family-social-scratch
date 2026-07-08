@@ -9,7 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import { Edit3, Eye, ExternalLink, Heart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Film, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDeferredValue, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
@@ -125,7 +125,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [selectedMovieDetail, setSelectedMovieDetail] = useState<MovieDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewMovieOpen, setIsViewMovieOpen] = useState(false);
-  const [movieStripMode, setMovieStripMode] = useState<"latest" | "top-rated">("latest");
+  const [movieStripMode, setMovieStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [startDate, setStartDate] = useState(() => {
@@ -138,7 +138,37 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const visibleMovies = movies.filter((movie) => movie.status === "published" || (includeArchived && movie.status === "archived"));
   const [selectedMovie, setSelectedMovie] = useState(visibleMovies[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
-  const deferredSearchValue = useDeferredValue(searchValue);
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
+  const filteredFinderMovies = visibleMovies.filter((movie) => {
+    const updatedAt = new Date(movie.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (filterWithDiscussionThreads && !movie.hasDiscussionThread) {
+      return false;
+    }
+
+    const query = searchValue.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+
+    return [
+      movie.movieTitle,
+      movie.tagNamesByType.genre?.[0] ?? "",
+      movie.tagNamesByType.adjective?.[0] ?? "",
+      movie.tagNamesByType.channel?.[0] ?? "",
+      movie.submitterName,
+    ].join(" ").toLowerCase().includes(query);
+  });
 
   useEffect(() => {
     const flushQueuedMovieComments = async () => {
@@ -180,7 +210,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     };
   }, [selectedMovie]);
 
-  const latestMovies = [...visibleMovies]
+  const latestMovies = [...filteredFinderMovies]
     .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
     .slice(0, 8)
     .map((movie) => ({
@@ -188,6 +218,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       id: movie.id,
       name: movie.movieTitle,
       date: formatStripDate(movie.updatedAt),
+      submitterName: movie.submitterName,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
@@ -199,7 +230,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       movieSiteBackground: movie.movieSiteBackground ?? "#000000",
     }));
 
-  const topRatedMovies = [...visibleMovies]
+  const topRatedMovies = [...filteredFinderMovies]
     .filter((movie) => (movie.thumbsUpCount + movie.loveCount) > 0)
     .sort((leftMovie, rightMovie) => {
       const leftScore = leftMovie.thumbsUpCount + leftMovie.loveCount;
@@ -216,6 +247,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       kind: "top-rated" as const,
       id: movie.id,
       name: movie.movieTitle,
+      date: formatStripDate(movie.updatedAt),
+      submitterName: movie.submitterName,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       thumbsUp: movie.thumbsUpCount,
@@ -228,55 +261,41 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
       movieSiteBackground: movie.movieSiteBackground ?? "#000000",
     }));
 
-  const stripItems = movieStripMode === "latest" ? latestMovies : topRatedMovies;
-  const stripTitle = movieStripMode === "latest" ? "Latest Movies" : "Top Rated Movies";
-  const stripDescription = movieStripMode === "latest"
-    ? "Latest movies first, based on added date."
-    : "Top rated movies based on total likes and loves.";
-  const stripAccentClassName = movieStripMode === "latest"
-    ? "bg-[linear-gradient(135deg,#ffb366,#ff8866)]"
-    : "bg-[linear-gradient(135deg,#ffa84d,#ff9933)]";
+  const allMovies = [...filteredFinderMovies]
+    .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
+    .map((movie) => ({
+      kind: "all" as const,
+      id: movie.id,
+      name: movie.movieTitle,
+      date: formatStripDate(movie.updatedAt),
+      submitterName: movie.submitterName,
+      submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
+      commentsCount: movie.commentCount,
+      thumbsUp: movie.thumbsUpCount,
+      love: movie.loveCount,
+      hasDiscussionThread: movie.hasDiscussionThread,
+      imageSrc: movie.movieImageUrl ?? null,
+      imageAlt: `${ movie.movieTitle } movie image`,
+      movieSiteUrl: movie.movieSiteUrl ?? null,
+      movieSiteBackground: movie.movieSiteBackground ?? "#000000",
+    }));
 
-  const finderRows = visibleMovies.map((movie) => ({
-    id: movie.id,
-    name: movie.movieTitle,
-    updatedAt: movie.updatedAt,
-    genre: movie.tagNamesByType.genre?.[0] ?? "-",
-    adjective: movie.tagNamesByType.adjective?.[0] ?? "-",
-    channel: movie.tagNamesByType.channel?.[0] ?? "Unknown",
-    year: movie.movieDebutYear,
-    addedBy: movie.submitterName,
-    thumbsDown: movie.noRatingCount,
-    thumbsUp: movie.thumbsUpCount,
-    love: movie.loveCount,
-    comments: movie.commentCount,
-    hasDiscussionThread: movie.hasDiscussionThread,
-  }));
-
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
-
-  const filteredMovies = finderRows.filter((movie) => {
-    const updatedAt = new Date(movie.updatedAt);
-
-    if (startDateValue && updatedAt < startDateValue) {
-      return false;
-    }
-
-    if (endDateValue && updatedAt > endDateValue) {
-      return false;
-    }
-
-    if (filterWithDiscussionThreads && !movie.hasDiscussionThread) {
-      return false;
-    }
-
-    const query = deferredSearchValue.trim().toLowerCase();
-    if (!query) {
-      return true;
-    }
-    return [movie.name, movie.genre, movie.adjective, movie.channel, movie.addedBy].join(" ").toLowerCase().includes(query);
-  });
+  const stripItems = movieStripMode === "all"
+    ? allMovies
+    : movieStripMode === "latest"
+      ? latestMovies
+      : topRatedMovies;
+  const stripTitle = movieStripMode === "all" ? "All Movies" : movieStripMode === "latest" ? "Latest Movies" : "Top Rated Movies";
+  const stripDescription = movieStripMode === "all"
+    ? "All movies, ordered by the most recently updated."
+    : movieStripMode === "latest"
+      ? "Latest movies first, based on added date."
+      : "Top rated movies based on total likes and loves.";
+  const stripAccentClassName = movieStripMode === "all"
+    ? "bg-[linear-gradient(135deg,#ffe0b5,#ffd0bf)]"
+    : movieStripMode === "latest"
+      ? "bg-[linear-gradient(135deg,#ffb366,#ff8866)]"
+      : "bg-[linear-gradient(135deg,#ffa84d,#ff9933)]";
 
   useEffect(() => {
     if (!selectedMovie) {
@@ -302,7 +321,6 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     };
   }, [selectedMovie]);
 
-  const selectedMovieName = finderRows.find((movie) => movie.id === selectedMovie)?.name ?? "";
   const selectedMovieBasic = (selectedMovieDetail?.id === selectedMovie ? selectedMovieDetail : movies.find((movie) => movie.id === selectedMovie)) ?? visibleMovies[0] ?? null;
   const canReactToSelectedMovie = Boolean(selectedMovieBasic && selectedMovieBasic.memberId !== member.memberId);
   const canCommentOnSelectedMovie = canReactToSelectedMovie;
@@ -411,49 +429,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
-          <div className="min-w-0 space-y-6 md:order-2">
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(96,32,0,0.8)] backdrop-blur sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
-                Movie Type
-              </p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
-                  <input
-                    type="radio"
-                    name="movie-strip-mode"
-                    value="latest"
-                    checked={ movieStripMode === "latest" }
-                    onChange={ () => setMovieStripMode("latest") }
-                    className="size-4 border-[#d4a574] text-[#b8581a]"
-                  />
-                  Latest Movies
-                </label>
-
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold text-[#5c2e1a] transition hover:bg-[#fffaf5]">
-                  <input
-                    type="radio"
-                    name="movie-strip-mode"
-                    value="top-rated"
-                    checked={ movieStripMode === "top-rated" }
-                    onChange={ () => setMovieStripMode("top-rated") }
-                    className="size-4 border-[#d4a574] text-[#b8581a]"
-                  />
-                  Top Rated Movies
-                </label>
-              </div>
-            </div>
-
-            <MovieScrollStrip
-              title={ stripTitle }
-              description={ stripDescription }
-              items={ stripItems }
-              accentClassName={ stripAccentClassName }
-              selectedItemId={ selectedMovie }
-              onSelectItem={ handleSelectMovie }
-              onOpenItem={ handleOpenMovieFromCard }
-            />
-          </div>
+        <div className="space-y-6">
 
           <div className="min-w-0 space-y-6 md:order-1">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
@@ -469,9 +445,9 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
                         tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
                       />
-                      <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View Movie</Button>
-                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/movies/add-movie"><Plus className="size-3.5" />Add Movie</Link></Button>
-                      <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Movie</Button>
+                      <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View</Button>
+                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/movies/add-movie"><Plus className="size-3.5" />Add</Link></Button>
+                      <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit</Button>
 
                     </span>
                     {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p> */ }
@@ -479,10 +455,42 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                   {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div> */ }
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center gap-3"><div className="relative min-w-[16rem] flex-1"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by movie, genre, adjective, channel, or family member" className="h-12 rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm" aria-label="Search movies" /></div><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-3 py-2 text-xs font-semibold text-[#8b5a3c]"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-4 border-[#d4a574] text-[#b8581a]" />Include Archived</label><label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-3 py-2 text-xs font-semibold text-[#8b5a3c]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#d4a574] text-[#b8581a]" />Show Discussions</label></div>
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
+                  <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" />
+                    <Input
+                      type="search"
+                      value={ searchValue }
+                      onChange={ (event) => setSearchValue(event.target.value) }
+                      placeholder="Search by movie, genre, adjective, channel, or family member"
+                      className="h-12 w-full rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm"
+                      aria-label="Search movies"
+                    />
+                  </div>
+                  <div className="flex flex-row flex-nowrap items-center gap-2">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-2.5 py-2 text-sm font-semibold text-[#8b5a3c]">
+                      <input
+                        type="checkbox"
+                        checked={ includeArchived }
+                        onChange={ (event) => setIncludeArchived(event.target.checked) }
+                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                      />
+                      Archived
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-2.5 py-2 text-sm font-semibold text-[#8b5a3c]">
+                      <input
+                        type="checkbox"
+                        checked={ filterWithDiscussionThreads }
+                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                      />
+                      Discussions
+                    </label>
+                  </div>
+                </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div className="space-y-1">
+                <div className="mt-3 flex flex-row gap-2 sm:flex-nowrap sm:items-end">
+                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
                       Start Date
                     </label>
@@ -494,7 +502,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       className="h-9 rounded-xl border-[#e8c4a0] bg-white px-2 text-xs text-[#5c2e1a]"
                     />
                   </div>
-                  <div className="space-y-1">
+                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
                       End Date
                     </label>
@@ -507,94 +515,67 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="px-4 py-4 sm:px-6 sm:py-5">
-                {/* <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[1.35rem] bg-[linear-gradient(135deg,#fff6ef,#fffaf5)] px-4 py-3 text-sm text-[#8b5a3c]">
-                  <Film className="size-4 text-[#a85a3a]" />
-                    <span className="font-semibold text-[#5c2e1a]">Selected movie:</span>
-                    <span>{ selectedMovieName || "Choose a movie from the list" }</span>
-                    <span className="rounded-full bg-[#fdf0e4] px-3 py-1 text-xs text-[#8b5a3c]"></span>
-                </div> */}
-                <div className="max-h-[68vh] overflow-y-auto pr-0.5">
-                  { filteredMovies.length === 0 ? (
-                    <div className="rounded-[1.4rem] border border-[#f0d9c4] bg-white px-4 py-8 text-center text-sm text-[#8b5a3c]">
-                      No movies match that search yet.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
-                      { filteredMovies.map((movie) => {
-                        const isSelected = selectedMovie === movie.id;
+                <div className="mt-4 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-3 text-sm text-[#8b5a3c]">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Type</p>
+                  <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                      <input
+                        type="radio"
+                        name="movie-strip-mode"
+                        value="all"
+                        checked={ movieStripMode === "all" }
+                        onChange={ () => setMovieStripMode("all") }
+                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                      />
+                      All
+                    </label>
 
-                        return (
-                          <button
-                            key={ movie.id }
-                            type="button"
-                            onClick={ () => handleSelectMovie(movie.id) }
-                            onDoubleClick={ () => handleOpenMovieFromCard(movie.id) }
-                            title={ [
-                              `${ movie.genre } • ${ movie.adjective } • ${ movie.channel }`,
-                              `Added by ${ movie.addedBy }`,
-                            ].join("\n") }
-                            className={ [
-                              "w-full rounded-xl border p-2 text-left transition-all duration-200",
-                              "hover:border-[#e8c4a0] hover:shadow-[0_12px_30px_-26px_rgba(96,32,0,0.8)]",
-                              isSelected
-                                ? "border-[#e8c4a0] bg-[#fff2e6] shadow-[0_16px_34px_-24px_rgba(96,32,0,0.85)]"
-                                : "border-[#f0d9c4] bg-white",
-                            ].join(" ") }
-                          >
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="min-w-0 truncate text-[13px] font-semibold text-[#5c2e1a]">{ movie.name }</p>
-                              { movie.hasDiscussionThread ? (
-                                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#fff1e8] text-[#b8581a]" title="Discussion thread available">
-                                  <MessageSquare className="size-3" aria-label="Discussion thread available" />
-                                </span>
-                              ) : null }
-                            </div>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                      <input
+                        type="radio"
+                        name="movie-strip-mode"
+                        value="latest"
+                        checked={ movieStripMode === "latest" }
+                        onChange={ () => setMovieStripMode("latest") }
+                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                      />
+                      Latest
+                    </label>
 
-                            <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#8b5a3c]">
-                              <Film className="size-3 shrink-0" />
-                              <span className="truncate">{ movie.channel }</span>
-                            </div>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                      <input
+                        type="radio"
+                        name="movie-strip-mode"
+                        value="top-rated"
+                        checked={ movieStripMode === "top-rated" }
+                        onChange={ () => setMovieStripMode("top-rated") }
+                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                      />
+                      Top Rated
+                    </label>
+                  </div>
+                </div>
 
-                            <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#734f3a]">
-                              <span>{ movie.year }</span>
-                              <span>·</span>
-                              <span className="inline-flex items-center gap-1">
-                                <ThumbsDown className="size-3 text-[#6d5c52]" />
-                                { movie.thumbsDown }
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <ThumbsUp className="size-3 text-[#b8581a]" />
-                                { movie.thumbsUp }
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <Heart className="size-3 text-[#cf3f7f]" />
-                                { movie.love }
-                              </span>
-                              <span className="inline-flex items-center gap-1">
-                                <MessageSquareText className="size-3 text-[#b8581a]" />
-                                { movie.comments }
-                              </span>
-                            </div>
-
-                            <p className="mt-1 truncate text-[10px] text-[#8b5a3c]">
-                              { movie.addedBy }
-                            </p>
-                          </button>
-                        );
-                      }) }
-                    </div>
-                  ) }
+                <div className="mt-4">
+                  <MovieScrollStrip
+                    title={ stripTitle }
+                    description={ stripDescription }
+                    items={ stripItems }
+                    accentClassName={ stripAccentClassName }
+                    selectedItemId={ selectedMovie }
+                    onSelectItem={ handleSelectMovie }
+                    onOpenItem={ handleOpenMovieFromCard }
+                  />
                 </div>
               </div>
+
             </div>
 
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)]"><div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(255,248,240,0.86))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Reactions</p><p className="mt-2 max-w-2xl text-xs leading-6 text-[#8b5a3c]">React to this movie and post comments your family can see.</p></div></div></div><div className="space-y-5 px-5 py-5 sm:px-6">{ selectedMovieBasic ? <><div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4"><div className="flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMovieDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button></div>{ !canReactToSelectedMovie ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own movie. Ask another family member to rate it.</p> : null }<div className="flex flex-wrap items-center gap-4"><span className="inline-flex items-center gap-1.5 font-semibold text-[#6d5c52]"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic?.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic?.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic?.loveCount ?? 0).toLocaleString() }</span></div></div>
 
               { selectedMovieDetail?.id === selectedMovie && (
-                <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                <div className="hidden space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p>
@@ -779,6 +760,96 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                     </div>
                   </div>
                 ) : null }
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Discussion%20Groups"
+                        buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
+                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
+                        tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
+                      />
+                    </div>
+                    <p className="text-xs text-[#8b5a3c]">Follow the conversation that belongs to this movie.</p>
+                  </div>
+                  <StartDiscussionDialog
+                    targetType="movie"
+                    targetId={ selectedMovieBasic.id }
+                    topicLabel={ `${ selectedMovieBasic.movieTitle } Discussion ${ (selectedMovieDetail?.id === selectedMovie
+                      ? selectedMovieDetail.discussionThreads.length
+                      : 0) + 1 }` }
+                    revalidatePaths={ ["/movies"] }
+                    onSuccessRoute="/movies/discussions/:threadId"
+                    disabled={ isEngaging || selectedMovieDetail?.id !== selectedMovie }
+                    triggerLabel="Add Discussion"
+                    triggerClassName="rounded-full bg-[#b8581a] px-4 text-xs font-semibold text-white hover:bg-[#964815]"
+                  />
+                </div>
+
+                { selectedMovieDetail?.id !== selectedMovie ? (
+                  <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-3 py-2 text-sm text-[#8b5a3c]">
+                    Loading discussion threads...
+                  </p>
+                ) : selectedMovieDetail.discussionThreads.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#f0d9c4] bg-[#fff8f2] px-3 py-3 text-sm text-[#8b5a3c]">
+                    <p>No discussion threads have been added for this movie yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    { selectedMovieDetail.discussionThreads.map((discussionThread) => (
+                      <article key={ discussionThread.id } className="rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] px-4 py-4 text-sm text-[#734f3a] shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 space-y-1 flex-1">
+                            <p className="text-base font-bold leading-snug text-[#5c2e1a]">{ discussionThread.discussTopic }</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">
+                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-3 shrink-0">
+                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                { discussionThread.dislikeCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#efe8e3] px-2 py-1 text-[0.65rem] font-semibold text-[#4f433d]">
+                                    <ThumbsDown className="size-3" />
+                                    { discussionThread.dislikeCount }
+                                  </span>
+                                ) }
+                                { discussionThread.likeCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fff1e8] px-2 py-1 text-[0.65rem] font-semibold text-[#8a5a22]">
+                                    <ThumbsUp className="size-3" />
+                                    { discussionThread.likeCount }
+                                  </span>
+                                ) }
+                                { discussionThread.loveCount > 0 && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fde4ee] px-2 py-1 text-[0.65rem] font-semibold text-[#aa3368]">
+                                    <Heart className="size-3 fill-current" />
+                                    { discussionThread.loveCount }
+                                  </span>
+                                ) }
+                              </div>
+                            ) : null }
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#e8c4a0] bg-white px-3 py-1 text-xs font-semibold text-[#7b3306] hover:bg-[#fffbf7] hover:text-[#7b3306]"
+                            >
+                              <Link href={ `/movies/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    )) }
+                  </div>
+                ) }
               </div>
             </div>
           ) : null }

@@ -207,13 +207,55 @@ export function FoodiesHomePage({
   const [selectedRecipeDetail, setSelectedRecipeDetail] = useState<FoodiesRecipeDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
-  const [recipeStripMode, setRecipeStripMode] = useState<"latest" | "top-rated">("latest");
+  const [recipeStripMode, setRecipeStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const visibleRecipes = recipes.filter((recipe) => recipe.status === "published" || (includeArchived && recipe.status === "archived"));
 
-  const latestRecipeRecords = [...visibleRecipes]
+  const [searchValue, setSearchValue] = useState("");
+  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
+  const filteredFinderRecipes = visibleRecipes.filter((recipe) => {
+    const updatedAt = new Date(recipe.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (filterWithDiscussionThreads && !recipe.hasDiscussionThread) {
+      return false;
+    }
+
+    const query = searchValue.trim().toLowerCase();
+    if (!query) {
+      return true;
+    }
+
+    return [
+      recipe.recipeTitle,
+      recipe.submitterName,
+      createFinderCategory(recipe),
+      String(recipe.prepTimeMins),
+      String(recipe.cookTimeMins),
+    ].join(" ").toLowerCase().includes(query);
+  });
+
+  const latestRecipeRecords = [...filteredFinderRecipes]
     .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
     .slice(0, 8);
 
@@ -223,6 +265,7 @@ export function FoodiesHomePage({
       id: recipe.id,
       name: recipe.recipeTitle,
       date: formatStripDate(recipe.updatedAt),
+      submitterName: recipe.submitterName,
       submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
@@ -232,7 +275,7 @@ export function FoodiesHomePage({
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
 
-  const topRatedRecipes = [...visibleRecipes]
+  const topRatedRecipes = [...filteredFinderRecipes]
     .filter((recipe) => (recipe.thumbsUpCount + recipe.loveCount) > 0)
     .sort((leftRecipe, rightRecipe) => {
       const leftScore = leftRecipe.thumbsUpCount + leftRecipe.loveCount;
@@ -249,6 +292,8 @@ export function FoodiesHomePage({
       kind: "top-rated" as const,
       id: recipe.id,
       name: recipe.recipeTitle,
+      date: formatStripDate(recipe.updatedAt),
+      submitterName: recipe.submitterName,
       submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       noRating: recipe.noRatingCount,
       thumbsUp: recipe.thumbsUpCount,
@@ -259,38 +304,37 @@ export function FoodiesHomePage({
       imageAlt: `${ recipe.recipeTitle } recipe photo`,
     }));
 
-  const stripItems = recipeStripMode === "latest" ? latestRecipes : topRatedRecipes;
-  const stripTitle = recipeStripMode === "latest" ? "Latest Recipes" : "Top Rated Recipes";
-  const stripDescription = recipeStripMode === "latest"
-    ? "Latest recipes first, based on added date."
-    : "Top rated recipes based on total likes and loves.";
-  const stripAccentClassName = recipeStripMode === "latest"
-    ? "bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
-    : "bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]";
+  const allRecipes = [...filteredFinderRecipes]
+    .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
+    .map((recipe) => ({
+      kind: "all" as const,
+      id: recipe.id,
+      name: recipe.recipeTitle,
+      date: formatStripDate(recipe.updatedAt),
+      submitterName: recipe.submitterName,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
+      commentsCount: recipe.commentCount,
+      thumbsUp: recipe.thumbsUpCount,
+      love: recipe.loveCount,
+      hasDiscussionThread: recipe.hasDiscussionThread,
+      imageSrc: recipe.recipeImageUrl ?? "/images/foodies/banana-bread-tablet.png",
+      imageAlt: `${ recipe.recipeTitle } recipe photo`,
+    }));
 
-  const recipeFinderRows = visibleRecipes.map((recipe) => ({
-    id: recipe.id,
-    name: recipe.recipeTitle,
-    updatedAt: recipe.updatedAt,
-    chef: recipe.submitterName,
-    category: createFinderCategory(recipe),
-    prepTimeMins: recipe.prepTimeMins,
-    cookTimeMins: recipe.cookTimeMins,
-    comments: recipe.commentCount,
-    hasDiscussionThread: recipe.hasDiscussionThread,
-  }));
+  const stripItems = recipeStripMode === "all" ? allRecipes : recipeStripMode === "latest" ? latestRecipes : topRatedRecipes;
+  const stripTitle = recipeStripMode === "all" ? "All Recipes" : recipeStripMode === "latest" ? "Latest Recipes" : "Top Rated Recipes";
+  const stripDescription = recipeStripMode === "all"
+    ? "All recipes first, ordered by the most recently updated."
+    : recipeStripMode === "latest"
+      ? "Latest recipes first, based on added date."
+      : "Top rated recipes based on total likes and loves.";
+  const stripAccentClassName = recipeStripMode === "all"
+    ? "bg-[linear-gradient(135deg,#d9f0c8,#fff6c9)]"
+    : recipeStripMode === "latest"
+      ? "bg-[linear-gradient(135deg,#d3f0b3,#fff6c9)]"
+      : "bg-[linear-gradient(135deg,#ffd7a8,#ffd0b7)]";
 
-  const [searchValue, setSearchValue] = useState("");
-  const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    const threeMonthsAgo = new Date(today);
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    return toDateInputValue(threeMonthsAgo);
-  });
-  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-  const [selectedRecipe, setSelectedRecipe] = useState(recipeFinderRows[0]?.id ?? 0);
-  const deferredSearchValue = useDeferredValue(searchValue);
+  const [selectedRecipe, setSelectedRecipe] = useState(filteredFinderRecipes[0]?.id ?? 0);
 
   useEffect(() => {
     const flushQueuedRecipeComments = async () => {
@@ -331,36 +375,6 @@ export function FoodiesHomePage({
       window.removeEventListener(getPwaSyncNowEventName(), handleOnline);
     };
   }, [selectedRecipe]);
-
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
-
-  const filteredRecipes = recipeFinderRows.filter((recipe) => {
-    const updatedAt = new Date(recipe.updatedAt);
-
-    if (startDateValue && updatedAt < startDateValue) {
-      return false;
-    }
-
-    if (endDateValue && updatedAt > endDateValue) {
-      return false;
-    }
-
-    if (filterWithDiscussionThreads && !recipe.hasDiscussionThread) {
-      return false;
-    }
-
-    const query = deferredSearchValue.trim().toLowerCase();
-
-    if (!query) {
-      return true;
-    }
-
-    return [recipe.name, recipe.chef, recipe.category, String(recipe.prepTimeMins), String(recipe.cookTimeMins)]
-      .join(" ")
-      .toLowerCase()
-      .includes(query);
-  });
 
   useEffect(() => {
     if (!selectedRecipe) {
@@ -851,51 +865,8 @@ export function FoodiesHomePage({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
-          <div className="min-w-0 space-y-6 md:order-2">
-            <div className="rounded-[1.6rem] border border-white/70 bg-white/80 px-5 py-4 shadow-[0_18px_55px_-36px_rgba(38,54,26,0.8)] backdrop-blur sm:px-6">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
-                Recipe Type
-              </p>
-              <div className="mt-3 flex flex-wrap gap-3">
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold text-[#2f4820] transition hover:bg-[#f7fce8]">
-                  <input
-                    type="radio"
-                    name="recipe-strip-mode"
-                    value="latest"
-                    checked={ recipeStripMode === "latest" }
-                    onChange={ () => setRecipeStripMode("latest") }
-                    className="size-4 border-[#9fc487] text-[#578c24]"
-                  />
-                  Latest Recipes
-                </label>
-
-                <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold text-[#2f4820] transition hover:bg-[#f7fce8]">
-                  <input
-                    type="radio"
-                    name="recipe-strip-mode"
-                    value="top-rated"
-                    checked={ recipeStripMode === "top-rated" }
-                    onChange={ () => setRecipeStripMode("top-rated") }
-                    className="size-4 border-[#9fc487] text-[#578c24]"
-                  />
-                  Top Rated Recipes
-                </label>
-              </div>
-            </div>
-
-            <FoodiesScrollStrip
-              title={ stripTitle }
-              description={ stripDescription }
-              items={ stripItems }
-              accentClassName={ stripAccentClassName }
-              selectedItemId={ selectedRecipe }
-              onSelectItem={ handleSelectRecipe }
-              onOpenItem={ handleOpenRecipeFromCard }
-            />
-          </div>
-
-          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)] backdrop-blur md:order-1">
+        <div className="space-y-6">
+          <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)] backdrop-blur">
             <div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
@@ -910,15 +881,15 @@ export function FoodiesHomePage({
                       iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
-                    <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View Recipe</Button>
-                    <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]"><Link href="/foodies/add-recipe"><Sparkles className="size-3.5" />Add Recipe</Link></Button>
+                    <Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50"><Eye className="size-3.5" />View</Button>
+                    <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]"><Link href="/foodies/add-recipe"><Sparkles className="size-3.5" />Add</Link></Button>
                     { canEditSelectedRecipe ? (
                       <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820]">
-                        <Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit Recipe</Link>
+                        <Link href={ `/foodies/edit-recipe/${ selectedRecipe }` }><Edit3 className="size-3.5" />Edit</Link>
                       </Button>
                     ) : (
                       <Button type="button" variant="outline" disabled className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-3 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] disabled:opacity-50">
-                        <Edit3 className="size-3.5" />Edit Recipe
+                        <Edit3 className="size-3.5" />Edit
                       </Button>
                     ) }
                   </div>
@@ -932,40 +903,42 @@ export function FoodiesHomePage({
                 </div> */}
               </div>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <div className="relative min-w-[16rem] flex-1">
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
+                <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72">
                   <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#647a50]" />
                   <Input
                     type="search"
                     value={ searchValue }
                     onChange={ (event) => setSearchValue(event.target.value) }
                     placeholder="Search by recipe, chef, category, or time"
-                    className="h-12 rounded-full border-[#ccdfb9] bg-white pl-11 pr-4 text-sm text-[#2f4820] shadow-sm"
+                    className="h-12 w-full rounded-full border-[#ccdfb9] bg-white pl-11 pr-4 text-sm text-[#2f4820] shadow-sm"
                     aria-label="Search recipes"
                   />
                 </div>
-                <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#ccdfb9] bg-white px-3 py-2 text-xs font-semibold text-[#4f6f36]">
-                  <input
-                    type="checkbox"
-                    checked={ includeArchived }
-                    onChange={ (event) => setIncludeArchived(event.target.checked) }
-                    className="size-4 border-[#9fc487] text-[#578c24]"
-                  />
-                  Include Archived
-                </label>
-                <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#ccdfb9] bg-white px-3 py-2 text-xs font-semibold text-[#4f6f36]">
-                  <input
-                    type="checkbox"
-                    checked={ filterWithDiscussionThreads }
-                    onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                    className="size-4 border-[#9fc487] text-[#578c24]"
-                  />
-                  Show Discussions
-                </label>
+                <div className="flex flex-row flex-nowrap items-center gap-2">
+                  <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#ccdfb9] bg-white px-2.5 py-2 text-sm font-semibold text-[#4f6f36]">
+                    <input
+                      type="checkbox"
+                      checked={ includeArchived }
+                      onChange={ (event) => setIncludeArchived(event.target.checked) }
+                      className="size-4 border-[#9fc487] text-[#578c24]"
+                    />
+                    Archived
+                  </label>
+                  <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#ccdfb9] bg-white px-2.5 py-2 text-sm font-semibold text-[#4f6f36]">
+                    <input
+                      type="checkbox"
+                      checked={ filterWithDiscussionThreads }
+                      onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                      className="size-4 border-[#9fc487] text-[#578c24]"
+                    />
+                    Discussions
+                  </label>
+                </div>
               </div>
 
-              <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <div className="space-y-1">
+              <div className="mt-3 flex flex-row flex-nowrap items-end gap-2">
+                <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">
                     Start Date
                   </label>
@@ -977,7 +950,7 @@ export function FoodiesHomePage({
                     className="h-9 rounded-xl border-[#ccdfb9] bg-white px-2 text-xs text-[#2f4820]"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">
                     End Date
                   </label>
@@ -992,223 +965,34 @@ export function FoodiesHomePage({
               </div>
             </div>
 
-            <div className="px-4 py-4 sm:px-6 sm:py-5">
-              <div className="max-h-[68vh] overflow-y-auto pr-0.5">
-                { filteredRecipes.length === 0 ? (
-                  <div className="rounded-[1.4rem] border border-[#dbeacc] bg-white px-4 py-8 text-center text-sm text-[#647a50]">
-                    No recipes match that search yet.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
-                    { filteredRecipes.map((recipe) => {
-                      const isSelected = selectedRecipe === recipe.id;
-
-                      return (
-                        <button
-                          key={ recipe.id }
-                          type="button"
-                          onClick={ () => handleSelectRecipe(recipe.id) }
-                          onDoubleClick={ () => handleOpenRecipeFromCard(recipe.id) }
-                          title={ [
-                            `${ recipe.category } • ${ recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins } min prep` : "No prep time" } • ${ recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins } min cook` : "No cook time" }`,
-                            `Added by ${ recipe.chef }`,
-                          ].join("\n") }
-                          className={ [
-                            "grid w-55 md:w-45 lg:w-45 gap-2 rounded-xl border px-2 py-2 text-left transition-all duration-200",
-                            "hover:border-[#cfe8b2] hover:shadow-[0_12px_30px_-26px_rgba(38,54,26,0.8)]",
-                            isSelected
-                              ? "border-[#cfe8b2] bg-[#f3fce7] shadow-[0_16px_34px_-24px_rgba(38,54,26,0.85)]"
-                              : "border-[#dbeacc] bg-white",
-                          ].join(" ") }
-                        >
-                          <div className="flex items-start justify-between gap-1">
-                            <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-semibold text-[#2f4820]">{ recipe.name }</p>
-                            { recipe.hasDiscussionThread ? (
-                              <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#eef9d9] text-[#578c24]" title="Discussion thread available">
-                                <MessageSquare className="size-3" aria-label="Discussion thread available" />
-                              </span>
-                            ) : null }
-                          </div>
-
-                          <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#4f6f36]">
-                            <Utensils className="size-3 shrink-0" />
-                            <span className="truncate">{ recipe.category }</span>
-                          </div>
-
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#4e6640]">
-                            <span className="inline-flex items-center gap-1">
-                              <Clock3 className="size-3 text-[#5d7f3f]" />
-                              { recipe.prepTimeMins > 0 ? `${ recipe.prepTimeMins }m` : "-" }
-                            </span>
-                            <span>·</span>
-                            <span>{ recipe.cookTimeMins > 0 ? `${ recipe.cookTimeMins }m` : "-" }</span>
-                            <span className="inline-flex items-center gap-1">
-                              <MessageSquareText className="size-3 text-[#5d7f3f]" />
-                              { recipe.comments }
-                            </span>
-                          </div>
-
-                          <p className="mt-1 truncate text-[10px] text-[#647a50]">
-                            { recipe.chef }
-                          </p>
-                        </button>
-                      );
-                    }) }
-                  </div>
-                ) }
+            <div className="mt-4 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] px-4 py-3 text-sm text-[#647a50]">
+              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Recipe Type</p>
+              <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8]">
+                  <input type="radio" name="recipe-strip-mode" value="all" checked={ recipeStripMode === "all" } onChange={ () => setRecipeStripMode("all") } className="size-4 border-[#9fc487] text-[#578c24]" />
+                  All
+                </label>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8]">
+                  <input type="radio" name="recipe-strip-mode" value="latest" checked={ recipeStripMode === "latest" } onChange={ () => setRecipeStripMode("latest") } className="size-4 border-[#9fc487] text-[#578c24]" />
+                  Latest
+                </label>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#cadfbb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8]">
+                  <input type="radio" name="recipe-strip-mode" value="top-rated" checked={ recipeStripMode === "top-rated" } onChange={ () => setRecipeStripMode("top-rated") } className="size-4 border-[#9fc487] text-[#578c24]" />
+                  Top Rated
+                </label>
               </div>
             </div>
 
-            { selectedRecipeBasic ? (
-              <div className="w-full rounded-[1.4rem] border border-[#cfe8b2] bg-white p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 text-sm text-[#647a50]">
-                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Discussion Threads</p>
-                      <FeatureFaqHelp
-                        href="/feature-faq?category=Discussion%20Groups"
-                        buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#cfe8b2] bg-gradient-to-b from-[#fbfff3] to-[#f4fae7] text-[#5d7f3f] shadow-[0_8px_18px_rgba(93,127,63,0.2)] group-hover:shadow-[0_12px_26px_rgba(93,127,63,0.28)]"
-                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#5d7f3f]"
-                        tooltipClassName="bg-[#2f4820] text-[#f4fae7]"
-                      />
-                    </div>
-                    <p className="mt-1 text-sm text-[#647a50]">Follow the conversation that belongs to this recipe.</p>
-                  </div>
-                  <StartDiscussionDialog
-                    targetType="recipe"
-                    targetId={ selectedRecipeBasic.id }
-                    topicLabel={ `${ selectedRecipeBasic.recipeTitle } Discussion` }
-                    revalidatePaths={ ["/foodies"] }
-                    onSuccessRoute="/foodies/discussions/:threadId"
-                    disabled={ isEngaging }
-                    triggerLabel="Add Discussion"
-                    triggerClassName="rounded-full bg-[#578c24] px-4 text-xs font-semibold text-white hover:bg-[#4a7320]"
-                  />
-                </div>
-
-                <div className="mt-3 space-y-3">
-                  { selectedRecipeBasic.discussionThreads.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-[#cfe8b2] bg-[#fbfff3] px-3 py-3 text-sm text-[#647a50]">
-                      <p>No discussion threads have been added for this recipe yet.</p>
-                    </div>
-                  ) : (
-                    selectedRecipeBasic.discussionThreads.map((discussionThread) => (
-                      <article key={ discussionThread.id } className="rounded-2xl border border-[#cfe8b2] bg-[#fbfff7] px-4 py-4 text-sm text-[#5e7347] shadow-sm">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="text-base font-bold leading-snug text-[#2f4820]">{ discussionThread.discussTopic }</p>
-                            <p className="text-xs uppercase tracking-[0.16em] text-[#7a906d]">
-                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
-                            </p>
-                          </div>
-
-                          <div className="flex shrink-0 flex-wrap items-center gap-3">
-                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
-                              <div className="flex flex-wrap items-center gap-2">
-                                { discussionThread.dislikeCount > 0 ? (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f1f4e8] px-2 py-1 text-[0.65rem] font-semibold text-[#5e7347]">
-                                    <ThumbsDown className="size-3" />
-                                    { discussionThread.dislikeCount }
-                                  </span>
-                                ) : null }
-                                { discussionThread.likeCount > 0 ? (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef9d9] px-2 py-1 text-[0.65rem] font-semibold text-[#578c24]">
-                                    <ThumbsUp className="size-3" />
-                                    { discussionThread.likeCount }
-                                  </span>
-                                ) : null }
-                                { discussionThread.loveCount > 0 ? (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fadcc7] px-2 py-1 text-[0.65rem] font-semibold text-[#c5731f]">
-                                    <Heart className="size-3 fill-current" />
-                                    { discussionThread.loveCount }
-                                  </span>
-                                ) : null }
-                              </div>
-                            ) : null }
-
-                            <Button
-                              type="button"
-                              variant="outline"
-                              asChild
-                              className="shrink-0 rounded-full border-[#cfe8b2] bg-white px-4 text-xs font-semibold text-[#2f4820] hover:bg-[#f7fce8] hover:text-[#2f4820]"
-                            >
-                              <Link href={ `/foodies/discussions/${ discussionThread.id }` }>
-                                View
-                              </Link>
-                            </Button>
-                          </div>
-                        </div>
-                      </article>
-                    ))
-                  ) }
-                </div>
-              </div>
-            ) : null }
-
-            <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)]"><div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">
-              Recipe Reactions
-            </p>
-              <p className="mt-2 max-w-2xl text-xs leading-6 text-[#647a50]">
-                Like or love this recipe, and share your thoughts with the family.
-              </p>
-            </div>
-              {/* <div className="inline-flex items-center rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#415d2c]">
-                    <MessageSquareText className="mr-2 size-3.5" />
-                    { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic?.commentCount ?? 0 } comments
-                  </div> */}
-            </div>
-            </div>
-
-              <div className="space-y-5 px-5 py-5 sm:px-6">
-                { selectedRecipeBasic ? (
-                  <>
-                    <div className="space-y-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] p-4">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                          type="button"
-                          onClick={ () => handleToggleLike(1) }
-                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
-                          className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
-                          aria-label={ selectedRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
-                        >
-                          <ThumbsUp className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={ () => handleToggleLike(2) }
-                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
-                          className="rounded-full bg-[#d9842a] text-white hover:bg-[#c5731f]"
-                          aria-label={ selectedRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
-                        >
-                          <Heart className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
-                        </Button>
-                      </div>
-                      { !canReactToSelectedRecipe ? (
-                        <p className="text-xs text-[#647a50]">
-                          You cannot react to your own recipe. Ask another family member to rate it.
-                        </p>
-                      ) : null }
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#476232]">
-                          <ThumbsUp className="size-4 text-[#578c24]" />
-                          { (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic?.thumbsUpCount ?? 0).toLocaleString() }
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#476232]">
-                          <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" />
-                          { (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic?.loveCount ?? 0).toLocaleString() }
-                        </span>
-                      </div>
-                    </div>
-
-                  </>
-                ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[#dbeacc] bg-[#faf8ff] px-6 py-10 text-center text-[#647a50]">
-                    <MessageSquareText className="mx-auto mb-3 size-10 text-[#8fa973]" />
-                    <p className="text-lg font-semibold text-[#2f4820]">Select a recipe to view comments.</p>
-                    <p className="mt-2 text-sm">Choose a recipe from the finder list to see and post comments.</p>
-                  </div>
-                ) }
-              </div>
+            <div className="mt-4 px-4 py-4 sm:px-6 sm:py-5">
+              <FoodiesScrollStrip
+                title={ stripTitle }
+                description={ stripDescription }
+                items={ stripItems }
+                accentClassName={ stripAccentClassName }
+                selectedItemId={ selectedRecipe }
+                onSelectItem={ handleSelectRecipe }
+                onOpenItem={ handleOpenRecipeFromCard }
+              />
             </div>
           </div>
         </div>
@@ -1364,6 +1148,88 @@ export function FoodiesHomePage({
                     </div>
                   </div>
                 ) : null }
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#cadfbb] bg-white p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#5f7a40]">Discussion Threads</p>
+                    <p className="text-xs text-[#647a50]">Follow the conversation that belongs to this recipe.</p>
+                  </div>
+                  <StartDiscussionDialog
+                    targetType="recipe"
+                    targetId={ selectedRecipeBasic.id }
+                    topicLabel={ `${ selectedRecipeBasic.recipeTitle } Discussion ${ (selectedRecipeDetail?.id === selectedRecipe
+                      ? selectedRecipeDetail.discussionThreads.length
+                      : 0) + 1 }` }
+                    revalidatePaths={ ["/foodies"] }
+                    onSuccessRoute="/foodies/discussions/:threadId"
+                    disabled={ isEngaging || selectedRecipeDetail?.id !== selectedRecipe }
+                    triggerLabel="Add Discussion"
+                    triggerClassName="rounded-full bg-[#578c24] px-4 text-xs font-semibold text-white hover:bg-[#4a7320]"
+                  />
+                </div>
+
+                { selectedRecipeDetail?.id !== selectedRecipe ? (
+                  <p className="rounded-2xl border border-dashed border-[#cfe8b2] bg-[#fbfff3] px-3 py-2 text-sm text-[#647a50]">
+                    Loading discussion threads...
+                  </p>
+                ) : selectedRecipeDetail.discussionThreads.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#cfe8b2] bg-[#fbfff3] px-3 py-3 text-sm text-[#647a50]">
+                    <p>No discussion threads have been added for this recipe yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    { selectedRecipeDetail.discussionThreads.map((discussionThread) => (
+                      <article key={ discussionThread.id } className="rounded-2xl border border-[#cfe8b2] bg-[#fbfff7] px-4 py-4 text-sm text-[#5e7347] shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-base font-bold leading-snug text-[#2f4820]">{ discussionThread.discussTopic }</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#7a906d]">
+                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 flex-wrap items-center gap-3">
+                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                { discussionThread.dislikeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f1f4e8] px-2 py-1 text-[0.65rem] font-semibold text-[#5e7347]">
+                                    <ThumbsDown className="size-3" />
+                                    { discussionThread.dislikeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.likeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#eef9d9] px-2 py-1 text-[0.65rem] font-semibold text-[#578c24]">
+                                    <ThumbsUp className="size-3" />
+                                    { discussionThread.likeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.loveCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fadcc7] px-2 py-1 text-[0.65rem] font-semibold text-[#c5731f]">
+                                    <Heart className="size-3 fill-current" />
+                                    { discussionThread.loveCount }
+                                  </span>
+                                ) : null }
+                              </div>
+                            ) : null }
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#cfe8b2] bg-white px-4 text-xs font-semibold text-[#2f4820] hover:bg-[#f7fce8] hover:text-[#2f4820]"
+                            >
+                              <Link href={ `/foodies/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    )) }
+                  </div>
+                ) }
               </div>
             </div>
           ) : null }

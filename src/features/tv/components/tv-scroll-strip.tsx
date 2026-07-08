@@ -13,6 +13,7 @@ type LatestShow = {
   id: number;
   name: string;
   date: string;
+  submitterName: string;
   submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
@@ -28,6 +29,8 @@ type TopRatedShow = {
   kind: "top-rated";
   id: number;
   name: string;
+  date: string;
+  submitterName: string;
   submitterLikenessDegree: number | null;
   noRating: number;
   thumbsUp: number;
@@ -40,7 +43,24 @@ type TopRatedShow = {
   hasDiscussionThread: boolean;
 };
 
-type TvScrollItem = LatestShow | TopRatedShow;
+type AllShow = {
+  kind: "all";
+  id: number;
+  name: string;
+  date: string;
+  submitterName: string;
+  submitterLikenessDegree: number | null;
+  commentsCount: number;
+  thumbsUp: number;
+  love: number;
+  hasDiscussionThread: boolean;
+  imageSrc: string | null;
+  imageAlt: string;
+  showSiteUrl: string | null;
+  showSiteBackground: string;
+};
+
+type TvScrollItem = LatestShow | TopRatedShow | AllShow;
 
 type TvScrollStripProps = {
   title: string;
@@ -145,12 +165,9 @@ export function TvScrollStrip({
 }: TvScrollStripProps) {
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
-      <CardHeader className="gap-2 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-5 py-3 sm:px-6">
+      <CardHeader className="gap-1 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-5 py-2 sm:px-6 sm:py-2.5">
         <div>
-          <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
-            TV Picks
-          </p>
-          <CardTitle className="mt-2 text-xl font-black tracking-tight text-[#15384a]">
+          <CardTitle className="mt-0 text-xl font-black tracking-tight text-[#15384a]">
             { title }
           </CardTitle>
           {/* <p className="mt-1 max-w-2xl text-xs leading-5 text-[#5f7987]">{ description }</p> */ }
@@ -159,7 +176,7 @@ export function TvScrollStrip({
 
       <CardContent className="px-4 py-2 sm:px-5 sm:py-3">
         <div
-          className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-1 lg:grid-cols-3"
+          className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-1 md:grid-cols-4 lg:grid-cols-4"
         >
           { items.map((item) => {
             const isSelected = selectedShowId === item.id;
@@ -228,9 +245,17 @@ export function TvScrollStrip({
                           </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        { item.kind === "latest" ? (
+                        <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                          <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
+                          <span className="text-[#9bb0bb]">·</span>
+                          <span className="whitespace-nowrap">{ item.date }</span>
+                        </div>
+                        { item.kind === "top-rated" ? (
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#607887]">
-                            <span>{ item.date }</span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
+                              <ThumbsDown className="size-3.5 text-[#5c6c76]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
                               <ThumbsUp className="size-3.5 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }
@@ -246,10 +271,6 @@ export function TvScrollStrip({
                           </div>
                         ) : (
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#607887]">
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
-                              <ThumbsDown className="size-3.5 text-[#5c6c76]" />
-                              { item.noRating.toLocaleString() }
-                            </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
                               <ThumbsUp className="size-3.5 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }

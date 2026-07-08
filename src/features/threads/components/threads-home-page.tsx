@@ -9,13 +9,6 @@ import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -51,6 +44,20 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   const [roleFilter, setRoleFilter] = useState<"all" | "sent" | "received">("all");
   const [readFilter, setReadFilter] = useState<"all" | "read" | "unread" | "archived">("all");
   const [timeFilter, setTimeFilter] = useState<"all" | "newest" | "oldest">("newest");
+
+  const roleFilterLabel = roleFilter === "all"
+    ? "All"
+    : roleFilter === "sent"
+      ? "Sent"
+      : "Received";
+  const readFilterLabel = readFilter === "all"
+    ? "All"
+    : readFilter === "read"
+      ? "Read"
+      : readFilter === "unread"
+        ? "Unread"
+        : "Archived";
+  const timeFilterLabel = timeFilter === "oldest" ? "Oldest" : "Newest";
 
   const deferredSearch = useDeferredValue(searchValue);
 
@@ -251,9 +258,8 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
             </div>
 
             {/* Filters */ }
-            <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Text search */ }
-              <div className="relative lg:col-span-1">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2">
+              <div className="relative min-w-0 flex-1">
                 <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8840b0]" />
                 <Input
                   type="search"
@@ -265,41 +271,29 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 />
               </div>
 
-              {/* Sender / recipient */ }
-              <Select value={ roleFilter } onValueChange={ (v) => setRoleFilter(v as typeof roleFilter) }>
-                <SelectTrigger className="h-10 rounded-full border-[#d0a8f0] bg-white text-sm text-[#4a1a6a] shadow-sm">
-                  <SelectValue placeholder="Sender or Recipient" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All — Sent &amp; Received</SelectItem>
-                  <SelectItem value="sent">Sent by me</SelectItem>
-                  <SelectItem value="received">Received by me</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Read status */ }
-              <Select value={ readFilter } onValueChange={ (v) => setReadFilter(v as typeof readFilter) }>
-                <SelectTrigger className="h-10 rounded-full border-[#d0a8f0] bg-white text-sm text-[#4a1a6a] shadow-sm">
-                  <SelectValue placeholder="Read status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All — Read &amp; Unread</SelectItem>
-                  <SelectItem value="unread">Unread only</SelectItem>
-                  <SelectItem value="read">Read only</SelectItem>
-                  <SelectItem value="archived">Archived only</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {/* Time */ }
-              <Select value={ timeFilter } onValueChange={ (v) => setTimeFilter(v as typeof timeFilter) }>
-                <SelectTrigger className="h-10 rounded-full border-[#d0a8f0] bg-white text-sm text-[#4a1a6a] shadow-sm">
-                  <SelectValue placeholder="Sort by time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Newest first</SelectItem>
-                  <SelectItem value="oldest">Oldest first</SelectItem>
-                </SelectContent>
-              </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" className="h-10 shrink-0 rounded-full border-[#d0a8f0] bg-white px-4 text-sm font-semibold text-[#4a1a6a] shadow-sm hover:bg-[#faf5ff] hover:text-[#4a1a6a]">
+                    { `Filters: ${ roleFilterLabel } / ${ readFilterLabel } / ${ timeFilterLabel }` }
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 rounded-2xl border-[#e8d0f8] bg-white p-2 text-[#4a1a6a]">
+                  <DropdownMenuLabel className="text-xs uppercase tracking-[0.18em] text-[#8840b0]">Sender or Recipient</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={ () => setRoleFilter("all") }>All — Sent & Received</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setRoleFilter("sent") }>Sent by me</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setRoleFilter("received") }>Received by me</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs uppercase tracking-[0.18em] text-[#8840b0]">Read Status</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={ () => setReadFilter("all") }>All — Read & Unread</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setReadFilter("unread") }>Unread only</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setReadFilter("read") }>Read only</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setReadFilter("archived") }>Archived only</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuLabel className="text-xs uppercase tracking-[0.18em] text-[#8840b0]">Sort by Time</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={ () => setTimeFilter("newest") }>Newest first</DropdownMenuItem>
+                  <DropdownMenuItem onClick={ () => setTimeFilter("oldest") }>Oldest first</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

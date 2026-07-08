@@ -13,6 +13,7 @@ type LatestMovieItem = {
   id: number;
   name: string;
   date: string;
+  submitterName: string;
   submitterLikenessDegree: number | null;
   commentsCount: number;
   thumbsUp: number;
@@ -28,6 +29,8 @@ type TopRatedMovieItem = {
   kind: "top-rated";
   id: number;
   name: string;
+  date: string;
+  submitterName: string;
   submitterLikenessDegree: number | null;
   noRating: number;
   thumbsUp: number;
@@ -40,7 +43,24 @@ type TopRatedMovieItem = {
   movieSiteBackground: string;
 };
 
-type MovieScrollItem = LatestMovieItem | TopRatedMovieItem;
+type AllMovieItem = {
+  kind: "all";
+  id: number;
+  name: string;
+  date: string;
+  submitterName: string;
+  submitterLikenessDegree: number | null;
+  commentsCount: number;
+  thumbsUp: number;
+  love: number;
+  hasDiscussionThread: boolean;
+  imageSrc: string | null;
+  imageAlt: string;
+  movieSiteUrl: string | null;
+  movieSiteBackground: string;
+};
+
+type MovieScrollItem = LatestMovieItem | TopRatedMovieItem | AllMovieItem;
 
 type MovieScrollStripProps = {
   title: string;
@@ -148,9 +168,6 @@ export function MovieScrollStrip({
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(102,34,0,0.8)] backdrop-blur">
       <CardHeader className="gap-4 border-b border-[#ffe0b5] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.82))] px-5 py-5 sm:px-6">
         <div>
-          <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">
-            Movie Theater
-          </p>
           <CardTitle className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">
             { title }
           </CardTitle>
@@ -160,7 +177,7 @@ export function MovieScrollStrip({
 
       <CardContent className="px-4 py-4 sm:px-5 sm:py-4">
         <div
-          className="grid max-h-800 grid-cols-2 gap-3 overflow-y-auto px-1 pb-1 pt-1 lg:grid-cols-3"
+          className="grid max-h-800 grid-cols-2 gap-3 overflow-y-auto px-1 pb-1 pt-1 md:grid-cols-4 lg:grid-cols-4"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;
@@ -229,9 +246,13 @@ export function MovieScrollStrip({
                           </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        { item.kind === "latest" ? (
+                        <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                          <span className="whitespace-nowrap font-semibold text-[#8a5a22]">{ item.submitterName }</span>
+                          <span className="text-[#bfa08a]">.</span>
+                          <span className="whitespace-nowrap">{ item.date }</span>
+                        </div>
+                        { item.kind !== "top-rated" ? (
                           <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
-                            <span>{ item.date }</span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#8a5a22]">
                               <ThumbsUp className="size-3 text-[#b8581a]" />
                               { item.thumbsUp.toLocaleString() }
