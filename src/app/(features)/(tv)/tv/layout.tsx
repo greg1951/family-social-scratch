@@ -4,7 +4,7 @@ import FeatureProfileMenu from "@/components/common/feature-profile-menu";
 export default function TvLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative">
-      <FeatureProfileMenu />
+      <FeatureProfileMenu mobileVariant="feature-hero" />
       { children }
     </div>
   );

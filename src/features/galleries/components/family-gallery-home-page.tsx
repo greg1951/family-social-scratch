@@ -600,31 +600,31 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 md:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(82,126,53,0.9),rgba(138,186,86,0.82)_54%,rgba(228,245,190,0.85))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(56,84,35,0.8)] sm:px-8 md:px-10">
-          <div className="flex flex-col gap-5">
+    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(82,126,53,0.9),rgba(138,186,86,0.82)_54%,rgba(228,245,190,0.85))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(56,84,35,0.8)] sm:px-8 sm:py-8 md:px-10">
+          <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#eefdd6]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#eefdd6] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 Family Picture Hallway
               </p>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <Link
                   href="/"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <ArrowLeft className="mr-2 size-4" />
+                  <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
                 <Link
                   href="/member-gallery"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <Camera className="mr-2 size-4" />
+                  <Camera className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   My Gallery
                 </Link>
               </div>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
                 Explore albums shared by your family and friends.
               </h1>
               {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-sm">

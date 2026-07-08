@@ -421,39 +421,39 @@ export default function BooksHomePage({
 
   /*---------------------------------------- Main Return ----------------------------------------------- */
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5">
+    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 sm:py-8 lg:px-10">
+          <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-4xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#d9f3ff] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 Family Reading Room
               </p>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <Link
                   href="/"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <ArrowLeft className="mr-2 size-4" />
+                  <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
                 <Link
                   href="/book-terms"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <LibraryBig className="mr-2 size-4" />
+                  <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Book Terms
                 </Link>
                   <Link
                     href="/add-club"
-                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
-                    <LibraryBig className="mr-2 size-4" />
-                    Book & Poetry Clubs
+                    <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    Book Clubs
                   </Link>
               </div>
 
-              <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
+              <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-2xl">
                 Post a book review and discuss it with other members of the family!
               </h1>
             </div>

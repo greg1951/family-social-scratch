@@ -16,6 +16,7 @@
     - [Post-edit apply/verify](#post-edit-applyverify)
   - [Operating Notes](#operating-notes)
 - [Troubleshooting](#troubleshooting)
+  - [Query for Errors](#query-for-errors)
   - [Crashing PM2 Woker(s)](#crashing-pm2-wokers)
   - [Getting PM2 Error Logs](#getting-pm2-error-logs)
   - [The pm2-ec2-user.service Service](#the-pm2-ec2-userservice-service)
@@ -257,6 +258,12 @@ sudo systemctl restart pm2-ec2-user.service
 - Rotate any secret that appeared in shell output during troubleshooting.
 
 # Troubleshooting
+
+## Query for Errors
+
+```bash
+sudo journalctl -u pm2-ec2-user.service --since "1 hours ago" --no-pager | grep "error"
+```
 
 ## Crashing PM2 Woker(s)
 

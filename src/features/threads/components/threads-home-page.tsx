@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft } from "lucide-react";
+import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft, Inbox } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -162,48 +162,46 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-5">
 
         {/* ── Hero banner ─────────────────────────────────────────────── */ }
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(90,20,120,0.95),rgba(130,40,170,0.86)_56%,rgba(190,100,220,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,0,90,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(90,20,120,0.95),rgba(130,40,170,0.86)_56%,rgba(190,100,220,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(60,0,90,0.95)] sm:px-8 sm:py-8 sm:pr-24 lg:px-10 lg:pr-28">
+          <div className="flex flex-col gap-3 sm:gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e8c0ff]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#e8c0ff] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 Family Mail Box
               </p>
               <Link
                 href="/"
-                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0d8ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                className="mt-2 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f0d8ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:mt-3 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
               >
-                <ArrowLeft className="font-app mr-2 size-4" />
+                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                 Go Home
               </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
                 Your family messages are here.
               </h1>
             </div>
 
-            <div className="grid gap-1 rounded-[1.6rem] border border-white/20 bg-white/10 p-3 shadow-inner backdrop-blur sm:grid-cols-4 lg:min-w-120">
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Total</p>
-                <p className="mt-2 text-2xl font-black">{ totalCount }</p>
-                <p className="text-sm text-[#f0d8ff]">conversations</p>
+            <div className="grid grid-cols-2 gap-2 rounded-[1.6rem] border border-white/20 bg-white/10 p-3 shadow-inner backdrop-blur lg:min-w-72">
+              <div className="flex items-center gap-2 rounded-[1.2rem] bg-white/8 px-3 py-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/14 text-[#f0d8ff]">
+                  <EyeOff className="size-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-2xl font-black leading-none">{ unreadCount }</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#f0d8ff]">Unread</p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Unread</p>
-                <p className="mt-2 text-2xl font-black">{ unreadCount }</p>
-                <p className="text-sm text-[#f0d8ff]">waiting for you</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Showing</p>
-                <p className="mt-2 text-2xl font-black">{ filtered.length }</p>
-                <p className="text-sm text-[#f0d8ff]">after filters</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.24em] text-[#e8c0ff]">Private</p>
-                <p className="mt-2 text-2xl font-black">{ privateCount }</p>
-                <p className="text-sm text-[#f0d8ff]">secured threads</p>
+              <div className="flex items-center gap-2 rounded-[1.2rem] bg-white/8 px-3 py-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/14 text-[#f0d8ff]">
+                  <Eye className="size-4" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="text-2xl font-black leading-none">{ filtered.length }</p>
+                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#f0d8ff]">Showing</p>
+                </div>
               </div>
             </div>
           </div>

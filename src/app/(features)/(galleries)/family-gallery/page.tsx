@@ -17,7 +17,7 @@ export default async function FamilyGalleryPage() {
 
   return (
     <div className="relative">
-      <FeatureProfileMenu />
+      <FeatureProfileMenu mobileVariant="feature-hero" />
       <FamilyGalleryHomePage
         sharedAlbums={ sharedAlbums }
         member={ memberKeyDetails }

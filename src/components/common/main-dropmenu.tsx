@@ -5,7 +5,7 @@ import { SettingsIcon } from 'lucide-react';
 import MemberAvatar from "@/components/common/member-avatar";
 
 
-export default function MainDropMenu({ firstName, email, sessionFound, isFounder, isAdmin, memberImageUrl, unreadThreadCount }
+export default function MainDropMenu({ firstName, email, sessionFound, isFounder, isAdmin, memberImageUrl, unreadThreadCount, sizeVariant = "default" }
   : {
     firstName: string;
     email: string;
@@ -14,13 +14,19 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
     isAdmin: boolean;
     memberImageUrl?: string | null;
     unreadThreadCount?: number;
+    sizeVariant?: "default" | "feature-hero-mobile";
   }) {
   let title: string = "";
   if (firstName.length === 0) title = 'Settings'
   else title = `${ firstName }'s Settings`
 
+  const isFeatureHeroMobile = sizeVariant === "feature-hero-mobile";
+  const mobileTileSize = isFeatureHeroMobile ? "h-10 w-10" : "h-8 w-8";
+  const mobileAvatarSize = isFeatureHeroMobile ? "h-10 w-10" : "h-8 w-8";
+  const mobileIconSize = isFeatureHeroMobile ? "h-7 w-7" : "h-6 w-6";
+
   const tileClasses = [
-    "relative grid place-items-center h-8 w-8 md:h-14 md:w-14 rounded-2xl border border-white/45",
+    `relative grid place-items-center ${ mobileTileSize } md:h-14 md:w-14 rounded-2xl border border-white/45`,
     "bg-white/18 backdrop-blur-sm shadow-[0_6px_14px_rgba(1,98,151,0.2)]",
     "transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-[0_10px_20px_rgba(1,98,151,0.28)]"
   ].join(" ");
@@ -41,11 +47,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                 imageUrl={ memberImageUrl ?? null }
                 firstName={ firstName }
                 lastName=""
-                sizeClassName="h-8 w-8 md:h-14 md:w-14"
+                sizeClassName={ `${ mobileAvatarSize } md:h-14 md:w-14` }
                 chromeClassName="border-white/45 bg-white/12 shadow-none backdrop-blur"
               />
             ) : (
-              <SettingsIcon className="h-6 w-6 md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110" />
+              <SettingsIcon className={ `${ mobileIconSize } md:h-9 md:w-9 text-sky-900/85 drop-shadow-[0_2px_4px_rgba(0,0,0,0.18)] transition-transform duration-300 group-hover:scale-110` } />
             ) }
 
             { sessionFound && (unreadThreadCount ?? 0) > 0 && (

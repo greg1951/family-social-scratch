@@ -419,25 +419,25 @@ export function GamesHomePage({
   const playerStats = gameLeaderboards.playerStats;
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(70,36,8,0.95),rgba(124,63,16,0.86)_56%,rgba(181,115,44,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(70,36,8,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-1">
+    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-5">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(70,36,8,0.95),rgba(124,63,16,0.86)_56%,rgba(181,115,44,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(70,36,8,0.95)] sm:px-8 sm:py-8 lg:px-10">
+          <div className="flex flex-col gap-1 sm:gap-3">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffe0bc]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#ffe0bc] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 Family Game Room
               </p>
-              <div className="mt-3 flex flex-wrap gap-3">
+              <div className="mt-2 flex flex-wrap gap-2">
                 <Link
                   href="/"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#fff0df] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#fff0df] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <ArrowLeft className="font-app mr-2 size-4" />
+                  <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
               </div>
               <div className="flex flex-col gap-1">
-                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+                <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
                   Review Leaderboard or start a new scorecard.
                 </h1>
                 {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#ffe0bc] sm:text-base">
