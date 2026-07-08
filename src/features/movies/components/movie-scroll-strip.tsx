@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, Link, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -225,34 +225,36 @@ export function MovieScrollStrip({
                       </div>
                     </div>
 
-                    <div className="space-y-3 px-4 py-4">
+                    <div className="space-y-1 px-2.5 py-2">
                       <div>
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 text-sm font-black leading-snug tracking-tight text-[#13364a]">
-                            { item.movieSiteUrl ? (
-                              <a
-                                href={ item.movieSiteUrl }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline-offset-2 hover:underline"
-                                onClick={ (event) => event.stopPropagation() }
-                                onKeyDown={ (event) => event.stopPropagation() }
-                              >
-                                { item.name }
-                              </a>
-                            ) : (
-                              item.name
-                            ) }
+                        <div className="flex items-start justify-between gap-2">
+                          <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#13364a]">
+                            <span className="inline-flex items-start gap-1.5">
+                              <span className="min-w-0 leading-tight">{ item.name }</span>
+                              { item.movieSiteUrl ? (
+                                <a
+                                  href={ item.movieSiteUrl }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex shrink-0 rounded-sm p-0.5 text-[#b8581a] transition-colors hover:text-[#5c2e1a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8581a] focus-visible:ring-offset-1"
+                                  aria-label={ `Open ${ item.name } link in a new tab` }
+                                  onClick={ (event) => event.stopPropagation() }
+                                  onKeyDown={ (event) => event.stopPropagation() }
+                                >
+                                  <Link className="size-3.5" />
+                                </a>
+                              ) : null }
+                            </span>
                           </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                        <div className="mt-0.5 flex select-none flex-wrap items-center gap-x-1 gap-y-0 text-[10px] leading-tight text-[#607887] sm:flex-nowrap">
                           <span className="whitespace-nowrap font-semibold text-[#8a5a22]">{ item.submitterName }</span>
                           <span className="text-[#bfa08a]">.</span>
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>
                         { item.kind !== "top-rated" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#8a5a22]">
                               <ThumbsUp className="size-3 text-[#b8581a]" />
                               { item.thumbsUp.toLocaleString() }
@@ -267,7 +269,7 @@ export function MovieScrollStrip({
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#6d5c52]">
                               <ThumbsDown className="size-3 text-[#6d5c52]" />
                               { item.noRating.toLocaleString() }

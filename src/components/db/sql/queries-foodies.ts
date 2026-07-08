@@ -1106,7 +1106,8 @@ async function loadFoodiesRecipeDetail(
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
-  const memberIds = [...new Set([recipeRow.memberId, ...commentMemberIds])];
+  const likeMemberIds = [...new Set(likeRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
+  const memberIds = [...new Set([recipeRow.memberId, ...commentMemberIds, ...likeMemberIds])];
 
   const memberRows = memberIds.length > 0
     ? await db
@@ -1128,6 +1129,14 @@ async function loadFoodiesRecipeDetail(
   const noRatingCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = nonSubmitterLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const thumbsUpMemberNames = nonSubmitterLikeRows
+    .filter((row) => row.likenessDegree === 1)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
+  const loveMemberNames = nonSubmitterLikeRows
+    .filter((row) => row.likenessDegree === 2)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
   const recipeProTipRows = commentRows.filter((row) => row.isRecipeProTip && !isEmptyRecipeProTipComment(row.commentJson));
   const familyCommentRows = commentRows.filter((row) => !row.isRecipeProTip);
 
@@ -1183,6 +1192,8 @@ async function loadFoodiesRecipeDetail(
     selectedTagIds: tagIdsByRecipeId.get(recipeId) ?? [],
     tagNamesByType: tagNamesByTypeByRecipeId.get(recipeId) ?? {},
     templateId: recipeRow.templateId ?? null,
+    thumbsUpMemberNames,
+    loveMemberNames,
     discussionThreads: discussionThreadsByRecipeId.get(recipeId) ?? [],
     hasDiscussionThread: (discussionThreadsByRecipeId.get(recipeId) ?? []).length > 0,
     recipeProTips: recipeProTipRows.map((row) => ({

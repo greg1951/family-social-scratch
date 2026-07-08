@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Heart, Link, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,30 +71,6 @@ type TvScrollStripProps = {
   onSelectShow?: (id: number) => void;
   onOpenShow?: (id: number) => void;
 };
-
-function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
-  if (likenessDegree === 1) {
-    return <ThumbsUp className="size-4 text-[#2d87a8]" aria-label="Submitter rated thumbs up" />;
-  }
-
-  if (likenessDegree === 2) {
-    return <Heart className="size-4 text-[#cf3f7f]" aria-label="Submitter rated love" />;
-  }
-
-  return null;
-}
-
-function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | null }) {
-  if (![1, 2].includes(likenessDegree ?? -1)) {
-    return null;
-  }
-
-  return (
-    <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#eef8fc] p-2 shadow-sm">
-      <SubmitterRatingIcon likenessDegree={ likenessDegree } />
-    </span>
-  );
-}
 
 function ShowImage({ src, alt }: { src: string; alt: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
@@ -224,34 +200,33 @@ export function TvScrollStrip({
                       </div>
                     </div>
 
-                    <div className="space-y-2 px-3 py-3">
+                    <div className="space-y-1 px-2.5 py-2">
                       <div>
-                        <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 text-sm font-black leading-snug tracking-tight text-[#13364a]">
-                            { item.showSiteUrl ? (
-                              <a
-                                href={ item.showSiteUrl }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline-offset-2 hover:underline"
-                                onClick={ (event) => event.stopPropagation() }
-                                onKeyDown={ (event) => event.stopPropagation() }
-                              >
-                                { item.name }
-                              </a>
-                            ) : (
-                              item.name
-                            ) }
+                        <div className="flex items-start gap-1.5">
+                          <h3 className="min-w-0 select-none text-sm font-black leading-tight tracking-tight text-[#13364a]">
+                            { item.name }
                           </h3>
-                          <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                          { item.showSiteUrl ? (
+                            <a
+                              href={ item.showSiteUrl }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex shrink-0 rounded-sm p-0.5 text-[#2d87a8] transition-colors hover:text-[#15384a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2d87a8] focus-visible:ring-offset-1"
+                              aria-label={ `Open ${ item.name } link in a new tab` }
+                              onClick={ (event) => event.stopPropagation() }
+                              onKeyDown={ (event) => event.stopPropagation() }
+                            >
+                              <Link className="size-3.5" />
+                            </a>
+                          ) : null }
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                        <div className="mt-0.5 flex select-none flex-wrap items-center gap-x-1 gap-y-0 text-[10px] leading-tight text-[#607887] sm:flex-nowrap">
                           <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
                           <span className="text-[#9bb0bb]">·</span>
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>
                         { item.kind === "top-rated" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#607887]">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
                               <ThumbsDown className="size-3.5 text-[#5c6c76]" />
                               { item.noRating.toLocaleString() }
@@ -270,7 +245,7 @@ export function TvScrollStrip({
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-[#607887]">
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
                               <ThumbsUp className="size-3.5 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }

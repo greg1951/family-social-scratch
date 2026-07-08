@@ -39,6 +39,9 @@ export interface MovieDetail extends MovieRecord {
   movieComments: MovieComment[];
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
+  noRatingMemberNames: string[];
+  thumbsUpMemberNames: string[];
+  loveMemberNames: string[];
 }
 
 export interface MovieTagOption {

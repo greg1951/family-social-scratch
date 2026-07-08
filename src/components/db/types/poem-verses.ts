@@ -49,6 +49,9 @@ export interface PoetryHomePoem {
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
   hasClubSession: boolean;
+  dislikeMemberNames: string[];
+  likeMemberNames: string[];
+  loveMemberNames: string[];
 }
 
 export interface PoetryHomeComment {

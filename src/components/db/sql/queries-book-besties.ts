@@ -86,9 +86,19 @@ async function loadBooksHomeBooks(
     .where(inArray(bookComment.bookId, bookIdsToLoad))
     .orderBy(asc(bookComment.createdAt));
 
+  const likeRows = await db
+    .select({
+      bookId: bookLike.bookId,
+      memberId: bookLike.memberId,
+      reactionType: bookLike.reactionType,
+    })
+    .from(bookLike)
+    .where(inArray(bookLike.bookId, bookIdsToLoad));
+
   const memberIds = [...new Set([
     ...bookRows.map((row) => row.memberId),
     ...commentRows.map((row) => row.memberId),
+    ...likeRows.map((row) => row.memberId),
   ])];
 
   const memberRows = memberIds.length > 0
@@ -101,15 +111,6 @@ async function loadBooksHomeBooks(
       .from(member)
       .where(inArray(member.id, memberIds))
     : [];
-
-  const likeRows = await db
-    .select({
-      bookId: bookLike.bookId,
-      memberId: bookLike.memberId,
-      reactionType: bookLike.reactionType,
-    })
-    .from(bookLike)
-    .where(inArray(bookLike.bookId, bookIdsToLoad));
 
   const factTagRows = await db
     .select()
@@ -132,6 +133,7 @@ async function loadBooksHomeBooks(
 
   const tagIdsByBookId = new Map<number, number[]>();
   const reactionsByBookId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
+  const reactionMemberNamesByBookId = new Map<number, { dislikeMemberNames: string[]; likeMemberNames: string[]; loveMemberNames: string[] }>();
   const userReactionTypeByBookId = new Map<number, number>();
   const submitterMemberIdByBookId = new Map(bookRows.map((row) => [row.id, row.memberId]));
   const hasClubSessionByBookId = new Set(clubSessionTargetIds);
@@ -151,16 +153,26 @@ async function loadBooksHomeBooks(
         likeCount: 0,
         loveCount: 0,
       };
+      const reactionMembers = reactionMemberNamesByBookId.get(likeRow.bookId) ?? {
+        dislikeMemberNames: [],
+        likeMemberNames: [],
+        loveMemberNames: [],
+      };
+      const memberName = memberNameById.get(likeRow.memberId) ?? `Member #${ likeRow.memberId }`;
 
       if (likeRow.reactionType === -1) {
         currentCounts.dislikeCount += 1;
+        reactionMembers.dislikeMemberNames.push(memberName);
       } else if (likeRow.reactionType === 2) {
         currentCounts.loveCount += 1;
+        reactionMembers.loveMemberNames.push(memberName);
       } else {
         currentCounts.likeCount += 1;
+        reactionMembers.likeMemberNames.push(memberName);
       }
 
       reactionsByBookId.set(likeRow.bookId, currentCounts);
+      reactionMemberNamesByBookId.set(likeRow.bookId, reactionMembers);
     }
 
     if (viewerMemberId && likeRow.memberId === viewerMemberId) {
@@ -180,6 +192,12 @@ async function loadBooksHomeBooks(
         commentJson: normalizeSerializedTipTapDocument(commentRow.commentJson),
       };
     });
+
+    const reactionMembers = reactionMemberNamesByBookId.get(row.id) ?? {
+      dislikeMemberNames: [],
+      likeMemberNames: [],
+      loveMemberNames: [],
+    };
 
     return {
       id: row.id,
@@ -204,6 +222,9 @@ async function loadBooksHomeBooks(
       discussionThreads: discussionThreadsByBookId.get(row.id) ?? [],
       hasDiscussionThread: (discussionThreadsByBookId.get(row.id) ?? []).length > 0,
       hasClubSession: hasClubSessionByBookId.has(row.id),
+      dislikeMemberNames: [...reactionMembers.dislikeMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
+      likeMemberNames: [...reactionMembers.likeMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
+      loveMemberNames: [...reactionMembers.loveMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
     };
   });
 }

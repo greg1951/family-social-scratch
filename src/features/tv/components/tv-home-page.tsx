@@ -35,12 +35,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
+import { cn } from "@/lib/utils";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 
@@ -74,6 +76,12 @@ function formatShortDate(value: Date) {
   const dd = String(parsed.getDate()).padStart(2, "0");
   const yy = String(parsed.getFullYear()).slice(-2);
   return `${ mm }-${ dd }-${ yy }`;
+}
+
+function getOneMonthAgo(referenceDate = new Date()) {
+  const oneMonthAgo = new Date(referenceDate);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  return oneMonthAgo;
 }
 
 function getShowDocument(showJson?: string): JSONContent {
@@ -183,6 +191,45 @@ function ModalShowImage({ src, alt }: { src: string; alt: string }) {
   return <img src={ resolvedSrc } alt={ alt } className="h-full w-full object-cover" />;
 }
 
+function ReactionMemberHoverCard({
+  icon,
+  count,
+  memberNames,
+  triggerClassName,
+  textClassName,
+  emptyLabel,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  memberNames: string[];
+  triggerClassName: string;
+  textClassName?: string;
+  emptyLabel: string;
+}) {
+  return (
+    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+      <HoverCardTrigger asChild>
+        <span className={ cn("inline-flex cursor-default items-center gap-2 rounded-full px-3 py-0.5", triggerClassName, textClassName) }>
+          { icon }
+          { count.toLocaleString() }
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#c6dcec] bg-white text-xs text-[#3f6576]">
+        <p className="font-semibold text-[#15384a]">{ emptyLabel }</p>
+        { memberNames.length > 0 ? (
+          <ul className="mt-2 space-y-1">
+            { memberNames.map((memberName) => (
+              <li key={ memberName }>{ memberName }</li>
+            )) }
+          </ul>
+        ) : (
+          <p className="mt-2 text-[#5f7987]">No family members yet.</p>
+        ) }
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberKeyDetails }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
@@ -193,8 +240,10 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const visibleShows = shows.filter((show) => show.status === "published" || (includeArchived && show.status === "archived"));
+  const latestCutoffDate = getOneMonthAgo();
 
   const latestShowRecords = [...visibleShows]
+    .filter((show) => new Date(show.updatedAt) >= latestCutoffDate)
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8);
 
@@ -269,7 +318,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const stripDescription = showType === "all"
     ? "All shows first, ordered by the most recently updated."
     : showType === "latest"
-      ? "Latest shows first, based on added date."
+      ? "Shows updated within the last month, newest first."
       : "Top rated shows based on total likes and loves.";
   const stripAccentClassName = showType === "all"
     ? "bg-[linear-gradient(135deg,#c6edf7,#fff6db)]"
@@ -378,7 +427,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const filteredShowIds = new Set(filteredShows.map((show) => show.id));
 
   const filteredLatestShows = [...visibleShows]
-    .filter((show) => filteredShowIds.has(show.id))
+    .filter((show) => filteredShowIds.has(show.id) && new Date(show.updatedAt) >= latestCutoffDate)
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8)
     .map((show) => ({
@@ -913,14 +962,21 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Reactions</p>
                     <div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#285b73]">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-0.5">
-                        <ThumbsUp className="size-4 text-[#2d87a8]" />
-                        { selectedShowThumbsUpCount.toLocaleString() }
-                      </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-0.5 text-[#8f2f58]">
-                        <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
-                        { selectedShowLoveCount.toLocaleString() }
-                      </span>
+                      <ReactionMemberHoverCard
+                        icon={ <ThumbsUp className="size-4 text-[#2d87a8]" /> }
+                        count={ selectedShowThumbsUpCount }
+                        memberNames={ selectedShowDetail?.thumbsUpMemberNames ?? [] }
+                        triggerClassName="bg-[#edf7fb]"
+                        emptyLabel="Family members who liked this show"
+                      />
+                      <ReactionMemberHoverCard
+                        icon={ <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" /> }
+                        count={ selectedShowLoveCount }
+                        memberNames={ selectedShowDetail?.loveMemberNames ?? [] }
+                        triggerClassName="bg-[#fff0f7]"
+                        textClassName="text-[#8f2f58]"
+                        emptyLabel="Family members who loved this show"
+                      />
                       <span className="inline-flex items-center gap-2 rounded-full bg-[#edf7fb] px-3 py-0.5">
                         <MessageSquareText className="size-4 text-[#2d87a8]" />
                         { selectedShowDetail?.commentCount ?? selectedShowBasic.commentCount ?? 0 }

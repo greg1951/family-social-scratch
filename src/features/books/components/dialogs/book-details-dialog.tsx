@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
@@ -63,6 +64,45 @@ type BookDetailsDialogProps = {
   save: BookDialogSave;
   formatCreatedAt: (createdAt: Date) => string;
 };
+
+function ReactionMemberHoverCard({
+  icon,
+  count,
+  memberNames,
+  triggerClassName,
+  textClassName,
+  emptyLabel,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  memberNames: string[];
+  triggerClassName: string;
+  textClassName?: string;
+  emptyLabel: string;
+}) {
+  return (
+    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+      <HoverCardTrigger asChild>
+        <span className={ `inline-flex cursor-default items-center gap-1.5 text-sm font-semibold ${ triggerClassName } ${ textClassName ?? "" }` }>
+          { icon }
+          { count.toLocaleString() }
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#c8d7df] bg-white text-xs text-[#355161]">
+        <p className="font-semibold text-[#183746]">{ emptyLabel }</p>
+        { memberNames.length > 0 ? (
+          <ul className="mt-2 space-y-1">
+            { memberNames.map((memberName) => (
+              <li key={ memberName }>{ memberName }</li>
+            )) }
+          </ul>
+        ) : (
+          <p className="mt-2 text-[#51707e]">No family members yet.</p>
+        ) }
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
 
 function extractTipTapText(content: unknown): string {
   const parsed = extractTipTapTextFromNode(content);
@@ -262,7 +302,7 @@ export function BookDetailsDialog({
                 { isFounderModerating && (
                   <div className="mb-4 rounded-lg border border-yellow-500/50 bg-yellow-500/10 p-4 text-yellow-900">
                     <p className="text-sm font-medium">
-                      As the family founder, you can archive this book if it doesn't follow guidelines. However, only the original author can edit their own posts.
+                      As the family founder, you can archive this book if it doesn&apos;t follow guidelines. However, only the original author can edit their own posts.
                     </p>
                   </div>
                 ) }
@@ -454,7 +494,8 @@ export function BookDetailsDialog({
               </div>
 
               <div className="rounded-[1.15rem] border border-[#d9e5ea] bg-white px-3 py-3">
-                <div className="mb-3 flex flex-wrap items-center gap-4">
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-4">
                   { canEngage ? (
                     <>
                       <Button
@@ -492,18 +533,30 @@ export function BookDetailsDialog({
                       </Button>
                     </>
                   ) : null }
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
-                    <ThumbsDown className="size-4 text-[#5d7c8a]" />
-                    { (draft.dislikeCount ?? 0).toLocaleString() }
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
-                    <ThumbsUp className="size-4 text-[#1d6d8f]" />
-                    { (draft.likeCount ?? 0).toLocaleString() }
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#355161]">
-                    <Heart className="size-4 text-[#c06c4a]" />
-                    { (draft.loveCount ?? 0).toLocaleString() }
-                  </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <ReactionMemberHoverCard
+                      icon={ <ThumbsDown className="size-4 text-[#5d7c8a]" /> }
+                      count={ draft.dislikeCount ?? 0 }
+                      memberNames={ draft.dislikeMemberNames ?? [] }
+                      triggerClassName="text-[#355161]"
+                      emptyLabel="Family members who disliked this book"
+                    />
+                    <ReactionMemberHoverCard
+                      icon={ <ThumbsUp className="size-4 text-[#1d6d8f]" /> }
+                      count={ draft.likeCount ?? 0 }
+                      memberNames={ draft.likeMemberNames ?? [] }
+                      triggerClassName="text-[#355161]"
+                      emptyLabel="Family members who liked this book"
+                    />
+                    <ReactionMemberHoverCard
+                      icon={ <Heart className="size-4 text-[#c06c4a]" /> }
+                      count={ draft.loveCount ?? 0 }
+                      memberNames={ draft.loveMemberNames ?? [] }
+                      triggerClassName="text-[#355161]"
+                      emptyLabel="Family members who loved this book"
+                    />
+                  </div>
                 </div>
               </div>
 

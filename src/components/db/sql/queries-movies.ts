@@ -532,7 +532,8 @@ async function loadMovieDetail(
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
-  const memberIds = [...new Set([movieRow.memberId, ...commentMemberIds])];
+  const likeMemberIds = [...new Set(likeRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
+  const memberIds = [...new Set([movieRow.memberId, ...commentMemberIds, ...likeMemberIds])];
 
   const memberRows = memberIds.length > 0
     ? await db
@@ -554,6 +555,18 @@ async function loadMovieDetail(
   const noRatingCount = audienceLikeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = audienceLikeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = audienceLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const noRatingMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === -1)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
+  const thumbsUpMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === 1)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
+  const loveMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === 2)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
   const regularCommentRows = commentRows.filter((row) => !row.ismovieReviewer);
 
   const viewerLike = viewerMemberId
@@ -609,6 +622,9 @@ async function loadMovieDetail(
     likenessDegree: viewerLike?.likenessDegree ?? null,
     selectedTagIds: tagIdsByMovieId.get(movieId) ?? [],
     tagNamesByType: tagNamesByTypeByMovieId.get(movieId) ?? {},
+    noRatingMemberNames,
+    thumbsUpMemberNames,
+    loveMemberNames,
     movieComments,
     discussionThreads,
     hasDiscussionThread: discussionThreads.length > 0,

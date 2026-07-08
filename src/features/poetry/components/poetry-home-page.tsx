@@ -45,6 +45,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
@@ -71,6 +72,9 @@ type PoemDraft = {
   discussionThreads: PoetryHomePoem["discussionThreads"];
   hasDiscussionThread: boolean;
   hasClubSession: boolean;
+  dislikeMemberNames: string[];
+  likeMemberNames: string[];
+  loveMemberNames: string[];
   poemComments: Array<{
     id: number;
     createdAt: Date;
@@ -133,8 +137,50 @@ function createDraftFromPoem(poemRecord: PoetryHomePoem, member: MemberKeyDetail
     discussionThreads: poemRecord.discussionThreads ?? [],
     hasDiscussionThread: poemRecord.hasDiscussionThread ?? false,
     hasClubSession: poemRecord.hasClubSession ?? false,
+    dislikeMemberNames: poemRecord.dislikeMemberNames ?? [],
+    likeMemberNames: poemRecord.likeMemberNames ?? [],
+    loveMemberNames: poemRecord.loveMemberNames ?? [],
     poemComments: poemRecord.poemComments ?? [],
   };
+}
+
+function ReactionMemberHoverCard({
+  icon,
+  count,
+  memberNames,
+  triggerClassName,
+  textClassName,
+  emptyLabel,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  memberNames: string[];
+  triggerClassName: string;
+  textClassName?: string;
+  emptyLabel: string;
+}) {
+  return (
+    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+      <HoverCardTrigger asChild>
+        <span className={ `inline-flex cursor-default items-center gap-1.5 text-sm font-semibold ${ triggerClassName } ${ textClassName ?? "" }` }>
+          { icon }
+          { count.toLocaleString() }
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#d7d0ea] bg-white text-xs text-[#5f466f]">
+        <p className="font-semibold text-[#43245d]">{ emptyLabel }</p>
+        { memberNames.length > 0 ? (
+          <ul className="mt-2 space-y-1">
+            { memberNames.map((memberName) => (
+              <li key={ memberName }>{ memberName }</li>
+            )) }
+          </ul>
+        ) : (
+          <p className="mt-2 text-[#77578f]">No family members yet.</p>
+        ) }
+      </HoverCardContent>
+    </HoverCard>
+  );
 }
 
 function getEditorLineCount(editor: Editor | null) {
@@ -965,7 +1011,8 @@ export default function PoetryHomePage({
                 </div>
 
                 <div className="rounded-[1.15rem] border border-[#e5daf0] bg-white px-3 py-3">
-                  <div className="mb-3 flex flex-wrap items-center gap-4">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-4">
                     { selectedPoem.memberId !== member.memberId ? (
                       <>
                         <Button
@@ -1003,18 +1050,30 @@ export default function PoetryHomePage({
                         </Button>
                       </>
                     ) : null }
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
-                      <ThumbsDown className="size-4 text-[#7b6394]" />
-                      { (selectedPoem.dislikeCount ?? 0).toLocaleString() }
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
-                      <ThumbsUp className="size-4 text-[#6e3f98]" />
-                      { (selectedPoem.likeCount ?? 0).toLocaleString() }
-                    </span>
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5f466f]">
-                      <Heart className="size-4 text-[#a86a8e]" />
-                      { (selectedPoem.loveCount ?? 0).toLocaleString() }
-                    </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <ReactionMemberHoverCard
+                        icon={ <ThumbsDown className="size-4 text-[#7b6394]" /> }
+                        count={ selectedPoem.dislikeCount ?? 0 }
+                        memberNames={ selectedPoem.dislikeMemberNames ?? [] }
+                        triggerClassName="text-[#5f466f]"
+                        emptyLabel="Family members who disliked this poem"
+                      />
+                      <ReactionMemberHoverCard
+                        icon={ <ThumbsUp className="size-4 text-[#6e3f98]" /> }
+                        count={ selectedPoem.likeCount ?? 0 }
+                        memberNames={ selectedPoem.likeMemberNames ?? [] }
+                        triggerClassName="text-[#5f466f]"
+                        emptyLabel="Family members who liked this poem"
+                      />
+                      <ReactionMemberHoverCard
+                        icon={ <Heart className="size-4 text-[#a86a8e]" /> }
+                        count={ selectedPoem.loveCount ?? 0 }
+                        memberNames={ selectedPoem.loveMemberNames ?? [] }
+                        triggerClassName="text-[#5f466f]"
+                        emptyLabel="Family members who loved this poem"
+                      />
+                    </div>
                   </div>
                 </div>
 

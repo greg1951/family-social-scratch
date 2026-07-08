@@ -98,9 +98,19 @@ async function loadPoetryHomePoems(
       .orderBy(asc(poemComment.createdAt))
     : [];
 
+  const likeRows = await db
+    .select({
+      poemId: poemLike.poemId,
+      memberId: poemLike.memberId,
+      reactionType: poemLike.reactionType,
+    })
+    .from(poemLike)
+    .where(inArray(poemLike.poemId, poemFactIds));
+
   const memberIds = [...new Set([
     ...poemFactRows.map((row) => row.memberId),
     ...commentRows.map((row) => row.memberId),
+    ...likeRows.map((row) => row.memberId),
   ])];
 
   const memberRows = memberIds.length > 0
@@ -113,15 +123,6 @@ async function loadPoetryHomePoems(
       .from(member)
       .where(inArray(member.id, memberIds))
     : [];
-
-  const likeRows = await db
-    .select({
-      poemId: poemLike.poemId,
-      memberId: poemLike.memberId,
-      reactionType: poemLike.reactionType,
-    })
-    .from(poemLike)
-    .where(inArray(poemLike.poemId, poemFactIds));
 
   const factTagRows = await db
     .select()
@@ -145,6 +146,7 @@ async function loadPoetryHomePoems(
 
   const tagIdsByPoemId = new Map<number, number[]>();
   const reactionsByPoemId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
+  const reactionMemberNamesByPoemId = new Map<number, { dislikeMemberNames: string[]; likeMemberNames: string[]; loveMemberNames: string[] }>();
   const userReactionTypeByPoemId = new Map<number, number>();
   const hasClubSessionByPoemId = new Set(clubSessionTargetIds);
 
@@ -160,16 +162,26 @@ async function loadPoetryHomePoems(
       likeCount: 0,
       loveCount: 0,
     };
+    const reactionMembers = reactionMemberNamesByPoemId.get(likeRow.poemId) ?? {
+      dislikeMemberNames: [],
+      likeMemberNames: [],
+      loveMemberNames: [],
+    };
+    const memberName = memberNameById.get(likeRow.memberId) ?? `Member #${ likeRow.memberId }`;
 
     if (likeRow.reactionType === -1) {
       currentCounts.dislikeCount += 1;
+      reactionMembers.dislikeMemberNames.push(memberName);
     } else if (likeRow.reactionType === 2) {
       currentCounts.loveCount += 1;
+      reactionMembers.loveMemberNames.push(memberName);
     } else {
       currentCounts.likeCount += 1;
+      reactionMembers.likeMemberNames.push(memberName);
     }
 
     reactionsByPoemId.set(likeRow.poemId, currentCounts);
+    reactionMemberNamesByPoemId.set(likeRow.poemId, reactionMembers);
 
     if (viewerMemberId && likeRow.memberId === viewerMemberId) {
       userReactionTypeByPoemId.set(likeRow.poemId, likeRow.reactionType);
@@ -189,6 +201,12 @@ async function loadPoetryHomePoems(
         commentJson: normalizeSerializedTipTapDocument(commentRow.commentJson),
       };
     });
+
+    const reactionMembers = reactionMemberNamesByPoemId.get(row.id) ?? {
+      dislikeMemberNames: [],
+      likeMemberNames: [],
+      loveMemberNames: [],
+    };
 
     return {
       id: row.id,
@@ -213,6 +231,9 @@ async function loadPoetryHomePoems(
       discussionThreads: discussionThreadsByPoemId.get(row.id) ?? [],
       hasDiscussionThread: (discussionThreadsByPoemId.get(row.id) ?? []).length > 0,
       hasClubSession: hasClubSessionByPoemId.has(row.id),
+      dislikeMemberNames: [...reactionMembers.dislikeMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
+      likeMemberNames: [...reactionMembers.likeMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
+      loveMemberNames: [...reactionMembers.loveMemberNames].sort((leftName, rightName) => leftName.localeCompare(rightName)),
     };
   });
 }

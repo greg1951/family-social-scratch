@@ -38,6 +38,8 @@ export interface FoodiesRecipeDetail {
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<RecipeTagType, string[]>>;
   templateId: number | null;
+  thumbsUpMemberNames: string[];
+  loveMemberNames: string[];
   recipeProTips: RecipeProTip[];
   recipeComments: RecipeComment[];
   discussionThreads: DiscussionThreadSummary[];

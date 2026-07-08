@@ -43,6 +43,9 @@ export interface BooksHomeBook {
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
   hasClubSession: boolean;
+  dislikeMemberNames: string[];
+  likeMemberNames: string[];
+  loveMemberNames: string[];
 }
 
 export interface BookHomeComment {

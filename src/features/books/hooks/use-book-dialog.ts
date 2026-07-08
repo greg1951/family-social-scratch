@@ -29,6 +29,9 @@ export type BookDraft = {
   discussionThreads: BooksHomeBook["discussionThreads"];
   hasDiscussionThread: boolean;
   hasClubSession: boolean;
+  dislikeMemberNames: string[];
+  likeMemberNames: string[];
+  loveMemberNames: string[];
   bookComments: Array<{
     id: number;
     createdAt: Date;
@@ -77,6 +80,9 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     discussionThreads: bookRecord.discussionThreads ?? [],
     hasDiscussionThread: bookRecord.hasDiscussionThread ?? false,
     hasClubSession: bookRecord.hasClubSession ?? false,
+    dislikeMemberNames: bookRecord.dislikeMemberNames ?? [],
+    likeMemberNames: bookRecord.likeMemberNames ?? [],
+    loveMemberNames: bookRecord.loveMemberNames ?? [],
     bookComments: summaryComments,
   };
 }
@@ -104,6 +110,9 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     discussionThreads: [],
     hasDiscussionThread: false,
     hasClubSession: false,
+    dislikeMemberNames: [],
+    likeMemberNames: [],
+    loveMemberNames: [],
     bookComments: [],
   };
 }

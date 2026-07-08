@@ -208,10 +208,10 @@ export function FoodiesScrollStrip({
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 text-sm font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                        <div className="mt-1 flex select-none flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
                           <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
                           <span className="text-[#9bb0bb]">.</span>
                           <span className="whitespace-nowrap">{ item.date }</span>

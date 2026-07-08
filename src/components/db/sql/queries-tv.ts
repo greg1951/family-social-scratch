@@ -546,7 +546,8 @@ async function loadShowDetail(
   ]);
 
   const commentMemberIds = [...new Set(commentRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
-  const memberIds = [...new Set([showRow.memberId, ...commentMemberIds])];
+  const likeMemberIds = [...new Set(likeRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))];
+  const memberIds = [...new Set([showRow.memberId, ...commentMemberIds, ...likeMemberIds])];
 
   const memberRows = memberIds.length > 0
     ? await db
@@ -568,6 +569,14 @@ async function loadShowDetail(
   const noRatingCount = audienceLikeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = audienceLikeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = audienceLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const thumbsUpMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === 1)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
+  const loveMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === 2)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
   const regularCommentRows = commentRows.filter((row) => !row.isShowReviewer);
 
   const viewerLike = viewerMemberId
@@ -625,6 +634,8 @@ async function loadShowDetail(
     likenessDegree: viewerLike?.likenessDegree ?? null,
     selectedTagIds: tagIdsByShowId.get(showId) ?? [],
     tagNamesByType: tagNamesByTypeByShowId.get(showId) ?? {},
+    thumbsUpMemberNames,
+    loveMemberNames,
     showComments,
     discussionThreads,
     hasDiscussionThread: discussionThreads.length > 0,

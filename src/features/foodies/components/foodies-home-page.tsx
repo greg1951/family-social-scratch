@@ -34,6 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import {
   clearQueuedFoodiesRecipeComment,
@@ -77,6 +78,45 @@ function toDateInputValue(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${ year }-${ month }-${ day }`;
+}
+
+function ReactionMemberHoverCard({
+  icon,
+  count,
+  memberNames,
+  triggerClassName,
+  textClassName,
+  emptyLabel,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  memberNames: string[];
+  triggerClassName: string;
+  textClassName?: string;
+  emptyLabel: string;
+}) {
+  return (
+    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+      <HoverCardTrigger asChild>
+        <span className={ `inline-flex cursor-default items-center gap-2 rounded-full px-3 py-1 ${ triggerClassName } ${ textClassName ?? "" }` }>
+          { icon }
+          { count.toLocaleString() }
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#cadfbb] bg-white text-xs text-[#4e6640]">
+        <p className="font-semibold text-[#2f4820]">{ emptyLabel }</p>
+        { memberNames.length > 0 ? (
+          <ul className="mt-2 space-y-1">
+            { memberNames.map((memberName) => (
+              <li key={ memberName }>{ memberName }</li>
+            )) }
+          </ul>
+        ) : (
+          <p className="mt-2 text-[#647a50]">No family members yet.</p>
+        ) }
+      </HoverCardContent>
+    </HoverCard>
+  );
 }
 
 function escapeHtml(value: string) {
@@ -1046,7 +1086,7 @@ export function FoodiesHomePage({
 
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Details</p>
-                    <div className="mt-3 space-y-3 text-sm text-[#4e6640]">
+                    <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-[#4e6640]">
                       <p><span className="font-semibold text-[#2f4820]">Submitter:</span> { selectedRecipeBasic.submitterName }</p>
                       <p><span className="font-semibold text-[#2f4820]">Updated:</span> { formatDate(selectedRecipeBasic.updatedAt) }</p>
                       <p><span className="font-semibold text-[#2f4820]">Prep:</span> { selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-" }</p>
@@ -1074,19 +1114,53 @@ export function FoodiesHomePage({
 
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Reactions</p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[#476232]">
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
-                        <ThumbsUp className="size-4 text-[#578c24]" />
-                        { (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0).toLocaleString() }
-                      </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#fff4e8] px-3 py-1 text-[#9a5e18]">
-                        <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" />
-                        { (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0).toLocaleString() }
-                      </span>
-                      <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
-                        <MessageSquareText className="size-4 text-[#5d7f3f]" />
-                        { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0 }
-                      </span>
+                    <div className="mt-3 space-y-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(1) }
+                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
+                          className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
+                          aria-label={ selectedRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                        >
+                          <ThumbsUp className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(2) }
+                          disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
+                          className="rounded-full bg-[#d9842a] text-white hover:bg-[#b86d20]"
+                          aria-label={ selectedRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
+                        >
+                          <Heart className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
+                        </Button>
+                      </div>
+                      { !canReactToSelectedRecipe && selectedRecipeBasic ? (
+                        <p className="text-xs text-[#647a50]">
+                          You cannot react to your own recipe. Ask another family member to rate it.
+                        </p>
+                      ) : null }
+                      <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#476232]">
+                        <ReactionMemberHoverCard
+                          icon={ <ThumbsUp className="size-4 text-[#578c24]" /> }
+                          count={ selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0 }
+                          memberNames={ selectedRecipeDetail?.thumbsUpMemberNames ?? [] }
+                          triggerClassName="bg-[#f7fce8]"
+                          emptyLabel="Family members who liked this recipe"
+                        />
+                        <ReactionMemberHoverCard
+                          icon={ <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" /> }
+                          count={ selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0 }
+                          memberNames={ selectedRecipeDetail?.loveMemberNames ?? [] }
+                          triggerClassName="bg-[#fff4e8]"
+                          textClassName="text-[#9a5e18]"
+                          emptyLabel="Family members who loved this recipe"
+                        />
+                        <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
+                          <MessageSquareText className="size-4 text-[#5d7f3f]" />
+                          { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0 }
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>

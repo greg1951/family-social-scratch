@@ -35,6 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
@@ -72,6 +73,12 @@ function toDateInputValue(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${ year }-${ month }-${ day }`;
+}
+
+function getOneMonthAgo(referenceDate = new Date()) {
+  const oneMonthAgo = new Date(referenceDate);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  return oneMonthAgo;
 }
 
 function getMovieDocument(movieJson?: string): JSONContent {
@@ -119,6 +126,45 @@ function MovieViewer({ movieJson }: { movieJson?: string }) {
   );
 }
 
+function ReactionMemberHoverCard({
+  icon,
+  count,
+  memberNames,
+  triggerClassName,
+  textClassName,
+  emptyLabel,
+}: {
+  icon: React.ReactNode;
+  count: number;
+  memberNames: string[];
+  triggerClassName: string;
+  textClassName?: string;
+  emptyLabel: string;
+}) {
+  return (
+    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+      <HoverCardTrigger asChild>
+        <span className={ `inline-flex cursor-default items-center gap-2 rounded-full px-3 py-0.5 ${ triggerClassName } ${ textClassName ?? "" }` }>
+          { icon }
+          { count.toLocaleString() }
+        </span>
+      </HoverCardTrigger>
+      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#f0d9c4] bg-white text-xs text-[#734f3a]">
+        <p className="font-semibold text-[#5c2e1a]">{ emptyLabel }</p>
+        { memberNames.length > 0 ? (
+          <ul className="mt-2 space-y-1">
+            { memberNames.map((memberName) => (
+              <li key={ memberName }>{ memberName }</li>
+            )) }
+          </ul>
+        ) : (
+          <p className="mt-2 text-[#8b5a3c]">No family members yet.</p>
+        ) }
+      </HoverCardContent>
+    </HoverCard>
+  );
+}
+
 export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; member: MemberKeyDetails }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
@@ -136,6 +182,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const visibleMovies = movies.filter((movie) => movie.status === "published" || (includeArchived && movie.status === "archived"));
+  const latestCutoffDate = getOneMonthAgo();
   const [selectedMovie, setSelectedMovie] = useState(visibleMovies[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
@@ -211,6 +258,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   }, [selectedMovie]);
 
   const latestMovies = [...filteredFinderMovies]
+    .filter((movie) => new Date(movie.updatedAt) >= latestCutoffDate)
     .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
     .slice(0, 8)
     .map((movie) => ({
@@ -289,7 +337,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const stripDescription = movieStripMode === "all"
     ? "All movies, ordered by the most recently updated."
     : movieStripMode === "latest"
-      ? "Latest movies first, based on added date."
+      ? "Movies updated within the last month, newest first."
       : "Top rated movies based on total likes and loves.";
   const stripAccentClassName = movieStripMode === "all"
     ? "bg-[linear-gradient(135deg,#ffe0b5,#ffd0bf)]"
@@ -708,7 +756,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                     </div>
                   ) : null }
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-2 space-y-1.5 text-sm leading-5 text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
-                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><span className="inline-flex items-center gap-2 rounded-full bg-[#f7f0eb] px-3 py-0.5"><ThumbsDown className="size-4 text-[#6d5c52]" />{ (selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5 text-[#8a5a22]"><ThumbsUp className="size-4 text-[#b8581a]" />{ (selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff0f7] px-3 py-0.5 text-[#8f2f58]"><Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />{ (selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0).toLocaleString() }</span><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
+                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><ReactionMemberHoverCard icon={ <ThumbsDown className="size-4 text-[#6d5c52]" /> } count={ selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0 } memberNames={ selectedMovieDetail?.noRatingMemberNames ?? [] } triggerClassName="bg-[#f7f0eb]" emptyLabel="Family members who disliked this movie" /><ReactionMemberHoverCard icon={ <ThumbsUp className="size-4 text-[#b8581a]" /> } count={ selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0 } memberNames={ selectedMovieDetail?.thumbsUpMemberNames ?? [] } triggerClassName="bg-[#fff1e8]" textClassName="text-[#8a5a22]" emptyLabel="Family members who liked this movie" /><ReactionMemberHoverCard icon={ <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" /> } count={ selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0 } memberNames={ selectedMovieDetail?.loveMemberNames ?? [] } triggerClassName="bg-[#fff0f7]" textClassName="text-[#8f2f58]" emptyLabel="Family members who loved this movie" /><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
                 </div>
               </div>
 
