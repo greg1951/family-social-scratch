@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import MemberAvatar from "@/components/common/member-avatar";
 
 type MemberListIdentityProps = {
@@ -6,6 +7,7 @@ type MemberListIdentityProps = {
   email: string;
   memberImageUrl?: string | null;
   avatarSizeClassName?: string;
+  nameAccessory?: ReactNode;
 };
 
 export default function MemberListIdentity({
@@ -14,6 +16,7 @@ export default function MemberListIdentity({
   email,
   memberImageUrl,
   avatarSizeClassName = "h-8 w-8",
+  nameAccessory,
 }: MemberListIdentityProps) {
   return (
     <div className="min-w-0">
@@ -27,9 +30,12 @@ export default function MemberListIdentity({
           />
         ) }
         <div className="min-w-0">
-          <p className="text-sm font-semibold leading-tight text-slate-900">
-            { firstName } { lastName }
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-semibold leading-tight text-slate-900">
+              { firstName } { lastName }
+            </p>
+            { nameAccessory }
+          </div>
           <p className="break-all text-xs text-slate-600">{ email }</p>
         </div>
       </div>

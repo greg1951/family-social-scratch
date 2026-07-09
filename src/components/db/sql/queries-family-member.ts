@@ -1,11 +1,11 @@
 "use server";
 
-import { count, eq, and, asc, ne } from 'drizzle-orm';
-import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
+import { eq, and, asc, ne, sql } from 'drizzle-orm';
+import { family, familyInvitation, member, user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/types/auth-types';
-import { GetMemberDetailsByEmailReturn, UpdateInvite } from '@/features/family/types/family-members';
+import { GetMemberDetailsByEmailReturn } from '@/features/family/types/family-members';
 
 /*-------- findRegisteredFamily ------------------ */
 export async function findRegisteredFamily(familyName: string)
@@ -265,6 +265,45 @@ export async function updateMemberDetails(updateAccountDetails: UpdateAccountDet
   }
 }
 
+export async function updateMemberProfileByFounder(input: {
+  memberId: number;
+  familyId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  birthday: string;
+  cellPhone: string;
+}) {
+  const [updatedMember] = await db
+    .update(member)
+    .set({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      birthday: input.birthday,
+      cellPhone: input.cellPhone,
+    })
+    .where(and(
+      eq(member.id, input.memberId),
+      eq(member.familyId, input.familyId),
+      eq(member.isGuest, false),
+    ))
+    .returning({
+      memberId: member.id,
+    });
+
+  if (!updatedMember) {
+    return {
+      success: false as const,
+      message: 'Member profile could not be updated.',
+    };
+  }
+
+  return {
+    success: true as const,
+  };
+}
+
 /*----------------- updateMemberImageUrl ------------------ */
 export async function updateMemberImageUrl(memberId: number, memberImageUrl: string)
   : Promise<UpdateMemberReturn> {
@@ -298,38 +337,51 @@ export async function getAllFamilyMembers(familyId: number)
   const result = await db
     .select({
       id: familyInvitation.id,
+      memberId: member.id,
       email: familyInvitation.email,
       firstName: familyInvitation.firstName,
       lastName: familyInvitation.lastName,
       status: familyInvitation.status,
+      memberStatus: member.status,
+      birthday: member.birthday,
+      cellPhone: member.cellPhone,
+      inviteFounderMessage: familyInvitation.inviteFounderMessage,
       inviteToken: familyInvitation.inviteToken,
       expirationDate: familyInvitation.expirationDate,
       createdAt: familyInvitation.createdAt,
       familyId: familyInvitation.familyId,
       memberImageUrl: member.memberImageUrl,
+      isFounder: member.isFounder,
     })
     .from(familyInvitation)
     .leftJoin(
       member,
       and(
         eq(familyInvitation.familyId, member.familyId),
-        eq(familyInvitation.email, member.email),
+        sql`lower(trim(${ familyInvitation.email })) = lower(trim(${ member.email }))`,
       ),
     )
     .where(and(
       eq(familyInvitation.familyId, familyId),
       ne(familyInvitation.status, 'retired'),
-    ));
+    ))
+    .orderBy(asc(familyInvitation.firstName), asc(familyInvitation.lastName));
   
   if (result[0]) 
     return {
       success: true,
       members: result.map(member => ({
         id: member.id as number,
+        memberId: member.memberId as number | null,
         email: member.email as string,
         firstName: member.firstName as string,
         lastName: member.lastName as string,
         status: member.status as string,
+        memberStatus: member.memberStatus as string | null,
+        birthday: member.birthday as string | undefined,
+        cellPhone: member.cellPhone as string | undefined,
+        inviteFounderMessage: member.inviteFounderMessage ?? undefined,
+        isFounder: member.isFounder as boolean | null,
         memberImageUrl: member.memberImageUrl as string | null,
         inviteToken: member.inviteToken as string,
         expirationDate: member.expirationDate as Date,

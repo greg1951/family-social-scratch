@@ -1,19 +1,15 @@
 import db from '@/components/db/drizzle';
-import { count, eq, and } from 'drizzle-orm';
-import { family, familyInvitation, member, optionReference, user, memberOption } from '../schema/family-social-schema-tables';
+import { eq, and } from 'drizzle-orm';
+import { family, familyInvitation, member } from '../schema/family-social-schema-tables';
 import { UpdateInviteStatusResult, UpdateInviteTokenInput, UpdateInviteTokenResult } from "@/features/family/types/family-steps";
 import { InsertInvitesInput, 
          InsertInvitesReturn, 
          MemberRegistrationReturn, 
          GetInviteByMemberIdReturn,
-         GenericDatabaseReturn,
-         StatusUpdateProcessing,
          GetInviteReturn,
          InsertInviteInput,
          InsertInviteReturn} from '../types/family-member';
-import { get } from 'http';
-import { CurrentMembersValues, NewFamilyInvites, UpdateInvite } from '@/features/family/types/family-members';
-import { deleteUserByUserId, getUserByEmail } from './queries-user';
+import { NewFamilyInvites } from '@/features/family/types/family-members';
 
 
 /*------------------- insertInvites (bulk insert) ------------------- */
@@ -250,6 +246,45 @@ export async function updateFamilyInviteStatus(id: number, status: string)
     }
   }
   return {error: false}
+}
+
+export async function updateFamilyInviteMemberDetails(input: {
+  familyId: number;
+  inviteId: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  status: string;
+  inviteFounderMessage?: string;
+}) {
+  const [updatedInvite] = await db
+    .update(familyInvitation)
+    .set({
+      firstName: input.firstName,
+      lastName: input.lastName,
+      email: input.email,
+      status: input.status,
+      inviteFounderMessage: input.inviteFounderMessage ?? null,
+      statusUpdate: new Date(),
+    })
+    .where(and(
+      eq(familyInvitation.id, input.inviteId),
+      eq(familyInvitation.familyId, input.familyId),
+    ))
+    .returning({
+      inviteId: familyInvitation.id,
+    });
+
+  if (!updatedInvite) {
+    return {
+      success: false as const,
+      message: 'Invitation details could not be updated.',
+    };
+  }
+
+  return {
+    success: true as const,
+  };
 }
 
 /*------------------ addNewInvites ------------------ */

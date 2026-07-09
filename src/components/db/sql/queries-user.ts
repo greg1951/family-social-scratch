@@ -1,7 +1,7 @@
 "use server";
 
 import { count, eq, and, sql } from 'drizzle-orm';
-import { member, user } from '../schema/family-social-schema-tables';
+import { user } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -69,7 +69,7 @@ export async function updateUserPassword(email: string, password: string)
         error: false,
       }      
       
-    } catch(e: unknown) {
+    } catch {
       returnedResult = {
         error: true,
         message: 'Failed to updated password'
@@ -248,6 +248,27 @@ export async function updateUser2faActivated(args: Update2faActivatedRecordType)
     error: false, 
   }
 };
+
+export async function updateUserEmailByMemberId(memberId: number, email: string)
+  : Promise<ErrorReturnType> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const updateResult = await db
+    .update(user)
+    .set({ email: normalizedEmail })
+    .where(eq(user.memberId, memberId));
+
+  if (!updateResult) {
+    return {
+      error: true,
+      message: 'Unable to update user email.',
+    };
+  }
+
+  return {
+    error: false,
+  };
+}
 
 /* Retrieve user details by id */
 export async function getEmailByUserId(userId: number) 

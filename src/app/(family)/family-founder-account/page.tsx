@@ -1,17 +1,13 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getMemberDetails } from "@/app/(family)/family-member-account/actions";
-import { AccountDetails } from "@/features/auth/types/auth-types";
-import { getUser2fa } from "@/components/db/sql/queries-user";
-import { getAllFamilyMembers, getFamilyFounderDetails, getJoinedFamilyMembersForRemoval } from "@/components/db/sql/queries-family-member";
+import { getAllFamilyMembers } from "@/components/db/sql/queries-family-member";
 import { getMemberNotifications } from "@/components/db/sql/queries-family-notifications";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { CurrentFamilyMember, FounderDetails, NewFamilyInvite, RemovableFamilyMember } from "@/features/family/types/family-members";
+import { CurrentFamilyMember, FounderDetails } from "@/features/family/types/family-members";
 import FounderAccountTabs from "./founder-tabs";
 import { toast } from "sonner";
 import { getFounderDetails } from "@/features/family/services/get-founder-details";
-import PublicHelpMenu from "@/components/common/public-help-menu";
 import FounderFaqHelp from "@/components/common/founder-faq-help";
 import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-features";
 import { getMemberDashboardActivitySummary, type MemberDashboardActivitySummary } from "@/components/db/sql/queries-family-activity";
@@ -45,10 +41,6 @@ export default async function FamilyMyAccountPage({
     redirect("/login");
   }
 
-  const email = session.user?.email as string;
-  const userId = Number(session.user?.id);
-
-
   const memberKeyDetails = await getMemberPageDetails();
   if (memberKeyDetails.isLoggedIn === false || memberKeyDetails.isFounder === false) {
     console.warn('Unauthorized access attempt to family founder account page. Redirecting to home page.');
@@ -74,12 +66,10 @@ export default async function FamilyMyAccountPage({
     memberNotificationsResult,
     featureConfigResult,
     currentMembersResult,
-    joinedMembersResult,
   ] = await Promise.all([
     getMemberNotifications(memberKeyDetails.memberId),
     getFamilyFeatureConfig(memberKeyDetails.familyId),
     getAllFamilyMembers(memberKeyDetails.familyId),
-    getJoinedFamilyMembersForRemoval(memberKeyDetails.familyId),
   ]);
 
 
@@ -97,32 +87,7 @@ export default async function FamilyMyAccountPage({
       features: [],
     };
 
-  const newFamilyMembers: NewFamilyInvite[] = [];
   let currentFamilyMembers: CurrentFamilyMember[] = [];
-  let joinedFamilyMembers: RemovableFamilyMember[] = [];
-
-  if (currentMembersResult.success && currentMembersResult.members) {
-    // console.log('FamilyCurrentMembersPage->getAllFamilyMembers->membersResult: ', currentMembersResult);
-    currentFamilyMembers = currentMembersResult.members.map((member) => ({
-      id: member.id,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      email: member.email,
-      status: member.status,
-      memberImageUrl: member.memberImageUrl ?? null,
-    })) as CurrentFamilyMember[];
-  }
-
-  if (joinedMembersResult.success) {
-    joinedFamilyMembers = joinedMembersResult.members.map((member) => ({
-      memberId: member.memberId,
-      firstName: member.firstName,
-      lastName: member.lastName,
-      email: member.email,
-      status: member.status,
-      memberImageUrl: member.memberImageUrl ?? null,
-    }));
-  }
 
 
   const founderDetailsResult = await getFounderDetails(memberKeyDetails.familyId);
@@ -133,6 +98,24 @@ export default async function FamilyMyAccountPage({
     console.error(`Error fetching founder details for familyId ${ memberKeyDetails.familyId }`);
     toast.error('Error fetching family founder details. Please try again later.');
     redirect("/");
+  }
+
+  if (currentMembersResult.success && currentMembersResult.members) {
+    currentFamilyMembers = currentMembersResult.members
+      .filter((member) => member.memberId !== founderDetails.memberId && member.email !== founderDetails.email)
+      .map((member) => ({
+        id: member.id,
+        memberId: member.memberId ?? null,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        status: member.status,
+        memberStatus: member.memberStatus ?? null,
+        birthday: member.birthday,
+        cellPhone: member.cellPhone,
+        inviteFounderMessage: member.inviteFounderMessage,
+        memberImageUrl: member.memberImageUrl ?? null,
+      })) as CurrentFamilyMember[];
   }
 
   return (
@@ -166,7 +149,6 @@ export default async function FamilyMyAccountPage({
               notifications={ notifications }
               featureConfig={ featureConfig }
               currentFamilyMembers={ currentFamilyMembers }
-              joinedFamilyMembers={ joinedFamilyMembers }
               memberActivitySummary={ memberActivitySummary }
               startDateValue={ startDateValue }
               endDateValue={ endDateValue }

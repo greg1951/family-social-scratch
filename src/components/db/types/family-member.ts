@@ -1,5 +1,3 @@
-import { inviteStatus } from "../schema/family-social-schema-tables";
-
 export type GenericDatabaseReturn = {
   success: boolean;
   message?: string;
@@ -167,10 +165,16 @@ export type GetAllFamilyMembersReturn =
       success: true;
       members: {
         id: number;
+        memberId?: number | null;
         email: string;
         firstName: string;
         lastName: string;
         status?: string;
+        memberStatus?: string | null;
+        birthday?: string;
+        cellPhone?: string;
+        inviteFounderMessage?: string;
+        isFounder?: boolean | null;
         memberImageUrl?: string | null;
         inviteToken?: string;
         expirationDate?: Date;

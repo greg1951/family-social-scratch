@@ -27,10 +27,15 @@ export interface NewFamilyInvites {
 
 export type CurrentFamilyMember = {
   id: number;
+  memberId?: number | null;
   firstName: string;
   lastName: string;
   email: string;
   status: string;
+  memberStatus?: string | null;
+  birthday?: string;
+  cellPhone?: string;
+  inviteFounderMessage?: string;
   memberImageUrl?: string | null;
 }
 
