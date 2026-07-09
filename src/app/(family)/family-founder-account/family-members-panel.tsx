@@ -686,9 +686,11 @@ export default function FamilyMembersPanel({
           <DialogHeader>
             <DialogTitle>Remove Member</DialogTitle>
             <DialogDescription>
-              { selectedLifecycle === 'joined'
-                ? 'Choose how to remove the selected joined member. Soft delete removes access and keeps contributions. Hard delete removes the member and their contributed records.'
-                : 'Remove the selected invitation from the family list.' }
+              <span className="font-semibold text-slate-900">Soft Delete:</span>{ ' ' }
+              A soft member delete will leave the member&apos;s content in the family but the member&apos;s identity will be Unknown.
+              <br />
+              <span className="font-semibold text-slate-900">Hard Delete:</span>{ ' ' }
+              The hard member delete will remove all traces of the member in the family, including posts, connects, and any uploaded content.
             </DialogDescription>
           </DialogHeader>
 
@@ -713,7 +715,7 @@ export default function FamilyMembersPanel({
                     variant="outline"
                     disabled={ isRemoveSubmitting }
                     onClick={ () => handleRemove('soft') }
-                    className="w-full border-slate-300 text-slate-700 hover:bg-slate-50"
+                    className="w-full min-w-0 border-slate-300 text-slate-700 hover:bg-slate-50 sm:flex-1"
                   >
                     <UserRoundMinus className="mr-2 h-4 w-4" />
                     { isRemoveSubmitting ? 'Processing...' : 'Soft Delete (Retire)' }
@@ -722,7 +724,7 @@ export default function FamilyMembersPanel({
                     type="button"
                     disabled={ isRemoveSubmitting }
                     onClick={ () => handleRemove('hard') }
-                    className="w-full bg-[#0a779f] text-white hover:bg-[#086684]"
+                    className="w-full min-w-0 bg-[#0a779f] text-white hover:bg-[#086684] sm:flex-1"
                   >
                     <UserRoundX className="mr-2 h-4 w-4" />
                     { isRemoveSubmitting ? 'Processing...' : 'Hard Delete' }
