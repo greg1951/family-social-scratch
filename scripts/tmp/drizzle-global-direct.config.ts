@@ -1,6 +1,6 @@
 import "dotenv/config";
 import * as dotenv from "dotenv";
-import { defineConfig } from 'drizzle-kit';
+import { defineConfig } from "drizzle-kit";
 
 dotenv.config({
   path: ".env.local",
@@ -19,9 +19,8 @@ function normalizeDatabaseUrl(connectionString: string): string {
 
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/components/db/schema/family-social-schema.ts",
-  out: "./drizzle/family",
+  schema: "./src/components/db/schema/global-schema-tables.ts",
   dbCredentials: {
-    url: normalizeDatabaseUrl(process.env.FAMILY_SOCIAL_DATABASE_URL!)
-  }
+    url: normalizeDatabaseUrl(process.env.FAMILY_SOCIAL_DATABASE_URL!),
+  },
 });

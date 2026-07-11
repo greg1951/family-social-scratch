@@ -42,6 +42,22 @@ export const bookTerm = globalSchema.table("book_term", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+export const featureReference = globalSchema.table("feature_reference", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  status: text("status").notNull().default("active"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const memberOptionReference = globalSchema.table("member_option_reference", {
+  id: serial("id").primaryKey(),
+  optionName: text("option_name").notNull(),
+  category: text("category").notNull().default("feature"),
+  seqNo: integer("seq_no").notNull().default(1),
+  isSelected: boolean("is_selected").notNull().default(false),
+});
+
 export const movieTagReference = globalSchema.table("movie_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),
@@ -61,7 +77,6 @@ export const musicTagReference = globalSchema.table("music_tag_reference", {
   seqNo: integer("seq_no").notNull().default(1),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
 
 export const poemCategoryReference = globalSchema.table("poem_category_reference", {
   id: serial("id").primaryKey(),

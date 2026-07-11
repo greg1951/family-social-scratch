@@ -61,6 +61,7 @@ export default async function FamilyMemberAccount({
   const startDate = parseDate(params.startDate, defaultStartDate);
   const startDateValue = toDateTimeLocalValue(startDate);
   const endDateValue = toDateTimeLocalValue(endDate);
+  const activeTab = params.tab ?? "profile";
 
   const memberActivitySummary: MemberDashboardActivitySummary = await getMemberDashboardActivitySummary(
     memberKeyDetails.familyId,
@@ -70,7 +71,9 @@ export default async function FamilyMemberAccount({
 
   const [memberDetails, memberNotificationsResult] = await Promise.all([
     getMemberDetails(userId),
-    getMemberNotifications(memberKeyDetails.memberId),
+    activeTab === "settings"
+      ? getMemberNotifications(memberKeyDetails.memberId)
+      : Promise.resolve({ success: true as const, memberId: memberKeyDetails.memberId, notifications: [] }),
   ]);
 
   const notifications = memberNotificationsResult.success ? memberNotificationsResult.notifications : [];

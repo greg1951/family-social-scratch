@@ -28,6 +28,8 @@ export type NotificationsFormValues = {
     memberOptionId: number;
     optionId: number;
     optionName: string;
+    optionCategory: string;
+    optionSeqNo: number;
     isSelected: boolean;
   }[];
 }

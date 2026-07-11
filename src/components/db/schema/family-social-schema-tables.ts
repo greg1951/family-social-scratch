@@ -3,7 +3,7 @@ import { pgSchema, serial, index, boolean, pgEnum, foreignKey, unique } from "dr
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
-import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, movieTagReference, musicTagReference } from "./global-schema-tables"; 
+import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, movieTagReference, musicTagReference, featureReference, memberOptionReference } from "./global-schema-tables"; 
 export const familySchema = pgSchema('family_schema');
 
 
@@ -122,14 +122,6 @@ export const familyInvitation = familySchema.table("family_invitation", {
   index('invite_token_idx').on(table.inviteToken),
 ]);
 
-export const featureReference = familySchema.table("feature_reference", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull().unique(),
-  description: text("description"),
-  status: text("status").notNull().default("active"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
 export const familyFeatureConfig = familySchema.table("family_feature_config", {
   id: serial("id").primaryKey(),
   isSelected: boolean("is_selected").notNull().default(false),
@@ -206,15 +198,7 @@ export const member = familySchema.table("member", {
 export const memberOption = familySchema.table("member_option", {
   id: serial("id").primaryKey(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  optionId: integer("fk_option_id").notNull().references(() => optionReference.id, {onDelete: 'cascade'}),
-  isSelected: boolean("is_selected").notNull().default(false),
-});
-
-export const optionReference = familySchema.table("option_reference", {
-  id: serial("id").primaryKey(),
-  optionName: text("option_name").notNull(),
-  category: text("category").notNull().default("feature"),
-  seqNo: integer("seq_no").notNull().default(1),
+  optionId: integer("fk_option_id").notNull().references(() => memberOptionReference.id, {onDelete: 'cascade'}),
   isSelected: boolean("is_selected").notNull().default(false),
 });
 

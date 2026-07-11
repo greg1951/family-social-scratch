@@ -6,8 +6,8 @@ import db from "@/components/db/drizzle";
 import {
   family,
   familyFeatureConfig,
-  featureReference,
 } from "@/components/db/schema/family-social-schema-tables";
+import { featureReference } from "@/components/db/schema/global-schema-tables";
 import {
   GetEnabledFamilyFeaturesReturn,
   GetFamilyFeatureConfigReturn,

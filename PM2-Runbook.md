@@ -20,6 +20,13 @@
   - [Crashing PM2 Woker(s)](#crashing-pm2-wokers)
   - [Getting PM2 Error Logs](#getting-pm2-error-logs)
   - [The pm2-ec2-user.service Service](#the-pm2-ec2-userservice-service)
+- [Schema Versioning Strategy](#schema-versioning-strategy)
+  - [Recommended approach](#recommended-approach)
+  - [Versioning policy](#versioning-policy)
+  - [Schema metadata model](#schema-metadata-model)
+  - [Startup compatibility check](#startup-compatibility-check)
+  - [Safe deployment sequence](#safe-deployment-sequence)
+  - [Practical Next Actions](#practical-next-actions)
 
 # Overview
 
@@ -315,3 +322,42 @@ If you changed ecosystem.config.cjs, run:
     pm2 save (if you rely on saved PM2 process list)
 ```
 If systemd starts with pm2-runtime start ecosystem.config.cjs, restarting the service is usually enough to re-read it.
+
+# Schema Versioning Strategy
+
+## Recommended approach
+1. Keep immutable migrations for all shared environments (test, dev, qa, prod).
+2. Maintain a schema metadata table with major.minor.patch per logical schema.
+3. Validate schema compatibility at application startup and fail fast on incompatibility.
+
+## Versioning policy
+1. MAJOR: breaking schema contract changes (drop/rename/meaning changes).
+2. MINOR: backward-compatible additions (nullable columns, additive tables).
+3. PATCH: non-contract-safe updates (indexes/default tweaks/backfills).
+
+## Schema metadata model
+1. schema_name (family_schema, global_schema)
+2. schema_version (for example, 2.4.1)
+3. min_app_version
+4. max_app_version (nullable)
+5. last_migration_id
+6. updated_at
+
+## Startup compatibility check
+1. App reads supported schema range from code or environment variables.
+2. App queries metadata for both family and global schemas.
+3. If out of range:
+1. Production: fail startup or switch to maintenance mode.
+2. Dev/Test: warn loudly; optionally auto-run migrations only in local dev.
+
+## Safe deployment sequence
+1. Expand: deploy additive schema migration first.
+2. Transition: deploy app version that supports old and new shapes.
+3. Migrate data: run backfills.
+4. Contract: remove deprecated schema only after all app versions are compatible.
+
+## Practical Next Actions
+1. Track independent version rows for family and global schemas.
+2. Add CI/CD gate ensuring migrations complete before app rollout.
+3. Use migration files for shared environments.
+4. Reserve push for local development only.

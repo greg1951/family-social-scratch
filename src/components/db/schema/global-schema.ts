@@ -2,6 +2,8 @@ export {
   bookCategoryReference,
   bookCategoryTagReference,
   bookTerm,
+  featureReference,
+  memberOptionReference,
   movieTagReference,
   musicTagReference,
   poemCategoryReference,

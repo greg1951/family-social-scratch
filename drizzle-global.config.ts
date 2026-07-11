@@ -13,6 +13,7 @@ function normalizeDatabaseUrl(connectionString: string): string {
   if (!sslMode || ["require", "prefer", "verify-ca"].includes(sslMode)) {
     normalizedUrl.searchParams.set("sslmode", "verify-full");
   }
+  // console.log(`Normalized database URL: ${normalizedUrl.toString()}`);
 
   return normalizedUrl.toString();
 }
@@ -20,7 +21,8 @@ function normalizeDatabaseUrl(connectionString: string): string {
 export default defineConfig({
   dialect: "postgresql",
   schema: "./src/components/db/schema/global-schema.ts",
+  out: "./drizzle/global",
   dbCredentials: {
     url: normalizeDatabaseUrl(process.env.FAMILY_SOCIAL_DATABASE_URL!)
-  }
+  },
 });

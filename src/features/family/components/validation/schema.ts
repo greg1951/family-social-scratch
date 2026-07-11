@@ -58,6 +58,8 @@ const MemberNotificationSchema = z.object({
   memberOptionId: z.number(),
   optionId: z.number(),
   optionName: z.string(),
+  optionCategory: z.string(),
+  optionSeqNo: z.number(),
   isSelected: z.boolean(),
 });
 const MemberNotificationsSchema = z.array(MemberNotificationSchema);

@@ -192,7 +192,8 @@ export type GetMemberNotificationsReturn =
         memberOptionId: number;
         optionId: number;
         optionName: string;
-        optionDesc: string;
+        optionCategory: string;
+        optionSeqNo: number;
         isSelected: boolean;
       }[];
     };
@@ -270,7 +271,9 @@ export type GetAllOptionsRefReturn =
       options: {
         id: number;
         optionName: string;
-        optionDesc: string;
+        optionCategory: string;
+        optionSeqNo: number;
+        isSelected: boolean;
       }[];
     };
 
