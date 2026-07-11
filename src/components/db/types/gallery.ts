@@ -58,6 +58,7 @@ export interface GalleryPhotoItem {
   photoId: number;
   albumId: number;
   caption: string | null;
+  photoYear: number;
   albumPhotoDescription: string | null;
   photoImageUrl: string;
   seqNo: number;
@@ -105,6 +106,10 @@ export type SaveGalleryPhotoReturn =
   | { success: true; photo: GalleryPhoto }
   | { success: false; message: string };
 
+export type UpdateGalleryPhotoReturn =
+  | { success: true; photo: GalleryPhoto }
+  | { success: false; message: string };
+
 export type CreateAlbumReturn =
   | { success: true; album: MemberAlbumItem }
   | { success: false; message: string };
@@ -138,6 +143,12 @@ export interface SaveGalleryPhotoInput {
   fileName: string | null;
   fileSizeBytes: number | null;
   mimeType: string | null;
+}
+
+export interface UpdateGalleryPhotoInput {
+  id: number;
+  caption: string | null;
+  photoYear: number;
 }
 
 export interface CreateAlbumInput {

@@ -26,6 +26,8 @@ import type {
   GetMemberGalleryDataReturn,
   SaveGalleryPhotoInput,
   SaveGalleryPhotoReturn,
+  UpdateGalleryPhotoInput,
+  UpdateGalleryPhotoReturn,
   CreateAlbumInput,
   CreateAlbumReturn,
   UpdateAlbumInput,
@@ -143,6 +145,7 @@ export async function getAlbumPhotos(
         photoId: galleryAlbumPhoto.photoId,
         albumId: galleryAlbumPhoto.albumId,
         caption: galleryAlbumPhoto.caption,
+        photoYear: galleryPhoto.photoYear,
         albumPhotoDescription: galleryAlbumPhoto.albumPhotoDescription,
         seqNo: galleryAlbumPhoto.seqNo,
         photoImageUrl: galleryPhoto.photoImageUrl,
@@ -212,6 +215,7 @@ export async function getAlbumPhotos(
         photoId: row.photoId,
         albumId: row.albumId,
         caption: row.caption,
+        photoYear: row.photoYear,
         albumPhotoDescription: row.albumPhotoDescription,
         photoImageUrl: row.photoImageUrl,
         seqNo: row.seqNo,
@@ -494,6 +498,38 @@ export async function saveGalleryPhoto(
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to save photo",
+    };
+  }
+}
+
+export async function updateGalleryPhoto(
+  input: UpdateGalleryPhotoInput,
+  ctx: MemberContext
+): Promise<UpdateGalleryPhotoReturn> {
+  try {
+    const [photo] = await db
+      .update(galleryPhoto)
+      .set({
+        caption: input.caption,
+        photoYear: input.photoYear,
+      })
+      .where(
+        and(
+          eq(galleryPhoto.id, input.id),
+          eq(galleryPhoto.memberId, ctx.memberId)
+        )
+      )
+      .returning();
+
+    if (!photo) {
+      return { success: false, message: "Photo not found." };
+    }
+
+    return { success: true, photo: photo as GalleryPhoto };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to update photo",
     };
   }
 }

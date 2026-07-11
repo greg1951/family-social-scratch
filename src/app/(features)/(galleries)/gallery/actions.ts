@@ -8,6 +8,7 @@ import {
   getAlbumPhotos,
   getMemberGalleryData,
   saveGalleryPhoto,
+  updateGalleryPhoto,
   clearUnallocatedGalleryPhotos,
   createGalleryAlbum,
   updateGalleryAlbum,
@@ -21,6 +22,7 @@ import {
 } from '@/components/db/sql/queries-gallery';
 import type {
   SaveGalleryPhotoInput,
+  UpdateGalleryPhotoInput,
   CreateAlbumInput,
   UpdateAlbumInput,
   AddPhotoToAlbumInput,
@@ -112,6 +114,26 @@ export async function saveGalleryPhotoAction(input: SaveGalleryPhotoInput) {
 
   if (result.success) {
     revalidatePath('/member-gallery');
+  }
+
+  return result;
+}
+
+export async function updateGalleryPhotoAction(input: UpdateGalleryPhotoInput) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return { success: false as const, message: 'You must be signed in to edit photos.' };
+  }
+
+  const result = await updateGalleryPhoto(input, {
+    memberId: memberDetails.memberId,
+    familyId: memberDetails.familyId,
+  });
+
+  if (result.success) {
+    revalidatePath('/member-gallery');
+    revalidatePath('/family-gallery');
   }
 
   return result;

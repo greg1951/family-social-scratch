@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Printer, Search, Sparkles, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
+import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Plus, Printer, Search, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -926,7 +926,7 @@ export function FoodiesHomePage({
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
                     <EditPostIcon tooltip="View Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50 sm:px-3" aria-label="View selected recipe"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button></EditPostIcon>
-                    <EditPostIcon tooltip="Add Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] sm:px-3"><Link href="/foodies/add-recipe" aria-label="Add recipe"><Sparkles className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
+                    <EditPostIcon tooltip="Add Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] sm:px-3"><Link href="/foodies/add-recipe" aria-label="Add recipe"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
                     { canEditSelectedRecipe ? (
                       <EditPostIcon tooltip="Edit Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] sm:px-3">
                         <Link href={ `/foodies/edit-recipe/${ selectedRecipe }` } aria-label="Edit selected recipe"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Link>

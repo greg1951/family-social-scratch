@@ -22,6 +22,7 @@ import {
   deleteGalleryAlbumAction,
   getAlbumPhotosAction,
   saveGalleryPhotoAction,
+  updateGalleryPhotoAction,
   clearUnallocatedGalleryPhotosAction,
   updateGalleryAlbumPhotoAction,
   updateGalleryAlbumAction,
@@ -102,6 +103,44 @@ function GalleryImage({
   return <img src={ resolvedSrc } alt={ alt } className={ className } />;
 }
 
+function PhotoHoverTooltip({
+  text,
+}: {
+  text: string;
+}) {
+  return (
+    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-max max-w-100 -translate-x-1/2 whitespace-pre-line rounded-lg border border-[#cfe2bc] bg-[#1f2e16] px-2.5 py-1.5 text-[11px] leading-4 text-[#f2ffe6] shadow-lg group-hover:block">
+      { text }
+    </div>
+  );
+}
+
+function buildPhotoHoverText(
+  caption: string | null | undefined,
+  photoYear: number | null | undefined,
+  albumPhotoDescription?: string | null
+) {
+  const lines: string[] = [];
+
+  if (caption?.trim()) {
+    lines.push(`Caption: ${ caption.trim() }`);
+  }
+
+  if (photoYear) {
+    lines.push(`Year: ${ photoYear }`);
+  }
+
+  if (albumPhotoDescription?.trim()) {
+    lines.push(`Notes: ${ albumPhotoDescription.trim() }`);
+  }
+
+  if (lines.length === 0) {
+    return "Double-click to edit photo details";
+  }
+
+  return lines.join("\n");
+}
+
 function uploadFileToSignedUrl(
   signedUrl: string,
   file: File,
@@ -146,6 +185,7 @@ function PhotoScrollStrip({
   selectedAlbumName,
   unallocatedPhotos,
   onPhotoDoubleClick,
+  onUnallocatedPhotoDoubleClick,
   onClearUnallocatedPhotos,
   onUpload,
   isUploading,
@@ -158,6 +198,7 @@ function PhotoScrollStrip({
   selectedAlbumName?: string;
   unallocatedPhotos: MemberPhotoItem[];
   onPhotoDoubleClick?: (photo: GalleryPhotoItem) => void;
+  onUnallocatedPhotoDoubleClick?: (photo: MemberPhotoItem) => void;
   onClearUnallocatedPhotos?: () => void;
   onUpload: (files: File[]) => void;
   isUploading: boolean;
@@ -253,19 +294,27 @@ function PhotoScrollStrip({
             { photos.map((photo) => {
               const imageUrl = photo.photoImageUrl;
               const caption = photo.caption;
+              const memberPhoto = photo as MemberPhotoItem;
+              const hoverText = buildPhotoHoverText(memberPhoto.caption, memberPhoto.photoYear);
               return (
                 <div
                   key={ photo.id }
                   className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
-                  title={ caption ?? "Photo" }
                 >
-                  <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
-                    <GalleryImage
-                      src={ imageUrl }
-                      alt={ caption ?? "Gallery photo" }
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
+                  <PhotoHoverTooltip text={ hoverText } />
+                  <button
+                    type="button"
+                    className="block w-full"
+                    onDoubleClick={ () => onUnallocatedPhotoDoubleClick?.(memberPhoto) }
+                  >
+                    <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
+                      <GalleryImage
+                        src={ imageUrl }
+                        alt={ caption ?? "Gallery photo" }
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  </button>
                   { caption && (
                     <div className="px-1.5 py-1">
                       <p className="truncate text-[10px] text-[#567145]">{ caption }</p>
@@ -292,20 +341,21 @@ function PhotoScrollStrip({
                   const albumPhoto = photo as GalleryPhotoItem;
                   const imageUrl = albumPhoto.photoImageUrl;
                   const caption = albumPhoto.caption;
-                  const tooltip = albumPhoto.albumPhotoDescription?.trim()
-                    ? albumPhoto.albumPhotoDescription
-                    : "Double-click to edit photo details";
+                  const tooltip = buildPhotoHoverText(
+                    albumPhoto.caption,
+                    albumPhoto.photoYear,
+                    albumPhoto.albumPhotoDescription
+                  );
                   return (
                     <div
                       key={ albumPhoto.id }
                       className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
-                      title={ tooltip }
                     >
+                      <PhotoHoverTooltip text={ tooltip } />
                       <button
                         type="button"
                         className="block w-full"
                         onDoubleClick={ () => onPhotoDoubleClick?.(albumPhoto) }
-                        title={ tooltip }
                       >
                         <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
                           <GalleryImage
@@ -349,14 +399,21 @@ function PhotoScrollStrip({
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 { unallocatedPhotos.map((photo) => (
-                  <div key={ photo.id } className="overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]">
-                    <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
-                      <GalleryImage
-                        src={ photo.photoImageUrl }
-                        alt={ photo.caption ?? "Unallocated photo" }
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
+                  <div key={ photo.id } className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]">
+                    <PhotoHoverTooltip text={ buildPhotoHoverText(photo.caption, photo.photoYear) } />
+                    <button
+                      type="button"
+                      className="block w-full text-left"
+                      onDoubleClick={ () => onUnallocatedPhotoDoubleClick?.(photo) }
+                    >
+                      <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
+                        <GalleryImage
+                          src={ photo.photoImageUrl }
+                          alt={ photo.caption ?? "Unallocated photo" }
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    </button>
                     <div className="px-1.5 py-1">
                       <p className="truncate text-[10px] text-[#567145]">{ photo.caption ?? photo.fileName ?? "Photo" }</p>
                     </div>
@@ -491,6 +548,11 @@ interface AlbumPhotoFormValues {
   caption: string;
   albumPhotoDescription: string;
   seqNo: number;
+}
+
+interface UnallocatedPhotoFormValues {
+  caption: string;
+  photoYear: number;
 }
 
 function AddAlbumDialog({
@@ -1002,6 +1064,102 @@ function EditAlbumPhotoDialog({
   );
 }
 
+function EditUnallocatedPhotoDialog({
+  open,
+  photo,
+  onClose,
+  onSave,
+}: {
+  open: boolean;
+  photo: MemberPhotoItem | null;
+  onClose: () => void;
+  onSave: (values: UnallocatedPhotoFormValues) => void;
+}) {
+  const [values, setValues] = useState<UnallocatedPhotoFormValues>({
+    caption: "",
+    photoYear: new Date().getFullYear(),
+  });
+
+  useEffect(() => {
+    if (!open || !photo) {
+      return;
+    }
+
+    setValues({
+      caption: photo.caption ?? "",
+      photoYear: photo.photoYear,
+    });
+  }, [open, photo]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const currentYear = new Date().getFullYear();
+    if (Number.isNaN(values.photoYear) || values.photoYear < 1800 || values.photoYear > currentYear + 1) {
+      toast.error(`Photo year must be between 1800 and ${ currentYear + 1 }.`);
+      return;
+    }
+
+    onSave(values);
+  }
+
+  return (
+    <Dialog open={ open } onOpenChange={ (isOpen) => { if (!isOpen) onClose(); } }>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Edit Unallocated Photo</DialogTitle>
+          <DialogDescription>Update the caption and year taken before adding this photo to an album.</DialogDescription>
+        </DialogHeader>
+
+        { photo && (
+          <form onSubmit={ handleSubmit } className="space-y-4 pt-1">
+            <div className="overflow-hidden rounded-2xl border border-[#dbe9cf] bg-[#f8fdf3]">
+              <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
+                <GalleryImage
+                  src={ photo.photoImageUrl }
+                  alt={ photo.caption ?? photo.fileName ?? "Unallocated photo" }
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="unallocatedPhotoCaption">Caption</Label>
+              <Input
+                id="unallocatedPhotoCaption"
+                value={ values.caption }
+                onChange={ (e) => setValues((current) => ({ ...current, caption: e.target.value })) }
+                placeholder="Photo caption"
+                maxLength={ 180 }
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="unallocatedPhotoYear">Year Taken</Label>
+              <Input
+                id="unallocatedPhotoYear"
+                type="number"
+                min={ 1800 }
+                max={ new Date().getFullYear() + 1 }
+                step={ 1 }
+                value={ values.photoYear }
+                onChange={ (e) => setValues((current) => ({ ...current, photoYear: Number(e.target.value) })) }
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={ onClose }>
+                Cancel
+              </Button>
+              <Button type="submit">Save Details</Button>
+            </div>
+          </form>
+        ) }
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Delete confirmation dialog ────────────────────────────────────────────────
 
 function DeleteAlbumDialog({
@@ -1073,6 +1231,8 @@ export default function MemberGalleryHomePage({
   const [editAlbumPhotos, setEditAlbumPhotos] = useState<GalleryPhotoItem[]>([]);
   const [isLoadingEditAlbumPhotos, setIsLoadingEditAlbumPhotos] = useState(false);
   const [isEditAlbumPhotoOpen, setIsEditAlbumPhotoOpen] = useState(false);
+  const [isEditUnallocatedPhotoOpen, setIsEditUnallocatedPhotoOpen] = useState(false);
+  const [selectedUnallocatedPhoto, setSelectedUnallocatedPhoto] = useState<MemberPhotoItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MemberAlbumItem | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [pendingAddPhotos, setPendingAddPhotos] = useState<MemberPhotoItem[]>([]);
@@ -1377,6 +1537,11 @@ export default function MemberGalleryHomePage({
     setIsEditAlbumPhotoOpen(true);
   }
 
+  function handleOpenUnallocatedPhotoEditor(photo: MemberPhotoItem) {
+    setSelectedUnallocatedPhoto(photo);
+    setIsEditUnallocatedPhotoOpen(true);
+  }
+
   // Photo upload
   async function handleUpload(files: File[]) {
     if (files.length === 0) {
@@ -1630,6 +1795,7 @@ export default function MemberGalleryHomePage({
       photoId: photo.id,
       albumId: selectedAlbum.id,
       caption: photo.caption,
+      photoYear: photo.photoYear,
       albumPhotoDescription: null,
       photoImageUrl: photo.photoImageUrl,
       seqNo: currentAlbumPhotos.length + index + 1,
@@ -1707,6 +1873,43 @@ export default function MemberGalleryHomePage({
       setIsEditAlbumPhotoOpen(false);
       refreshSelectedAlbumPhotos(selectedAlbum.id);
       toast.success("Album photo updated.");
+    });
+  }
+
+  async function handleSaveUnallocatedPhoto(values: UnallocatedPhotoFormValues) {
+    if (!selectedUnallocatedPhoto) {
+      return;
+    }
+
+    setIsBusy(true);
+
+    startTransition(async () => {
+      const result = await updateGalleryPhotoAction({
+        id: selectedUnallocatedPhoto.id,
+        caption: values.caption.trim() || null,
+        photoYear: values.photoYear,
+      });
+
+      setIsBusy(false);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setUnallocatedPhotos((currentPhotos) => currentPhotos.map((photo) => (
+        photo.id === selectedUnallocatedPhoto.id
+          ? {
+            ...photo,
+            caption: result.photo.caption,
+            photoYear: result.photo.photoYear,
+          }
+          : photo
+      )));
+
+      setIsEditUnallocatedPhotoOpen(false);
+      setSelectedUnallocatedPhoto(null);
+      toast.success("Photo details updated.");
     });
   }
 
@@ -2046,6 +2249,7 @@ export default function MemberGalleryHomePage({
                     selectedAlbumName={ selectedAlbum?.albumName }
                     unallocatedPhotos={ visibleUnallocatedPhotos }
                     onPhotoDoubleClick={ selectedAlbum ? handleOpenAlbumPhotoEditor : undefined }
+                    onUnallocatedPhotoDoubleClick={ handleOpenUnallocatedPhotoEditor }
                     onClearUnallocatedPhotos={ handleClearUnallocatedPhotos }
                     onUpload={ handleUpload }
                     isUploading={ isUploading }
@@ -2174,6 +2378,16 @@ export default function MemberGalleryHomePage({
         } }
         onSave={ handleSaveAlbumPhoto }
         onDelete={ handleDeleteAlbumPhoto }
+      />
+
+      <EditUnallocatedPhotoDialog
+        open={ isEditUnallocatedPhotoOpen }
+        photo={ selectedUnallocatedPhoto }
+        onClose={ () => {
+          setIsEditUnallocatedPhotoOpen(false);
+          setSelectedUnallocatedPhoto(null);
+        } }
+        onSave={ handleSaveUnallocatedPhoto }
       />
     </section>
   );

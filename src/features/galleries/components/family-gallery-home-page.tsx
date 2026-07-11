@@ -81,6 +81,40 @@ function GalleryImage({
   return <img src={ resolvedSrc } alt={ alt } className={ className } />;
 }
 
+function PhotoHoverTooltip({ text }: { text: string }) {
+  return (
+    <div className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 hidden w-max max-w-100 -translate-x-1/2 whitespace-pre-line rounded-lg border border-[#cfe2bc] bg-[#1f2e16] px-2.5 py-1.5 text-[11px] leading-4 text-[#f2ffe6] shadow-lg group-hover:block">
+      { text }
+    </div>
+  );
+}
+
+function buildPhotoHoverText(
+  caption: string | null | undefined,
+  photoYear: number | null | undefined,
+  albumPhotoDescription?: string | null
+) {
+  const lines: string[] = [];
+
+  if (caption?.trim()) {
+    lines.push(`Caption: ${ caption.trim() }`);
+  }
+
+  if (photoYear) {
+    lines.push(`Year: ${ photoYear }`);
+  }
+
+  if (albumPhotoDescription?.trim()) {
+    lines.push(`Notes: ${ albumPhotoDescription.trim() }`);
+  }
+
+  if (lines.length === 0) {
+    return "Double-click to view photo details";
+  }
+
+  return lines.join("\n");
+}
+
 // ── Photo scroll strip ────────────────────────────────────────────────────────
 
 function PhotoScrollStrip({
@@ -151,17 +185,18 @@ function PhotoScrollStrip({
           <div className="max-h-[50vh] overflow-y-auto pr-1">
             <div className="grid grid-cols-3 gap-2.5 xl:grid-cols-4">
               { photos.map((photo) => {
-                // Tooltip: show description if present, else fallback
-                const tooltip = photo.albumPhotoDescription?.trim()
-                  ? photo.albumPhotoDescription
-                  : "Double-click to view photo details";
+                const tooltip = buildPhotoHoverText(
+                  photo.caption,
+                  photo.photoYear,
+                  photo.albumPhotoDescription
+                );
                 return (
                   <div
                     key={ photo.id }
                     className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)] cursor-pointer"
-                    title={ tooltip }
                     onDoubleClick={ () => setViewPhoto(photo) }
                   >
+                    <PhotoHoverTooltip text={ tooltip } />
                     <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
                       <GalleryImage
                         src={ photo.photoImageUrl }
@@ -606,7 +641,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#eefdd6] sm:text-[0.72rem] sm:tracking-[0.34em]">
-                Family Picture Hallway
+                Family Gallery
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Link

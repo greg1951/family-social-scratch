@@ -439,7 +439,7 @@ export default function BooksHomePage({
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-4xl">
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#d9f3ff] sm:text-[0.72rem] sm:tracking-[0.34em]">
-                Family Reading Room
+                Family Library
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <Link
