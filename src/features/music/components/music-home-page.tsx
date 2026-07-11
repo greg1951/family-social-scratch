@@ -28,6 +28,7 @@ import {
 import { MusicDetail, MusicRecord } from "@/components/db/types/music";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -391,8 +392,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 md:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
+      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="max-w-3xl">
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#dbe8ff] sm:text-[0.72rem] sm:tracking-[0.34em]">Family Music Salon</p>
@@ -405,42 +406,45 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
         </div>
 
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)] backdrop-blur">
-          <div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6">
+          <div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(239,245,255,0.9))] px-4 py-3.5 sm:px-6 sm:py-5">
             <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Directory</p>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#4a6fae]">
               <h2 className="text-2xl font-black tracking-tight text-[#203b66]">Music Finder</h2>
-              <FeatureFaqHelp href="/feature-faq?category=Music%20Lovers" buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c8d9f3] bg-gradient-to-b from-[#f7fbff] to-[#eaf1ff] text-[#2C5EAD]" iconClassName="text-[#2C5EAD]" tooltipClassName="bg-[#203b66] text-[#eff5ff]" />
-              <Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 rounded-full border border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD]"><Eye className="size-3.5" />View</Button>
+              <FeatureFaqHelp 
+                  href="/feature-faq?category=Music%20Lovers" 
+                  buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c8d9f3] bg-gradient-to-b from-[#f7fbff] to-[#eaf1ff] text-[#2C5EAD]" 
+                  iconClassName="h-3 w-3 text-[#2C5EAD]" 
+                  tooltipClassName="bg-[#203b66] text-[#eff5ff]" 
+              />
+              <EditPostIcon tooltip="View Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 rounded-full border border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] sm:px-3" aria-label="View selected music"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button></EditPostIcon>
               { canViewLyricsSelectedMusic ? (
-                <Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD]">
-                  <Link href={ `/music/lyrics?id=${ selectedMusic }` }><Eye className="size-3.5" />View Lyrics</Link>
-                </Button>
+                <EditPostIcon tooltip="View Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD]"><Link href={ `/music/lyrics?id=${ selectedMusic }` } aria-label="View selected lyrics"><Eye className="size-3.5" /><span className="hidden sm:inline">View Lyrics</span></Link></Button></EditPostIcon>
               ) : null }
-              <Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD]"><Link href="/music/add-music"><Plus className="size-3.5" />Add</Link></Button>
-              <Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50"><Edit3 className="size-3.5" />Edit</Button>
-              <Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50"><Edit3 className="size-3.5" />Edit Lyrics</Button>
+              <EditPostIcon tooltip="Add Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] sm:px-3"><Link href="/music/add-music" aria-label="Add music"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
+              <EditPostIcon tooltip="Edit Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected music"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button></EditPostIcon>
+              <EditPostIcon tooltip="Edit Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected lyrics"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit Lyrics</span></Button></EditPostIcon>
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2">
-              <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-12 w-full rounded-full border-[#c8d9f3] bg-white pl-11 pr-4 text-sm text-[#203b66] shadow-sm" aria-label="Search music" /></div>
-              <div className="flex flex-row flex-nowrap items-center gap-2"><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-2.5 py-2 text-sm font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Archived</label><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-2.5 py-2 text-sm font-semibold text-[#2C5EAD]"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Discussions</label></div>
+              <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-9 w-full rounded-full border-[#c8d9f3] bg-white pl-10 pr-3 text-xs text-[#203b66] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm" aria-label="Search music" /></div>
+              <div className="flex flex-row flex-nowrap items-center gap-2"><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Archived</label><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Discussions</label></div>
             </div>
 
-            <div className="mt-3 flex flex-row flex-nowrap items-end gap-2">
-              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">Start Date</label><Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } className="h-9 rounded-xl border-[#c8d9f3] bg-white px-2 text-xs text-[#203b66]" /></div>
-              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">End Date</label><Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } className="h-9 rounded-xl border-[#c8d9f3] bg-white px-2 text-xs text-[#203b66]" /></div>
+            <div className="-mt-1 flex flex-row flex-nowrap items-end gap-2 sm:mt-0">
+              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">Start Date</label><Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] sm:h-9 sm:text-xs" /></div>
+              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">End Date</label><Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] sm:h-9 sm:text-xs" /></div>
             </div>
 
-            <div className="mt-4 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-3 text-sm text-[#4a6fae]">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Music Type</p>
-              <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#203b66]"><input type="radio" name="music-strip-mode" value="all" checked={ musicStripMode === "all" } onChange={ () => setMusicStripMode("all") } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />All</label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#203b66]"><input type="radio" name="music-strip-mode" value="latest" checked={ musicStripMode === "latest" } onChange={ () => setMusicStripMode("latest") } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Latest</label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c8d9f3] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#203b66]"><input type="radio" name="music-strip-mode" value="top-rated" checked={ musicStripMode === "top-rated" } onChange={ () => setMusicStripMode("top-rated") } className="size-4 border-[#7aa0dd] text-[#2C5EAD]" />Top Rated</label>
+            <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#2C5EAD] sm:text-[0.68rem] sm:tracking-[0.32em]">Music Type</p>
+              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="all" checked={ musicStripMode === "all" } onChange={ () => setMusicStripMode("all") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />All</label>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="latest" checked={ musicStripMode === "latest" } onChange={ () => setMusicStripMode("latest") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Latest</label>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="top-rated" checked={ musicStripMode === "top-rated" } onChange={ () => setMusicStripMode("top-rated") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Top Rated</label>
               </div>
             </div>
 
-            <div className="mt-4"><MusicScrollStrip title={ stripTitle } description={ stripDescription } items={ stripItems } accentClassName={ stripAccentClassName } selectedItemId={ selectedMusic } onSelectItem={ handleSelectMusic } onOpenItem={ handleOpenMusicFromCard } /></div>
+            <div className="mt-1"><MusicScrollStrip title={ stripTitle } description={ stripDescription } items={ stripItems } accentClassName={ stripAccentClassName } selectedItemId={ selectedMusic } onSelectItem={ handleSelectMusic } onOpenItem={ handleOpenMusicFromCard } /></div>
           </div>
         </div>
 

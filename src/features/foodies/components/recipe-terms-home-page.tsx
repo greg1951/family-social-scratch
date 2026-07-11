@@ -4,7 +4,7 @@ import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookText, PenSquare, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, BookText, PenSquare, Plus, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -110,11 +110,12 @@ export function RecipeTermsHomePage({ recipeTerms, isAdmin }: RecipeTermsHomePag
                 href="/foodies"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Back to Foodies Home Page
+                <ArrowLeft className="size-3.5 mr-2" />
+                Back to the Kitchen
               </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Browse the Recipe Terms below.
-              </h1>
+              <h3 className="mt-4 text-1xl font-black tracking-tight sm:text-3xl">
+                Expand a Recipe Term below.
+              </h3>
             </div>
           </div>
         </div>

@@ -40,6 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
 import {
   createDraftFromBook,
   createEmptyDraft,
@@ -49,7 +50,7 @@ import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
 import { BookDetailsDialog } from "@/features/books/components/dialogs/book-details-dialog";
 import { BookLinkDialog } from "@/features/books/components/dialogs/book-link-dialog";
 import type { Club } from "@/components/db/types/clubs";
-type DirectoryMode = "latest" | "top-rated";
+type DirectoryMode = "all" | "latest" | "top-rated";
 
 function getEditorDocument(value?: string): JSONContent {
   const parsed = parseSerializedTipTapDocument(value);
@@ -91,8 +92,8 @@ export default function BooksHomePage({
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
-  const [expandBookCards, setExpandBookCards] = useState(true);
-  const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("latest");
+  const [expandBookCards, setExpandBookCards] = useState(false);
+  const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("all");
   const deferredSearchValue = useDeferredValue(searchValue);
   const initialDraft = useMemo(() => {
     if (books[0]) {
@@ -204,10 +205,21 @@ export default function BooksHomePage({
   ), [bookItems, includeArchived]);
 
   const directoryBooks = useMemo(() => {
-    if (directoryMode === "latest") {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    if (directoryMode === "all") {
       return [...visibleBookItems].sort((leftBook, rightBook) => (
         new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
       ));
+    }
+
+    if (directoryMode === "latest") {
+      return visibleBookItems
+        .filter((bookItem) => new Date(bookItem.createdAt).getTime() >= monthAgo.getTime())
+        .sort((leftBook, rightBook) => (
+          new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
+        ));
     }
 
     return visibleBookItems
@@ -466,94 +478,117 @@ export default function BooksHomePage({
               <div className="min-w-0 flex-1">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#42748a]">Book Directory</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
-                  <h2 className="mt-2 text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
+                  <h2 className="text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
                   <FeatureFaqHelp
                     href=" /feature-faq?category=Book%20Besties"
                     buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
                     tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
                   />
-                  <Button
-                    type="button"
-                    onClick={ () => bookDialog.openBookDialog("view") }
-                    disabled={ !selectedBook }
-                    className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                  >
-                    <Eye className="size-4" />
-                    View Book
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ () => bookDialog.openBookDialog("edit") }
-                    disabled={ !selectedBook || !canEditSelected }
-                    className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
-                  >
-                    <PenSquare className="size-4" />
-                    Edit Book
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ () => bookDialog.openBookDialog("add") }
-                    className="rounded-full border-[#0f5c78]/20 bg-white text-[#0f5c78] hover:bg-[#e9f5fa]"
-                  >
-                    <Plus className="size-4" />
-                    Add Book
-                  </Button>
+                  <EditPostIcon tooltip="View Book" tooltipClassName="bg-[#0f435c] text-[#ecfaff]">
+                    <Button
+                      type="button"
+                      onClick={ () => bookDialog.openBookDialog("view") }
+                      disabled={ !selectedBook }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#183746] hover:bg-[#dff2f9] disabled:opacity-50 sm:px-3"
+                      aria-label="View selected book"
+                    >
+                      <Eye className="size-3.5" />
+                      <span className="hidden sm:inline">View</span>
+                    </Button>
+                  </EditPostIcon>
+                  <EditPostIcon tooltip="Edit Book" tooltipClassName="bg-[#0f435c] text-[#ecfaff]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={ () => bookDialog.openBookDialog("edit") }
+                      disabled={ !selectedBook || !canEditSelected }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#183746] hover:bg-[#dff2f9] hover:text-[#183746] disabled:opacity-50 sm:px-3"
+                      aria-label="Edit selected book"
+                    >
+                      <PenSquare className="size-3.5" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </Button>
+                  </EditPostIcon>
+                  <EditPostIcon tooltip="Add Book" tooltipClassName="bg-[#0f435c] text-[#ecfaff]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={ () => bookDialog.openBookDialog("add") }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#183746] hover:bg-[#dff2f9] hover:text-[#183746] sm:px-3"
+                      aria-label="Add book"
+                    >
+                      <Plus className="size-3.5" />
+                      <span className="hidden sm:inline">Add</span>
+                    </Button>
+                  </EditPostIcon>
                 </div>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
+                {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
                   Select a book card from the directory, or use search to narrow the list, then open View Book or Edit Book details in a separate dialog.
-                </p>
+                </p> */}
 
                 <div className="mt-4 min-w-0">
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-[#355161]">
-                    <label className="inline-flex cursor-pointer items-center gap-2">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-[#355161]">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input
+                        type="radio"
+                        name="book-directory-mode"
+                        value="all"
+                        checked={ directoryMode === "all" }
+                        onChange={ () => setDirectoryMode("all") }
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
+                      />
+                      All Books
+                    </label>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="book-directory-mode"
                         value="latest"
                         checked={ directoryMode === "latest" }
                         onChange={ () => setDirectoryMode("latest") }
-                        className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
                       />
-                      <span className="font-semibold">Latest Books</span>
+                      Latest Month
                     </label>
-                    <label className="inline-flex cursor-pointer items-center gap-2">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="book-directory-mode"
                         value="top-rated"
                         checked={ directoryMode === "top-rated" }
                         onChange={ () => setDirectoryMode("top-rated") }
-                        className="size-4 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b]"
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
                       />
-                      <span className="font-semibold">Top Rated Books</span>
+                      Top Rated Books
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-[#355161]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ includeArchived }
                         onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
                       />
-                      Include Archived
+                      Archived Too
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ filterWithClubSessions }
                         onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
-                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
                       />
-                      Filter Book Clubs
+                      Clubs Only
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#c8d7df] bg-white px-3 py-2 text-xs font-semibold text-[#2a5a6f]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ expandBookCards }
                         onChange={ (event) => setExpandBookCards(event.target.checked) }
-                        className="size-4 border-[#9ec3d2] text-[#0f5c78]"
+                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
                       />
                       Expand Book Cards
                     </label>
@@ -567,7 +602,7 @@ export default function BooksHomePage({
                         value={ searchValue }
                         onChange={ (event) => setSearchValue(event.target.value) }
                         placeholder="Search by title, author, year, language, series, or family member"
-                        className="h-12 rounded-full border-[#c8d7df] bg-white pl-11 pr-4 text-sm text-[#183746] shadow-sm"
+                        className="h-9 rounded-full border-[#c8d7df] bg-white pl-10 pr-3 text-xs text-[#183746] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
                         aria-label="Search books"
                       />
                     </div>
@@ -608,7 +643,7 @@ export default function BooksHomePage({
                   <div className="mt-3 space-y-3">
                     { selectedBook.discussionThreads.length === 0 ? (
                       <div className="rounded-2xl border border-dashed border-[#c8d7df] bg-[#f8fcff] px-3 py-3 text-sm text-[#51707e]">
-                        <p>No discussion threads have been added for this book yet.</p>
+                        <p>There are no discussion threads for this book yet.</p>
                       </div>
                     ) : (
                       selectedBook.discussionThreads.map((discussionThread) => (

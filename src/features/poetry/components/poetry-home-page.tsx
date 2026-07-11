@@ -29,6 +29,7 @@ import {
 } from "@/app/(features)/(poetry)/poetry/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import {
   createEmptyTipTapDocument,
@@ -83,7 +84,7 @@ type PoemDraft = {
   }>;
 };
 
-type PoetryDirectoryMode = "latest" | "top-rated";
+type PoetryDirectoryMode = "all" | "latest" | "top-rated";
 
 function getEditorDocument(value?: string): JSONContent {
   const parsed = parseSerializedTipTapDocument(value);
@@ -216,8 +217,8 @@ export default function PoetryHomePage({
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
-  const [expandPoemCards, setExpandPoemCards] = useState(true);
-  const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("latest");
+  const [expandPoemCards, setExpandPoemCards] = useState(false);
+  const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("all");
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
   const [verseLineCount, setVerseLineCount] = useState(1);
   const [verseLines, setVerseLines] = useState<string[]>([""]);
@@ -308,10 +309,21 @@ export default function PoetryHomePage({
   ), [poemItems, includeArchived]);
 
   const directoryPoems = useMemo(() => {
-    if (directoryMode === "latest") {
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    if (directoryMode === "all") {
       return [...visiblePoemItems].sort((leftPoem, rightPoem) => (
         new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
       ));
+    }
+
+    if (directoryMode === "latest") {
+      return visiblePoemItems
+        .filter((poemItem) => new Date(poemItem.createdAt).getTime() >= monthAgo.getTime())
+        .sort((leftPoem, rightPoem) => (
+          new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
+        ));
     }
 
     return visiblePoemItems
@@ -574,95 +586,118 @@ export default function PoetryHomePage({
               <div className="min-w-0 flex-1">
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Poetry Directory</p>
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
-                  <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Select a Poem Submission</h2>
+                  <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Find a Poem</h2>
                   <FeatureFaqHelp
                     href=" /feature-faq?category=Poetry%20Cafe"
                     buttonClassName="h-4 w-4 md:h-7 md:w-7border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
                     tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
                   />
-                  <Button
-                    type="button"
-                    onClick={ () => openPoemDialog() }
-                    disabled={ !selectedPoem }
-                    className="h-8 rounded-full border border-[#d8b5ff] bg-[#fbf4ff] px-3 text-xs font-semibold text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.16)] hover:bg-[#f5e9ff] disabled:opacity-50"
-                  >
-                    <Eye className="size-3.5" />
-                    View Poem
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ handleEditPoem }
-                    disabled={ !selectedPoem || !canEditSelected }
-                    className="h-8 rounded-full border border-[#d8b5ff] bg-white px-3 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff] disabled:opacity-50"
-                  >
-                    <PenSquare className="size-3.5" />
-                    Edit Poem
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ handleAddPoem }
-                    className="h-8 rounded-full border border-[#d8b5ff] bg-white px-3 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff]"
-                  >
-                    <Plus className="size-3.5" />
-                    Add Poem
-                  </Button>
+                  <EditPostIcon tooltip="View Poem" tooltipClassName="bg-[#4e2374] text-[#f6ebff]">
+                    <Button
+                      type="button"
+                      onClick={ () => openPoemDialog() }
+                      disabled={ !selectedPoem }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#d8b5ff] bg-[#fbf4ff] px-2 text-xs font-semibold text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.16)] hover:bg-[#f5e9ff] disabled:opacity-50 sm:px-3"
+                      aria-label="View selected poem"
+                    >
+                      <Eye className="size-3.5" />
+                      <span className="hidden sm:inline">View</span>
+                    </Button>
+                  </EditPostIcon>
+                  <EditPostIcon tooltip="Edit Poem" tooltipClassName="bg-[#4e2374] text-[#f6ebff]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={ handleEditPoem }
+                      disabled={ !selectedPoem || !canEditSelected }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#d8b5ff] bg-white px-2 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff] disabled:opacity-50 sm:px-3"
+                      aria-label="Edit selected poem"
+                    >
+                      <PenSquare className="size-3.5" />
+                      <span className="hidden sm:inline">Edit</span>
+                    </Button>
+                  </EditPostIcon>
+                  <EditPostIcon tooltip="Add Poem" tooltipClassName="bg-[#4e2374] text-[#f6ebff]">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={ handleAddPoem }
+                      className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#d8b5ff] bg-white px-2 text-xs font-semibold text-[#6e3f98] hover:bg-[#f5e9ff] sm:px-3"
+                      aria-label="Add poem"
+                    >
+                      <Plus className="size-3.5" />
+                      <span className="hidden sm:inline">Add</span>
+                    </Button>
+                  </EditPostIcon>
                 </div>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
+                {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                   Select a poem card from the directory, or use search to narrow the list, then open View Poem or Edit Poem details in a separate dialog.
-                </p>
+                </p> */}
 
                 <div className="mt-4 min-w-0">
-                  <div className="mb-3 flex flex-wrap gap-3">
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input
+                        type="radio"
+                        name="poetry-directory-mode"
+                        value="all"
+                        checked={ directoryMode === "all" }
+                        onChange={ () => setDirectoryMode("all") }
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
+                      />
+                      All
+                    </label>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="poetry-directory-mode"
                         value="latest"
                         checked={ directoryMode === "latest" }
                         onChange={ () => setDirectoryMode("latest") }
-                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
                       />
-                      Latest Poems
+                      Latest Month
                     </label>
 
-                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-4 py-2 text-sm font-semibold text-[#5d426f] transition hover:bg-[#faf4ff]">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="poetry-directory-mode"
                         value="top-rated"
                         checked={ directoryMode === "top-rated" }
                         onChange={ () => setDirectoryMode("top-rated") }
-                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
                       />
-                      Top Rated Poems
+                      Top Rated
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                  </div>
+
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ includeArchived }
                         onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
                       />
-                      Include Archived
+                      Archived Also
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ filterWithClubSessions }
                         onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
-                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
                       />
-                      Filter Poetry Clubs
+                      Clubs Only
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-2 rounded-full border border-[#d7d0ea] bg-white px-3 py-2 text-xs font-semibold text-[#5f466f]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ expandPoemCards }
                         onChange={ (event) => setExpandPoemCards(event.target.checked) }
-                        className="size-4 border-[#b79ad1] text-[#6e3f98]"
+                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
                       />
                       Expand Poem Cards
                     </label>
@@ -676,7 +711,7 @@ export default function PoetryHomePage({
                         value={ searchValue }
                         onChange={ (event) => setSearchValue(event.target.value) }
                         placeholder="Search by poem, poet, year, or family member"
-                        className="h-12 rounded-full border-[#d7d0ea] bg-white pl-11 pr-4 text-sm text-[#43245d] shadow-sm"
+                        className="h-9 rounded-full border-[#d7d0ea] bg-white pl-10 pr-3 text-xs text-[#43245d] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
                         aria-label="Search poems"
                       />
                     </div>

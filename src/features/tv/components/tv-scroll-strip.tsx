@@ -141,18 +141,18 @@ export function TvScrollStrip({
 }: TvScrollStripProps) {
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
-      <CardHeader className="gap-1 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-5 py-2 sm:px-6 sm:py-2.5">
+      <CardHeader className="gap-0.5 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-4 py-1.5 sm:px-6 sm:py-2.5">
         <div>
-          <CardTitle className="mt-0 text-xl font-black tracking-tight text-[#15384a]">
+          <CardTitle className="mt-0 text-lg font-black tracking-tight text-[#15384a] sm:text-xl">
             { title }
           </CardTitle>
           {/* <p className="mt-1 max-w-2xl text-xs leading-5 text-[#5f7987]">{ description }</p> */ }
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 py-2 sm:px-5 sm:py-3">
+      <CardContent className="px-3 pb-1 pt-1 sm:px-5 sm:py-3">
         <div
-          className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-1 md:grid-cols-4 lg:grid-cols-4"
+          className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-0.5 md:grid-cols-4 lg:grid-cols-4 sm:px-1 sm:pb-1 sm:pt-1"
         >
           { items.map((item) => {
             const isSelected = selectedShowId === item.id;

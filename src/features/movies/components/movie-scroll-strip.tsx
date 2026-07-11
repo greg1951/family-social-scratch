@@ -166,18 +166,18 @@ export function MovieScrollStrip({
 
   return (
     <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(102,34,0,0.8)] backdrop-blur">
-      <CardHeader className="gap-4 border-b border-[#ffe0b5] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.82))] px-5 py-5 sm:px-6">
+      <CardHeader className="gap-0.5 border-b border-[#ffe0b5] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,248,240,0.82))] px-4 py-1.5 sm:px-6 sm:py-2.5">
         <div>
-          <CardTitle className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">
+          <CardTitle className="mt-0 text-lg font-black tracking-tight text-[#5c2e1a] sm:text-xl">
             { title }
           </CardTitle>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">{ description }</p>
+          <p className="mt-0.5 max-w-2xl text-xs leading-5 text-[#8b5a3c] sm:mt-2 sm:text-sm sm:leading-6">{ description }</p>
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 py-4 sm:px-5 sm:py-4">
+      <CardContent className="px-3 pb-1 pt-1 sm:px-5 sm:py-4">
         <div
-          className="grid max-h-800 grid-cols-2 gap-3 overflow-y-auto px-1 pb-1 pt-1 md:grid-cols-4 lg:grid-cols-4"
+          className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-0.5 md:grid-cols-4 lg:grid-cols-4 sm:pt-1"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;

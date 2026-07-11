@@ -360,7 +360,7 @@ function AlbumFinder({
             <p className="text-sm text-[#86a072]">No shared albums found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
             { filtered.map((album) => (
               <button
                 key={ album.id }
@@ -651,17 +651,8 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
               <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2 md:gap-6">
                 <div className="min-w-0 overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/85 shadow-[0_24px_70px_-40px_rgba(63,93,42,0.75)] backdrop-blur order-2 md:order-2">
                   <div className="border-b border-[#d6e8c6] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,252,236,0.88))] px-5 py-5 sm:px-6">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                      <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
-                          Album Preview
-                        </p>
-                        <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">Photo Scroll Strip</h2>
-                        {/* <p className="mt-2 max-w-xl text-sm leading-6 text-[#6f8f5d]">
-                        Photos are shown in the saved album sequence, with newest album updates visible first.
-                      </p> */}
-                      </div>
-                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"> 
+                    </div>  
                   </div>
 
                   <div className="px-4 py-4 sm:px-6 sm:py-5">

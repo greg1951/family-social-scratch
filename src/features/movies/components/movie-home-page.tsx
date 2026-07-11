@@ -43,6 +43,7 @@ import { MovieScrollStrip } from "@/features/movies/components/movie-scroll-stri
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -452,8 +453,8 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
@@ -481,7 +482,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
 
           <div className="min-w-0 space-y-6 md:order-1">
             <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)] backdrop-blur">
-              <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.85))] px-5 py-5 sm:px-6">
+              <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.85))] px-4 py-3.5 sm:px-6 sm:py-5">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Directory</p>
@@ -493,9 +494,15 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
                         tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
                       />
-                      <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50"><Eye className="size-3.5" />View</Button>
-                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306]"><Link href="/movies/add-movie"><Plus className="size-3.5" />Add</Link></Button>
-                      <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-3 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50"><Edit3 className="size-3.5" />Edit</Button>
+                      <EditPostIcon tooltip="View Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                        <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50 sm:px-3" aria-label="View selected movie"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
+                      </EditPostIcon>
+                      <EditPostIcon tooltip="Add Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                        <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] sm:px-3"><Link href="/movies/add-movie" aria-label="Add movie"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button>
+                      </EditPostIcon>
+                      <EditPostIcon tooltip="Edit Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                        <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50 sm:px-3" aria-label="Edit selected movie"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button>
+                      </EditPostIcon>
 
                     </span>
                     {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p> */ }
@@ -511,33 +518,33 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       value={ searchValue }
                       onChange={ (event) => setSearchValue(event.target.value) }
                       placeholder="Search by movie, genre, adjective, channel, or family member"
-                      className="h-12 w-full rounded-full border-[#e8c4a0] bg-white pl-11 pr-4 text-sm text-[#5c2e1a] shadow-sm"
+                      className="h-9 w-full rounded-full border-[#e8c4a0] bg-white pl-10 pr-3 text-xs text-[#5c2e1a] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
                       aria-label="Search movies"
                     />
                   </div>
                   <div className="flex flex-row flex-nowrap items-center gap-2">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-2.5 py-2 text-sm font-semibold text-[#8b5a3c]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ includeArchived }
                         onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       Archived
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-2.5 py-2 text-sm font-semibold text-[#8b5a3c]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ filterWithDiscussionThreads }
                         onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       Discussions
                     </label>
                   </div>
                 </div>
 
-                <div className="mt-3 flex flex-row gap-2 sm:flex-nowrap sm:items-end">
+                <div className="-mt-1 flex flex-row gap-2 sm:mt-0 sm:flex-nowrap sm:items-end">
                   <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
                       Start Date
@@ -547,7 +554,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       value={ startDate }
                       max={ endDate || undefined }
                       onChange={ (event) => setStartDate(event.target.value) }
-                      className="h-9 rounded-xl border-[#e8c4a0] bg-white px-2 text-xs text-[#5c2e1a]"
+                      className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] sm:h-9 sm:text-xs"
                     />
                   </div>
                   <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
@@ -559,53 +566,53 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                       value={ endDate }
                       min={ startDate || undefined }
                       onChange={ (event) => setEndDate(event.target.value) }
-                      className="h-9 rounded-xl border-[#e8c4a0] bg-white px-2 text-xs text-[#5c2e1a]"
+                      className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] sm:h-9 sm:text-xs"
                     />
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-3 text-sm text-[#8b5a3c]">
-                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Type</p>
-                  <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                <div className="mt-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-2 text-sm text-[#8b5a3c] sm:py-3">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#a85a3a] sm:text-[0.68rem] sm:tracking-[0.32em]">Movie Type</p>
+                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="movie-strip-mode"
                         value="all"
                         checked={ movieStripMode === "all" }
                         onChange={ () => setMovieStripMode("all") }
-                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       All
                     </label>
 
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="movie-strip-mode"
                         value="latest"
                         checked={ movieStripMode === "latest" }
                         onChange={ () => setMovieStripMode("latest") }
-                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       Latest
                     </label>
 
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#e8c4a0] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5]">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                       <input
                         type="radio"
                         name="movie-strip-mode"
                         value="top-rated"
                         checked={ movieStripMode === "top-rated" }
                         onChange={ () => setMovieStripMode("top-rated") }
-                        className="size-4 border-[#d4a574] text-[#b8581a]"
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       Top Rated
                     </label>
                   </div>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-1">
                   <MovieScrollStrip
                     title={ stripTitle }
                     description={ stripDescription }

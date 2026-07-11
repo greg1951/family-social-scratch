@@ -157,19 +157,19 @@ export function FoodiesScrollStrip({
   onOpenItem,
 }: FoodiesScrollStripProps) {
   return (
-    <Card className="overflow-hidden border-white/70 bg-white/80 shadow-[0_22px_65px_-38px_rgba(9,44,62,0.8)] backdrop-blur">
-      <CardHeader className="gap-1 border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(239,249,253,0.82))] px-4 py-2 sm:px-5 sm:py-2.5">
+    <Card className="overflow-hidden border-white/70 bg-white/85 shadow-[0_22px_65px_-38px_rgba(38,54,26,0.78)] backdrop-blur">
+      <CardHeader className="gap-0.5 border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(245,251,235,0.86))] px-4 py-1.5 sm:px-5 sm:py-2.5">
         <div>
-          <CardTitle className="mt-0 text-xl font-black tracking-tight text-[#15384a]">
+          <CardTitle className="mt-0 text-lg font-black tracking-tight text-[#2f4820] sm:text-xl">
             { title }
           </CardTitle>
           {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5f7987]">{ description }</p> */ }
         </div>
       </CardHeader>
 
-      <CardContent className="px-4 py-4 sm:px-5 sm:py-5">
+      <CardContent className="px-3 pb-1 pt-1 sm:px-5 sm:py-5">
         <div
-          className="grid max-h-132 grid-cols-2 gap-3 overflow-y-auto px-1 pb-1 pt-1 md:grid-cols-4 lg:grid-cols-4"
+          className="grid max-h-132 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-0.5 md:grid-cols-4 lg:grid-cols-4 sm:pt-1"
         >
           { items.map((item) => {
             const isSelected = selectedItemId === item.id;
@@ -179,7 +179,7 @@ export function FoodiesScrollStrip({
                 key={ item.name }
                 className="min-w-0"
               >
-                <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(17,53,70,0.72)]", isSelected ? "ring-2 ring-[#2d87a8] ring-offset-1" : accentClassName) }>
+                <div className={ cn("rounded-[1.6rem] p-px shadow-[0_18px_34px_-24px_rgba(40,62,26,0.68)]", isSelected ? "ring-2 ring-[#578c24] ring-offset-1" : accentClassName) }>
                   <div
                     role={ onSelectItem ? "button" : undefined }
                     tabIndex={ onSelectItem ? 0 : undefined }
@@ -189,17 +189,17 @@ export function FoodiesScrollStrip({
                     aria-label={ onSelectItem ? (isSelected ? `${ item.name } is selected` : `Select ${ item.name }`) : undefined }
                     aria-pressed={ onSelectItem ? isSelected : undefined }
                     className={ cn(
-                      "overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfeff]",
+                      "overflow-hidden rounded-[calc(1.6rem-1px)] border border-white/80 bg-[#fbfdf7]",
                       onSelectItem && "cursor-pointer",
-                      onSelectItem && !isSelected && "hover:bg-[#f0faff]",
-                      isSelected && "bg-[#eaf7ff]",
+                      onSelectItem && !isSelected && "hover:bg-[#eef7df]",
+                      isSelected && "bg-[#e5f2d2]",
                     ) }
                   >
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                       { item.hasDiscussionThread ? (
-                        <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
+                        <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#578c24] shadow-sm">
                           <MessageSquare className="size-4" aria-label="Discussion thread available" />
                         </div>
                       ) : null }
@@ -208,45 +208,45 @@ export function FoodiesScrollStrip({
                     <div className="space-y-3 px-4 py-4">
                       <div>
                         <div className="flex items-center justify-between gap-3">
-                          <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
+                          <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#2f4820]">{ item.name }</h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        <div className="mt-1 flex select-none flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
-                          <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
-                          <span className="text-[#9bb0bb]">.</span>
+                        <div className="mt-1 flex select-none flex-wrap items-center gap-1 text-[11px] text-[#647a50] sm:flex-nowrap">
+                          <span className="whitespace-nowrap font-semibold text-[#476232]">{ item.submitterName }</span>
+                          <span className="text-[#8ca479]">.</span>
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>
                         { item.kind !== "top-rated" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
-                              <ThumbsUp className="size-3 text-[#2d87a8]" />
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#647a50]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#476232]">
+                              <ThumbsUp className="size-3 text-[#578c24]" />
                               { item.thumbsUp.toLocaleString() }
                             </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
                               <Heart className="size-3 text-[#cf3f7f]" />
                               { item.love.toLocaleString() }
                             </span>
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
-                              <MessageSquareText className="size-3 text-[#2d87a8]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#476232]">
+                              <MessageSquareText className="size-3 text-[#578c24]" />
                               { item.commentsCount.toLocaleString() }
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#607887]">
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#425e6d]">
-                              <ThumbsDown className="size-3 text-[#7e99a7]" />
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#647a50]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#5a7250]">
+                              <ThumbsDown className="size-3 text-[#7a8f5f]" />
                               { item.noRating.toLocaleString() }
                             </span>
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
-                              <ThumbsUp className="size-3 text-[#2d87a8]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#476232]">
+                              <ThumbsUp className="size-3 text-[#578c24]" />
                               { item.thumbsUp.toLocaleString() }
                             </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#8f2f58]">
                               <Heart className="size-3 text-[#cf3f7f]" />
                               { item.love.toLocaleString() }
                             </span>
-                            <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
-                              <MessageSquareText className="size-3 text-[#2d87a8]" />
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#476232]">
+                              <MessageSquareText className="size-3 text-[#578c24]" />
                               { item.commentsCount.toLocaleString() }
                             </span>
                           </div>

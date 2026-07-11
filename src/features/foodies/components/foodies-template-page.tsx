@@ -56,6 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import EditPostIcon from "@/components/common/edit-post-icon";
 
 type DialogMode = "create" | "edit";
 
@@ -259,25 +260,29 @@ export function FoodiesTemplatePage({
                 className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <ArrowLeft className="mr-1.5 size-3.5" />
-                Home
+                Back to the Kitchen
               </Link>
-              <Button
-                type="button"
-                className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
-                onClick={ openCreateDialog }
-              >
-                <Plus className="size-4" />
-                Create
-              </Button>
-              <Button
-                type="button"
-                className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={ openEditDialog }
-                disabled={ !selectedTemplate?.canEdit }
-              >
-                <Edit3 className="size-4" />
-                Update
-              </Button>
+              <EditPostIcon tooltip="Add Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
+                <Button
+                  type="button"
+                  className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
+                  onClick={ openCreateDialog }
+                  aria-label="Add template"
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </EditPostIcon>
+              <EditPostIcon tooltip="Edit Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
+                <Button
+                  type="button"
+                  className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={ openEditDialog }
+                  disabled={ !selectedTemplate?.canEdit }
+                  aria-label="Edit selected template"
+                >
+                  <Edit3 className="size-4" />
+                </Button>
+              </EditPostIcon>
             </div>
           </div>
         </div>

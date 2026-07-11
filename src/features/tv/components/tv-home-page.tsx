@@ -44,6 +44,7 @@ import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import { cn } from "@/lib/utils";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
 
 
 
@@ -644,8 +645,8 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   }
 
   return (
-    <section className="font-app h-full w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-5">
+    <section className="font-app h-full w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
@@ -681,7 +682,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
 
         <div className="space-y-6">
           <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/82 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
-            <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-5 py-5 sm:px-6">
+            <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-4 py-3.5 sm:px-6 sm:py-5">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                   <div>
@@ -696,9 +697,15 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
-                      <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50"><Eye className="size-3.5" />View</Button>
-                      <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a]"><Link href="/tv/add-show"><Plus className="size-3.5" />Add</Link></Button>
-                      <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-3 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50"><Edit3 className="size-3.5" />Edit</Button>
+                      <EditPostIcon tooltip="View Show" tooltipClassName="bg-[#15384a] text-[#ecf9ff]">
+                        <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50 sm:px-3" aria-label="View selected show"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
+                      </EditPostIcon>
+                      <EditPostIcon tooltip="Add Show" tooltipClassName="bg-[#15384a] text-[#ecf9ff]">
+                        <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] sm:px-3"><Link href="/tv/add-show" aria-label="Add new show"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button>
+                      </EditPostIcon>
+                      <EditPostIcon tooltip="Edit Show" tooltipClassName="bg-[#15384a] text-[#ecf9ff]">
+                        <Button type="button" variant="outline" onClick={ () => router.push(`/tv/edit-show/${ selectedShow }`) } disabled={ !canEditSelectedShow } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] hover:text-[#15384a] disabled:opacity-50 sm:px-3" aria-label="Edit selected show"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button>
+                      </EditPostIcon>
                     </div>
                   </div>
 
@@ -712,33 +719,33 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       value={ searchValue }
                       onChange={ (event) => setSearchValue(event.target.value) }
                       placeholder="Search by show, genre, adjective, channel, or family member"
-                      className="h-12 w-full rounded-full border-[#c9e2ec] bg-white pl-11 pr-4 text-sm text-[#15384a] shadow-sm"
+                      className="h-9 w-full rounded-full border-[#c9e2ec] bg-white pl-10 pr-3 text-xs text-[#15384a] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
                       aria-label="Search TV shows"
                     />
                   </div>
                   <div className="flex flex-row flex-nowrap items-center gap-2">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-2.5 py-2 text-sm font-semibold text-[#24536a]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ includeArchived }
                         onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                        className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
                       />
                       Archived
                     </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-2.5 py-2 text-sm font-semibold text-[#24536a]">
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
                         checked={ filterWithDiscussionThreads }
                         onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                        className="size-4 border-[#8ec6df] text-[#2d87a8]"
+                        className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
                       />
                       Discussions
                     </label>
                   </div>
                 </div>
 
-                <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end">
+                <div className="-mt-1 flex flex-row gap-2 sm:mt-0 sm:flex-nowrap sm:items-end">
                   <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
                     <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
                       Start Date
@@ -748,7 +755,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       value={ startDate }
                       max={ endDate || undefined }
                       onChange={ (event) => setStartDate(event.target.value) }
-                      className="h-9 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                      className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] sm:h-9 sm:text-xs"
                     />
                   </div>
                   <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
@@ -760,55 +767,55 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                       value={ endDate }
                       min={ startDate || undefined }
                       onChange={ (event) => setEndDate(event.target.value) }
-                      className="h-9 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-xs text-[#15384a]"
+                      className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] sm:h-9 sm:text-xs"
                     />
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-3 text-sm text-[#376176]">
-              <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">Show Type</p>
-              <div className="mt-2 flex flex-nowrap gap-2 overflow-x-auto">
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+            <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#45829a] sm:text-[0.68rem] sm:tracking-[0.32em]">Show Type</p>
+              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                   <input
                     type="radio"
                     name="tv-show-type"
                     value="all"
                     checked={ showType === "all" }
                     onChange={ () => setShowType("all") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
                   />
                   All
                 </label>
 
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                   <input
                     type="radio"
                     name="tv-show-type"
                     value="latest"
                     checked={ showType === "latest" }
                     onChange={ () => setShowType("latest") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
                   />
                   Latest
                 </label>
 
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full border border-[#c7dfeb] bg-white px-4 py-2 text-sm font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb]">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
                   <input
                     type="radio"
                     name="tv-show-type"
                     value="top-rated"
                     checked={ showType === "top-rated" }
                     onChange={ () => setShowType("top-rated") }
-                    className="size-4 border-[#86b3c5] text-[#2d87a8]"
+                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
                   />
                   Top Rated
                 </label>
               </div>
             </div>
 
-            <div className="px-4 py-4 sm:px-6 sm:py-5">
+            <div className="px-4 pb-2 pt-1 sm:px-6 sm:py-5">
               { stripItems.length === 0 ? (
                 <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-white px-4 py-8 text-center text-sm text-[#5f7987]">
                   No shows match that search yet.
