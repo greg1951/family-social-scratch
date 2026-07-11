@@ -108,11 +108,11 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
                 href="/books"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Back to Books Home Page
+                Back to Books
               </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Browse the Book Terms below.
-              </h1>
+              </h1> */}
             </div>
           </div>
         </div>

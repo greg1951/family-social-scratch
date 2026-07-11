@@ -25,6 +25,7 @@ import {
   Underline as UnderlineIcon,
   Unlink,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -244,28 +245,29 @@ export function FoodiesTemplatePage({
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 The Kitchen
               </p>
-              <Link
-                href="/foodies"
-                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                Back to Foodies Home
-              </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Recipe Templates
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
                 The global recipe template is listed for reference. Here you may create and edit your own family templates.
-              </p>
+              </p> */}
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <Link
+                href="/foodies"
+                className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <ArrowLeft className="mr-1.5 size-3.5" />
+                Home
+              </Link>
               <Button
                 type="button"
                 className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
                 onClick={ openCreateDialog }
               >
-                <Plus className="mr-2 size-4" />
-                Create Template
+                <Plus className="size-4" />
+                Create
               </Button>
               <Button
                 type="button"
@@ -273,8 +275,8 @@ export function FoodiesTemplatePage({
                 onClick={ openEditDialog }
                 disabled={ !selectedTemplate?.canEdit }
               >
-                <Edit3 className="mr-2 size-4" />
-                Update Selected
+                <Edit3 className="size-4" />
+                Update
               </Button>
             </div>
           </div>

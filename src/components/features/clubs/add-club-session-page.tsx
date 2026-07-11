@@ -184,7 +184,7 @@ export default function AddClubSessionPage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0f7ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Back to Book & Poetry Clubs
+                  Back to Clubs
                 </Link>
               </div>
 

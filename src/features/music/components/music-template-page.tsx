@@ -7,6 +7,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import {
+  ArrowLeft,
   Bold,
   Columns2,
   Edit3,
@@ -232,14 +233,17 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
-              <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Music Home</Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p>
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p> */}
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="mr-2 size-4" />Create Template</Button>
-              <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="mr-2 size-4" />Update Selected</Button>
+              <Link href="/music" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+              <ArrowLeft className="mr-1.5 size-3.5" />
+              Music Home
+              </Link>
+              <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
+              <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Update</Button>
             </div>
           </div>
         </div>

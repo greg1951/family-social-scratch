@@ -2000,7 +2000,7 @@ export default function MemberGalleryHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Back to Main Page
+                  Home
                 </Link>
                 <Link
                   href="/family-gallery"
@@ -2010,9 +2010,9 @@ export default function MemberGalleryHomePage({
                   Family Gallery
                 </Link>
               </div>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              <h3 className="mt-4 text-1xl font-black tracking-tight sm:text-3xl">
                 { member.firstName }&apos;s Private Photo and Album Workspace
-              </h1>
+              </h3>
               {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-base">
                 Upload photos, create albums, and prepare albums to share with your family. When you're ready, share them!
               </p> */}

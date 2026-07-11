@@ -144,13 +144,13 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0f7ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Go Back
+                  Back
                 </button>
               </div>
 
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Create clubs for shared book and poetry discussions.
-              </h1>
+              </h1> */}
             </div>
           </div>
         </div>

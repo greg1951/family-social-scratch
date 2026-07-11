@@ -7,6 +7,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import {
+  ArrowLeft,
   Bold,
   Columns2,
   Edit3,
@@ -232,14 +233,15 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
-              <Link href="/movies" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Back to Movies Home</Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Movie Templates</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#ffe8d1]">Create your own movie templates in draft or published status. Draft templates stay out of the Add Movie template selection list.</p>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="mr-2 size-4" />Create Template</Button>
-              <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="mr-2 size-4" />Update Selected</Button>
+              <Link href="/movies" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                Home
+              </Link>
+              <Button type="button" className="rounded-full bg-white/20 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="mr-2 size-3" />Create</Button>
+              <Button type="button" className="rounded-full bg-white/10 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="mr-2 size-3" />Edit</Button>
             </div>
           </div>
         </div>

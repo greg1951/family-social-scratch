@@ -543,27 +543,27 @@ export default function PoetryHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Go Home
+                  Home
                 </Link>
                 <Link
                   href="/poem-terms"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Poetry Terms
+                  Terms
                 </Link>
                   <Link
                     href="/add-club"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
                     <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                    Poetry Clubs
+                    Clubs
                   </Link>
               </div>
 
-              <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-2xl">
+              {/* <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-2xl">
                 Share your favorite poetry. Comment on each other&apos;s favorites.
-              </h1>
+              </h1> */}
             </div>
           </div>
         </div>

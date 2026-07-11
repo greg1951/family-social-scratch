@@ -468,10 +468,10 @@ export function MovieAddPage({
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
             <Link href="/movies" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
               <ArrowLeft className="mr-1 size-4" />
-              Back to Movies Home Page
+              Home
             </Link>
-            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{ isEditing ? "Edit Movie Details" : "Add a Movie Review" }</h1>
-            <p className="mt-2 text-sm text-[#ffe8d1]">Select a published template, upload the poster image to S3, and save your family movie write-up as TipTap JSON.</p>
+            {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{ isEditing ? "Edit Movie Details" : "Add a Movie Review" }</h1>
+            <p className="mt-2 text-sm text-[#ffe8d1]">Select a published template, upload the poster image to S3, and save your family movie write-up as TipTap JSON.</p> */}
           </div>
         </div>
 

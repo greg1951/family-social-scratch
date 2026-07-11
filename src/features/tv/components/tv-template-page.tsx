@@ -26,6 +26,7 @@ import {
   Underline as UnderlineIcon,
   Unlink,
   X,
+  ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -242,37 +243,38 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
                 Family TV Room
               </p>
-              <Link
-                href="/tv"
-                className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                Back to TV Home
-              </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Show Templates
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d9f5ff]">
                 Create your own show templates in draft or published status. Draft templates stay private to management and do not appear in Add Show template selection.
-              </p>
+              </p> */}
             </div>
 
             <div className="flex flex-wrap gap-3">
+              <Link
+                href="/tv"
+                className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              >
+                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                Home
+              </Link>
               <Button
                 type="button"
-                className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
+                className="rounded-full bg-white/20 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
                 onClick={ openCreateDialog }
               >
-                <Plus className="mr-2 size-4" />
-                Create Template
+                <Plus className="size-4" />
+                Create
               </Button>
               <Button
                 type="button"
-                className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-full bg-white/10 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={ openEditDialog }
                 disabled={ !selectedTemplate?.canEdit }
               >
-                <Edit3 className="mr-2 size-4" />
-                Update Selected
+                <Edit3 className="size-4" />
+                Update
               </Button>
             </div>
           </div>
