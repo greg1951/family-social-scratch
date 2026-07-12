@@ -356,10 +356,7 @@ export default function FamilyMembersPanel({
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
             {/* <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#2f7a95]">Family Members</p> */}
-            <h3 className="mt-1 text-xl font-bold text-[#10364a]">Manage your family membership on this page.</h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#456271]">
-              Select a member from the list below to edit their details, send another invitation, or remove them from the family. You can also add new members to your family account.
-            </p>
+            <h3 className="mt-1 text-base font-bold text-[#10364a]">Manage your family membership entirely from here.</h3>
           </div>
           <div className="rounded-xl border border-white/70 bg-white/85 px-4 py-3 text-sm text-[#456271] shadow-sm">
             {/* <p className="font-semibold text-[#10364a]">{ founderDetails.familyName }</p> */}

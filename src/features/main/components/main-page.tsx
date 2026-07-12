@@ -114,7 +114,7 @@ export default async function MainPage() {
                 </div>
               </div>
 
-              <div className="shrink-0 scale-90 sm:scale-95">
+              <div className="shrink-0 self-center scale-90 sm:scale-95">
                 <MainDropMenu
                   firstName={ memberKeyDetails.firstName }
                   email={ memberKeyDetails.email }

@@ -40,7 +40,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className="group relative cursor-pointer" aria-label={ title }>
+        <button type="button" className="group relative inline-flex cursor-pointer items-center justify-center self-center" aria-label={ title }>
           <div className={ tileClasses }>
             { sessionFound ? (
               <MemberAvatar
