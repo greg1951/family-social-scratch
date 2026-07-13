@@ -12,7 +12,7 @@ export default async function FeatureProfileMenu({ mobileVariant = "default" }: 
   const isFeatureHeroVariant = mobileVariant === "feature-hero";
 
   return (
-    <div className={ `pointer-events-none absolute inset-x-0 top-0 z-40 flex ${ isFeatureHeroVariant ? "h-20 sm:h-32 lg:h-36" : "h-56" } items-center justify-end` }>
+    <div className={ `pointer-events-none absolute inset-x-0 top-0 z-40 flex ${ isFeatureHeroVariant ? "h-28 sm:h-32 lg:h-36" : "h-56" } items-center justify-end` }>
       <div className={ `mx-auto flex w-full max-w-7xl justify-end px-4 ${ isFeatureHeroVariant ? "pr-6 sm:px-6 sm:pr-10 lg:px-8 lg:pr-12" : "pr-8 sm:px-6 sm:pr-10 lg:px-8 lg:pr-12" }` }>
         <div className="pointer-events-auto flex items-center">
         <MainDropMenu

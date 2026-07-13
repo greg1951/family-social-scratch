@@ -35,9 +35,8 @@ import { ThreadRecipientOption } from "@/components/db/types/thread-convos";
 import type { ThreadTemplate } from "@/components/db/types/thread-templates";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getThreadAttachmentSizeWarning, MAX_THREAD_IMAGE_SIZE_BYTES } from "@/features/threads/utils/thread-attachment-size";
 import { replaceTemplateVariables, validateTipTapDocument } from "@/features/threads/utils/template-variables";
-
-const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 
 function getEditorDocument(value?: string): JSONContent {
   const parsed = parseSerializedTipTapDocument(value);
@@ -248,9 +247,15 @@ export function ThreadComposePage({
         continue;
       }
 
-      if (file.size > MAX_IMAGE_SIZE_BYTES) {
-        toast.error(`${ file.name } is larger than 4MB.`);
+      if (file.size > MAX_THREAD_IMAGE_SIZE_BYTES) {
+        toast.error(`${ file.name } is larger than 8MB.`);
         continue;
+      }
+
+      const sizeWarning = getThreadAttachmentSizeWarning(file);
+
+      if (sizeWarning) {
+        toast.message(sizeWarning);
       }
 
       validFiles.push(file);

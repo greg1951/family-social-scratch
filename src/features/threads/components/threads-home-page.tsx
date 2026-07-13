@@ -28,11 +28,12 @@ type ThreadsHomePageProps = {
 function formatDate(date: Date | null): string {
   if (!date) return "—";
   return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
+    month: "2-digit",
+    day: "2-digit",
     year: "numeric",
-    hour: "numeric",
+    hour: "2-digit",
     minute: "2-digit",
+    hour12: true,
   }).format(new Date(date));
 }
 
@@ -186,30 +187,9 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                 Go Home
               </Link>
-              <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
+              {/* <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
                 Your family messages are here.
-              </h1>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 rounded-[1.6rem] border border-white/20 bg-white/10 p-3 shadow-inner backdrop-blur lg:min-w-72">
-              <div className="flex items-center gap-2 rounded-[1.2rem] bg-white/8 px-3 py-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/14 text-[#f0d8ff]">
-                  <EyeOff className="size-4" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black leading-none">{ unreadCount }</p>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#f0d8ff]">Unread</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 rounded-[1.2rem] bg-white/8 px-3 py-2">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/14 text-[#f0d8ff]">
-                  <Eye className="size-4" aria-hidden="true" />
-                </div>
-                <div>
-                  <p className="text-2xl font-black leading-none">{ filtered.length }</p>
-                  <p className="text-[11px] uppercase tracking-[0.18em] text-[#f0d8ff]">Showing</p>
-                </div>
-              </div>
+              </h1> */}
             </div>
           </div>
         </div>
@@ -220,40 +200,54 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
           {/* Toolbar */ }
           <div className="border-b border-[#e8d0f8] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(250,240,255,0.85))] px-5 py-5 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8840b0]">
-                  Thread Directory
-                </p>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center justify-between gap-3 pr-2 sm:pr-3">
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8840b0]">
+                    Thread Directory
+                  </p>
+                  <div className="ml-auto flex items-center justify-end gap-3 text-[#7a4a9a] sm:gap-4">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <EyeOff className="size-3.5 sm:size-4 md:size-5" aria-hidden="true" />
+                      <span className="text-sm font-black leading-none sm:text-base md:text-xl">{ unreadCount }</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Unread</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 sm:gap-2">
+                      <Eye className="size-3.5 sm:size-4 md:size-5" aria-hidden="true" />
+                      <span className="text-sm font-black leading-none sm:text-base md:text-xl">{ filtered.length }</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.16em]">Showing</span>
+                    </div>
+                  </div>
+                </div>
                 <h2 className="mt-2 text-2xl font-black tracking-tight text-[#4a1a6a]">
-                  Conversation Finder
+                  Message Finder
                 </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7a4a9a]">
+                {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7a4a9a]">
                   Search and filter your mail box messages by sender, recipient, read status, or time.
-                </p>
+                </p> */}
               </div>
 
               <div className="flex flex-wrap items-center justify-end gap-2">
+                <Button asChild size="xs" className="rounded-full bg-[#8840b0] text-white hover:bg-[#6d2f93]">
+                  <Link href="/threads/compose">
+                    <PencilLine className="mr-1 size-3" />
+                    Compose
+                  </Link>
+                </Button>
                 <Button
                   type="button"
-                  size="sm"
+                  size="xs"
                   onClick={ handleArchiveReadThreads }
                   disabled={ isArchiving }
                   className="rounded-full bg-[#6d2f93] text-white hover:bg-[#5a2679]"
                 >
-                  <Archive className="mr-1 size-4" />
-                  { isArchiving ? "Archiving..." : "Archive All Read" }
+                  <Archive className="mr-1 size-3" />
+                  { isArchiving ? "Archiving..." : "Archive All" }
                 </Button>
 
-                <Button asChild size="sm" className="rounded-full bg-[#8840b0] text-white hover:bg-[#6d2f93]">
-                  <Link href="/threads/compose">
-                    <PencilLine className="mr-1 size-4" />
-                    Compose
-                  </Link>
-                </Button>
 
-                <div className="rounded-full border border-[#e8d0f8] bg-[#faf5ff] px-4 py-2 text-sm font-semibold text-[#7a4a9a]">
+                {/* <div className="rounded-full border border-[#e8d0f8] bg-[#faf5ff] px-4 py-2 text-sm font-semibold text-[#7a4a9a]">
                   { filtered.length } thread{ filtered.length !== 1 ? "s" : "" } found
-                </div>
+                </div> */}
               </div>
             </div>
 
@@ -349,7 +343,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                           {/* Sender */ }
                           <td className="px-4 py-3 text-sm text-[#5c3a7a]">
                             { s.senderFirstName
-                              ? `${ s.senderFirstName } ${ s.senderLastName ?? "" }`.trim()
+                              ? s.senderFirstName
                               : <span className="text-[#b0a0c0]">—</span> }
                           </td>
 
