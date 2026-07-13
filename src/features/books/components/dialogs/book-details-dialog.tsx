@@ -29,6 +29,13 @@ import {
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { RichTextField } from "@/features/books/components/book-rich-text-field";
@@ -263,17 +270,6 @@ export function BookDetailsDialog({
                     </>
                   ) : null }
 
-                  { !isFounderModerating ? (
-                    <Button
-                      type="button"
-                      onClick={ save.onSave }
-                      disabled={ bookDialog.isSaving }
-                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                    >
-                      <Save className="size-4" />
-                      { bookDialog.isSaving ? "Saving..." : "Save Book" }
-                    </Button>
-                  ) : null }
                 </div>
               </div>
             </div>
@@ -294,6 +290,16 @@ export function BookDetailsDialog({
                 <p className="text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
                   Added { formatCreatedAt(draft.createdAt) }
                 </p>
+              ) : !isFounderModerating ? (
+                <Button
+                  type="button"
+                  onClick={ save.onSave }
+                  disabled={ bookDialog.isSaving }
+                  className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                >
+                  <Save className="size-4" />
+                  { bookDialog.isSaving ? "Saving..." : "Save Book" }
+                </Button>
               ) : null }
             </div>
 
@@ -358,6 +364,23 @@ export function BookDetailsDialog({
                     disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#355161]">Status</label>
+                  <Select
+                    value={ draft.status }
+                    onValueChange={ (nextStatus) => setDraft((currentDraft) => ({ ...currentDraft, status: nextStatus })) }
+                    disabled={ isFounderModerating }
+                  >
+                    <SelectTrigger className="w-full border-[#c8d7df] text-[#183746]">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                      <SelectItem value="archived">Archived</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               </>

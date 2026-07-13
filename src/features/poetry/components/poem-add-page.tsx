@@ -51,6 +51,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
@@ -321,7 +328,7 @@ function createEmptyDraft(member: MemberKeyDetails): PoemDraft {
     verseJson: JSON.stringify(createEmptyTipTapDocument()),
     analysisJson: JSON.stringify(createEmptyTipTapDocument()),
     selectedTagIds: [],
-    status: "draft",
+    status: "published",
     memberId: member.memberId,
     familyId: member.familyId,
   };
@@ -591,20 +598,6 @@ export function PoemAddPage({
                   : "Provide the poem title, poet name, year, verse, and optional analysis." }
               </p>
             </div>
-
-            <div className="flex flex-wrap gap-3">
-              { !isFounderModerating ? (
-                <Button
-                  type="button"
-                  onClick={ () => handleSave() }
-                  disabled={ isSaving || isDeleting }
-                  className="rounded-full bg-white text-[#4e2374] hover:bg-[#f6ebff]"
-                >
-                  <Save className="size-4" />
-                  { isSaving ? "Saving..." : "Save Poem" }
-                </Button>
-              ) : null }
-            </div>
           </div>
         </div>
 
@@ -624,7 +617,7 @@ export function PoemAddPage({
                 </p>
               </div>
 
-              { isEditMode && canModerate && (
+              { isEditMode && canModerate ? (
                 <div className="flex gap-2">
                   <Button
                     type="button"
@@ -675,7 +668,19 @@ export function PoemAddPage({
                     </>
                   ) : null }
                 </div>
-              ) }
+              ) : !isFounderModerating ? (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={ () => handleSave() }
+                    disabled={ isSaving || isDeleting }
+                    className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
+                  >
+                    <Save className="size-4" />
+                    { isSaving ? "Saving..." : "Save Poem" }
+                  </Button>
+                </div>
+              ) : null }
             </div>
           </div>
 
@@ -732,6 +737,24 @@ export function PoemAddPage({
                   disabled={ isSaving || isFounderModerating }
                   className="border-[#d7d0ea] text-[#43245d]"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#5d426f]">Status</label>
+                <Select
+                  value={ draft.status }
+                  onValueChange={ (nextStatus) => setDraft((currentDraft) => ({ ...currentDraft, status: nextStatus })) }
+                  disabled={ isSaving || isFounderModerating }
+                >
+                  <SelectTrigger className="w-full border-[#d7d0ea] text-[#43245d]">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>

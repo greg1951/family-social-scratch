@@ -103,7 +103,7 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     userReactionType: null,
     memberId: member.memberId,
     familyId: member.familyId,
-    status: "draft",
+    status: "published",
     createdAt: new Date(),
     analysisJson: JSON.stringify(createEmptyTipTapDocument()),
     selectedTagIds: [],
