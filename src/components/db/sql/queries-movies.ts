@@ -49,6 +49,36 @@ import {
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== "draft") {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 export async function deleteMovie(
   movieId: number,
   actor: {
@@ -359,7 +389,14 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     return [];
   }
 
-  const movieIds = movieRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visibleMovieRows = movieRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visibleMovieRows.length === 0) {
+    return [];
+  }
+
+  const movieIds = visibleMovieRows.map((row) => row.id);
 
   const [commentRows, likeRows, tagRows, discussionThreadRows] = await Promise.all([
     db
@@ -390,7 +427,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     loadDiscussionThreadSummariesByTargetIds(familyId, "movie", movieIds),
   ]);
 
-  const memberIds = [...new Set(movieRows.map((row) => row.memberId))];
+  const memberIds = [...new Set(visibleMovieRows.map((row) => row.memberId))];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -405,7 +442,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
-  const submitterMemberIdByMovieId = new Map(movieRows.map((row) => [row.id, row.memberId]));
+  const submitterMemberIdByMovieId = new Map(visibleMovieRows.map((row) => [row.id, row.memberId]));
 
   const commentCountByMovieId = new Map<number, number>();
   const noRatingByMovieId = new Map<number, number>();
@@ -463,7 +500,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     hasDiscussionThreadByMovieId.set(targetId, summaries.length > 0);
   }
 
-  return movieRows.map((row) => ({
+  return visibleMovieRows.map((row) => ({
     id: row.id,
     movieTitle: row.movieTitle,
     movieImageCredit: row.movieImageCredit,
@@ -505,6 +542,11 @@ async function loadMovieDetail(
   }
 
   const movieRow = movieRows[0];
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+
+  if (!canViewDraftPost(movieRow.status, movieRow.memberId, viewerMemberId, viewerIsFounder)) {
+    return null;
+  }
 
   const [commentRows, likeRows, tagRows, discussionThreads] = await Promise.all([
     db

@@ -51,6 +51,36 @@ import {
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== "draft") {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 export async function deleteShow(
   showId: number,
   actor: {
@@ -358,7 +388,14 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     return [];
   }
 
-  const showIds = showRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visibleShowRows = showRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visibleShowRows.length === 0) {
+    return [];
+  }
+
+  const showIds = visibleShowRows.map((row) => row.id);
 
   const [commentRows, likeRows, tagRows, discussionThreadRows] = await Promise.all([
     db
@@ -389,7 +426,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     loadDiscussionThreadSummariesByTargetIds(familyId, "show", showIds),
   ]);
 
-  const memberIds = [...new Set(showRows.map((row) => row.memberId))];
+  const memberIds = [...new Set(visibleShowRows.map((row) => row.memberId))];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -423,7 +460,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
   }
 
   for (const likeRow of likeRows) {
-    const showRow = showRows.find((candidate) => candidate.id === likeRow.showId);
+    const showRow = visibleShowRows.find((candidate) => candidate.id === likeRow.showId);
     const isSubmitterRating = Boolean(showRow && likeRow.memberId === showRow.memberId);
 
     if (isSubmitterRating) {
@@ -475,7 +512,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     hasDiscussionThreadByShowId.set(targetId, summaries.length > 0);
   }
 
-  return showRows.map((row) => ({
+  return visibleShowRows.map((row) => ({
     id: row.id,
     showTitle: row.showTitle,
     showImageCredit: row.showImageCredit,
@@ -519,6 +556,11 @@ async function loadShowDetail(
   }
 
   const showRow = showRows[0];
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+
+  if (!canViewDraftPost(showRow.status, showRow.memberId, viewerMemberId, viewerIsFounder)) {
+    return null;
+  }
 
   const [commentRows, likeRows, tagRows, discussionThreads] = await Promise.all([
     db

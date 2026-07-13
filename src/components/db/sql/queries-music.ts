@@ -52,6 +52,36 @@ import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-thre
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== "draft") {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 export async function deleteMusic(
   musicId: number,
   actor: {
@@ -401,7 +431,14 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     return [];
   }
 
-  const musicIds = musicRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visibleMusicRows = musicRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visibleMusicRows.length === 0) {
+    return [];
+  }
+
+  const musicIds = visibleMusicRows.map((row) => row.id);
 
   const [commentRows, likeRows, tagRows, lyricsRows, discussionThreadsByMusicId] = await Promise.all([
     db
@@ -438,7 +475,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     loadDiscussionThreadSummariesByTargetIds(familyId, 'music', musicIds),
   ]);
 
-  const memberIds = [...new Set(musicRows.map((row) => row.memberId))];
+  const memberIds = [...new Set(visibleMusicRows.map((row) => row.memberId))];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -453,7 +490,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
-  const submitterMemberIdByMusicId = new Map(musicRows.map((row) => [row.id, row.memberId]));
+  const submitterMemberIdByMusicId = new Map(visibleMusicRows.map((row) => [row.id, row.memberId]));
 
   const commentCountByMusicId = new Map<number, number>();
   const noRatingByMusicId = new Map<number, number>();
@@ -511,7 +548,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     hasLyricsByMusicId.add(lyricsRow.musicId);
   }
 
-  return musicRows.map((row) => ({
+  return visibleMusicRows.map((row) => ({
     id: row.id,
     musicTitle: row.musicTitle,
     artistName: row.artistName,
@@ -554,6 +591,11 @@ async function loadMusicDetail(
   }
 
   const musicRow = musicRows[0];
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+
+  if (!canViewDraftPost(musicRow.status, musicRow.memberId, viewerMemberId, viewerIsFounder)) {
+    return null;
+  }
 
   const [commentRows, likeRows, tagRows, lyrics, discussionThreadsByMusicId] = await Promise.all([
     db

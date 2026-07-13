@@ -72,6 +72,36 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   return "Unknown Member";
 }
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== "draft") {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 function createDefaultRecipeTemplateJson() {
   return serializeTipTapDocument({
     type: "doc",
@@ -368,7 +398,7 @@ async function loadFoodiesTemplateManagementRecords(
   });
 }
 
-async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
+async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Promise<FoodiesRecipe[]> {
   const recipeRows = await db
     .select()
     .from(recipe)
@@ -379,7 +409,14 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     return [];
   }
 
-  const recipeIds = recipeRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visibleRecipeRows = recipeRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visibleRecipeRows.length === 0) {
+    return [];
+  }
+
+  const recipeIds = visibleRecipeRows.map((row) => row.id);
 
   const [commentRows, likeRows, tagRows, discussionThreadsByRecipeId] = await Promise.all([
     db
@@ -411,7 +448,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     loadDiscussionThreadSummariesByTargetIds(familyId, 'recipe', recipeIds),
   ]);
 
-  const memberIds = [...new Set(recipeRows.map((row) => row.memberId))];
+  const memberIds = [...new Set(visibleRecipeRows.map((row) => row.memberId))];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -444,7 +481,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
   }
 
   for (const likeRow of likeRows) {
-    const recipeRow = recipeRows.find((row) => row.id === likeRow.recipeId);
+    const recipeRow = visibleRecipeRows.find((row) => row.id === likeRow.recipeId);
 
     if (recipeRow && likeRow.memberId === recipeRow.memberId) {
       submitterLikeByRecipeId.set(likeRow.recipeId, likeRow.likenessDegree);
@@ -478,7 +515,7 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
     tagNamesByTypeByRecipeId.set(tagRow.recipeId, byType);
   }
 
-  return recipeRows.map((row) => ({
+  return visibleRecipeRows.map((row) => ({
     id: row.id,
     recipeTitle: row.recipeTitle,
     recipeShortSummary: row.recipeShortSummary,
@@ -506,9 +543,10 @@ async function loadFoodiesRecipes(familyId: number): Promise<FoodiesRecipe[]> {
 
 export async function getFoodiesRecipeById(
   familyId: number,
-  recipeId: number
+  recipeId: number,
+  viewerMemberId?: number
 ): Promise<GetFoodiesRecipeReturn> {
-  const recipes = await loadFoodiesRecipes(familyId);
+  const recipes = await loadFoodiesRecipes(familyId, viewerMemberId);
   const selectedRecipe = recipes.find((recipeRecord) => recipeRecord.id === recipeId);
 
   if (!selectedRecipe) {
@@ -533,7 +571,7 @@ export async function getFoodiesHomePageData(
     const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const isTemplateDebug = process.env.NODE_ENV !== "production";
     const [recipes, recipeTags, recipeTemplates] = await Promise.all([
-      loadFoodiesRecipes(familyId),
+      loadFoodiesRecipes(familyId, memberId),
       loadRecipeTagOptions(),
       loadRecipeTemplates(familyId, memberId, {
         includeDraft: false,
@@ -662,7 +700,7 @@ export async function saveFoodiesRecipe(
       }
 
       // Load the full updated recipe to return
-      const recipes = await loadFoodiesRecipes(actor.familyId);
+      const recipes = await loadFoodiesRecipes(actor.familyId, actor.memberId);
       const fullUpdatedRecipe = recipes.find((r) => r.id === updatedRecipe.id);
 
       if (!fullUpdatedRecipe) {
@@ -896,7 +934,7 @@ export async function saveFoodiesRecipe(
       });
     }
 
-    const [savedFoodiesRecipe] = await loadFoodiesRecipes(actor.familyId).then((rows) => rows.filter((row) => row.id === savedRecipe.id));
+    const [savedFoodiesRecipe] = await loadFoodiesRecipes(actor.familyId, actor.memberId).then((rows) => rows.filter((row) => row.id === savedRecipe.id));
 
     if (!savedFoodiesRecipe) {
       return {
@@ -1080,6 +1118,12 @@ async function loadFoodiesRecipeDetail(
   }
 
   const recipeRow = recipeRows[0];
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+
+  if (!canViewDraftPost(recipeRow.status, recipeRow.memberId, viewerMemberId, viewerIsFounder)) {
+    return null;
+  }
+
   const [commentRows, likeRows, tagRows, discussionThreadsByRecipeId] = await Promise.all([
     db
       .select()

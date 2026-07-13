@@ -201,8 +201,16 @@ export default function BooksHomePage({
   const linkDialog = useLinkDialog(analysisEditor);
 
   const visibleBookItems = useMemo(() => (
-    bookItems.filter((bookItem) => bookItem.status === "published" || (includeArchived && bookItem.status === "archived"))
-  ), [bookItems, includeArchived]);
+    bookItems.filter((bookItem) => {
+      const normalizedStatus = bookItem.status.trim().toLowerCase();
+
+      return (
+        normalizedStatus === "published"
+        || (normalizedStatus === "draft" && (bookItem.memberId === member.memberId || member.isFounder))
+        || (includeArchived && normalizedStatus === "archived")
+      );
+    })
+  ), [bookItems, includeArchived, member.isFounder, member.memberId]);
 
   const directoryBooks = useMemo(() => {
     const monthAgo = new Date();
@@ -750,6 +758,11 @@ export default function BooksHomePage({
                             <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#183746] sm:text-sm">{ bookItem.bookTitle }</p>
                           ) }
                           <p className="mt-1 text-[0.7rem] text-[#6b8a98] sm:text-xs">Created { formatCreatedAt(bookItem.createdAt) }</p>
+                          { bookItem.status === "draft" ? (
+                            <p className="mt-1 inline-flex w-fit rounded-full border border-[#d4a64f] bg-[#fff5dc] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9a5a06] sm:text-[0.65rem]">
+                              Draft
+                            </p>
+                          ) : null }
                         </div>
                         { expandBookCards ? (
                           <div className="flex flex-col gap-1">

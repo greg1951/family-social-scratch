@@ -240,7 +240,13 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   const [showType, setShowType] = useState<"all" | "latest" | "top-rated">("all");
   const [includeArchived, setIncludeArchived] = useState(false);
 
-  const visibleShows = shows.filter((show) => show.status === "published" || (includeArchived && show.status === "archived"));
+  const canAccessDraftShow = (showMemberId: number) => showMemberId === member.memberId || member.isFounder;
+
+  const visibleShows = shows.filter((show) => (
+    show.status === "published"
+    || (show.status === "draft" && canAccessDraftShow(show.memberId))
+    || (includeArchived && show.status === "archived")
+  ));
   const latestCutoffDate = getOneMonthAgo();
 
   const latestShowRecords = [...visibleShows]

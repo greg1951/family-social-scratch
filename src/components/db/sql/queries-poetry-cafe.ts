@@ -64,6 +64,36 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   return 'Unknown Member';
 }
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== 'draft') {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 async function loadPoetryHomePoems(
   familyId: number,
   poemIds?: number[],
@@ -83,7 +113,14 @@ async function loadPoetryHomePoems(
     return [];
   }
 
-  const poemFactIds = poemFactRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visiblePoemRows = poemFactRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visiblePoemRows.length === 0) {
+    return [];
+  }
+
+  const poemFactIds = visiblePoemRows.map((row) => row.id);
   const verseRows = await db
     .select()
     .from(poemVerse)
@@ -108,7 +145,7 @@ async function loadPoetryHomePoems(
     .where(inArray(poemLike.poemId, poemFactIds));
 
   const memberIds = [...new Set([
-    ...poemFactRows.map((row) => row.memberId),
+    ...visiblePoemRows.map((row) => row.memberId),
     ...commentRows.map((row) => row.memberId),
     ...likeRows.map((row) => row.memberId),
   ])];
@@ -188,7 +225,7 @@ async function loadPoetryHomePoems(
     }
   }
 
-  return poemFactRows.map((row) => {
+  return visiblePoemRows.map((row) => {
     const verseRow = verseByPoemId.get(row.id);
     const verseComments = verseRow ? commentsByVerseId.get(verseRow.id) ?? [] : [];
     const analysisComment = verseComments.find((commentRow) => commentRow.isPoemAnalysis);
@@ -486,7 +523,7 @@ export async function savePoetryHomePoem(
       }
 
       // Load the full updated poem to return
-      const poems = await loadPoetryHomePoems(actor.familyId, [updatedPoem.id]);
+      const poems = await loadPoetryHomePoems(actor.familyId, [updatedPoem.id], actor.memberId);
       const fullUpdatedPoem = poems[0];
 
       if (!fullUpdatedPoem) {
@@ -754,7 +791,7 @@ export async function savePoetryHomePoem(
     };
   }
 
-  const [savedPoem] = await loadPoetryHomePoems(actor.familyId, [savedPoemId]);
+  const [savedPoem] = await loadPoetryHomePoems(actor.familyId, [savedPoemId], actor.memberId);
 
   if (!savedPoem) {
     return {

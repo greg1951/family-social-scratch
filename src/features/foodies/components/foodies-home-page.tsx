@@ -251,8 +251,13 @@ export function FoodiesHomePage({
   const [recipeStripMode, setRecipeStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
+  const canAccessDraftRecipe = (recipeMemberId: number) => recipeMemberId === member.memberId || member.isFounder;
 
-  const visibleRecipes = recipes.filter((recipe) => recipe.status === "published" || (includeArchived && recipe.status === "archived"));
+  const visibleRecipes = recipes.filter((recipe) => (
+    recipe.status === "published"
+    || (recipe.status === "draft" && canAccessDraftRecipe(recipe.memberId))
+    || (includeArchived && recipe.status === "archived")
+  ));
 
   const [searchValue, setSearchValue] = useState("");
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);

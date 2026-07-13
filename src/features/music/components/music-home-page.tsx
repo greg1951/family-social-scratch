@@ -141,6 +141,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   const [musicStripMode, setMusicStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
+  const canAccessDraftMusic = (musicMemberId: number) => musicMemberId === member.memberId || member.isFounder;
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -148,7 +149,11 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-  const visibleMusics = musics.filter((music) => music.status === "published" || (includeArchived && music.status === "archived"));
+  const visibleMusics = musics.filter((music) => (
+    music.status === "published"
+    || (music.status === "draft" && canAccessDraftMusic(music.memberId))
+    || (includeArchived && music.status === "archived")
+  ));
   const latestCutoffDate = getOneMonthAgo();
   const [selectedMusic, setSelectedMusic] = useState(visibleMusics[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);

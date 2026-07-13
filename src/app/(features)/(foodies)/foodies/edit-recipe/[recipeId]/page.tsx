@@ -27,7 +27,7 @@ export default async function EditRecipePage({
       memberKeyDetails.memberId,
       memberKeyDetails.isAdmin ?? false
     ),
-    getFoodiesRecipeById(memberKeyDetails.familyId, parsedRecipeId),
+    getFoodiesRecipeById(memberKeyDetails.familyId, parsedRecipeId, memberKeyDetails.memberId),
     getFoodiesRecipeDetail(memberKeyDetails.familyId, parsedRecipeId, memberKeyDetails.memberId),
   ]);
 

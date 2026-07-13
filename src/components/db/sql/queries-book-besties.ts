@@ -53,6 +53,36 @@ function createSubmitterName(firstName?: string | null, lastName?: string | null
   return 'Unknown Member';
 }
 
+async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
+  if (!viewerMemberId) {
+    return false;
+  }
+
+  const viewer = await db
+    .select({
+      id: member.id,
+      isFounder: member.isFounder,
+    })
+    .from(member)
+    .where(and(eq(member.id, viewerMemberId), eq(member.familyId, familyId)))
+    .then((rows) => rows[0] ?? null);
+
+  return Boolean(viewer?.isFounder);
+}
+
+function canViewDraftPost(
+  status: string,
+  ownerMemberId: number,
+  viewerMemberId: number | undefined,
+  viewerIsFounder: boolean
+) {
+  if (status !== 'draft') {
+    return true;
+  }
+
+  return ownerMemberId === viewerMemberId || viewerIsFounder;
+}
+
 async function loadBooksHomeBooks(
   familyId: number,
   bookIds?: number[],
@@ -72,7 +102,14 @@ async function loadBooksHomeBooks(
     return [];
   }
 
-  const bookIdsToLoad = bookRows.map((row) => row.id);
+  const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
+  const visibleBookRows = bookRows.filter((row) => canViewDraftPost(row.status, row.memberId, viewerMemberId, viewerIsFounder));
+
+  if (visibleBookRows.length === 0) {
+    return [];
+  }
+
+  const bookIdsToLoad = visibleBookRows.map((row) => row.id);
   const commentRows = await db
     .select({
       id: bookComment.id,
@@ -96,7 +133,7 @@ async function loadBooksHomeBooks(
     .where(inArray(bookLike.bookId, bookIdsToLoad));
 
   const memberIds = [...new Set([
-    ...bookRows.map((row) => row.memberId),
+    ...visibleBookRows.map((row) => row.memberId),
     ...commentRows.map((row) => row.memberId),
     ...likeRows.map((row) => row.memberId),
   ])];
@@ -135,7 +172,7 @@ async function loadBooksHomeBooks(
   const reactionsByBookId = new Map<number, { dislikeCount: number; likeCount: number; loveCount: number }>();
   const reactionMemberNamesByBookId = new Map<number, { dislikeMemberNames: string[]; likeMemberNames: string[]; loveMemberNames: string[] }>();
   const userReactionTypeByBookId = new Map<number, number>();
-  const submitterMemberIdByBookId = new Map(bookRows.map((row) => [row.id, row.memberId]));
+  const submitterMemberIdByBookId = new Map(visibleBookRows.map((row) => [row.id, row.memberId]));
   const hasClubSessionByBookId = new Set(clubSessionTargetIds);
 
   for (const factTagRow of factTagRows) {
@@ -180,7 +217,7 @@ async function loadBooksHomeBooks(
     }
   }
 
-  return bookRows.map((row) => {
+  return visibleBookRows.map((row) => {
     const bookCommentsForBook = commentsByBookId.get(row.id) ?? [];
     const analysisComment = bookCommentsForBook.find((commentRow) => commentRow.isBookAnalysis);
     const submissionComments = bookCommentsForBook.filter((commentRow) => !commentRow.isBookAnalysis);
@@ -415,7 +452,7 @@ export async function saveBooksHomeBook(
       }
 
       // Load the full updated book to return
-      const fullUpdatedBooks = await loadBooksHomeBooks(actor.familyId, [updatedBook.id]);
+      const fullUpdatedBooks = await loadBooksHomeBooks(actor.familyId, [updatedBook.id], actor.memberId);
       const fullUpdatedBook = fullUpdatedBooks[0];
 
       if (!fullUpdatedBook) {

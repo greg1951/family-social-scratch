@@ -305,8 +305,12 @@ export default function PoetryHomePage({
   }, [analysisViewer, selectedPoem?.analysisJson, selectedPoem?.id]);
 
   const visiblePoemItems = useMemo(() => (
-    poemItems.filter((poemItem) => poemItem.status === "published" || (includeArchived && poemItem.status === "archived"))
-  ), [poemItems, includeArchived]);
+    poemItems.filter((poemItem) => (
+      poemItem.status === "published"
+      || (poemItem.status === "draft" && (poemItem.memberId === member.memberId || member.isFounder))
+      || (includeArchived && poemItem.status === "archived")
+    ))
+  ), [poemItems, includeArchived, member.isFounder, member.memberId]);
 
   const directoryPoems = useMemo(() => {
     const monthAgo = new Date();
@@ -853,6 +857,11 @@ export default function PoetryHomePage({
                             <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                           ) }
                           <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
+                          { poemItem.status === "draft" ? (
+                            <p className="mt-1 inline-flex w-fit rounded-full border border-[#d4a64f] bg-[#fff5dc] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9a5a06] sm:text-[0.65rem]">
+                              Draft
+                            </p>
+                          ) : null }
                         </div>
                         { expandPoemCards ? (
                           <div className="flex flex-col gap-1">

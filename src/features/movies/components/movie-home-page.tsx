@@ -175,6 +175,7 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   const [movieStripMode, setMovieStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
+  const canAccessDraftMovie = (movieMemberId: number) => movieMemberId === member.memberId || member.isFounder;
   const [startDate, setStartDate] = useState(() => {
     const today = new Date();
     const threeMonthsAgo = new Date(today);
@@ -182,7 +183,11 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-  const visibleMovies = movies.filter((movie) => movie.status === "published" || (includeArchived && movie.status === "archived"));
+  const visibleMovies = movies.filter((movie) => (
+    movie.status === "published"
+    || (movie.status === "draft" && canAccessDraftMovie(movie.memberId))
+    || (includeArchived && movie.status === "archived")
+  ));
   const latestCutoffDate = getOneMonthAgo();
   const [selectedMovie, setSelectedMovie] = useState(visibleMovies[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
