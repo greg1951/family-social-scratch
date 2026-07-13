@@ -100,9 +100,9 @@ export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] })
           <h1 className="mt-3 text-2xl font-black tracking-tight sm:text-3xl">
             Frequently Asked Questions
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eafcff]">
+          {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eafcff]">
             Browse the most common questions and answers for account access, family setup, and support workflow.
-          </p>
+          </p> */}
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {/* <div className="inline-flex rounded-full border border-white/35 bg-white/15 px-4 py-2 text-sm font-semibold">
               { filteredFaqItems.length } Published FAQ{ filteredFaqItems.length === 1 ? "" : "s" }

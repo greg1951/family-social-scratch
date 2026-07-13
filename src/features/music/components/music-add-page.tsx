@@ -384,8 +384,8 @@ export function MusicAddPage({
               <ArrowLeft className="mr-1 size-4" />
               Back to Music Home Page
             </Link>
-            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{ isEditing ? "Edit Music Details" : "Add a Music Review" }</h1>
-            <p className="mt-2 text-sm text-[#eff5ff]">Write a review of your favorite music song or album. There&apos;s a nice template to help you out.</p>
+            {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">{ isEditing ? "Edit Music Details" : "Add a Music Review" }</h1> */}
+            {/* <p className="mt-2 text-sm text-[#eff5ff]">Write a review of your favorite music song or album. There&apos;s a nice template to help you out.</p> */}
           </div>
         </div>
 

@@ -81,6 +81,12 @@ function toDateInputValue(date: Date) {
   return `${ year }-${ month }-${ day }`;
 }
 
+function getOneMonthAgo(referenceDate = new Date()) {
+  const oneMonthAgo = new Date(referenceDate);
+  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+  return oneMonthAgo;
+}
+
 function getMusicDocument(musicJson?: string): JSONContent {
   if (!musicJson) {
     return createEmptyTipTapDocument();
@@ -143,6 +149,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
   const visibleMusics = musics.filter((music) => music.status === "published" || (includeArchived && music.status === "archived"));
+  const latestCutoffDate = getOneMonthAgo();
   const [selectedMusic, setSelectedMusic] = useState(visibleMusics[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
   const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
@@ -260,9 +267,26 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       imageAlt: `${ music.musicTitle } music image`,
     }));
 
-  const latestMusics = [...allMusics]
+  const latestMusics = [...filteredFinderMusics]
+    .filter((music) => new Date(music.updatedAt) >= latestCutoffDate)
+    .sort((leftMusic, rightMusic) => +new Date(rightMusic.updatedAt) - +new Date(leftMusic.updatedAt))
     .slice(0, 8)
-    .map((music) => ({ ...music, kind: "latest" as const }));
+    .map((music) => ({
+      kind: "latest" as const,
+      id: music.id,
+      name: music.musicTitle,
+      date: formatShortDate(music.updatedAt),
+      submitterName: music.submitterName,
+      reviewType: music.isSong ? "Song" as const : "Album" as const,
+      hasLyrics: Boolean(music.hasLyrics),
+      submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
+      commentsCount: music.commentCount,
+      thumbsUp: music.thumbsUpCount,
+      love: music.loveCount,
+      hasDiscussionThread: music.hasDiscussionThread,
+      imageSrc: music.musicImageUrl ?? "/images/music/princess-bride.png",
+      imageAlt: `${ music.musicTitle } music image`,
+    }));
 
   const topRatedMusics = [...filteredFinderMusics]
     .filter((music) => (music.thumbsUpCount + music.loveCount) > 0)
@@ -471,6 +495,15 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                     <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Artist</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
                   </div>
                 </div>
+
+                { selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.lyrics ? (
+                  <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-white p-4">
+                    <div>
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Lyrics</p>
+                    </div>
+                    <MusicViewer musicJson={ selectedMusicDetail.lyrics.lyricsJson } />
+                  </div>
+                ) : null }
 
                 <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
                   <div>

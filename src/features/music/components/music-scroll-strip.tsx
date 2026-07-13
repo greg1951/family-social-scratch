@@ -233,7 +233,7 @@ export function MusicScrollStrip({
                       ) : null }
                     </div>
 
-                    <div className="space-y-3 px-4 py-4">
+                    <div className="select-none space-y-3 px-4 py-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
