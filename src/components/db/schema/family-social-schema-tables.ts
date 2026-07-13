@@ -639,6 +639,7 @@ export const book = familySchema.table("book", {
   bookLanguage: text("book_language").notNull().default("english"),
   bookYear: integer("book_year").notNull().default(0),
   bookSeriesName: text("book_series_name"),
+  bookSource: text("book_source").notNull().default("bookstore"),
   status: text("status").notNull().default("published"),
   createdAt: timestamp("created_at").defaultNow(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),

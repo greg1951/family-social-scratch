@@ -61,6 +61,14 @@ type BookDialogSave = {
   onDelete?: () => void;
 };
 
+const BOOK_SOURCE_OPTIONS = [
+  { label: "Audible", value: "audible" },
+  { label: "Bookstore", value: "bookstore" },
+  { label: "Gift", value: "gift" },
+  { label: "Library", value: "library" },
+  { label: "Other", value: "other" },
+];
+
 type BookDetailsDialogProps = {
   bookDialog: ReturnType<typeof useBookDialog>;
   linkDialog: ReturnType<typeof useLinkDialog>;
@@ -159,6 +167,8 @@ export function BookDetailsDialog({
   const isOwner = draft.memberId === member.memberId;
   const canModerate = isOwner || member.isFounder;
   const isFounderModerating = isEditing && member.isFounder && !isOwner;
+  const normalizedDraftBookSource = (draft.bookSource ?? "bookstore").trim().toLowerCase();
+  const selectedBookSourceLabel = BOOK_SOURCE_OPTIONS.find((sourceOption) => sourceOption.value === normalizedDraftBookSource)?.label ?? normalizedDraftBookSource;
 
   useEffect(() => {
     if (analysisEditor) {
@@ -282,6 +292,7 @@ export function BookDetailsDialog({
                 { bookDialog.bookDialogMode === "view" ? (
                   <p className="mt-1 text-sm text-[#355161]">
                     { draft.bookTitle } by { draft.authorName } ({ draft.bookYear || "Unknown year" }) &middot; { draft.bookLanguage }
+                    { selectedBookSourceLabel ? ` · Source: ${ selectedBookSourceLabel }` : "" }
                     { draft.bookSeriesName.trim() ? ` · Series: ${ draft.bookSeriesName.trim() }` : "" }
                   </p>
                 ) : null }
@@ -313,7 +324,7 @@ export function BookDetailsDialog({
                   </div>
                 ) }
 
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#355161]">Book Name</label>
                   <Input
@@ -354,6 +365,25 @@ export function BookDetailsDialog({
                     disabled={ isFounderModerating }
                     className="border-[#c8d7df] text-[#183746]"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#355161]">Book Source</label>
+                  <Select
+                    value={ normalizedDraftBookSource || "bookstore" }
+                    onValueChange={ (nextSource) => setDraft((currentDraft) => ({ ...currentDraft, bookSource: nextSource })) }
+                    disabled={ isFounderModerating }
+                  >
+                    <SelectTrigger className="w-full border-[#c8d7df] text-[#183746]">
+                      <SelectValue placeholder="Select source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      { BOOK_SOURCE_OPTIONS.map((sourceOption) => (
+                        <SelectItem key={ sourceOption.value } value={ sourceOption.value }>
+                          { sourceOption.label }
+                        </SelectItem>
+                      )) }
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-[#355161]">Book Series Name</label>

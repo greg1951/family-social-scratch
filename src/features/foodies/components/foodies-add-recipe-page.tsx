@@ -9,8 +9,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
-  Columns2,
-  Combine,
   Clock3,
   Heading2,
   Heading3,
@@ -19,15 +17,12 @@ import {
   List,
   ListOrdered,
   Minus,
-  Rows2,
   Save,
   Sparkles,
-  Table2,
   Trash2,
   Underline as UnderlineIcon,
   Unlink,
   Upload,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -170,6 +165,7 @@ export function FoodiesAddRecipePage({
   const [isDeleting, startDeleteTransition] = useTransition();
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const initialTemplateId = useMemo(() => {
     if (initialRecipe?.templateId) {
       const found = recipeTemplates.find((template) => template.id === initialRecipe.templateId);
@@ -221,6 +217,14 @@ export function FoodiesAddRecipePage({
   const isFounderModerating = isEditing && member.isFounder && !isOwner;
   const canSelectTemplate = !isEditing;
   const isTemplateDebug = process.env.NODE_ENV !== "production";
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => {
+      setIsMounted(true);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, []);
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE
@@ -619,13 +623,27 @@ export function FoodiesAddRecipePage({
         return;
       }
 
+      if (!recipeTitle.trim()) {
+        toast.error("Enter a recipe title before saving.");
+        return;
+      }
+
       if (!selectedTemplate) {
         toast.error("Select a recipe template before saving.");
         return;
       }
 
-      if (isSerializedTipTapDocumentEmpty(recipeProTipsJson)) {
-        toast.error("Add content to the Pro-Tips section before saving.");
+      if (!recipeShortSummary.trim()) {
+        toast.error("Enter a short summary before saving.");
+        return;
+      }
+
+      const uploadedRecipeImageUrl = selectedFile
+        ? await uploadRecipeImage()
+        : recipeImageUrl;
+
+      if (!uploadedRecipeImageUrl) {
+        toast.error("Upload a recipe photo before saving.");
         return;
       }
 
@@ -633,11 +651,13 @@ export function FoodiesAddRecipePage({
         .map((value) => Number(value))
         .filter((value) => Number.isInteger(value) && value > 0);
 
-      const uploadedRecipeImageUrl = selectedFile
-        ? await uploadRecipeImage()
-        : recipeImageUrl;
+      if (selectedTagIds.length === 0) {
+        toast.error("Select at least one recipe category before saving.");
+        return;
+      }
 
-      if (selectedFile && !uploadedRecipeImageUrl) {
+      if (isSerializedTipTapDocumentEmpty(recipeProTipsJson)) {
+        toast.error("Add content to the Pro-Tips section before saving.");
         return;
       }
 
@@ -670,6 +690,16 @@ export function FoodiesAddRecipePage({
   function handleArchive() {
     setIsArchiveConfirmOpen(false);
     startSaveTransition(async () => {
+      if (isSerializedTipTapDocumentEmpty(recipeProTipsJson)) {
+        toast.error("Add content to the Pro-Tips section before saving.");
+        return;
+      }
+
+      if (!recipeImageUrl) {
+        toast.error("Upload a recipe photo before saving.");
+        return;
+      }
+
       const newStatus = status === "archived" ? "published" : "archived";
       const selectedTagIds = Object.values(selectedTagsByType)
         .map((value) => Number(value))
@@ -736,13 +766,13 @@ export function FoodiesAddRecipePage({
                 Back to Foodies Home
               </Link>
               <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                { isEditing ? "Edit Family Recipe" : "Add a Family Recipe" }
+                { isEditing ? "Edit Recipe" : "Add Recipe" }
               </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
+              {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
                 { isEditing
                   ? "Update your recipe, change the image if needed, and save the revised TipTap content."
                   : "Start with a recipe template, use the editor to create the recipe, and upload a lovely image of your dish. Fill in the Pro-Tips section to share your culinary wisdom." }
-              </p>
+              </p> */}
             </div>
 
             {/* <div className="rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur sm:min-w-[18rem]">
@@ -755,19 +785,19 @@ export function FoodiesAddRecipePage({
 
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/88 shadow-[0_24px_70px_-40px_rgba(38,54,26,0.75)] backdrop-blur">
           <div className="border-b border-[#dbeacc] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(245,251,235,0.88))] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Details</h2>
-                <p className="mt-2 text-sm leading-6 text-[#647a50]">
+            <div className={ isEditing && canModerate
+              ? "flex flex-col gap-4 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-4"
+              : "flex flex-row flex-nowrap items-center gap-2 sm:gap-4"
+            }>
+              <div className="min-w-0">
+                <h2 className="text-lg font-black tracking-tight text-[#2f4820] sm:text-xl md:text-2xl">Recipe Details</h2>
+                {/* <p className="mt-2 text-sm leading-6 text-[#647a50]">
                   Choose from published templates available to your account, then fill in recipe details and instructions.
-                </p>
+                </p> */}
               </div>
 
               { isEditing && canModerate && (
-                <div className="flex gap-2">
-                  <Button type="button" variant="outline" asChild className="rounded-full border-[#cadfbb] text-[#2f4820] hover:bg-[#f1f8e4]">
-                    <Link href="/foodies">Cancel</Link>
-                  </Button>
+                <div className="flex shrink-0 flex-nowrap items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
@@ -786,6 +816,35 @@ export function FoodiesAddRecipePage({
                     <Trash2 className="size-4" />
                     Delete
                   </Button>
+                  <Button type="button" variant="outline" asChild className="rounded-full border-[#cadfbb] text-[#2f4820] hover:bg-[#f1f8e4]">
+                    <Link href="/foodies">Cancel</Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={ handleSubmit }
+                    className="rounded-full bg-[#3f6d23] text-white hover:bg-[#315619]"
+                    disabled={ isSaving || uploadingImage }
+                  >
+                    <Save className="mr-2 size-4" />
+                    { isSaving ? "Saving..." : "Save Recipe" }
+                  </Button>
+                </div>
+              ) }
+
+              { !isEditing && (
+                <div className="flex shrink-0 flex-nowrap items-center gap-2">
+                  <Button type="button" variant="outline" asChild className="rounded-full border-[#cadfbb] px-2.5 text-xs text-[#2f4820] hover:bg-[#f1f8e4] sm:px-4 sm:text-sm">
+                    <Link href="/foodies">Cancel</Link>
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={ handleSubmit }
+                    className="rounded-full bg-[#3f6d23] px-2.5 text-xs text-white hover:bg-[#315619] sm:px-4 sm:text-sm"
+                    disabled={ isSaving || uploadingImage }
+                  >
+                    <Save className="mr-1 size-3.5 sm:mr-1.5 sm:size-4" />
+                    { isSaving ? "Saving..." : "Add Recipe" }
+                  </Button>
                 </div>
               ) }
             </div>
@@ -800,7 +859,7 @@ export function FoodiesAddRecipePage({
               </div>
             ) }
 
-            <fieldset className="grid gap-5 md:grid-cols-3" disabled={ isSaving || isFounderModerating }>
+            <fieldset className="grid grid-cols-2 gap-5 md:grid-cols-3" disabled={ isSaving || isFounderModerating }>
               <div className="space-y-2">
                 <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeTitle">Recipe title</label>
                 <Input
@@ -941,7 +1000,7 @@ export function FoodiesAddRecipePage({
                 <p className="text-sm font-bold text-[#2f4820]">Recipe categories</p>
                 <p className="mt-1 text-xs text-[#607a4e]">Tags are listed in tag type and sequence order.</p>
               </div>
-              <div className="grid gap-4 md:grid-cols-5">
+              <div className="grid grid-cols-3 gap-4 md:grid-cols-5">
                 { TAG_TYPE_LABELS.map((entry) => {
                   const options = recipeTags
                     .filter((tag) => tag.tagType === entry.type)
@@ -993,157 +1052,108 @@ export function FoodiesAddRecipePage({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
-                  <div className="flex flex-wrap gap-2">
-                    <ToolbarButton
-                      label="Heading 2"
-                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
-                      active={ editor?.isActive("heading", { level: 2 }) }
-                      disabled={ !editor }
-                    >
-                      <Heading2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Heading 3"
-                      onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
-                      active={ editor?.isActive("heading", { level: 3 }) }
-                      disabled={ !editor }
-                    >
-                      <Heading3 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Bold"
-                      onClick={ () => editor?.chain().focus().toggleBold().run() }
-                      active={ editor?.isActive("bold") }
-                      disabled={ !editor }
-                    >
-                      <Bold className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Italic"
-                      onClick={ () => editor?.chain().focus().toggleItalic().run() }
-                      active={ editor?.isActive("italic") }
-                      disabled={ !editor }
-                    >
-                      <Italic className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Underline"
-                      onClick={ () => editor?.chain().focus().toggleUnderline().run() }
-                      active={ editor?.isActive("underline") }
-                      disabled={ !editor }
-                    >
-                      <UnderlineIcon className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Bullet list"
-                      onClick={ () => editor?.chain().focus().toggleBulletList().run() }
-                      active={ editor?.isActive("bulletList") }
-                      disabled={ !editor }
-                    >
-                      <List className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Numbered list"
-                      onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
-                      active={ editor?.isActive("orderedList") }
-                      disabled={ !editor }
-                    >
-                      <ListOrdered className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Add link"
-                      onClick={ () => {
-                        if (!editor) {
-                          return;
-                        }
+              { isMounted ? (
+                <div className="space-y-2">
+                  <div className="rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
+                    <div className="flex flex-wrap gap-2">
+                      <ToolbarButton
+                        label="Heading 2"
+                        onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
+                        active={ editor?.isActive("heading", { level: 2 }) }
+                        disabled={ !editor }
+                      >
+                        <Heading2 className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Heading 3"
+                        onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
+                        active={ editor?.isActive("heading", { level: 3 }) }
+                        disabled={ !editor }
+                      >
+                        <Heading3 className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Bold"
+                        onClick={ () => editor?.chain().focus().toggleBold().run() }
+                        active={ editor?.isActive("bold") }
+                        disabled={ !editor }
+                      >
+                        <Bold className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Italic"
+                        onClick={ () => editor?.chain().focus().toggleItalic().run() }
+                        active={ editor?.isActive("italic") }
+                        disabled={ !editor }
+                      >
+                        <Italic className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Underline"
+                        onClick={ () => editor?.chain().focus().toggleUnderline().run() }
+                        active={ editor?.isActive("underline") }
+                        disabled={ !editor }
+                      >
+                        <UnderlineIcon className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Bullet list"
+                        onClick={ () => editor?.chain().focus().toggleBulletList().run() }
+                        active={ editor?.isActive("bulletList") }
+                        disabled={ !editor }
+                      >
+                        <List className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Numbered list"
+                        onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
+                        active={ editor?.isActive("orderedList") }
+                        disabled={ !editor }
+                      >
+                        <ListOrdered className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Add link"
+                        onClick={ () => {
+                          if (!editor) {
+                            return;
+                          }
 
-                        const value = window.prompt("Enter a URL", "https://");
-                        if (!value) {
-                          return;
-                        }
+                          const value = window.prompt("Enter a URL", "https://");
+                          if (!value) {
+                            return;
+                          }
 
-                        editor.chain().focus().setLink({ href: value }).run();
-                      } }
-                      disabled={ !editor }
-                    >
-                      <Link2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Remove link"
-                      onClick={ () => editor?.chain().focus().unsetLink().run() }
-                      disabled={ !editor }
-                    >
-                      <Unlink className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Insert horizontal line"
-                      onClick={ () => editor?.chain().focus().setHorizontalRule().run() }
-                      disabled={ !editor }
-                    >
-                      <Minus className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Insert table"
-                      onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() }
-                      active={ editor?.isActive("table") }
-                      disabled={ !editor }
-                    >
-                      <Table2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete table"
-                      onClick={ () => editor?.chain().focus().deleteTable().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Table2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Add column after"
-                      onClick={ () => editor?.chain().focus().addColumnAfter().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Columns2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete column"
-                      onClick={ () => editor?.chain().focus().deleteColumn().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Columns2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Add row after"
-                      onClick={ () => editor?.chain().focus().addRowAfter().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Rows2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete row"
-                      onClick={ () => editor?.chain().focus().deleteRow().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Rows2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Toggle header row"
-                      onClick={ () => editor?.chain().focus().toggleHeaderRow().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Combine className="size-4" />
-                    </ToolbarButton>
+                          editor.chain().focus().setLink({ href: value }).run();
+                        } }
+                        disabled={ !editor }
+                      >
+                        <Link2 className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Remove link"
+                        onClick={ () => editor?.chain().focus().unsetLink().run() }
+                        disabled={ !editor }
+                      >
+                        <Unlink className="size-4" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        label="Insert horizontal line"
+                        onClick={ () => editor?.chain().focus().setHorizontalRule().run() }
+                        disabled={ !editor }
+                      >
+                        <Minus className="size-4" />
+                      </ToolbarButton>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap]:min-h-112 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                    <EditorContent editor={ editor } />
                   </div>
                 </div>
-
-                <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap]:min-h-112 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#cadfbb] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#cadfbb] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#cadfbb] [&_.tiptap_th]:bg-[#f4fae7] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#cadfbb] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
-                  <EditorContent editor={ editor } />
-                </div>
-              </div>
+              ) : (
+                <div className="h-112 rounded-2xl border border-[#cadfbb] bg-white" />
+              ) }
             </div>
 
             <div className="space-y-3 rounded-2xl border border-[#dbeacc] bg-[#fbfff3] p-4">
@@ -1154,100 +1164,94 @@ export function FoodiesAddRecipePage({
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2 rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
-                <ToolbarButton
-                  label="Heading 2"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 2 }).run() }
-                  active={ proTipsEditor?.isActive("heading", { level: 2 }) }
-                  disabled={ !proTipsEditor }
-                >
-                  <Heading2 className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Heading 3"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 3 }).run() }
-                  active={ proTipsEditor?.isActive("heading", { level: 3 }) }
-                  disabled={ !proTipsEditor }
-                >
-                  <Heading3 className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Bold"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleBold().run() }
-                  active={ proTipsEditor?.isActive("bold") }
-                  disabled={ !proTipsEditor }
-                >
-                  <Bold className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Italic"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleItalic().run() }
-                  active={ proTipsEditor?.isActive("italic") }
-                  disabled={ !proTipsEditor }
-                >
-                  <Italic className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Underline"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleUnderline().run() }
-                  active={ proTipsEditor?.isActive("underline") }
-                  disabled={ !proTipsEditor }
-                >
-                  <UnderlineIcon className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Bullet list"
-                  onClick={ () => proTipsEditor?.chain().focus().toggleBulletList().run() }
-                  active={ proTipsEditor?.isActive("bulletList") }
-                  disabled={ !proTipsEditor }
-                >
-                  <List className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Add link"
-                  onClick={ () => {
-                    if (!proTipsEditor) {
-                      return;
-                    }
+              { isMounted ? (
+                <>
+                  <div className="flex flex-wrap gap-2 rounded-2xl border border-[#cadfbb] bg-[#f4fae7] px-2 py-2">
+                    <ToolbarButton
+                      label="Heading 2"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 2 }).run() }
+                      active={ proTipsEditor?.isActive("heading", { level: 2 }) }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Heading2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Heading 3"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleHeading({ level: 3 }).run() }
+                      active={ proTipsEditor?.isActive("heading", { level: 3 }) }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Heading3 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bold"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleBold().run() }
+                      active={ proTipsEditor?.isActive("bold") }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Bold className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Italic"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleItalic().run() }
+                      active={ proTipsEditor?.isActive("italic") }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Italic className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Underline"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleUnderline().run() }
+                      active={ proTipsEditor?.isActive("underline") }
+                      disabled={ !proTipsEditor }
+                    >
+                      <UnderlineIcon className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Bullet list"
+                      onClick={ () => proTipsEditor?.chain().focus().toggleBulletList().run() }
+                      active={ proTipsEditor?.isActive("bulletList") }
+                      disabled={ !proTipsEditor }
+                    >
+                      <List className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Add link"
+                      onClick={ () => {
+                        if (!proTipsEditor) {
+                          return;
+                        }
 
-                    const value = window.prompt("Enter a URL", "https://");
-                    if (!value) {
-                      return;
-                    }
+                        const value = window.prompt("Enter a URL", "https://");
+                        if (!value) {
+                          return;
+                        }
 
-                    proTipsEditor.chain().focus().setLink({ href: value }).run();
-                  } }
-                  disabled={ !proTipsEditor }
-                >
-                  <Link2 className="size-4" />
-                </ToolbarButton>
-                <ToolbarButton
-                  label="Remove link"
-                  onClick={ () => proTipsEditor?.chain().focus().unsetLink().run() }
-                  disabled={ !proTipsEditor }
-                >
-                  <Unlink className="size-4" />
-                </ToolbarButton>
-              </div>
+                        proTipsEditor.chain().focus().setLink({ href: value }).run();
+                      } }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Link2 className="size-4" />
+                    </ToolbarButton>
+                    <ToolbarButton
+                      label="Remove link"
+                      onClick={ () => proTipsEditor?.chain().focus().unsetLink().run() }
+                      disabled={ !proTipsEditor }
+                    >
+                      <Unlink className="size-4" />
+                    </ToolbarButton>
+                  </div>
 
-              <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
-                <EditorContent editor={ proTipsEditor } />
-              </div>
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-0.5 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
+                    <EditorContent editor={ proTipsEditor } />
+                  </div>
+                </>
+              ) : (
+                <div className="h-44 rounded-2xl border border-[#cadfbb] bg-white" />
+              ) }
             </div>
 
-            <div className="flex flex-wrap gap-3 pt-2">
-              { !isFounderModerating ? (
-                <Button
-                  type="button"
-                  onClick={ handleSubmit }
-                  className="bg-[#3f6d23] text-white hover:bg-[#315619]"
-                  disabled={ isSaving || uploadingImage }
-                >
-                  <Save className="mr-2 size-4" />
-                  { isSaving ? "Saving..." : isEditing ? "Update Recipe" : "Save Recipe" }
-                </Button>
-              ) : null }
-            </div>
+            <div className="pt-2" />
           </div>
         </div>
       </div>

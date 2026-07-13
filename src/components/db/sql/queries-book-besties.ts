@@ -42,6 +42,7 @@ import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 
 const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
+const BOOK_SOURCE_OPTIONS = new Set(['bookstore', 'library', 'audible', 'gift', 'other']);
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -241,6 +242,7 @@ async function loadBooksHomeBooks(
       bookTitle: row.bookTitle,
       authorName: row.authorName,
       bookLanguage: row.bookLanguage,
+      bookSource: row.bookSource,
       bookSeriesName: row.bookSeriesName,
       bookYear: row.bookYear,
       status: row.status,
@@ -340,6 +342,7 @@ export async function saveBooksHomeBook(
   const normalizedTitle = input.bookTitle.trim();
   const normalizedAuthorName = input.authorName.trim();
   const normalizedLanguage = input.bookLanguage.trim() || 'English';
+  const normalizedSource = input.bookSource.trim().toLowerCase() || 'bookstore';
   const normalizedSeriesName = (input.bookSeriesName ?? '').trim();
   const uniqueTagIds = [...new Set(input.selectedTagIds)];
   const parsedAnalysisJson = parseSerializedTipTapDocument(input.analysisJson.trim());
@@ -355,6 +358,13 @@ export async function saveBooksHomeBook(
     return {
       success: false,
       message: 'Enter an author name before saving.',
+    };
+  }
+
+  if (!BOOK_SOURCE_OPTIONS.has(normalizedSource)) {
+    return {
+      success: false,
+      message: 'Select a valid book source before saving.',
     };
   }
 
@@ -476,6 +486,13 @@ export async function saveBooksHomeBook(
     }
   }
 
+  if (isTipTapDocumentEmpty(parsedAnalysisJson.content)) {
+    return {
+      success: false,
+      message: 'Book Analysis is required before saving.',
+    };
+  }
+
   const existingAnalysis = existingBook
     ? await db
       .select()
@@ -491,13 +508,13 @@ export async function saveBooksHomeBook(
       .where(eq(bookTag.bookId, existingBook.id))
     : [];
 
-  const isAnalysisEmpty = isTipTapDocumentEmpty(parsedAnalysisJson.content);
   const serializedAnalysisJson = serializeTipTapDocument(parsedAnalysisJson.content);
 
   const bookPayload = {
     bookTitle: normalizedTitle,
     authorName: normalizedAuthorName,
     bookLanguage: normalizedLanguage,
+    bookSource: normalizedSource,
     bookSeriesName: normalizedSeriesName || null,
     bookYear: input.bookYear,
     status: input.status.trim() || 'draft',
@@ -527,13 +544,7 @@ export async function saveBooksHomeBook(
       createdBookFactId = savedBookFact.id;
     }
 
-    if (isAnalysisEmpty) {
-      if (existingAnalysis) {
-        await db
-          .delete(bookComment)
-          .where(eq(bookComment.id, existingAnalysis.id));
-      }
-    } else if (existingAnalysis) {
+    if (existingAnalysis) {
       await db
         .update(bookComment)
         .set({ commentJson: serializedAnalysisJson })
@@ -651,6 +662,7 @@ export async function saveBooksHomeBook(
               bookTitle: existingBook.bookTitle,
               authorName: existingBook.authorName,
               bookLanguage: existingBook.bookLanguage,
+              bookSource: existingBook.bookSource,
               bookSeriesName: existingBook.bookSeriesName,
               bookYear: existingBook.bookYear,
               status: existingBook.status,
@@ -915,6 +927,7 @@ export async function getAllFamilyBooks(familyId: number)
     bookTitle: row.bookTitle,
     authorName: row.authorName,
     bookLanguage: row.bookLanguage,
+    bookSource: row.bookSource,
     bookSeriesName: row.bookSeriesName,
     bookYear: row.bookYear,
     status: row.status,

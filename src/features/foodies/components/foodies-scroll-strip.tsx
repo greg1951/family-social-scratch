@@ -12,6 +12,7 @@ type LatestRecipe = {
   id: number;
   name: string;
   date: string;
+  status: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
   commentsCount: number;
@@ -27,6 +28,7 @@ type TopRatedRecipe = {
   id: number;
   name: string;
   date: string;
+  status: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
   noRating: number;
@@ -43,6 +45,7 @@ type AllRecipe = {
   id: number;
   name: string;
   date: string;
+  status: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
   commentsCount: number;
@@ -216,8 +219,13 @@ export function FoodiesScrollStrip({
                           <span className="text-[#8ca479]">.</span>
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>
+                        { item.status === "draft" ? (
+                          <div className="mt-2 inline-flex select-none rounded-full border border-[#f0c36c] bg-[#fff6df] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#9a6b15]">
+                            Draft
+                          </div>
+                        ) : null }
                         { item.kind !== "top-rated" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#647a50]">
+                          <div className="pointer-events-none mt-1 flex select-none flex-wrap items-center gap-2 text-xs text-[#647a50]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#476232]">
                               <ThumbsUp className="size-3 text-[#578c24]" />
                               { item.thumbsUp.toLocaleString() }
@@ -232,7 +240,7 @@ export function FoodiesScrollStrip({
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[#647a50]">
+                          <div className="pointer-events-none mt-1 flex select-none flex-wrap items-center gap-2 text-xs text-[#647a50]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#5a7250]">
                               <ThumbsDown className="size-3 text-[#7a8f5f]" />
                               { item.noRating.toLocaleString() }

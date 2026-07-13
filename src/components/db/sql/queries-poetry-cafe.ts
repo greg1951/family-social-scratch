@@ -547,6 +547,13 @@ export async function savePoetryHomePoem(
     }
   }
 
+  if (isTipTapDocumentEmpty(parsedAnalysisJson.content)) {
+    return {
+      success: false,
+      message: 'Poem Analysis is required before saving.',
+    };
+  }
+
   const existingVerse = existingPoem
     ? await db
       .select()
@@ -570,7 +577,6 @@ export async function savePoetryHomePoem(
       .where(eq(poemCategoryTag.poemId, existingPoem.id))
     : [];
 
-  const isAnalysisEmpty = isTipTapDocumentEmpty(parsedAnalysisJson.content);
   const cleanedVerseContent = removeUnusedLinesFromEnd(parsedVerseJson.content);
   const serializedVerseJson = serializeTipTapDocument(cleanedVerseContent);
   const serializedAnalysisJson = serializeTipTapDocument(parsedAnalysisJson.content);
@@ -628,13 +634,7 @@ export async function savePoetryHomePoem(
       createdVerseId = savedVerse.id;
     }
 
-    if (isAnalysisEmpty) {
-      if (existingAnalysis) {
-        await db
-          .delete(poemComment)
-          .where(eq(poemComment.id, existingAnalysis.id));
-      }
-    } else if (existingAnalysis) {
+    if (existingAnalysis) {
       await db
         .update(poemComment)
         .set({ commentJson: serializedAnalysisJson })

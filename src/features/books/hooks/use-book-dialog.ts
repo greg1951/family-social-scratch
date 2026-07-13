@@ -3,8 +3,8 @@ import { useCallback, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { saveBooksHomeBookAction } from "@/app/(features)/(books)/books/actions";
-import { BookTagOption, BooksHomeBook } from "@/components/db/types/books";
-import { createEmptyTipTapDocument } from "@/components/db/types/poem-term-validation";
+import { BooksHomeBook } from "@/components/db/types/books";
+import { createEmptyTipTapDocument, isSerializedTipTapDocumentEmpty } from "@/components/db/types/poem-term-validation";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
 export type BookDraft = {
@@ -12,6 +12,7 @@ export type BookDraft = {
   bookTitle: string;
   authorName: string;
   bookLanguage: string;
+  bookSource: string;
   bookSeriesName: string;
   bookYear: string;
   submitterName: string;
@@ -63,6 +64,7 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     bookTitle: bookRecord.bookTitle,
     authorName: bookRecord.authorName,
     bookLanguage: bookRecord.bookLanguage,
+    bookSource: (bookRecord.bookSource ?? "bookstore").trim().toLowerCase() || "bookstore",
     bookSeriesName: bookRecord.bookSeriesName ?? "",
     bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
     submitterName: createSubmitterLabel(bookRecord, member),
@@ -93,6 +95,7 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     bookTitle: "",
     authorName: "",
     bookLanguage: "English",
+    bookSource: "bookstore",
     bookSeriesName: "",
     bookYear: "",
     submitterName: `${ member.firstName } ${ member.lastName }`,
@@ -188,9 +191,15 @@ export function useBookDialog({
 
   function handleSave(analysisJson: string, overrideDraft?: BookDraft) {
     const currentDraft = overrideDraft || draft;
+    const isFounderStatusModeration =
+      currentDraft.id > 0
+      && currentDraft.memberId !== member.memberId
+      && member.isFounder
+      && (currentDraft.status === "archived" || currentDraft.status === "published");
     const normalizedTitle = currentDraft.bookTitle.trim();
     const normalizedAuthorName = currentDraft.authorName.trim();
     const normalizedLanguage = currentDraft.bookLanguage.trim();
+    const normalizedSource = (currentDraft.bookSource ?? "bookstore").trim().toLowerCase() || "bookstore";
     const normalizedSeriesName = currentDraft.bookSeriesName.trim();
     const normalizedYear = currentDraft.bookYear.trim();
 
@@ -224,6 +233,11 @@ export function useBookDialog({
       return;
     }
 
+    if (!isFounderStatusModeration && isSerializedTipTapDocumentEmpty(analysisJson)) {
+      toast.error("Book Analysis is required before saving.");
+      return;
+    }
+
     setSavePhase("saving");
 
     startSaveTransition(async () => {
@@ -232,6 +246,7 @@ export function useBookDialog({
         bookTitle: normalizedTitle,
         authorName: normalizedAuthorName,
         bookLanguage: normalizedLanguage,
+        bookSource: normalizedSource,
         bookSeriesName: normalizedSeriesName,
         bookYear: Number(normalizedYear),
         status: currentDraft.status,

@@ -427,12 +427,28 @@ export default function BooksHomePage({
       return;
     }
 
+    const deletedBookId = selectedBook.id;
+
     startDeleteTransition(async () => {
-      const result = await deleteBooksHomeBookAction({ bookId: selectedBook.id });
+      const result = await deleteBooksHomeBookAction({ bookId: deletedBookId });
       if (!result.success) {
         toast.error(result.message);
         return;
       }
+
+      const remainingBooks = bookItems.filter((bookItem) => bookItem.id !== deletedBookId);
+
+      setBookItems(remainingBooks);
+      setSelectedBookId((currentSelectedBookId) => {
+        if (currentSelectedBookId && remainingBooks.some((bookItem) => bookItem.id === currentSelectedBookId)) {
+          return currentSelectedBookId;
+        }
+
+        return remainingBooks[0]?.id ?? null;
+      });
+      setPendingSelectedBookId(null);
+      setCommentText("");
+      bookDialog.setIsBookDialogOpen(false);
 
       toast.success("Book deleted.");
       router.push("/books");

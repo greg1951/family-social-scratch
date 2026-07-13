@@ -754,12 +754,24 @@ export async function saveFoodiesRecipe(
     };
   }
 
-  const submitterLikenessDegree = Number(input.submitterLikenessDegree);
-  const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
-  if (!existingRecipe && !hasSubmitterLikenessDegree) {
+  if (!normalizedSummary) {
     return {
       success: false,
-      message: "Select Like or Love for your own recipe post.",
+      message: "Enter a short summary before saving.",
+    };
+  }
+
+  if (!input.recipeImageUrl?.trim()) {
+    return {
+      success: false,
+      message: "Upload a recipe photo before saving.",
+    };
+  }
+
+  if (uniqueTagIds.length === 0) {
+    return {
+      success: false,
+      message: "Select at least one recipe category before saving.",
     };
   }
 
@@ -791,18 +803,23 @@ export async function saveFoodiesRecipe(
   const recipeProTipsJsonToSave = serializeTipTapDocument(parsedRecipeProTipsJson.content);
   const hasRecipeProTips = !isTipTapDocumentEmpty(parsedRecipeProTipsJson.content);
 
-  if (uniqueTagIds.length > 0) {
-    const validTags = await db
-      .select({ id: recipeTagReference.id })
-      .from(recipeTagReference)
-      .where(inArray(recipeTagReference.id, uniqueTagIds));
+  if (!hasRecipeProTips) {
+    return {
+      success: false,
+      message: "Add content to the Pro-Tips section before saving.",
+    };
+  }
 
-    if (validTags.length !== uniqueTagIds.length) {
-      return {
-        success: false,
-        message: "One or more selected recipe tags are invalid.",
-      };
-    }
+  const validTags = await db
+    .select({ id: recipeTagReference.id })
+    .from(recipeTagReference)
+    .where(inArray(recipeTagReference.id, uniqueTagIds));
+
+  if (validTags.length !== uniqueTagIds.length) {
+    return {
+      success: false,
+      message: "One or more selected recipe tags are invalid.",
+    };
   }
 
   let createdRecipeId: number | null = null;
@@ -870,21 +887,6 @@ export async function saveFoodiesRecipe(
         });
     }
 
-    if (hasSubmitterLikenessDegree) {
-      await db
-        .delete(recipeLike)
-        .where(and(eq(recipeLike.recipeId, savedRecipe.id), eq(recipeLike.memberId, actor.memberId)));
-
-      await db
-        .insert(recipeLike)
-        .values({
-          recipeId: savedRecipe.id,
-          memberId: actor.memberId,
-          likenessDegree: submitterLikenessDegree,
-          updatedAt: new Date(),
-        });
-    }
-
     const existingActorProTip = await db
       .select({
         id: recipeComment.id,
@@ -900,6 +902,24 @@ export async function saveFoodiesRecipe(
       .orderBy(desc(recipeComment.createdAt))
       .then((rows) => rows[0] ?? null);
 
+    const existingActorLegacyProTip = existingActorProTip
+      ? null
+      : await db
+        .select({
+          id: recipeComment.id,
+        })
+        .from(recipeComment)
+        .where(
+          and(
+            eq(recipeComment.recipeId, savedRecipe.id),
+            eq(recipeComment.memberId, actor.memberId),
+            eq(recipeComment.isRecipeProTip, false),
+            eq(recipeComment.commentJson, recipeProTipsJsonToSave)
+          )
+        )
+        .orderBy(desc(recipeComment.createdAt))
+        .then((rows) => rows[0] ?? null);
+
     if (hasRecipeProTips) {
       if (existingActorProTip) {
         await db
@@ -908,6 +928,14 @@ export async function saveFoodiesRecipe(
             commentJson: recipeProTipsJsonToSave,
           })
           .where(eq(recipeComment.id, existingActorProTip.id));
+      } else if (existingActorLegacyProTip) {
+        await db
+          .update(recipeComment)
+          .set({
+            isRecipeProTip: true,
+            commentJson: recipeProTipsJsonToSave,
+          })
+          .where(eq(recipeComment.id, existingActorLegacyProTip.id));
       } else {
         await db
           .insert(recipeComment)
@@ -918,10 +946,6 @@ export async function saveFoodiesRecipe(
             commentJson: recipeProTipsJsonToSave,
           });
       }
-    } else if (existingActorProTip && existingRecipe) {
-      await db
-        .delete(recipeComment)
-        .where(eq(recipeComment.id, existingActorProTip.id));
     }
 
     if (!existingRecipe) {
@@ -1245,7 +1269,7 @@ async function loadFoodiesRecipeDetail(
       createdAt: row.createdAt ?? new Date(),
       commenterName: memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
       memberId: row.memberId ?? 0,
-      proTipJson: row.commentJson,
+      proTipJson: normalizeSerializedTipTapDocument(row.commentJson),
     })),
     recipeComments: familyCommentRows.map((row) => ({
       id: row.id,

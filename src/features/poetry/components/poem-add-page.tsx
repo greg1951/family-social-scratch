@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { savePoetryHomePoemAction, deletePoetryHomePoemAction } from "@/app/(features)/(poetry)/poetry/actions";
 import {
   createEmptyTipTapDocument,
+  isSerializedTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
@@ -505,9 +506,16 @@ export function PoemAddPage({
 
   function handleSave(overrideDraft?: PoemDraft) {
     const currentDraft = overrideDraft || draft;
+    const isFounderStatusModeration =
+      currentDraft.id > 0
+      && currentDraft.memberId !== member.memberId
+      && member.isFounder
+      && (currentDraft.status === "archived" || currentDraft.status === "published");
     const normalizedTitle = currentDraft.poemTitle.trim();
     const normalizedPoetName = currentDraft.poetName.trim();
     const normalizedYear = currentDraft.poemYear.trim();
+    const currentVerseJson = verseEditor ? serializeTipTapDocument(verseEditor.getJSON()) : currentDraft.verseJson;
+    const currentAnalysisJson = analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : currentDraft.analysisJson;
 
     if (!normalizedTitle) {
       toast.error("Enter a poem name before saving.");
@@ -524,6 +532,16 @@ export function PoemAddPage({
       return;
     }
 
+    if (isSerializedTipTapDocumentEmpty(currentVerseJson)) {
+      toast.error("Enter the poem verse before saving.");
+      return;
+    }
+
+    if (!isFounderStatusModeration && isSerializedTipTapDocumentEmpty(currentAnalysisJson)) {
+      toast.error("Poem Analysis is required before saving.");
+      return;
+    }
+
     if (currentDraft.selectedTagIds.length === 0) {
       toast.error("Select at least one poem tag before saving.");
       return;
@@ -537,8 +555,8 @@ export function PoemAddPage({
         poemSource: currentDraft.poemSource,
         poemYear: Number(normalizedYear),
         status: currentDraft.status,
-        verseJson: verseEditor ? serializeTipTapDocument(verseEditor.getJSON()) : currentDraft.verseJson,
-        analysisJson: analysisEditor ? serializeTipTapDocument(analysisEditor.getJSON()) : currentDraft.analysisJson,
+        verseJson: currentVerseJson,
+        analysisJson: currentAnalysisJson,
         selectedTagIds: currentDraft.selectedTagIds,
       });
 
@@ -553,20 +571,24 @@ export function PoemAddPage({
   }
 
   function handleDelete() {
-    if (!initialPoem?.id) {
+    const poemIdToDelete = draft.id > 0 ? draft.id : initialPoem?.id;
+
+    if (!poemIdToDelete) {
       return;
     }
 
     setIsDeleteConfirmOpen(false);
     startDeleteTransition(async () => {
-      const result = await deletePoetryHomePoemAction({ poemId: initialPoem.id });
+      const result = await deletePoetryHomePoemAction({ poemId: poemIdToDelete });
       if (!result.success) {
         toast.error(result.message);
         return;
       }
 
+      setDraft(createEmptyDraft(member));
       toast.success("Poem deleted.");
-      router.push("/poetry");
+      router.replace("/poetry");
+      router.refresh();
     });
   }
 
@@ -590,13 +612,13 @@ export function PoemAddPage({
                 </Link>
               </div>
               <h1 className="mt-4 text-lg font-black tracking-tight sm:text-2xl">
-                { isEditMode ? `Edit Poem: ${ initialPoem?.poemTitle }` : "Add a New Poem" }
+                { isEditMode ? `Edit Poem: ${ initialPoem?.poemTitle }` : "Add Poem" }
               </h1>
-              <p className="mt-2 text-sm text-[#f3e8ff]">
+              {/* <p className="mt-2 text-sm text-[#f3e8ff]">
                 { isEditMode
                   ? "Update the poem details, verse, analysis, and tags below."
                   : "Provide the poem title, poet name, year, verse, and optional analysis." }
-              </p>
+              </p> */}
             </div>
           </div>
         </div>
@@ -604,17 +626,17 @@ export function PoemAddPage({
         {/* Poem Metadata */ }
         <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(57,27,88,0.7)]">
           <div className="border-b border-[#e4d9ee] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(249,244,255,0.86))] px-5 py-5 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div>
                 <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">
                   Poem Details
                 </p>
-                <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
+                {/* <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
                   Poem Information
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                   Enter the poem title, the name of the poet, and the year it was written.
-                </p>
+                </p> */}
               </div>
 
               { isEditMode && canModerate ? (
@@ -672,6 +694,16 @@ export function PoemAddPage({
                 <div className="flex gap-2">
                   <Button
                     type="button"
+                    variant="outline"
+                    onClick={ () => router.push("/poetry") }
+                    disabled={ isSaving || isDeleting }
+                    className="rounded-full border-[#d7d0ea] text-[#6d5384]"
+                  >
+                    <X className="size-4" />
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
                     onClick={ () => handleSave() }
                     disabled={ isSaving || isDeleting }
                     className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
@@ -693,7 +725,7 @@ export function PoemAddPage({
               </div>
             ) }
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-[#5d426f]">Poem Title</label>
                 <Input
@@ -769,7 +801,7 @@ export function PoemAddPage({
                 Poem Verse
               </p> */}
               <h2 className="mt-2 text-xl font-black tracking-tight text-[#43245d]">
-                Poem Text
+                Poem Verse
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                 Write or paste the poem verse here.
