@@ -40,6 +40,14 @@
   - [Server-side Idempotency for Replay Safety](#server-side-idempotency-for-replay-safety)
   - [Feature Upload Consistency Work](#feature-upload-consistency-work)
 - [Setting up My Family Social on Safari](#setting-up-my-family-social-on-safari)
+- [Troubleshooting Server Errors](#troubleshooting-server-errors)
+  - [Reporting Incident](#reporting-incident)
+  - [DB Logging Function](#db-logging-function)
+    - [How To Use It](#how-to-use-it)
+    - [An Example](#an-example)
+    - [When to Use It](#when-to-use-it)
+  - [Query Debug Workflow](#query-debug-workflow)
+- [Unit Testing with vitest](#unit-testing-with-vitest)
 
 ---
 # Overview
@@ -645,3 +653,122 @@ The book form (title, author, year, language, analysis, tags) is meaningfully si
   7. Back on the Share screen, click on the +Add to Home Screen to add it.
   8. Open My Family Social app on your home screen and login.
 
+# Troubleshooting Server Errors
+
+## Reporting Incident 
+Need to have a way for support to enter incident in a Support system consisting of the following.
+
+- Date/time:
+- Environment: local | staging | production
+- Feature: books | foodies | other
+- User impact summary:
+- Reporter:
+
+## DB Logging Function
+Implement a means to report the error in the logs with sufficient context to help troubleshoot issues when they arise. 
+
+**Note**: The `db-error-logger.ts` file resides in the `src/components/db/sql` directory where all of the queries.*.ts files reside.
+
+### How To Use It
+
+- import `logDbQueryError` from `@sql/db-error-logger.ts`
+- Wrap DB queries in try/catch 
+- Add `logDbQueryError` in catch block (see example below)
+
+### An Example
+
+  ```tsx
+  ...
+  import { logDbQueryError } from './db-error-logger';
+  ...
+  export async function getBooksHomePageData(familyId: number, memberId?: number)
+    : Promise<BooksHomePageDataReturn> {
+    try {
+      const [books, bookTagsResult, clubs] = await Promise.all([
+        loadBooksHomeBooks(familyId, undefined, memberId),
+        getBookTagReferences(),
+        getFamilyClubs(familyId),
+      ]);
+
+      return {
+        success: true,
+        books,
+        bookTags: bookTagsResult.success ? bookTagsResult.bookTags : [],
+        clubs,
+      };
+    } catch (error) {
+      logDbQueryError('books.getBooksHomePageData', error, { familyId, memberId });
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error loading book besties home page data',
+      };
+    }
+  }
+  ```
+### When to Use It
+The above patter is best applied in one of these scenarios.
+
+1. An exported query/service function that a page or server action calls directly
+2. A server action in src/app/(features)/(books)/books/actions.ts/(books)/books/actions.ts) or src/app/(features)/(foodies)/foodies/actions.ts/(foodies)/foodies/actions.ts)
+3. A top-level workflow function that coordinates several DB reads/writes
+
+
+## Query Debug Workflow
+- Locate failing scope in logs
+- Open related query module
+- Identify boundary `try/catch`
+- Ensure `logDbQueryError` includes context fields:
+  - `familyId`
+  - `memberId`
+  - entity id (`bookId`/`recipeId`)
+  - action/status where relevant
+
+```bash
+[DB_QUERY_FAILED] {
+  requestId: 'debug-live-request-id',
+  scope: 'books.getBooksHomePageData',
+  message: 'Failed query: select "book_source" from "family_schema"."book" where "fk_family_id" = $1 params: 28',
+  stack: 'Error: Failed query: select "book_source" from "family_schema"."book" where "fk_family_id" = $1 params: 28\n' +
+    '    at C:\\Users\\gregh\\projects\\family-social-scratch\\src\\components\\db\\sql\\db-error-logger.debug.test.ts:9:21\n' +
+    '    at AsyncLocalStorage.run (node:internal/async_local_storage/async_context_frame:63:14)\n' +
+    '    at Module.withRequestCorrelation (C:\\Users\\gregh\\projects\\family-social-scratch\\src\\components\\db\\sql\\request-correlation.ts:28:36)\n' +
+    '    at C:\\Users\\gregh\\projects\\family-social-scratch\\src\\components\\db\\sql\\db-error-logger.debug.test.ts:8:11\n' +
+    '    at file:///C:/Users/gregh/projects/family-social-scratch/node_modules/@vitest/runner/dist/index.js:146:14\n' +
+    '    at file:///C:/Users/gregh/projects/family-social-scratch/node_modules/@vitest/runner/dist/index.js:533:11\n' +
+    '    at runWithTimeout (file:///C:/Users/gregh/projects/family-social-scratch/node_modules/@vitest/runner/dist/index.js:39:7)\n' +
+    '    at runTest (file:///C:/Users/gregh/projects/family-social-scratch/node_modules/@vitest/runner/dist/index.js:1056:17)\n' +
+    '    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n' +
+    '    at runSuite (file:///C:/Users/gregh/projects/family-social-scratch/node_modules/@vitest/runner/dist/index.js:1205:15)',
+  familyId: 28,
+  memberId: 4,
+  debugMode: true
+```
+
+# Unit Testing with vitest
+Using Vite dev server to transform your files during testing, enables the creation of a simple runner that doesn't need to deal with the complexity of transforming source files and can solely focus on providing a test runner that uses the same configuration of your App (through vite.config.js), sharing a common transformation pipeline during dev, build, and test time.
+
+Vitest is optimal for headless testing where other tools like Cypress or Playwright are better for browser based test. Vitest in this project will be utilized to provide regression tests for the server-side query code.
+
+Vitest files have `test` or `spec` defined in them, as the simple example below illustrates.
+
+**sum.ts**
+  ```tsx
+  export function sum(a, b) {
+    return a + b
+  }
+  ```
+**sum.test.ts**
+  ```tsx
+  import { expect, test } from 'vitest'
+  import { sum } from './sum.js'
+
+  test('adds 1 + 2 to equal 3', () => {
+    expect(sum(1, 2)).toBe(3)
+  })
+  ```
+**Running a test**
+
+Go to directory where there is a test: *`cd src\app\(features)\(books)\books`*
+  ```bash
+    npx vitest run .\actions.correlation.test.ts --coverage
+  ```

@@ -20,6 +20,7 @@ import {
   updateThreadRecipientStateReturn,
 } from '../types/thread-convos';
 import { createFamilyActivityRecord, FAMILY_ACTIVITY_ACTION_TYPES } from './queries-family-activity';
+import { logDbQueryError } from './db-error-logger';
 
 function isMissingContentJsonColumnError(error: unknown): boolean {
   if (!error || typeof error !== 'object') {
@@ -309,156 +310,163 @@ export async function getConvoRecipientState(conversationId:number, recipientMem
 // and the requesting member's recipient state (read/archived timestamps).
 export async function getConvoSummaries(familyId: number, memberId: number)
   : Promise<getConvoSummariesReturn> {
-
-  const senderMember = db.$with('sender_member').as(
-    db.select({
-      id: member.id,
-      firstName: member.firstName,
-      lastName: member.lastName,
-    }).from(member)
-  );
-
-  const recipientMember = db.$with('recipient_member').as(
-    db.select({
-      id: member.id,
-      firstName: member.firstName,
-      lastName: member.lastName,
-    }).from(member)
-  );
-
-  const rows = await db
-    .with(senderMember, recipientMember)
-    .select({
-      id: threadConversation.id,
-      title: threadConversation.title,
-      visibility: threadConversation.visibility,
-      status: threadConversation.status,
-      createdAt: threadConversation.createdAt,
-      senderMemberId: threadConversation.senderMemberId,
-      senderFirstName: senderMember.firstName,
-      senderLastName: senderMember.lastName,
-      recipientStateId: threadRecipientState.id,
-      recipientMemberId: threadRecipientState.recipientMemberId,
-      recipientFirstName: recipientMember.firstName,
-      recipientLastName: recipientMember.lastName,
-      deliveryType: threadRecipientState.deliveryType,
-      readAt: threadRecipientState.readAt,
-      archivedAt: threadRecipientState.archivedAt,
-      conversationArchivedAt: threadConversation.archivedAt,
-      postContent: threadPostReply.content,
-      postType: threadPostReply.type,
-    })
-    .from(threadConversation)
-    .leftJoin(senderMember, eq(senderMember.id, threadConversation.senderMemberId))
-    .leftJoin(
-      threadRecipientState,
-      and(
-        eq(threadRecipientState.conversationId, threadConversation.id),
-        eq(threadRecipientState.recipientMemberId, memberId),
-      )
-    )
-    .leftJoin(recipientMember, eq(recipientMember.id, threadRecipientState.recipientMemberId))
-    .leftJoin(
-      threadPostReply,
-      and(
-        eq(threadPostReply.conversationId, threadConversation.id),
-        eq(threadPostReply.seqNo, 1),
-      )
-    )
-    .where(and(
-      eq(threadConversation.familyId, familyId),
-      or(
-        eq(threadConversation.senderMemberId, memberId),
-        isNotNull(threadRecipientState.id),
-      ),
-    ))
-    .orderBy(desc(threadConversation.createdAt));
-
-  const conversationIds = rows.map((row) => row.id);
-  const recipientNamesByConversationId = new Map<number, string[]>();
-  const replyCountByConversationId = new Map<number, number>();
-  const imageCountByConversationId = new Map<number, number>();
-
-  if (conversationIds.length > 0) {
-    const recipientRows = await db
-      .select({
-        conversationId: threadRecipientState.conversationId,
+  try {
+    const senderMember = db.$with('sender_member').as(
+      db.select({
+        id: member.id,
         firstName: member.firstName,
-      })
-      .from(threadRecipientState)
-      .innerJoin(member, eq(member.id, threadRecipientState.recipientMemberId))
-      .where(inArray(threadRecipientState.conversationId, conversationIds))
-      .orderBy(asc(threadRecipientState.conversationId), asc(member.firstName), asc(member.lastName));
+        lastName: member.lastName,
+      }).from(member)
+    );
 
-    for (const row of recipientRows) {
-      if (!row.firstName) {
-        continue;
-      }
+    const recipientMember = db.$with('recipient_member').as(
+      db.select({
+        id: member.id,
+        firstName: member.firstName,
+        lastName: member.lastName,
+      }).from(member)
+    );
 
-      const currentNames = recipientNamesByConversationId.get(row.conversationId) ?? [];
-      if (!currentNames.includes(row.firstName)) {
-        currentNames.push(row.firstName);
-        recipientNamesByConversationId.set(row.conversationId, currentNames);
-      }
-    }
-
-    const replyRows = await db
+    const rows = await db
+      .with(senderMember, recipientMember)
       .select({
-        conversationId: threadPostReply.conversationId,
-        replyCount: count().mapWith(Number),
+        id: threadConversation.id,
+        title: threadConversation.title,
+        visibility: threadConversation.visibility,
+        status: threadConversation.status,
+        createdAt: threadConversation.createdAt,
+        senderMemberId: threadConversation.senderMemberId,
+        senderFirstName: senderMember.firstName,
+        senderLastName: senderMember.lastName,
+        recipientStateId: threadRecipientState.id,
+        recipientMemberId: threadRecipientState.recipientMemberId,
+        recipientFirstName: recipientMember.firstName,
+        recipientLastName: recipientMember.lastName,
+        deliveryType: threadRecipientState.deliveryType,
+        readAt: threadRecipientState.readAt,
+        archivedAt: threadRecipientState.archivedAt,
+        conversationArchivedAt: threadConversation.archivedAt,
+        postContent: threadPostReply.content,
+        postType: threadPostReply.type,
       })
-      .from(threadPostReply)
+      .from(threadConversation)
+      .leftJoin(senderMember, eq(senderMember.id, threadConversation.senderMemberId))
+      .leftJoin(
+        threadRecipientState,
+        and(
+          eq(threadRecipientState.conversationId, threadConversation.id),
+          eq(threadRecipientState.recipientMemberId, memberId),
+        )
+      )
+      .leftJoin(recipientMember, eq(recipientMember.id, threadRecipientState.recipientMemberId))
+      .leftJoin(
+        threadPostReply,
+        and(
+          eq(threadPostReply.conversationId, threadConversation.id),
+          eq(threadPostReply.seqNo, 1),
+        )
+      )
       .where(and(
-        inArray(threadPostReply.conversationId, conversationIds),
-        eq(threadPostReply.type, 'reply'),
+        eq(threadConversation.familyId, familyId),
+        or(
+          eq(threadConversation.senderMemberId, memberId),
+          isNotNull(threadRecipientState.id),
+        ),
       ))
-      .groupBy(threadPostReply.conversationId);
+      .orderBy(desc(threadConversation.createdAt));
 
-    for (const row of replyRows) {
-      replyCountByConversationId.set(row.conversationId, row.replyCount);
+    const conversationIds = rows.map((row) => row.id);
+    const recipientNamesByConversationId = new Map<number, string[]>();
+    const replyCountByConversationId = new Map<number, number>();
+    const imageCountByConversationId = new Map<number, number>();
+
+    if (conversationIds.length > 0) {
+      const recipientRows = await db
+        .select({
+          conversationId: threadRecipientState.conversationId,
+          firstName: member.firstName,
+        })
+        .from(threadRecipientState)
+        .innerJoin(member, eq(member.id, threadRecipientState.recipientMemberId))
+        .where(inArray(threadRecipientState.conversationId, conversationIds))
+        .orderBy(asc(threadRecipientState.conversationId), asc(member.firstName), asc(member.lastName));
+
+      for (const row of recipientRows) {
+        if (!row.firstName) {
+          continue;
+        }
+
+        const currentNames = recipientNamesByConversationId.get(row.conversationId) ?? [];
+        if (!currentNames.includes(row.firstName)) {
+          currentNames.push(row.firstName);
+          recipientNamesByConversationId.set(row.conversationId, currentNames);
+        }
+      }
+
+      const replyRows = await db
+        .select({
+          conversationId: threadPostReply.conversationId,
+          replyCount: count().mapWith(Number),
+        })
+        .from(threadPostReply)
+        .where(and(
+          inArray(threadPostReply.conversationId, conversationIds),
+          eq(threadPostReply.type, 'reply'),
+        ))
+        .groupBy(threadPostReply.conversationId);
+
+      for (const row of replyRows) {
+        replyCountByConversationId.set(row.conversationId, row.replyCount);
+      }
+
+      const imageRows = await db
+        .select({
+          conversationId: threadPostReply.conversationId,
+          imageCount: count(threadPostAttachment.id).mapWith(Number),
+        })
+        .from(threadPostAttachment)
+        .innerJoin(threadPostReply, eq(threadPostReply.id, threadPostAttachment.postId))
+        .where(inArray(threadPostReply.conversationId, conversationIds))
+        .groupBy(threadPostReply.conversationId);
+
+      for (const row of imageRows) {
+        imageCountByConversationId.set(row.conversationId, row.imageCount);
+      }
     }
 
-    const imageRows = await db
-      .select({
-        conversationId: threadPostReply.conversationId,
-        imageCount: count(threadPostAttachment.id).mapWith(Number),
-      })
-      .from(threadPostAttachment)
-      .innerJoin(threadPostReply, eq(threadPostReply.id, threadPostAttachment.postId))
-      .where(inArray(threadPostReply.conversationId, conversationIds))
-      .groupBy(threadPostReply.conversationId);
-
-    for (const row of imageRows) {
-      imageCountByConversationId.set(row.conversationId, row.imageCount);
-    }
+    return {
+      success: true,
+      summaries: rows.map(row => ({
+        id: row.id,
+        title: row.title,
+        visibility: row.visibility,
+        status: row.status,
+        createdAt: row.createdAt!,
+        senderMemberId: row.senderMemberId,
+        senderFirstName: row.senderFirstName,
+        senderLastName: row.senderLastName,
+        recipientNames: recipientNamesByConversationId.get(row.id) ?? [],
+        recipientStateId: row.recipientStateId,
+        recipientMemberId: row.recipientMemberId,
+        recipientFirstName: row.recipientFirstName,
+        recipientLastName: row.recipientLastName,
+        deliveryType: row.deliveryType,
+        readAt: row.readAt,
+        archivedAt: row.archivedAt,
+        conversationArchivedAt: row.conversationArchivedAt,
+        postContent: row.postContent,
+        postType: row.postType,
+        replyCount: replyCountByConversationId.get(row.id) ?? 0,
+        imageCount: imageCountByConversationId.get(row.id) ?? 0,
+      })),
+    };
+  } catch (error) {
+    logDbQueryError('threads.getConvoSummaries', error, { familyId, memberId });
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Error loading conversation summaries.',
+    };
   }
-
-  return {
-    success: true,
-    summaries: rows.map(row => ({
-      id: row.id,
-      title: row.title,
-      visibility: row.visibility,
-      status: row.status,
-      createdAt: row.createdAt!,
-      senderMemberId: row.senderMemberId,
-      senderFirstName: row.senderFirstName,
-      senderLastName: row.senderLastName,
-      recipientNames: recipientNamesByConversationId.get(row.id) ?? [],
-      recipientStateId: row.recipientStateId,
-      recipientMemberId: row.recipientMemberId,
-      recipientFirstName: row.recipientFirstName,
-      recipientLastName: row.recipientLastName,
-      deliveryType: row.deliveryType,
-      readAt: row.readAt,
-      archivedAt: row.archivedAt,
-      conversationArchivedAt: row.conversationArchivedAt,
-      postContent: row.postContent,
-      postType: row.postType,
-      replyCount: replyCountByConversationId.get(row.id) ?? 0,
-      imageCount: imageCountByConversationId.get(row.id) ?? 0,
-    })),
-  };
 }
 
 /*------------------ archiveSenderConversation ------------------ */

@@ -47,6 +47,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
+import { logDbQueryError } from "./db-error-logger";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -730,6 +731,8 @@ export async function getTvHomePageData(
       showTemplates,
     };
   } catch (error) {
+    logDbQueryError("tv.getTvHomePageData", error, { familyId, memberId });
+    
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading TV home page data",

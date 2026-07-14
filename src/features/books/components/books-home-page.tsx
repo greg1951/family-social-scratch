@@ -75,11 +75,13 @@ export default function BooksHomePage({
   member,
   bookTags = [],
   clubs = [],
+  loadError = null,
 }: {
   books: BooksHomeBook[];
   member: MemberKeyDetails;
   bookTags?: BookTagOption[];
   clubs?: Club[];
+  loadError?: string | null;
 }) {
   const router = useRouter();
   const previousBooksRef = useRef(books);
@@ -734,8 +736,17 @@ export default function BooksHomePage({
             { bookItems.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
                 <LibraryBig className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
-                <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
-                <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
+                { loadError ? (
+                  <>
+                    <p className="text-lg font-semibold text-[#183746]">Books could not be loaded.</p>
+                    <p className="mt-2 text-sm">{ loadError }</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
+                    <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
+                  </>
+                ) }
               </div>
             ) : (
               <>

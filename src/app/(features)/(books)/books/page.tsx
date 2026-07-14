@@ -22,6 +22,7 @@ export default async function BooksPage() {
       books={ books }
       bookTags={ bookTags }
       clubs={ booksHomeData.success ? booksHomeData.clubs : [] }
+      loadError={ booksHomeData.success ? null : booksHomeData.message }
       member={ memberKeyDetails }
     />
   );

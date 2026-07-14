@@ -45,6 +45,7 @@ import {
   createFamilyReactionActivityRecord,
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
+import { logDbQueryError } from "./db-error-logger";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -719,6 +720,7 @@ export async function getMoviesHomePageData(
       movieTemplates,
     };
   } catch (error) {
+    logDbQueryError("movies.getMoviesHomePageData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading movie home page data",

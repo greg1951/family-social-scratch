@@ -51,6 +51,7 @@ import {
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
+import { logDbQueryError } from "./db-error-logger";
 
 const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "cuisine",
@@ -601,6 +602,7 @@ export async function getFoodiesHomePageData(
       recipeTemplates,
     };
   } catch (error) {
+    logDbQueryError("foodies.getFoodiesHomePageData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading foodies home page data",
@@ -622,6 +624,7 @@ export async function getFoodiesTemplateManagementData(
       templates,
     };
   } catch (error) {
+    logDbQueryError("foodies.getFoodiesTemplateManagementData", error, { familyId, memberId, isAdmin });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading recipe templates",
@@ -716,7 +719,12 @@ export async function saveFoodiesRecipe(
         message: updatedRecipe.status === "archived" ? "Recipe archived." : "Recipe unarchived.",
       };
     } catch (error) {
-      console.error("Error archiving recipe:", error);
+      logDbQueryError("foodies.saveFoodiesRecipe.archiveToggle", error, {
+        recipeId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: "An error occurred while archiving the recipe.",
@@ -973,6 +981,12 @@ export async function saveFoodiesRecipe(
       message: `Recipe \"${savedFoodiesRecipe.recipeTitle}\" saved successfully.`,
     };
   } catch (error) {
+    logDbQueryError("foodies.saveFoodiesRecipe", error, {
+      inputId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     if (createdRecipeId) {
       try {
         await db
@@ -1118,6 +1132,12 @@ export async function saveFoodiesTemplate(
       message: `Template "${savedTemplateRecord.templateName}" saved successfully.`,
     };
   } catch (error) {
+    logDbQueryError("foodies.saveFoodiesTemplate", error, {
+      templateId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isAdmin: actor.isAdmin,
+    });
     return {
       success: false,
       message: error instanceof Error
@@ -1300,6 +1320,7 @@ export async function getFoodiesRecipeDetail(
       recipe: recipeDetail,
     };
   } catch (error) {
+    logDbQueryError("foodies.getFoodiesRecipeDetail", error, { familyId, recipeId, viewerMemberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to load recipe detail.",
@@ -1409,6 +1430,12 @@ export async function toggleRecipeLike(
       message: `Recipe ${actionText} successfully.`,
     };
   } catch (error) {
+    logDbQueryError("foodies.toggleRecipeLike", error, {
+      recipeId,
+      likenessDegree,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update recipe reaction.",
@@ -1526,6 +1553,12 @@ export async function addRecipeComment(
       message: "Comment posted successfully.",
     };
   } catch (error) {
+    logDbQueryError("foodies.addRecipeComment", error, {
+      recipeId: input.recipeId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      clientRequestId: input.clientRequestId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to add comment.",
@@ -1691,6 +1724,7 @@ export async function deleteRecipeTerm(
       message: "Recipe term deleted.",
     };
   } catch (error) {
+    logDbQueryError("foodies.deleteRecipeTerm", error, { id, familyId: actor.familyId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting recipe term",
@@ -1737,6 +1771,12 @@ export async function deleteRecipe(
       message: "Recipe deleted.",
     };
   } catch (error) {
+    logDbQueryError("foodies.deleteRecipe", error, {
+      recipeId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting recipe",

@@ -25,6 +25,7 @@ import type {
   UpdateClubSessionReturn,
 } from '@/components/db/types/clubs';
 import { isSerializedTipTapDocumentEmpty, parseSerializedTipTapDocument, serializeTipTapDocument } from '@/components/db/types/poem-term-validation';
+import { logDbQueryError } from './db-error-logger';
 
 function createMemberName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -120,84 +121,90 @@ export async function getClubTargetTitle(
 }
 
 export async function getFamilyClubs(familyId: number): Promise<Club[]> {
-  const clubRows = await db
-    .select({
-      id: club.id,
-      status: club.status,
-      clubName: club.clubName,
-      createdAt: club.createdAt,
-      clubFounderId: club.clubFounderId,
-      familyId: club.familyId,
-      founderFirstName: member.firstName,
-      founderLastName: member.lastName,
-    })
-    .from(club)
-    .leftJoin(member, eq(club.clubFounderId, member.id))
-    .where(eq(club.familyId, familyId))
-    .orderBy(asc(club.clubName), asc(club.createdAt));
+  try {
 
-  if (clubRows.length === 0) {
+    const clubRows = await db
+      .select({
+        id: club.id,
+        status: club.status,
+        clubName: club.clubName,
+        createdAt: club.createdAt,
+        clubFounderId: club.clubFounderId,
+        familyId: club.familyId,
+        founderFirstName: member.firstName,
+        founderLastName: member.lastName,
+      })
+      .from(club)
+      .leftJoin(member, eq(club.clubFounderId, member.id))
+      .where(eq(club.familyId, familyId))
+      .orderBy(asc(club.clubName), asc(club.createdAt));
+
+    if (clubRows.length === 0) {
+      return [];
+    }
+
+    const sessionRows = await db
+      .select({
+        id: club_session.id,
+        status: club_session.status,
+        startedAt: club_session.startedAt,
+        finishesAt: club_session.finishesAt,
+        targetType: club_session.targetType,
+        targetId: club_session.targetId,
+        clubId: club_session.clubId,
+        moderatorId: club_session.moderatorId,
+        clubName: club.clubName,
+        moderatorFirstName: member.firstName,
+        moderatorLastName: member.lastName,
+        discussThreadId: discussThread.id,
+        discussTopic: discussThread.discussTopic,
+        topicJson: discussThread.topicJson,
+        contentJson: discussPostReply.contentJson,
+      })
+      .from(club_session)
+      .innerJoin(club, eq(club_session.clubId, club.id))
+      .leftJoin(member, eq(club_session.moderatorId, member.id))
+      .leftJoin(
+        discussThread,
+        and(
+          eq(discussThread.familyId, familyId),
+          eq(discussThread.targetType, club_session.targetType),
+          eq(discussThread.targetId, club_session.targetId),
+        ),
+      )
+      .leftJoin(
+        discussPostReply,
+        and(
+          eq(discussPostReply.discussThreadId, discussThread.id),
+          eq(discussPostReply.postReplyType, 'post'),
+          eq(discussPostReply.seqNo, 1),
+        ),
+      )
+      .where(eq(club.familyId, familyId))
+      .orderBy(asc(club.clubName), asc(club_session.startedAt), asc(club_session.id));
+
+    const sessionByClubId = new Map<number, ClubSession[]>();
+    for (const resolvedSession of await resolveClubSessionRows(familyId, sessionRows)) {
+      const existingSessions = sessionByClubId.get(resolvedSession.clubId) ?? [];
+      existingSessions.push(resolvedSession);
+      sessionByClubId.set(resolvedSession.clubId, existingSessions);
+    }
+
+      return clubRows.map((row) => ({
+        id: row.id,
+        status: row.status,
+        clubName: row.clubName,
+        createdAt: row.createdAt as Date,
+        clubFounderId: row.clubFounderId,
+        familyId: row.familyId,
+        founderName: createMemberName(row.founderFirstName, row.founderLastName),
+        sessionCount: sessionByClubId.get(row.id)?.length ?? 0,
+        sessions: sessionByClubId.get(row.id) ?? [],
+      }));
+  } catch (error) {
+    logDbQueryError("clubs.getFamilyClubs", error, { familyId });
     return [];
   }
-
-  const sessionRows = await db
-    .select({
-      id: club_session.id,
-      status: club_session.status,
-      startedAt: club_session.startedAt,
-      finishesAt: club_session.finishesAt,
-      targetType: club_session.targetType,
-      targetId: club_session.targetId,
-      clubId: club_session.clubId,
-      moderatorId: club_session.moderatorId,
-      clubName: club.clubName,
-      moderatorFirstName: member.firstName,
-      moderatorLastName: member.lastName,
-      discussThreadId: discussThread.id,
-      discussTopic: discussThread.discussTopic,
-      topicJson: discussThread.topicJson,
-      contentJson: discussPostReply.contentJson,
-    })
-    .from(club_session)
-    .innerJoin(club, eq(club_session.clubId, club.id))
-    .leftJoin(member, eq(club_session.moderatorId, member.id))
-    .leftJoin(
-      discussThread,
-      and(
-        eq(discussThread.familyId, familyId),
-        eq(discussThread.targetType, club_session.targetType),
-        eq(discussThread.targetId, club_session.targetId),
-      ),
-    )
-    .leftJoin(
-      discussPostReply,
-      and(
-        eq(discussPostReply.discussThreadId, discussThread.id),
-        eq(discussPostReply.postReplyType, 'post'),
-        eq(discussPostReply.seqNo, 1),
-      ),
-    )
-    .where(eq(club.familyId, familyId))
-    .orderBy(asc(club.clubName), asc(club_session.startedAt), asc(club_session.id));
-
-  const sessionByClubId = new Map<number, ClubSession[]>();
-  for (const resolvedSession of await resolveClubSessionRows(familyId, sessionRows)) {
-    const existingSessions = sessionByClubId.get(resolvedSession.clubId) ?? [];
-    existingSessions.push(resolvedSession);
-    sessionByClubId.set(resolvedSession.clubId, existingSessions);
-  }
-
-  return clubRows.map((row) => ({
-    id: row.id,
-    status: row.status,
-    clubName: row.clubName,
-    createdAt: row.createdAt as Date,
-    clubFounderId: row.clubFounderId,
-    familyId: row.familyId,
-    founderName: createMemberName(row.founderFirstName, row.founderLastName),
-    sessionCount: sessionByClubId.get(row.id)?.length ?? 0,
-    sessions: sessionByClubId.get(row.id) ?? [],
-  }));
 }
 
 export async function getClubSessionById(

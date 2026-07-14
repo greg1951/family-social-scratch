@@ -6,6 +6,7 @@ import db from '@/components/db/drizzle';
 import { GetMemberDetailsReturn, GetFamilyReturn, GetAllFamiliesReturn, GetAllFamilyMembersReturn, GetFounderDetailsReturn } from '../types/family-member';
 import { UpdateMemberReturn, UpdateAccountDetails } from '@/features/auth/types/auth-types';
 import { GetMemberDetailsByEmailReturn } from '@/features/family/types/family-members';
+import { logDbQueryError } from './db-error-logger';
 
 /*-------- findRegisteredFamily ------------------ */
 export async function findRegisteredFamily(familyName: string)
@@ -39,20 +40,29 @@ export async function findRegisteredFamily(familyName: string)
 export async function getAllFamilies()
   :(Promise<GetAllFamiliesReturn>) {
 
-  const result = 
-    await db
-    .select({name: family.name})
-    .from(family);
-  
-  if (result[0]) 
-    return {
-      success: true,
-      familyNames: result.map(r => r.name),
+  try {
+
+    const result = 
+      await db
+      .select({name: family.name})
+      .from(family);
+    
+    if (result[0]) 
+      return {
+        success: true,
+        familyNames: result.map(r => r.name),
+      }
+    else {
+      return {
+        success: false,
+        message: "No families found",
+      }
     }
-  else {
+  } catch (error) {
+    logDbQueryError("family-setup-steps.getAllFamilies", error);
     return {
       success: false,
-      message: "No families found",
+      message: "Error retrieving families",
     }
   }
 }

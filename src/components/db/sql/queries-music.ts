@@ -48,6 +48,7 @@ import {
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
+import { logDbQueryError } from "./db-error-logger";
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -779,6 +780,7 @@ export async function getMusicHomePageData(
       musicTemplates,
     };
   } catch (error) {
+    logDbQueryError("music.getMusicHomePageData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading music home page data",

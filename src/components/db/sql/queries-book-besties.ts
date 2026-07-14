@@ -40,6 +40,7 @@ import {
 } from './queries-family-activity';
 import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
+import { logDbQueryError } from './db-error-logger';
 
 const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
 const BOOK_SOURCE_OPTIONS = new Set(['bookstore', 'library', 'audible', 'gift', 'other']);
@@ -284,6 +285,7 @@ export async function getBooksHomePageData(familyId: number, memberId?: number)
       clubs,
     };
   } catch (error) {
+    logDbQueryError('books.getBooksHomePageData', error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Error loading book besties home page data',
@@ -478,7 +480,12 @@ export async function saveBooksHomeBook(
         message: updatedBook.status === 'archived' ? 'Book archived.' : 'Book unarchived.',
       };
     } catch (error) {
-      console.error('Error archiving book:', error);
+      logDbQueryError('books.saveBooksHomeBook.archiveToggle', error, {
+        bookId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: 'An error occurred while archiving the book.',
@@ -590,6 +597,12 @@ export async function saveBooksHomeBook(
 
     savedBookId = savedBookFact.id;
   } catch (error) {
+    logDbQueryError('books.saveBooksHomeBook', error, {
+      inputId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     if (createdBookFactId) {
       try {
         await db
@@ -1456,6 +1469,7 @@ export async function deleteBookTerm(
       message: "Book term deleted.",
     };
   } catch (error) {
+    logDbQueryError('books.deleteBookTerm', error, { id, familyId: actor.familyId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting book term",
@@ -1502,6 +1516,12 @@ export async function deleteBook(
       message: "Book deleted.",
     };
   } catch (error) {
+    logDbQueryError('books.deleteBook', error, {
+      bookId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting book",

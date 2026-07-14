@@ -44,6 +44,8 @@ import type {
   AddGalleryAlbumCommentInput,
   AddGalleryAlbumCommentReturn,
 } from "../types/gallery";
+import { logDbQueryError } from "./db-error-logger";
+
 
 type MemberContext = { memberId: number; familyId: number };
 
@@ -127,6 +129,7 @@ export async function getFamilyGalleryData(familyId: number): Promise<GetFamilyG
 
     return { success: true, sharedAlbums };
   } catch (error) {
+    logDbQueryError("gallery.getGalleryHomePageData", error, { familyId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to load family gallery",

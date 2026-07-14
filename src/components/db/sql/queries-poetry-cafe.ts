@@ -51,6 +51,7 @@ import {
 } from './queries-family-activity';
 import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
+import { logDbQueryError } from './db-error-logger';
 
 const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
 
@@ -334,6 +335,7 @@ export async function getPoetryHomePageData(familyId: number, memberId?: number)
       clubs,
     };
   } catch (error) {
+    logDbQueryError("poetry.getPoetryHomePageData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : 'Error loading poetry home page data',
