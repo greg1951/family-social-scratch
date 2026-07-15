@@ -1,6 +1,8 @@
 import { getAllFamilies } from "@/components/db/sql/queries-family-member";
 import CreateFamilyAccountSteps from "./index";
 
+export const dynamic = "force-dynamic";
+
 export default async function FamilySetup() {
   const familyNamesResult = await getAllFamilies();
   if (!familyNamesResult.success) {
