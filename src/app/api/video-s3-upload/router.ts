@@ -1,6 +1,7 @@
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
+import { logApiRouteError } from "@/components/api/api-error-logger";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
@@ -77,9 +78,9 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[api/video-s3-upload] failed to stream object", {
+    logApiRouteError("api.video-s3-upload.GET.streamObject", error, {
       key: normalizedObjectKey,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      route: "video-s3-upload",
     });
     return NextResponse.json({ error: "Failed to load video" }, { status: 500 });
   }
@@ -144,10 +145,10 @@ export async function POST(request: Request) {
       s3Key: objectKey,
     });
   } catch (error) {
-    console.error("[api/video-s3-upload] failed to generate signed URL", {
+    logApiRouteError("api.video-s3-upload.POST.generateUrl", error, {
       action,
       fileName,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      route: "video-s3-upload",
     });
     return NextResponse.json({ error: "Failed to generate URL" }, { status: 500 });
   }

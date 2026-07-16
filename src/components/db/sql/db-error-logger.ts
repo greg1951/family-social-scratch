@@ -1,3 +1,5 @@
+import * as Sentry from "@sentry/nextjs";
+
 type DbErrorMeta = Record<string, unknown>;
 import { getRequestCorrelationId } from "./request-correlation";
 
@@ -12,12 +14,20 @@ function toError(value: unknown): Error {
 export function logDbQueryError(scope: string, error: unknown, meta: DbErrorMeta = {}) {
   const err = toError(error);
   const requestId = getRequestCorrelationId() ?? "unknown";
-
-  console.error("[DB_QUERY_FAILED]", {
+  const payload = {
     requestId,
     scope,
     message: err.message,
     stack: err.stack,
     ...meta,
+  };
+
+  Sentry.withScope((sentryScope) => {
+    sentryScope.setTag("db.scope", scope);
+    sentryScope.setTag("request.id", requestId);
+    sentryScope.setContext("db_query_error", payload);
+    Sentry.captureException(err);
   });
+
+  console.error("[DB_QUERY_FAILED]", payload);
 }

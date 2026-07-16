@@ -1,6 +1,7 @@
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { NextResponse } from "next/server";
+import { logApiRouteError } from "@/components/api/api-error-logger";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import { getS3ClientForFamily } from "@/lib/s3-client-factory";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
@@ -248,11 +249,11 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[api/s3-upload] failed to stream object", {
+    logApiRouteError("api.s3-upload.GET.streamObject", error, {
       requestId,
       familyId: memberDetails.familyId,
       objectKey,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      route: "s3-upload",
     });
     return NextResponse.json({ error: "Failed to load image" }, { status: 500 });
   }
@@ -362,7 +363,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const downloadContext = await resolveDownloadContext(requestId, s3Context, objectKey);
+    await resolveDownloadContext(requestId, s3Context, objectKey);
     const url = `/api/s3-upload?key=${encodeURIComponent(objectKey)}`;
 
     // if (IS_DEV) {
@@ -378,13 +379,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ url, s3Key: objectKey });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[api/s3-upload] failed to generate signed URL", {
+    logApiRouteError("api.s3-upload.POST.generateUrl", error, {
       requestId,
       action,
       familyId: memberDetails.familyId,
       fileName,
       folder,
       errorMessage,
+      route: "s3-upload",
     });
     return NextResponse.json({ error: `Failed to generate URL: ${errorMessage}` }, { status: 500 });
   }
@@ -432,11 +434,11 @@ export async function PUT(request: Request) {
       fileUrl: buildPublicObjectUrl(normalizedObjectKey, s3Context.bucketName, s3Context.region),
     });
   } catch (error) {
-    console.error("[api/s3-upload] failed to proxy upload", {
+    logApiRouteError("api.s3-upload.PUT.proxyUpload", error, {
       requestId,
       familyId: memberDetails.familyId,
       objectKey: normalizedObjectKey,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      route: "s3-upload",
     });
 
     return NextResponse.json({ error: "Failed to upload image" }, { status: 500 });

@@ -1,6 +1,7 @@
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
+import { logApiRouteError } from "@/components/api/api-error-logger";
 
 import db from "@/components/db/drizzle";
 import { video } from "@/components/db/schema/global-schema-tables";
@@ -56,10 +57,10 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("[api/video-faq-playback] failed to stream published video", {
+    logApiRouteError("api.video-faq-playback.GET.streamPublishedVideo", error, {
       videoId,
       objectKey,
-      errorMessage: error instanceof Error ? error.message : "Unknown error",
+      route: "video-faq-playback",
     });
 
     return NextResponse.json({ error: "Failed to load video" }, { status: 500 });
