@@ -1,5 +1,5 @@
 {
-  "id": "8ff735f9-06c7-4899-a79f-7bb7db05186a",
+  "id": "81e92004-1be0-47f3-91a5-9894847e4b75",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -148,6 +148,494 @@
           "primaryKey": false,
           "notNull": false,
           "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "global_schema.feature_reference": {
+      "name": "feature_reference",
+      "schema": "global_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "feature_reference_name_unique": {
+          "name": "feature_reference_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "global_schema.guided_tour_reference": {
+      "name": "guided_tour_reference",
+      "schema": "global_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "tour_key": {
+          "name": "tour_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tour_name": {
+          "name": "tour_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature_name": {
+          "name": "feature_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "audience_type": {
+          "name": "audience_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'new_member'"
+        },
+        "fk_family_id": {
+          "name": "fk_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version_major": {
+          "name": "version_major",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "version_minor": {
+          "name": "version_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "version_patch": {
+          "name": "version_patch",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "guided_tour_reference_feature_status_idx": {
+          "name": "guided_tour_reference_feature_status_idx",
+          "columns": [
+            {
+              "expression": "feature_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guided_tour_reference_family_status_idx": {
+          "name": "guided_tour_reference_family_status_idx",
+          "columns": [
+            {
+              "expression": "fk_family_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guided_tour_reference_version_idx": {
+          "name": "guided_tour_reference_version_idx",
+          "columns": [
+            {
+              "expression": "version_major",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_minor",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "version_patch",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guided_tour_reference_fk_family_id_family_id_fk": {
+          "name": "guided_tour_reference_fk_family_id_family_id_fk",
+          "tableFrom": "guided_tour_reference",
+          "tableTo": "family",
+          "schemaTo": "family_schema",
+          "columnsFrom": [
+            "fk_family_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guided_tour_reference_tour_key_unique": {
+          "name": "guided_tour_reference_tour_key_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "tour_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "global_schema.guided_tour_step_reference": {
+      "name": "guided_tour_step_reference",
+      "schema": "global_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "step_key": {
+          "name": "step_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step_no": {
+          "name": "step_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "route_pattern": {
+          "name": "route_pattern",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_selector": {
+          "name": "target_selector",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snippet_title": {
+          "name": "snippet_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snippet_body": {
+          "name": "snippet_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "snippet_type": {
+          "name": "snippet_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'coach_mark'"
+        },
+        "placement": {
+          "name": "placement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'bottom'"
+        },
+        "highlight_padding": {
+          "name": "highlight_padding",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 8
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'next_only'"
+        },
+        "cta_primary_label": {
+          "name": "cta_primary_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'Next'"
+        },
+        "cta_secondary_label": {
+          "name": "cta_secondary_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_optional": {
+          "name": "is_optional",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "fk_tour_id": {
+          "name": "fk_tour_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "guided_tour_step_tour_step_no_idx": {
+          "name": "guided_tour_step_tour_step_no_idx",
+          "columns": [
+            {
+              "expression": "fk_tour_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "step_no",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "guided_tour_step_route_idx": {
+          "name": "guided_tour_step_route_idx",
+          "columns": [
+            {
+              "expression": "route_pattern",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guided_tour_step_reference_fk_tour_id_guided_tour_reference_id_fk": {
+          "name": "guided_tour_step_reference_fk_tour_id_guided_tour_reference_id_fk",
+          "tableFrom": "guided_tour_step_reference",
+          "tableTo": "guided_tour_reference",
+          "schemaTo": "global_schema",
+          "columnsFrom": [
+            "fk_tour_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "guided_tour_step_tour_step_no_uq": {
+          "name": "guided_tour_step_tour_step_no_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fk_tour_id",
+            "step_no"
+          ]
+        },
+        "guided_tour_step_tour_step_key_uq": {
+          "name": "guided_tour_step_tour_step_key_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fk_tour_id",
+            "step_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "global_schema.member_option_reference": {
+      "name": "member_option_reference",
+      "schema": "global_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "option_name": {
+          "name": "option_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'feature'"
+        },
+        "seq_no": {
+          "name": "seq_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "is_selected": {
+          "name": "is_selected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         }
       },
       "indexes": {},

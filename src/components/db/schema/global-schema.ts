@@ -3,6 +3,8 @@ export {
   bookCategoryTagReference,
   bookTerm,
   featureReference,
+  guidedTourReference,
+  guidedTourStepReference,
   memberOptionReference,
   movieTagReference,
   musicTagReference,

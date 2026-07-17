@@ -3,7 +3,10 @@ import { pgSchema, serial, index, boolean, pgEnum, foreignKey, unique } from "dr
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
-import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, movieTagReference, musicTagReference, featureReference, memberOptionReference } from "./global-schema-tables"; 
+import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, 
+         movieTagReference, musicTagReference, featureReference, memberOptionReference,
+         guidedTourReference, guidedTourStepReference  
+        } from "./global-schema-tables"; 
 export const familySchema = pgSchema('family_schema');
 
 
@@ -25,7 +28,6 @@ import {
 import type { AdapterAccount } from "@auth/core/adapters"
 
 
-/*------------------------------- OAuth Schema ------------------------------ */
 export const accounts = familySchema.table("account",
   {
     userId: integer("userId")
@@ -231,7 +233,6 @@ export const club_session = familySchema.table("club_session", {
     index('club_session_club_id_idx').on(table.clubId),
 ]);
 
-/*------------------------------- Discussion Thread Schema ------------------------------ */
 export const discussThread = familySchema.table("discuss_thread", {
   id: serial("id").primaryKey(),
   discussTopic: text("title").notNull(),
@@ -294,8 +295,58 @@ export const discussLike = familySchema.table("discuss_like", {
   ]
 );
 
+export const guidedMemberTourProgress = familySchema.table("guided_member_tour_progress", {
+  id: serial("id").primaryKey(),
+  versionMajor: integer("version_major").notNull().default(1),
+  versionMinor: integer("version_minor").notNull().default(0),
+  versionPatch: integer("version_patch").notNull().default(0),
+  status: text("status").notNull().default("not_started"),
+  currentStepNo: integer("current_step_no").notNull().default(1),
+  startedAt: timestamp("started_at"),
+  lastSeenAt: timestamp("last_seen_at"),
+  completedAt: timestamp("completed_at"),
+  skippedAt: timestamp("skipped_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  neverShowAgain: boolean("never_show_again").notNull().default(false),
+  restartCount: integer("restart_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+  tourId: integer("fk_tour_id").notNull().references(() => guidedTourReference.id, { onDelete: "cascade" }),
+},
+(table) => [
+  index("member_tour_progress_member_status_updated_idx").on(table.memberId, table.status, table.updatedAt),
+  index("member_tour_progress_family_member_idx").on(table.familyId, table.memberId),
+  unique("member_tour_progress_member_family_tour_version_uq").on(
+    table.memberId,
+    table.familyId,
+    table.tourId,
+    table.versionMajor,
+    table.versionMinor,
+    table.versionPatch,
+  ),
+]);
 
-/*------------------------------- Mail Box Schema ------------------------------ */
+export const guidedMemberTourStepProgress = familySchema.table("guided_member_tour_step_progress", {
+  id: serial("id").primaryKey(),
+  stepNo: integer("step_no").notNull(),
+  status: text("status").notNull().default("not_started"),
+  viewedAt: timestamp("viewed_at"),
+  completedAt: timestamp("completed_at"),
+  skippedAt: timestamp("skipped_at"),
+  timeSpentMs: integer("time_spent_ms").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberTourProgressId: integer("fk_member_tour_progress_id").notNull().references(() => guidedMemberTourProgress.id, { onDelete: "cascade" }),
+  stepId: integer("fk_step_id").notNull().references(() => guidedTourStepReference.id, { onDelete: "cascade" }),
+},
+(table) => [
+  index("member_tour_step_progress_member_progress_status_idx").on(table.memberTourProgressId, table.status),
+  index("member_tour_step_progress_step_no_idx").on(table.stepNo),
+  unique("member_tour_step_progress_member_progress_step_uq").on(table.memberTourProgressId, table.stepId),
+]);
+
 export const threadVisibility = pgEnum('visibility', ['public', 'private']);
 export const conversationStatus = pgEnum('status', ['active', 'archived', 'closed']);
 export const postReplyType = pgEnum('type', ['post', 'reply']);
@@ -429,7 +480,6 @@ export const threadTemplate = familySchema.table("thread_template", {
 });
 
 
-/*-------------------------------- Picture Hallway ------------------------------ */
 export const galleryPhoto = familySchema.table("gallery_photo", {
   id: serial("id").primaryKey(),
   caption: text("caption"),
@@ -501,9 +551,6 @@ export const galleryAlbumComment = familySchema.table("gallery_album_photo_comme
   ]
 );
 
-/*------------------------------- Games Scoreboard ------------------------------ */
-//export const gameStatus = pgEnum('game_status', ['active', 'in_progress', 'completed', 'archived']);
-
 export const gameMetadata = familySchema.table("game_metadata", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -556,9 +603,6 @@ export const gamePlayerRound = familySchema.table("game_player_round", {
     index('game_player_round_game_player_id_idx').on(table.gamePlayerId),
     index('game_player_round_game_id_idx').on(table.gameId),
 ]);
-
-/*------------------------------- Poetry Nook ------------------------------ */
-//export const status = pgEnum('status', ['draft', 'published', 'archived']);
 
 export const poem = familySchema.table("poem", {
   id: serial("id").primaryKey(),
@@ -628,10 +672,6 @@ export const poemLike = familySchema.table("poem_like", {
   ]
 );
 
-
-/*------------------------------- Reading Room ------------------------------ */
-//export const status = pgEnum('status', ['draft', 'published', 'archived']);
-
 export const book = familySchema.table("book", {
   id: serial("id").primaryKey(),
   bookTitle: text("book_title").notNull().unique(),
@@ -677,28 +717,6 @@ export const bookCategoryTag = familySchema.table("book_category_tag", {
   ]
 );
 
-
-// export const bookTagReference = pgTable("book_tag_reference", {
-//   id: serial("id").primaryKey(),
-//   tagName: text("tag_name").notNull().default(""),
-//   tagDesc: text("tag_description"),
-//   tagType: text("tag_type").notNull().default("category"),
-//   status: text("status").notNull().default("active"),
-//   seqNo: integer("seq_no").notNull().default(1),
-//   createdAt: timestamp("created_at").defaultNow(),
-// });
-
-// export const bookTag = pgTable("book_tag", {
-//   id: serial("id").primaryKey(),
-//   bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
-//   tagId: integer("fk_tag_id").notNull().references(() => bookTagReference.id, {onDelete: 'cascade'}),
-// },
-//   (table) => [
-//     index('book_tag_book_id_idx').on(table.bookId),
-//     index('book_tag_tag_id_idx').on(table.tagId),
-//   ]
-// );
-
 export const bookLike = familySchema.table("book_like", {
   id: serial("id").primaryKey(),
   bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
@@ -712,9 +730,6 @@ export const bookLike = familySchema.table("book_like", {
     unique("book_like_member_id_uq").on(table.bookId, table.memberId),
   ]
 );
-
-
-/*------------------------------- The Kitchen ------------------------------ */
 
 export const recipe = familySchema.table("recipe", {
   id: serial("id").primaryKey(),
@@ -810,8 +825,6 @@ export const recipeTerm = familySchema.table("recipe_term", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-/*------------------------------- TV Room ------------------------------ */
-
 export const show = familySchema.table("show", {
   id: serial("id").primaryKey(),
   showTitle: text("show_title").notNull().unique(),
@@ -864,7 +877,6 @@ export const showTemplate = familySchema.table("show_template", {
   ]
 );
 
-
 export const showTag = familySchema.table("show_tag", {
   id: serial("id").primaryKey(),
   showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
@@ -888,8 +900,6 @@ export const showLike = familySchema.table("show_like", {
     index("show_like_member_id_idx").on(table.memberId),
   ]
 );
-
-/*------------------------------- Movie Theater ------------------------------ */
 
 export const movie = familySchema.table("movie", {
   id: serial("id").primaryKey(),
@@ -966,7 +976,6 @@ export const movieLike = familySchema.table("movie_like", {
   ]
 );
 
-/*------------------------------- Music Salon ------------------------------ */
 export const music = familySchema.table("music", {
   id: serial("id").primaryKey(),
   musicTitle: text("music_title").notNull().unique(),

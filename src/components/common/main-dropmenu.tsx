@@ -132,6 +132,11 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
                       Add Book Tag
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <Link href="/add-guided">
+                      Tour Reference
+                    </Link>
+                  </DropdownMenuItem>
                 </DropdownMenuGroup>
               </>
             ) }

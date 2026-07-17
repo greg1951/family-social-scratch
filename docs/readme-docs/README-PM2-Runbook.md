@@ -20,6 +20,7 @@
   - [Crashing PM2 Woker(s)](#crashing-pm2-wokers)
   - [Getting PM2 Error Logs](#getting-pm2-error-logs)
   - [The pm2-ec2-user.service Service](#the-pm2-ec2-userservice-service)
+- [Out of Space on EC2](#out-of-space-on-ec2)
 - [Schema Versioning Strategy](#schema-versioning-strategy)
   - [Recommended approach](#recommended-approach)
   - [Versioning policy](#versioning-policy)
@@ -322,6 +323,35 @@ If you changed ecosystem.config.cjs, run:
     pm2 save (if you rely on saved PM2 process list)
 ```
 If systemd starts with pm2-runtime start ecosystem.config.cjs, restarting the service is usually enough to re-read it.
+
+# Out of Space on EC2
+
+1) Confirm space and inode pressure
+
+    ```bash
+    df -h
+    df -i
+    ```
+
+2) See what's consuming space
+
+    ```bash
+    du -xh --max-depth=1 /home/ec2-user | sort -h
+    du -xh --max-depth=1 /home/ec2-user/projects | sort -h
+    ```
+
+3) Clean project artifacts safely: `rm -rf node_modules .next`
+
+4) Clean npm cache/logs
+    ```bash
+    npm cache clean --force
+    find /home/ec2-user/.npm/_logs -type f -delete
+    ```
+
+5) Reinstall from lockfile (preferred for servers): `npm ci`
+
+6) Build again: `npm run build`
+
 
 # Schema Versioning Strategy
 

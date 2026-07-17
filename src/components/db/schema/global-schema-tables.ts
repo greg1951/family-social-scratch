@@ -2,7 +2,7 @@ import { pgSchema, serial, index, boolean, pgEnum, foreignKey, unique } from "dr
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
-import { member } from "./family-social-schema-tables"; 
+import { member, family } from "./family-social-schema-tables"; 
 
 import {
   timestamp,
@@ -49,6 +49,53 @@ export const featureReference = globalSchema.table("feature_reference", {
   status: text("status").notNull().default("active"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const guidedTourReference = globalSchema.table("guided_tour_reference", {
+  id: serial("id").primaryKey(),
+  tourKey: text("tour_key").notNull().unique(),
+  tourName: text("tour_name").notNull(),
+  featureName: text("feature_name").notNull(),
+  status: text("status").notNull().default("draft"),
+  audienceType: text("audience_type").notNull().default("member"),
+  versionMajor: integer("version_major").notNull().default(1),
+  versionMinor: integer("version_minor").notNull().default(0),
+  versionPatch: integer("version_patch").notNull().default(0),
+  startsAt: timestamp("starts_at"),
+  endsAt: timestamp("ends_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+(table) => [
+  index("guided_tour_reference_feature_status_idx").on(table.featureName, table.status),
+  index("guided_tour_reference_version_idx").on(table.versionMajor, table.versionMinor, table.versionPatch),
+]);
+
+export const guidedTourStepReference = globalSchema.table("guided_tour_step_reference", {
+  id: serial("id").primaryKey(),
+  stepKey: text("step_key").notNull(),
+  stepNo: integer("step_no").notNull(),
+  routePattern: text("route_pattern").notNull(),
+  targetSelector: text("target_selector").notNull(),
+  targetSelectorPath: text("target_selector_path"),
+  snippetTitle: text("snippet_title").notNull(),
+  snippetBody: text("snippet_body").notNull(),
+  snippetType: text("snippet_type").notNull().default("coach_mark"),
+  placement: text("placement").notNull().default("bottom"),
+  highlightPadding: integer("highlight_padding").notNull().default(8),
+  actionType: text("action_type").notNull().default("next_only"),
+  ctaPrimaryLabel: text("cta_primary_label").notNull().default("Next"),
+  ctaSecondaryLabel: text("cta_secondary_label"),
+  isOptional: boolean("is_optional").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  tourId: integer("fk_tour_id").notNull().references(() => guidedTourReference.id, { onDelete: "cascade" }),
+},
+(table) => [
+  index("guided_tour_step_tour_step_no_idx").on(table.tourId, table.stepNo),
+  index("guided_tour_step_route_idx").on(table.routePattern),
+  unique("guided_tour_step_tour_step_no_uq").on(table.tourId, table.stepNo),
+  unique("guided_tour_step_tour_step_key_uq").on(table.tourId, table.stepKey),
+]);
 
 export const memberOptionReference = globalSchema.table("member_option_reference", {
   id: serial("id").primaryKey(),

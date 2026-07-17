@@ -1,5 +1,5 @@
 {
-  "id": "1869e585-9c45-443b-abe3-06e90e04815b",
+  "id": "0094681d-1953-4606-a20a-96c4744a91d0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -149,12 +149,19 @@
           "primaryKey": false,
           "notNull": false
         },
+        "book_source": {
+          "name": "book_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'bookstore'"
+        },
         "status": {
           "name": "status",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'draft'"
+          "default": "'published'"
         },
         "created_at": {
           "name": "created_at",
@@ -1546,7 +1553,7 @@
           "name": "family_feature_config_fk_feature_id_feature_reference_id_fk",
           "tableFrom": "family_feature_config",
           "tableTo": "feature_reference",
-          "schemaTo": "family_schema",
+          "schemaTo": "global_schema",
           "columnsFrom": [
             "fk_feature_id"
           ],
@@ -1809,59 +1816,6 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "family_schema.feature_reference": {
-      "name": "feature_reference",
-      "schema": "family_schema",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'active'"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "feature_reference_name_unique": {
-          "name": "feature_reference_name_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
-        }
-      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -2853,6 +2807,399 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "family_schema.guided_member_tour_progress": {
+      "name": "guided_member_tour_progress",
+      "schema": "family_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "version_major": {
+          "name": "version_major",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "version_minor": {
+          "name": "version_minor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "version_patch": {
+          "name": "version_patch",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not_started'"
+        },
+        "current_step_no": {
+          "name": "current_step_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_seen_at": {
+          "name": "last_seen_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skipped_at": {
+          "name": "skipped_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dismissed_at": {
+          "name": "dismissed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "never_show_again": {
+          "name": "never_show_again",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "restart_count": {
+          "name": "restart_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "fk_member_id": {
+          "name": "fk_member_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fk_family_id": {
+          "name": "fk_family_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fk_tour_id": {
+          "name": "fk_tour_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "member_tour_progress_member_status_updated_idx": {
+          "name": "member_tour_progress_member_status_updated_idx",
+          "columns": [
+            {
+              "expression": "fk_member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_tour_progress_family_member_idx": {
+          "name": "member_tour_progress_family_member_idx",
+          "columns": [
+            {
+              "expression": "fk_family_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "fk_member_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guided_member_tour_progress_fk_member_id_member_id_fk": {
+          "name": "guided_member_tour_progress_fk_member_id_member_id_fk",
+          "tableFrom": "guided_member_tour_progress",
+          "tableTo": "member",
+          "schemaTo": "family_schema",
+          "columnsFrom": [
+            "fk_member_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guided_member_tour_progress_fk_family_id_family_id_fk": {
+          "name": "guided_member_tour_progress_fk_family_id_family_id_fk",
+          "tableFrom": "guided_member_tour_progress",
+          "tableTo": "family",
+          "schemaTo": "family_schema",
+          "columnsFrom": [
+            "fk_family_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guided_member_tour_progress_fk_tour_id_guided_tour_reference_id_fk": {
+          "name": "guided_member_tour_progress_fk_tour_id_guided_tour_reference_id_fk",
+          "tableFrom": "guided_member_tour_progress",
+          "tableTo": "guided_tour_reference",
+          "schemaTo": "global_schema",
+          "columnsFrom": [
+            "fk_tour_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "member_tour_progress_member_family_tour_version_uq": {
+          "name": "member_tour_progress_member_family_tour_version_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fk_member_id",
+            "fk_family_id",
+            "fk_tour_id",
+            "version_major",
+            "version_minor",
+            "version_patch"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "family_schema.guided_member_tour_step_progress": {
+      "name": "guided_member_tour_step_progress",
+      "schema": "family_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "step_no": {
+          "name": "step_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'not_started'"
+        },
+        "viewed_at": {
+          "name": "viewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skipped_at": {
+          "name": "skipped_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time_spent_ms": {
+          "name": "time_spent_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "fk_member_tour_progress_id": {
+          "name": "fk_member_tour_progress_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fk_step_id": {
+          "name": "fk_step_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "member_tour_step_progress_member_progress_status_idx": {
+          "name": "member_tour_step_progress_member_progress_status_idx",
+          "columns": [
+            {
+              "expression": "fk_member_tour_progress_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "member_tour_step_progress_step_no_idx": {
+          "name": "member_tour_step_progress_step_no_idx",
+          "columns": [
+            {
+              "expression": "step_no",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "guided_member_tour_step_progress_fk_member_tour_progress_id_guided_member_tour_progress_id_fk": {
+          "name": "guided_member_tour_step_progress_fk_member_tour_progress_id_guided_member_tour_progress_id_fk",
+          "tableFrom": "guided_member_tour_step_progress",
+          "tableTo": "guided_member_tour_progress",
+          "schemaTo": "family_schema",
+          "columnsFrom": [
+            "fk_member_tour_progress_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "guided_member_tour_step_progress_fk_step_id_guided_tour_step_reference_id_fk": {
+          "name": "guided_member_tour_step_progress_fk_step_id_guided_tour_step_reference_id_fk",
+          "tableFrom": "guided_member_tour_step_progress",
+          "tableTo": "guided_tour_step_reference",
+          "schemaTo": "global_schema",
+          "columnsFrom": [
+            "fk_step_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "member_tour_step_progress_member_progress_step_uq": {
+          "name": "member_tour_step_progress_member_progress_step_uq",
+          "nullsNotDistinct": false,
+          "columns": [
+            "fk_member_tour_progress_id",
+            "fk_step_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "family_schema.member": {
       "name": "member",
       "schema": "family_schema",
@@ -3035,11 +3382,11 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "member_option_fk_option_id_option_reference_id_fk": {
-          "name": "member_option_fk_option_id_option_reference_id_fk",
+        "member_option_fk_option_id_member_option_reference_id_fk": {
+          "name": "member_option_fk_option_id_member_option_reference_id_fk",
           "tableFrom": "member_option",
-          "tableTo": "option_reference",
-          "schemaTo": "family_schema",
+          "tableTo": "member_option_reference",
+          "schemaTo": "global_schema",
           "columnsFrom": [
             "fk_option_id"
           ],
@@ -4319,52 +4666,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "family_schema.option_reference": {
-      "name": "option_reference",
-      "schema": "family_schema",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "option_name": {
-          "name": "option_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "category": {
-          "name": "category",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'feature'"
-        },
-        "seq_no": {
-          "name": "seq_no",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "is_selected": {
-          "name": "is_selected",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "family_schema.password_reset": {
       "name": "password_reset",
       "schema": "family_schema",
@@ -4483,7 +4784,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "default": "'draft'"
+          "default": "'published'"
         },
         "created_at": {
           "name": "created_at",

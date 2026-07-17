@@ -194,7 +194,7 @@ export default function AccountDetailsForm({ accountDetails, founderDetails }
                 ) }
               </div>
             </div>
-            <div className="pb-5">
+            <div id="member-birthday" className="pb-5">
 
               <FormField
                 control={ form.control }

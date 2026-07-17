@@ -20,7 +20,8 @@ CREATE TABLE "family_schema"."book" (
 	"book_language" text DEFAULT 'english' NOT NULL,
 	"book_year" integer DEFAULT 0 NOT NULL,
 	"book_series_name" text,
-	"status" text DEFAULT 'draft' NOT NULL,
+	"book_source" text DEFAULT 'bookstore' NOT NULL,
+	"status" text DEFAULT 'published' NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"fk_member_id" integer NOT NULL,
 	"fk_family_id" integer NOT NULL,
@@ -161,15 +162,6 @@ CREATE TABLE "family_schema"."family_s3_credentials" (
 	"fk_family_id" integer NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "family_schema"."feature_reference" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"name" text NOT NULL,
-	"description" text,
-	"status" text DEFAULT 'active' NOT NULL,
-	"updated_at" timestamp DEFAULT now(),
-	CONSTRAINT "feature_reference_name_unique" UNIQUE("name")
-);
---> statement-breakpoint
 CREATE TABLE "family_schema"."gallery_album" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"caption" text,
@@ -260,6 +252,43 @@ CREATE TABLE "family_schema"."game_state" (
 	"fk_game_meta_id" integer NOT NULL,
 	"fk_family_id" integer NOT NULL,
 	CONSTRAINT "game_state_game_title_unique" UNIQUE("game_title")
+);
+--> statement-breakpoint
+CREATE TABLE "family_schema"."guided_member_tour_progress" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"version_major" integer DEFAULT 1 NOT NULL,
+	"version_minor" integer DEFAULT 0 NOT NULL,
+	"version_patch" integer DEFAULT 0 NOT NULL,
+	"status" text DEFAULT 'not_started' NOT NULL,
+	"current_step_no" integer DEFAULT 1 NOT NULL,
+	"started_at" timestamp,
+	"last_seen_at" timestamp,
+	"completed_at" timestamp,
+	"skipped_at" timestamp,
+	"dismissed_at" timestamp,
+	"never_show_again" boolean DEFAULT false NOT NULL,
+	"restart_count" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	"fk_member_id" integer NOT NULL,
+	"fk_family_id" integer NOT NULL,
+	"fk_tour_id" integer NOT NULL,
+	CONSTRAINT "member_tour_progress_member_family_tour_version_uq" UNIQUE("fk_member_id","fk_family_id","fk_tour_id","version_major","version_minor","version_patch")
+);
+--> statement-breakpoint
+CREATE TABLE "family_schema"."guided_member_tour_step_progress" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"step_no" integer NOT NULL,
+	"status" text DEFAULT 'not_started' NOT NULL,
+	"viewed_at" timestamp,
+	"completed_at" timestamp,
+	"skipped_at" timestamp,
+	"time_spent_ms" integer DEFAULT 0 NOT NULL,
+	"created_at" timestamp DEFAULT now(),
+	"updated_at" timestamp DEFAULT now(),
+	"fk_member_tour_progress_id" integer NOT NULL,
+	"fk_step_id" integer NOT NULL,
+	CONSTRAINT "member_tour_step_progress_member_progress_step_uq" UNIQUE("fk_member_tour_progress_id","fk_step_id")
 );
 --> statement-breakpoint
 CREATE TABLE "family_schema"."member" (
@@ -394,14 +423,6 @@ CREATE TABLE "family_schema"."music_template" (
 	"fk_family_id" integer
 );
 --> statement-breakpoint
-CREATE TABLE "family_schema"."option_reference" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"option_name" text NOT NULL,
-	"category" text DEFAULT 'feature' NOT NULL,
-	"seq_no" integer DEFAULT 1 NOT NULL,
-	"is_selected" boolean DEFAULT false NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "family_schema"."password_reset" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"fk_user_id" integer NOT NULL,
@@ -416,7 +437,7 @@ CREATE TABLE "family_schema"."poem" (
 	"poet_name" text DEFAULT 'Anonymous' NOT NULL,
 	"poem_source" text DEFAULT 'Unknown' NOT NULL,
 	"poem_year" integer DEFAULT 0 NOT NULL,
-	"status" text DEFAULT 'draft' NOT NULL,
+	"status" text DEFAULT 'published' NOT NULL,
 	"created_at" timestamp DEFAULT now(),
 	"fk_member_id" integer NOT NULL,
 	"fk_family_id" integer NOT NULL,
@@ -726,7 +747,7 @@ ALTER TABLE "family_schema"."discuss_thread" ADD CONSTRAINT "discuss_thread_fk_f
 ALTER TABLE "family_schema"."family_activity" ADD CONSTRAINT "family_activity_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."family_activity" ADD CONSTRAINT "family_activity_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."family_feature_config" ADD CONSTRAINT "family_feature_config_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "family_schema"."family_feature_config" ADD CONSTRAINT "family_feature_config_fk_feature_id_feature_reference_id_fk" FOREIGN KEY ("fk_feature_id") REFERENCES "family_schema"."feature_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."family_feature_config" ADD CONSTRAINT "family_feature_config_fk_feature_id_feature_reference_id_fk" FOREIGN KEY ("fk_feature_id") REFERENCES "global_schema"."feature_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."family_invitation" ADD CONSTRAINT "family_invitation_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."family_s3_credentials" ADD CONSTRAINT "family_s3_credentials_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."gallery_album" ADD CONSTRAINT "gallery_album_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -744,9 +765,14 @@ ALTER TABLE "family_schema"."game_player_state" ADD CONSTRAINT "game_player_stat
 ALTER TABLE "family_schema"."game_player_state" ADD CONSTRAINT "game_player_state_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."game_state" ADD CONSTRAINT "game_state_fk_game_meta_id_game_metadata_id_fk" FOREIGN KEY ("fk_game_meta_id") REFERENCES "family_schema"."game_metadata"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."game_state" ADD CONSTRAINT "game_state_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."guided_member_tour_progress" ADD CONSTRAINT "guided_member_tour_progress_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."guided_member_tour_progress" ADD CONSTRAINT "guided_member_tour_progress_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."guided_member_tour_progress" ADD CONSTRAINT "guided_member_tour_progress_fk_tour_id_guided_tour_reference_id_fk" FOREIGN KEY ("fk_tour_id") REFERENCES "global_schema"."guided_tour_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."guided_member_tour_step_progress" ADD CONSTRAINT "guided_member_tour_step_progress_fk_member_tour_progress_id_guided_member_tour_progress_id_fk" FOREIGN KEY ("fk_member_tour_progress_id") REFERENCES "family_schema"."guided_member_tour_progress"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."guided_member_tour_step_progress" ADD CONSTRAINT "guided_member_tour_step_progress_fk_step_id_guided_tour_step_reference_id_fk" FOREIGN KEY ("fk_step_id") REFERENCES "global_schema"."guided_tour_step_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."member" ADD CONSTRAINT "member_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."member_option" ADD CONSTRAINT "member_option_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "family_schema"."member_option" ADD CONSTRAINT "member_option_fk_option_id_option_reference_id_fk" FOREIGN KEY ("fk_option_id") REFERENCES "family_schema"."option_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."member_option" ADD CONSTRAINT "member_option_fk_option_id_member_option_reference_id_fk" FOREIGN KEY ("fk_option_id") REFERENCES "global_schema"."member_option_reference"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."movie" ADD CONSTRAINT "movie_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."movie" ADD CONSTRAINT "movie_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."movie_comment" ADD CONSTRAINT "movie_comment_fk_movie_id_movie_id_fk" FOREIGN KEY ("fk_movie_id") REFERENCES "family_schema"."movie"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -858,6 +884,10 @@ CREATE INDEX "game_player_state_member_id_idx" ON "family_schema"."game_player_s
 CREATE INDEX "game_player_state_family_id_idx" ON "family_schema"."game_player_state" USING btree ("fk_family_id");--> statement-breakpoint
 CREATE INDEX "game_state_metadata_id_idx" ON "family_schema"."game_state" USING btree ("fk_game_meta_id");--> statement-breakpoint
 CREATE INDEX "game_state_family_id_idx" ON "family_schema"."game_state" USING btree ("fk_family_id");--> statement-breakpoint
+CREATE INDEX "member_tour_progress_member_status_updated_idx" ON "family_schema"."guided_member_tour_progress" USING btree ("fk_member_id","status","updated_at");--> statement-breakpoint
+CREATE INDEX "member_tour_progress_family_member_idx" ON "family_schema"."guided_member_tour_progress" USING btree ("fk_family_id","fk_member_id");--> statement-breakpoint
+CREATE INDEX "member_tour_step_progress_member_progress_status_idx" ON "family_schema"."guided_member_tour_step_progress" USING btree ("fk_member_tour_progress_id","status");--> statement-breakpoint
+CREATE INDEX "member_tour_step_progress_step_no_idx" ON "family_schema"."guided_member_tour_step_progress" USING btree ("step_no");--> statement-breakpoint
 CREATE INDEX "member_email_idx" ON "family_schema"."member" USING btree ("email");--> statement-breakpoint
 CREATE INDEX "movie_member_id_idx" ON "family_schema"."movie" USING btree ("fk_member_id");--> statement-breakpoint
 CREATE INDEX "movie_family_id_idx" ON "family_schema"."movie" USING btree ("fk_family_id");--> statement-breakpoint

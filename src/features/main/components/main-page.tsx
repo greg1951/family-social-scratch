@@ -6,6 +6,8 @@ import { getFamilyFeatureConfig } from "@/components/db/sql/queries-family-featu
 import { FamilyFeatureKey, getFeatureKeyFromReferenceName } from "@/features/family/services/family-feature-flags";
 import FamilyActivity from "@/components/common/family-activity";
 import MainDropMenu from "@/components/common/main-dropmenu";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
+import { resolveGuidedTourLaunch, type GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
 import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
 import { RoomDefinitions, PhoneRoomOrder, TabletRoomOrder   } from "../types/constants";
@@ -26,6 +28,7 @@ export default async function MainPage() {
   let enabledFeatureKeys: FamilyFeatureKey[] | null = null;
   let memberImageUrl: string | null = null;
   let unreadThreadCount = 0;
+  let initialGuidedLaunchPayload: GuidedTourLaunchPayload | null = null;
 
   if (memberKeyDetails.isLoggedIn) {
     const [memberImageResult, unreadCount] = await Promise.all([
@@ -47,6 +50,18 @@ export default async function MainPage() {
         .filter((f) => f.isSelected)
         .map((f) => getFeatureKeyFromReferenceName(f.featureName))
         .filter((k): k is FamilyFeatureKey => k !== null);
+    }
+
+    const guidedLaunchResult = await resolveGuidedTourLaunch({
+      memberId: memberKeyDetails.memberId,
+      familyId: memberKeyDetails.familyId,
+      isFounder: memberKeyDetails.isFounder,
+      audienceType: "member",
+      tourKey: "new_member",
+    });
+
+    if (guidedLaunchResult.success && guidedLaunchResult.launch) {
+      initialGuidedLaunchPayload = guidedLaunchResult.payload;
     }
   }
 
@@ -95,7 +110,7 @@ export default async function MainPage() {
         <div className="mx-auto w-full max-w-260">
           <Card className="rounded-[22px] border border-slate-200/70 bg-white/95 px-3 py-2 shadow-sm sm:min-h-27 sm:px-6 sm:py-2.5">
             <div className="flex items-center justify-between gap-3 sm:gap-5">
-              <div>
+              <div id="welcome-card">
                 <div className="flex items-center gap-2 sm:gap-3">
                   <p className="font-sans text-[17px] leading-none font-extrabold tracking-tight text-slate-800 sm:text-[20px]">{ title }</p>
                   <div className="flex items-center gap-1.5 sm:gap-2.5">
@@ -114,7 +129,7 @@ export default async function MainPage() {
                 </div>
               </div>
 
-              <div className="shrink-0 self-center scale-90 sm:scale-95">
+              <div id="main-profile-icon" className="shrink-0 self-center scale-90 sm:scale-95">
                 <MainDropMenu
                   firstName={ memberKeyDetails.firstName }
                   email={ memberKeyDetails.email }
@@ -146,6 +161,7 @@ export default async function MainPage() {
           </div>
         </div>
       </section>
+      { memberKeyDetails.isLoggedIn ? <GuidedTourLauncher initialPayload={initialGuidedLaunchPayload} /> : null }
     </div>
   );
 };

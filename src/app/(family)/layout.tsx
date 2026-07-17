@@ -4,6 +4,7 @@ import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 import BackButton from "@/components/common/back-button";
 import MemberAvatar from "@/components/common/member-avatar";
 import SyncStatusConsole from "@/components/pwa/sync-status-console";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
 
 export default async function TrialLayout({
@@ -66,7 +67,7 @@ export default async function TrialLayout({
                 <ShieldCheck className="h-4 w-4 text-[#005472]" />
                 Update 2FA
               </Link>
-              <Link
+              <Link id="upload-avatar-link"
                 href="/family-image-upload"
                 prefetch={ false }
                 className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
@@ -86,6 +87,7 @@ export default async function TrialLayout({
           { children }
         </main>
       </div>
+      { memberAvatarDetails.isLoggedIn ? <GuidedTourLauncher /> : null }
     </div>
   )
 }

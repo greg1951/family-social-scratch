@@ -86,11 +86,11 @@ export default function MemberAccountTabs({
         ) }
       </TabsContent>
 
-      <TabsContent value="settings" className="mt-4 rounded-lg border p-4">
+      <TabsContent id="member-settings"  value="settings" className="mt-4 rounded-lg border p-4">
         <FamilyNotificationsForm notifications={ notifications } />
       </TabsContent>
 
-      <TabsContent value="family-members" className="mt-4 rounded-lg border p-4">
+      <TabsContent id="family-members" value="family-members" className="mt-4 rounded-lg border p-4">
         <FamilyMemberSuggestForm
           currentFamilyMembers={ currentFamilyMembers }
           memberKeyDetails={ memberKeyDetails }
@@ -98,7 +98,7 @@ export default function MemberAccountTabs({
         />
       </TabsContent>
 
-      <TabsContent value="activity" className="mt-4 rounded-lg border p-4">
+      <TabsContent id="member-activity" value="activity" className="mt-4 rounded-lg border p-4">
         <Card className="p-3">
           <form method="get" className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_1fr_auto] md:items-end">
             <input type="hidden" name="tab" value="activity" />

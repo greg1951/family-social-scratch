@@ -6,6 +6,8 @@ export {
   passwordReset, 
   family, 
   familyS3Credentials,
+  guidedMemberTourProgress,
+  guidedMemberTourStepProgress,
   member, 
   memberOption, 
   familyInvitation,
