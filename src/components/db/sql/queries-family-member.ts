@@ -550,6 +550,25 @@ export async function getJoinedFamilyMembersForRemoval(familyId: number) {
 }
 
 export async function softRetireFamilyMember(memberId: number, familyId: number) {
+  const [existingMember] = await db
+    .select({
+      memberId: member.id,
+      email: member.email,
+    })
+    .from(member)
+    .where(and(
+      eq(member.id, memberId),
+      eq(member.familyId, familyId),
+      eq(member.isFounder, false),
+    ));
+
+  if (!existingMember) {
+    return {
+      success: false as const,
+      message: 'Member could not be retired.',
+    };
+  }
+
   const [updatedMember] = await db
     .update(member)
     .set({
@@ -557,6 +576,7 @@ export async function softRetireFamilyMember(memberId: number, familyId: number)
       firstName: 'Retired',
       lastName: 'Member',
       nickName: '',
+      email: sql`concat('retired+', ${member.id}::text, '.', extract(epoch from now())::bigint::text, '@retired.invalid')`,
     })
     .where(and(
       eq(member.id, memberId),
@@ -578,7 +598,8 @@ export async function softRetireFamilyMember(memberId: number, familyId: number)
   return {
     success: true as const,
     memberId: updatedMember.memberId,
-    email: updatedMember.email,
+    email: existingMember.email,
+    obfuscatedEmail: updatedMember.email,
   };
 }
 
