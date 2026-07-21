@@ -287,7 +287,7 @@ export default function GuidedTourLauncher({ initialPayload, tourKey = "new_memb
         hideOverlay: true,
         blockTargetInteraction: false,
         overlayClickAction: false,
-        showProgress: true,
+        showProgress: false,
         targetWaitTimeout: 4000,
         zIndex: 1100,
       }}

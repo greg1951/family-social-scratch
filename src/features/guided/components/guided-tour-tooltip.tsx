@@ -243,19 +243,19 @@ export default function GuidedTourTooltip({
       <div
       {...tooltipProps}
       className={ joinClasses(
-        "font-app max-w-[42rem] rounded-[1.35rem] border px-4 py-4 sm:px-5 sm:py-5",
+        "font-app w-[min(20rem,calc(100vw-2rem))] max-w-2xl rounded-[1.35rem] border px-3 py-3 sm:w-[min(26rem,calc(100vw-3rem))] sm:px-5 sm:py-5",
         theme.cardClassName
       ) }
       style={ tooltipOuterStyle }
     >
       <div className="space-y-3">
-        { step.title ? <h3 className={ joinClasses("text-base font-black tracking-tight", theme.titleClassName) }>{ step.title }</h3> : null }
-        <div className={ joinClasses("space-y-2 text-sm leading-6", theme.bodyClassName) }>
+        { step.title ? <h3 className={ joinClasses("text-sm font-black tracking-tight sm:text-base", theme.titleClassName) }>{ step.title }</h3> : null }
+        <div className={ joinClasses("space-y-2 text-[13px] leading-5 sm:text-sm sm:leading-6", theme.bodyClassName) }>
           { step.content }
         </div>
       </div>
 
-      <div className={ joinClasses("mt-4 flex items-center justify-between gap-3 border-t pt-3", theme.footerClassName) }>
+      <div className={ joinClasses("mt-4 flex flex-col gap-3 border-t pt-3 sm:flex-row sm:items-center sm:justify-between", theme.footerClassName) }>
         <div className="flex items-center gap-2">
           { !isLastStep && step.showProgress ? (
             <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6f8793]">
@@ -264,7 +264,7 @@ export default function GuidedTourTooltip({
           ) : null }
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           { step.buttons.includes("back") ? (
             <button
               type="button"
