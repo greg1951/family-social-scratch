@@ -311,6 +311,24 @@ export default function AddGuidedForm() {
       return;
     }
 
+    const duplicateStepNo = selectedTour?.steps.find(
+      (step) => step.stepNo === parsedStepNo && step.id !== stepForm.id,
+    );
+
+    if (duplicateStepNo) {
+      toast.error(`Step #${ parsedStepNo } is already used in this tour. Choose a different step number.`);
+      return;
+    }
+
+    const duplicateStepKey = selectedTour?.steps.find(
+      (step) => step.stepKey === submittedStepKey && step.id !== stepForm.id,
+    );
+
+    if (duplicateStepKey) {
+      toast.error(`Step key "${ submittedStepKey }" already exists in this tour. Use a unique step key.`);
+      return;
+    }
+
     const payload = {
       tourId: selectedTourId,
       stepKey: submittedStepKey,

@@ -12,7 +12,7 @@ type GuidedProgressActionInput = Omit<
   "memberId" | "familyId"
 >;
 
-export async function getNewMemberTourLaunchPlanAction() {
+export async function getGuidedTourLaunchPlanAction(tourKey: string) {
   const memberDetails = await getMemberPageDetails();
 
   if (!memberDetails.isLoggedIn) {
@@ -28,8 +28,12 @@ export async function getNewMemberTourLaunchPlanAction() {
     familyId: memberDetails.familyId,
     isFounder: memberDetails.isFounder,
     audienceType: "member",
-    tourKey: "new_member",
+    tourKey,
   });
+}
+
+export async function getNewMemberTourLaunchPlanAction() {
+  return getGuidedTourLaunchPlanAction("new_member");
 }
 
 export async function applyGuidedTourProgressCommandAction(input: GuidedProgressActionInput) {

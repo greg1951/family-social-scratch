@@ -919,12 +919,6 @@ export async function saveMusic(
 
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
-  if (!existingMusic && !hasSubmitterLikenessDegree) {
-    return {
-      success: false,
-      message: "Select Like or Love for your own music post.",
-    };
-  }
 
   const normalizedMusicJson = input.musicJson?.trim();
   const parsedMusicJson = normalizedMusicJson ? parseSerializedTipTapDocument(normalizedMusicJson) : null;

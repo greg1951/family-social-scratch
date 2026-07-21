@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ACTIONS, EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
 
 import {
   applyGuidedTourProgressCommandAction,
-  getNewMemberTourLaunchPlanAction,
+  getGuidedTourLaunchPlanAction,
 } from "@/app/(main)/guided-tour/actions";
 import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
+import GuidedTourTooltip, { getGuidedTourTheme } from "./guided-tour-tooltip";
 
 function normalizePlacement(value: string): Step["placement"] {
   type JoyridePlacement = Exclude<Step["placement"], undefined>;
@@ -64,11 +65,22 @@ function findNextResolvableStepIndex(steps: GuidedTourLaunchPayload["steps"], fr
   return -1;
 }
 
-type GuidedTourLauncherProps = {
-  initialPayload?: GuidedTourLaunchPayload | null;
+function renderGuidedTourContent(step: GuidedTourLaunchPayload["steps"][number]): ReactNode {
+  return <div dangerouslySetInnerHTML={{ __html: step.snippetBody }} />;
+}
+
+type GuidedTourStepData = {
+  tourKey: string;
+  onSkipStep: () => void;
+  onFinishTour: () => void;
 };
 
-export default function GuidedTourLauncher({ initialPayload }: GuidedTourLauncherProps) {
+type GuidedTourLauncherProps = {
+  initialPayload?: GuidedTourLaunchPayload | null;
+  tourKey?: string;
+};
+
+export default function GuidedTourLauncher({ initialPayload, tourKey = "new_member" }: GuidedTourLauncherProps) {
   const [launchPayload, setLaunchPayload] = useState<GuidedTourLaunchPayload | null>(null);
   const [run, setRun] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
@@ -80,12 +92,44 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
       return [];
     }
 
-    return launchPayload.steps.map((step) => ({
+    const tourTheme = getGuidedTourTheme(launchPayload.tourKey);
+
+    return launchPayload.steps.map((step, index) => ({
       target: step.target,
       title: step.snippetTitle,
-      content: step.snippetBody,
+      content: renderGuidedTourContent(step),
       placement: normalizePlacement(step.placement),
       spotlightPadding: step.targetPadding,
+      styles: tourTheme.styles,
+      data: {
+        tourKey: launchPayload.tourKey,
+        onSkipStep: () => {
+          void applyGuidedTourProgressCommandAction({
+            memberTourProgressId: launchPayload.memberTourProgressId,
+            command: "skip_step",
+            stepNo: step.stepNo,
+          });
+
+          const nextIndex = Math.min(index + 1, launchPayload.steps.length - 1);
+
+          if (nextIndex === index) {
+            setRun(false);
+            return;
+          }
+
+          setStepIndex(nextIndex);
+        },
+        onFinishTour: () => {
+          void applyGuidedTourProgressCommandAction({
+            memberTourProgressId: launchPayload.memberTourProgressId,
+            command: "finish_tour",
+            stepNo: step.stepNo,
+          });
+
+          terminalStateHandledRef.current = true;
+          setRun(false);
+        },
+      } satisfies GuidedTourStepData,
       skipBeacon: true,
     }));
   }, [launchPayload]);
@@ -94,11 +138,13 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
     let isCancelled = false;
 
     async function loadLaunchPlan() {
+      const loadCurrentTourLaunchPlan = () => getGuidedTourLaunchPlanAction(tourKey);
+
       if (initialPayload !== undefined) {
         // Reconcile with a fresh resolver call to avoid stale route-cache payloads
         // relaunching a tour that is already completed.
         setIsLoading(true);
-        const refreshedResult = await getNewMemberTourLaunchPlanAction();
+        const refreshedResult = await loadCurrentTourLaunchPlan();
 
         if (isCancelled) {
           return;
@@ -120,8 +166,8 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
         return;
       }
 
-      setIsLoading(true);
-      const result = await getNewMemberTourLaunchPlanAction();
+        setIsLoading(true);
+        const result = await loadCurrentTourLaunchPlan();
 
       if (isCancelled) {
         return;
@@ -147,7 +193,7 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
     return () => {
       isCancelled = true;
     };
-  }, [initialPayload]);
+  }, [initialPayload, tourKey]);
 
   const handleCallback = (data: EventData) => {
     if (!launchPayload || joyrideSteps.length === 0) {
@@ -161,6 +207,16 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
       }
 
       if (data.action === ACTIONS.PREV) {
+        const previousStep = launchPayload.steps[data.index - 1];
+
+        if (previousStep) {
+          void applyGuidedTourProgressCommandAction({
+            memberTourProgressId: launchPayload.memberTourProgressId,
+            command: "reset_step",
+            stepNo: previousStep.stepNo,
+          });
+        }
+
         setStepIndex(Math.max(data.index - 1, 0));
         return;
       }
@@ -215,17 +271,6 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
       return;
     }
 
-    if (data.status === STATUS.SKIPPED) {
-      setRun(false);
-      if (!terminalStateHandledRef.current) {
-        terminalStateHandledRef.current = true;
-        void applyGuidedTourProgressCommandAction({
-          memberTourProgressId: launchPayload.memberTourProgressId,
-          command: "dismiss_tour",
-          neverShowAgain: false,
-        });
-      }
-    }
   };
 
   if (isLoading || joyrideSteps.length === 0) {
@@ -236,6 +281,7 @@ export default function GuidedTourLauncher({ initialPayload }: GuidedTourLaunche
     <Joyride
       onEvent={handleCallback}
       continuous
+      tooltipComponent={GuidedTourTooltip}
       options={{
         buttons: ["back", "close", "primary", "skip"],
         hideOverlay: true,

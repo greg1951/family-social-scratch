@@ -11,6 +11,7 @@ type LatestMusicItem = {
   kind: "latest";
   id: number;
   name: string;
+  status: string;
   date: string;
   submitterName: string;
   reviewType: "Song" | "Album";
@@ -20,7 +21,7 @@ type LatestMusicItem = {
   commentsCount: number;
   thumbsUp: number;
   love: number;
-  imageSrc: string;
+  imageSrc: string | null;
   imageAlt: string;
 };
 
@@ -28,6 +29,7 @@ type TopRatedMusicItem = {
   kind: "top-rated";
   id: number;
   name: string;
+  status: string;
   date: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
@@ -36,7 +38,7 @@ type TopRatedMusicItem = {
   love: number;
   commentsCount: number;
   hasDiscussionThread: boolean;
-  imageSrc: string;
+  imageSrc: string | null;
   imageAlt: string;
 };
 
@@ -44,6 +46,7 @@ type AllMusicItem = {
   kind: "all";
   id: number;
   name: string;
+  status: string;
   date: string;
   submitterName: string;
   reviewType: "Song" | "Album";
@@ -53,7 +56,7 @@ type AllMusicItem = {
   commentsCount: number;
   thumbsUp: number;
   love: number;
-  imageSrc: string;
+  imageSrc: string | null;
   imageAlt: string;
 };
 
@@ -87,7 +90,7 @@ function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | nul
   }
 
   return (
-    <span className="inline-flex shrink-0 items-center justify-center rounded-full bg-[#eef6fb] p-2 shadow-sm">
+    <span className="inline-flex shrink-0 items-center justify-center rounded-full border border-[#f2d28f] bg-[#fff3c9] p-2.5 shadow-[0_8px_18px_-12px_rgba(145,100,0,0.65)]">
       <SubmitterRatingIcon likenessDegree={ likenessDegree } />
     </span>
   );
@@ -224,7 +227,17 @@ export function MusicScrollStrip({
                     ) }
                   >
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
-                      <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
+                      { item.imageSrc ? (
+                        <MusicImage src={ item.imageSrc } alt={ item.imageAlt } />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#17324f,#315d8d_52%,#587fb1_100%)] px-5 py-6 text-center">
+                          <div className="max-w-[92%] rounded-[1.3rem] border border-white/15 bg-black/20 px-4 py-3 shadow-[0_14px_32px_-20px_rgba(3,18,28,0.75)] backdrop-blur-[1px]">
+                            <h3 className="max-w-full text-wrap text-xl font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_8px_rgba(4,24,34,0.58)] sm:text-2xl">
+                              { item.name }
+                            </h3>
+                          </div>
+                        </div>
+                      ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
                       { item.hasDiscussionThread ? (
                         <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
@@ -235,16 +248,34 @@ export function MusicScrollStrip({
 
                     <div className="select-none space-y-3 px-4 py-4">
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
-                          <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
-                            <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
-                            <span className="text-[#9bb0bb]">.</span>
-                            <span className="whitespace-nowrap">{ item.date }</span>
-                          </div>
+                        <div className="min-w-0">
+                          { item.imageSrc ? (
+                            <>
+                              <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
+                              <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
+                                <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
+                                <span className="text-[#9bb0bb]">.</span>
+                                <span className="whitespace-nowrap">{ item.date }</span>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="space-y-1 text-[11px] text-[#607887]">
+                              <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap">
+                                <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
+                                <span className="text-[#9bb0bb]">.</span>
+                                <span className="whitespace-nowrap">{ item.date }</span>
+                              </div>
+                            </div>
+                          ) }
+                          { item.status === "draft" ? (
+                            <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-[#d69b2d] bg-[#fff0b8] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#8d5200] shadow-[0_8px_16px_-10px_rgba(141,82,0,0.75)]">
+                              <span className="size-1.5 rounded-full bg-[#d38a00]" aria-hidden="true" />
+                              Draft
+                            </span>
+                          ) : null }
                         </div>
 
-                        <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
+                        { item.imageSrc ? <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } /> : null }
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#21536a]">

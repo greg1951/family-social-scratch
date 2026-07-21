@@ -84,7 +84,15 @@ export type ApplyGuidedTourProgressCommandInput = {
   memberId: number;
   familyId: number;
   memberTourProgressId: number;
-  command: "start_tour" | "complete_step" | "skip_step" | "complete_tour" | "dismiss_tour" | "heartbeat";
+  command:
+    | "start_tour"
+    | "complete_step"
+    | "skip_step"
+    | "reset_step"
+    | "finish_tour"
+    | "complete_tour"
+    | "dismiss_tour"
+    | "heartbeat";
   stepNo?: number;
   neverShowAgain?: boolean;
 };
@@ -468,6 +476,41 @@ export async function applyGuidedTourProgressCommand(
       };
     }
 
+    if (input.command === "finish_tour") {
+      const unfinishedStepStatuses = ["not_started", "in_progress", "viewed"] as const;
+
+      await db
+        .update(guidedMemberTourStepProgress)
+        .set({
+          status: "completed",
+          completedAt: now,
+          skippedAt: null,
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(guidedMemberTourStepProgress.memberTourProgressId, progress.id),
+            inArray(guidedMemberTourStepProgress.status, unfinishedStepStatuses)
+          )
+        );
+
+      await db
+        .update(guidedMemberTourProgress)
+        .set({
+          status: "completed",
+          currentStepNo: input.stepNo ?? progress.currentStepNo,
+          completedAt: now,
+          lastSeenAt: now,
+          updatedAt: now,
+        })
+        .where(eq(guidedMemberTourProgress.id, progress.id));
+
+      return {
+        success: true,
+        message: "Tour finished.",
+      };
+    }
+
     if (input.command === "dismiss_tour") {
       await db
         .update(guidedMemberTourProgress)
@@ -493,16 +536,23 @@ export async function applyGuidedTourProgressCommand(
       };
     }
 
-    const nextStepStatus = input.command === "skip_step" ? "skipped" : "completed";
+    const nextStepStatus = input.command === "skip_step"
+      ? "skipped"
+      : input.command === "reset_step"
+        ? "not_started"
+        : "completed";
+
+    const shouldClearStepProgress = input.command === "reset_step";
 
     await db
       .update(guidedMemberTourStepProgress)
       .set({
         status: nextStepStatus,
-        viewedAt: now,
+        viewedAt: shouldClearStepProgress ? null : now,
         completedAt: input.command === "complete_step" ? now : null,
         skippedAt: input.command === "skip_step" ? now : null,
         updatedAt: now,
+        timeSpentMs: shouldClearStepProgress ? 0 : undefined,
       })
       .where(
         and(
@@ -510,6 +560,24 @@ export async function applyGuidedTourProgressCommand(
           eq(guidedMemberTourStepProgress.stepNo, input.stepNo)
         )
       );
+
+    if (input.command === "reset_step") {
+      await db
+        .update(guidedMemberTourProgress)
+        .set({
+          status: "in_progress",
+          currentStepNo: input.stepNo,
+          completedAt: null,
+          lastSeenAt: now,
+          updatedAt: now,
+        })
+        .where(eq(guidedMemberTourProgress.id, progress.id));
+
+      return {
+        success: true,
+        message: "Tour step reopened.",
+      };
+    }
 
     const [nextRemainingStep] = await db
       .select({ stepNo: guidedMemberTourStepProgress.stepNo })
@@ -546,6 +614,7 @@ export async function applyGuidedTourProgressCommand(
       .set({
         status: "in_progress",
         currentStepNo: nextRemainingStep.stepNo,
+        completedAt: null,
         lastSeenAt: now,
         updatedAt: now,
       })
@@ -563,7 +632,6 @@ export async function applyGuidedTourProgressCommand(
       command: input.command,
       stepNo: input.stepNo,
     });
-
     return {
       success: false,
       message: "Unable to update guided tour progress.",

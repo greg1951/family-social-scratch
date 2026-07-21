@@ -20,6 +20,7 @@ import {
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
+import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import {
   createEmptyTipTapDocument,
   isSerializedTipTapDocumentEmpty,
@@ -38,6 +39,7 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
 import { TvScrollStrip } from "@/features/tv/components/tv-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
@@ -231,7 +233,15 @@ function ReactionMemberHoverCard({
   );
 }
 
-export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberKeyDetails }) {
+export function TvHomePage({
+  shows,
+  member,
+  initialGuidedLaunchPayload,
+}: {
+  shows: TvShow[];
+  member: MemberKeyDetails;
+  initialGuidedLaunchPayload?: GuidedTourLaunchPayload | null;
+}) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedShowDetail, setSelectedShowDetail] = useState<TvShowDetail | null>(null);
@@ -651,8 +661,9 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
   }
 
   return (
-    <section className="font-app h-full w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
+    <>
+      <section className="font-app h-full w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+        <div id="tv-show-welcome" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
@@ -660,13 +671,15 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
                 Family TV Room
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link
-                  href="/"
-                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
-                >
-                  <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
-                </Link>
+                <div id="tv-return-home">
+                  <Link
+                    href="/"
+                    className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
+                  >
+                    <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    Home
+                  </Link>
+                </div>
                 <Link
                   href="/tv/templates"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
@@ -691,7 +704,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
             <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(236,249,255,0.85))] px-4 py-3.5 sm:px-6 sm:py-5">
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
+                  <div id="tv-show-finder">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
                       TV Directory
                     </p>
@@ -780,7 +793,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
               </div>
             </div>
 
-            <div className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
+            <div id="tv-show-type" className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
               <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#45829a] sm:text-[0.68rem] sm:tracking-[0.32em]">Show Type</p>
               <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
                 <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
@@ -843,7 +856,7 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
           <div className="overflow-hidden rounded-[1.9rem] border border-white/70 bg-white/90 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.75)] backdrop-blur">
             <div className="border-b border-[#d7ebf3] bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(236,249,255,0.86))] px-5 py-5 sm:px-6">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
+                <div id="tv-show-reactions">
                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#45829a]">
                     Show Reactions
                   </p>
@@ -1150,6 +1163,8 @@ export function TvHomePage({ shows, member }: { shows: TvShow[]; member: MemberK
           ) : null }
         </DialogContent>
       </Dialog>
-    </section>
+      </section>
+      <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="tv_tour" />
+    </>
   );
 }

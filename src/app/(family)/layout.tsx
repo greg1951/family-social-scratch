@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
 
-import BackButton from "@/components/common/back-button";
 import MemberAvatar from "@/components/common/member-avatar";
 import SyncStatusConsole from "@/components/pwa/sync-status-console";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
@@ -50,7 +49,20 @@ export default async function TrialLayout({
             <div className="flex flex-wrap items-start justify-between gap-3">
             </div>
             <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-5">
-              <BackButton tw="border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]" />
+              <div id="back-button">
+                <Link
+                  href="/"
+                  prefetch={ false }
+                  className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M19 12H5" />
+                    <path d="M12 5l-7 7 7 7" />
+                  </svg>
+                  Home
+              </Link>
+
+              </div>
               <Link
                 href="/change-password"
                 prefetch={ false }

@@ -21,6 +21,7 @@ vi.mock("@/components/db/sql/queries-guided-runtime", () => ({
 
 import {
   applyGuidedTourProgressCommandAction,
+  getGuidedTourLaunchPlanAction,
   getNewMemberTourLaunchPlanAction,
 } from "@/app/(main)/guided-tour/actions";
 
@@ -66,6 +67,31 @@ describe("guided tour actions", () => {
       isFounder: false,
       audienceType: "member",
       tourKey: "new_member",
+    });
+  });
+
+  it("forwards the requested tour key to the generic launch resolver", async () => {
+    getMemberPageDetailsMock.mockResolvedValue({
+      isLoggedIn: true,
+      memberId: 42,
+      familyId: 7,
+      isFounder: false,
+    });
+
+    resolveGuidedTourLaunchMock.mockResolvedValue({
+      success: true,
+      launch: false,
+      reason: "No active tour.",
+    });
+
+    await getGuidedTourLaunchPlanAction("movie_tour");
+
+    expect(resolveGuidedTourLaunchMock).toHaveBeenCalledWith({
+      memberId: 42,
+      familyId: 7,
+      isFounder: false,
+      audienceType: "member",
+      tourKey: "movie_tour",
     });
   });
 

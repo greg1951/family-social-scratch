@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, ExternalLink, Heart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Film, ArrowLeft } from "lucide-react";
+import { Edit3, Eye, ExternalLink, Heart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -20,6 +20,7 @@ import {
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
+import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import {
   createEmptyTipTapDocument,
   isSerializedTipTapDocumentEmpty,
@@ -38,7 +39,7 @@ import {
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
-import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { MovieScrollStrip } from "@/features/movies/components/movie-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
@@ -166,7 +167,15 @@ function ReactionMemberHoverCard({
   );
 }
 
-export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; member: MemberKeyDetails }) {
+export function MovieHomePage({
+  movies,
+  member,
+  initialGuidedLaunchPayload,
+}: {
+  movies: MovieRecord[];
+  member: MemberKeyDetails;
+  initialGuidedLaunchPayload?: GuidedTourLaunchPayload | null;
+}) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedMovieDetail, setSelectedMovieDetail] = useState<MovieDetail | null>(null);
@@ -458,17 +467,20 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
+    <>
+      <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+        <div id="movie-show-welcome" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
               <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#ffd9b5] sm:text-[0.72rem] sm:tracking-[0.34em]">Family Movie Theater</p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
-                  <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
-                </Link>
+                <div id="movie-return-home">
+                  <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
+                    <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    Home
+                  </Link>
+                </div>
                 <Link href="/movies/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><Edit3 className="mr-1 size-3 sm:size-3.5" />Templates</Link>
               </div>
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Keep your family&apos;s favorite movies and reviews in one place.</h1> */ }
@@ -493,21 +505,25 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Movie Directory</p>
                     <span className="flex flex-wrap items-center gap-2 text-sm text-[#8b5a3c]">
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">Movie Finder</h2>
-                      <FeatureFaqHelp
-                        href="/feature-faq?category=TV%20and%20Movie%20Reviews"
-                        buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
-                        iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
-                        tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
-                      />
-                      <EditPostIcon tooltip="View Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
-                        <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50 sm:px-3" aria-label="View selected movie"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
-                      </EditPostIcon>
-                      <EditPostIcon tooltip="Add Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
-                        <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] sm:px-3"><Link href="/movies/add-movie" aria-label="Add movie"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button>
-                      </EditPostIcon>
-                      <EditPostIcon tooltip="Edit Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
-                        <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50 sm:px-3" aria-label="Edit selected movie"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button>
-                      </EditPostIcon>
+                      <div id="movie-feature-help">
+                        <FeatureFaqHelp
+                          href="/feature-faq?category=TV%20and%20Movie%20Reviews"
+                          buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
+                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
+                          tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
+                        />
+                      </div>
+                      <div id="movie-action-buttons">
+                        <EditPostIcon tooltip="View Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                          <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50 sm:px-3" aria-label="View selected movie"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
+                        </EditPostIcon>
+                        <EditPostIcon tooltip="Add Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                          <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] sm:px-3"><Link href="/movies/add-movie" aria-label="Add movie"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button>
+                        </EditPostIcon>
+                        <EditPostIcon tooltip="Edit Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                          <Button type="button" variant="outline" onClick={ () => router.push(`/movies/add-movie?id=${ selectedMovie }`) } disabled={ !canEditSelectedMovie } className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] hover:text-[#7b3306] disabled:opacity-50 sm:px-3" aria-label="Edit selected movie"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button>
+                        </EditPostIcon>
+                      </div>
 
                     </span>
                     {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p> */ }
@@ -915,7 +931,9 @@ export function MovieHomePage({ movies, member }: { movies: MovieRecord[]; membe
           ) : null }
         </DialogContent>
       </Dialog>
-    </section>
+      </section>
+      <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="movie_tour" />
+    </>
   );
 }
 

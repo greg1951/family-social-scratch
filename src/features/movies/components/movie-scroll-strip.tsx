@@ -176,7 +176,8 @@ export function MovieScrollStrip({
       </CardHeader>
 
       <CardContent className="px-3 pb-1 pt-1 sm:px-5 sm:py-4">
-        <div
+        <div id="movie-double-click"
+        
           className="grid max-h-800 grid-cols-2 gap-2 overflow-y-auto px-1 pb-1 pt-0.5 md:grid-cols-4 lg:grid-cols-4 sm:pt-1"
         >
           { items.map((item) => {

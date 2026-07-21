@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Camera, Sparkles } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import S3Manager from "@/components/s3/S3Manager";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
@@ -37,12 +39,20 @@ export default async function FamilyImageUploadPage() {
           <CardTitle className="mt-3 text-center text-2xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
             Upload Profile Image
           </CardTitle>
-          <CardDescription className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[#315363]">
+          {/* <CardDescription className="mx-auto mt-2 max-w-2xl text-center text-sm leading-6 text-[#315363]">
             Upload a PNG or JPEG up to 50 KB. File name format is generated as <b>memberId-{ uploadDetails.memberId }</b> with extension.
-          </CardDescription>
+          </CardDescription> */}
+          <div className="mb-5 flex justify-start">
+            <Button asChild variant="outline" className="border-[#d8eef7] bg-white/75 text-[#10364a] transition hover:bg-[#dff6ff]">
+              <Link href="/family-member-account?tab=profile" prefetch={ false }>
+                Done
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
 
         <CardContent className="p-6">
+
           <div className="mb-5 flex items-center justify-center gap-2 text-sm text-[#315363]">
             <Camera className="h-4 w-4 text-[#005472]" />
             <span>

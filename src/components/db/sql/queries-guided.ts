@@ -111,8 +111,48 @@ export type CreateGuidedTourStepInput = z.infer<typeof createGuidedTourStepInput
 export type UpdateGuidedTourStepInput = z.infer<typeof updateGuidedTourStepInputSchema>;
 
 function toGuidedErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) {
-    const detail = error.message.toLowerCase();
+  const detailParts: string[] = [];
+
+  const pushDetail = (value: unknown) => {
+    if (typeof value === "string" && value.trim().length > 0) {
+      detailParts.push(value.trim());
+    }
+  };
+
+  const collectDetails = (value: unknown, depth = 0) => {
+    if (value == null || depth > 3) {
+      return;
+    }
+
+    if (typeof value === "string") {
+      pushDetail(value);
+      return;
+    }
+
+    if (value instanceof Error) {
+      pushDetail(value.message);
+      collectDetails((value as { cause?: unknown }).cause, depth + 1);
+      return;
+    }
+
+    if (typeof value === "object") {
+      const record = value as Record<string, unknown>;
+
+      pushDetail(record.message);
+      pushDetail(record.detail);
+      pushDetail(record.hint);
+      pushDetail(record.constraint);
+      pushDetail(record.code);
+
+      collectDetails(record.cause, depth + 1);
+    }
+  };
+
+  collectDetails(error);
+
+  const detail = detailParts.join("\n").toLowerCase();
+
+  if (detail.length > 0) {
 
     if (detail.includes("guided_tour_reference_tour_key_unique")) {
       return "Tour key must be unique.";
@@ -125,6 +165,10 @@ function toGuidedErrorMessage(error: unknown, fallback: string): string {
     if (detail.includes("guided_tour_step_tour_step_key_uq")) {
       return "Step key must be unique for this tour.";
     }
+
+    // Bubble up concrete DB messages for admin debugging when no friendly
+    // mapping exists.
+    return detailParts[0] ?? fallback;
   }
 
   return fallback;
@@ -238,7 +282,9 @@ export async function createGuidedTourReference(input: CreateGuidedTourInput): P
       message: "Guided tour created.",
     };
   } catch (error) {
-    console.error("createGuidedTourReference failed", error);
+    logDbQueryError("guided.createGuidedTourReference", error, {
+      tourKey: parsed.data.tourKey,
+    });
     return {
       success: false,
       message: toGuidedErrorMessage(error, "Unable to create guided tour."),
@@ -282,7 +328,10 @@ export async function updateGuidedTourReference(input: UpdateGuidedTourInput): P
       message: "Guided tour updated.",
     };
   } catch (error) {
-    console.error("updateGuidedTourReference failed", error);
+    logDbQueryError("guided.updateGuidedTourReference", error, {
+      id: parsed.data.id,
+      tourKey: parsed.data.tourKey,
+    });
     return {
       success: false,
       message: toGuidedErrorMessage(error, "Unable to update guided tour."),
@@ -316,7 +365,9 @@ export async function deleteGuidedTourReference(tourId: number): Promise<GuidedM
       message: "Guided tour deleted.",
     };
   } catch (error) {
-    console.error("deleteGuidedTourReference failed", error);
+    logDbQueryError("guided.deleteGuidedTourReference", error, {
+      tourId,
+    });
     return {
       success: false,
       message: "Unable to delete guided tour.",
@@ -367,7 +418,11 @@ export async function createGuidedTourStepReference(input: CreateGuidedTourStepI
       message: "Guided tour step created.",
     };
   } catch (error) {
-    console.error("createGuidedTourStepReference failed", error);
+    logDbQueryError("guided.createGuidedTourStepReference", error, {
+      tourId: parsed.data.tourId,
+      stepKey: parsed.data.stepKey,
+      stepNo: parsed.data.stepNo,
+    });
     return {
       success: false,
       message: toGuidedErrorMessage(error, "Unable to create guided tour step."),
@@ -420,7 +475,12 @@ export async function updateGuidedTourStepReference(input: UpdateGuidedTourStepI
       message: "Guided tour step updated.",
     };
   } catch (error) {
-    console.error("updateGuidedTourStepReference failed", error);
+    logDbQueryError("guided.updateGuidedTourStepReference", error, {
+      id: parsed.data.id,
+      tourId: parsed.data.tourId,
+      stepKey: parsed.data.stepKey,
+      stepNo: parsed.data.stepNo,
+    });
     return {
       success: false,
       message: toGuidedErrorMessage(error, "Unable to update guided tour step."),
@@ -454,7 +514,9 @@ export async function deleteGuidedTourStepReference(stepId: number): Promise<Gui
       message: "Guided tour step deleted.",
     };
   } catch (error) {
-    console.error("deleteGuidedTourStepReference failed", error);
+    logDbQueryError("guided.deleteGuidedTourStepReference", error, {
+      stepId,
+    });
     return {
       success: false,
       message: "Unable to delete guided tour step.",

@@ -19,6 +19,7 @@ import {
 } from "@/app/(features)/(music)/music/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
+import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import {
   createEmptyTipTapDocument,
   isSerializedTipTapDocumentEmpty,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import {
@@ -132,7 +134,15 @@ function MusicViewer({ musicJson }: { musicJson?: string }) {
   );
 }
 
-export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; member: MemberKeyDetails }) {
+export function MusicHomePage({
+  musics,
+  member,
+  initialGuidedLaunchPayload,
+}: {
+  musics: MusicRecord[];
+  member: MemberKeyDetails;
+  initialGuidedLaunchPayload?: GuidedTourLaunchPayload | null;
+}) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedMusicDetail, setSelectedMusicDetail] = useState<MusicDetail | null>(null);
@@ -259,6 +269,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "all" as const,
       id: music.id,
       name: music.musicTitle,
+      status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
       reviewType: music.isSong ? "Song" as const : "Album" as const,
@@ -268,8 +279,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
       hasDiscussionThread: music.hasDiscussionThread,
-      imageSrc: music.musicImageUrl ?? "/images/music/princess-bride.png",
-      imageAlt: `${ music.musicTitle } music image`,
+      imageSrc: music.musicImageUrl ?? null,
+      imageAlt: music.musicTitle,
     }));
 
   const latestMusics = [...filteredFinderMusics]
@@ -280,6 +291,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "latest" as const,
       id: music.id,
       name: music.musicTitle,
+      status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
       reviewType: music.isSong ? "Song" as const : "Album" as const,
@@ -289,8 +301,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       thumbsUp: music.thumbsUpCount,
       love: music.loveCount,
       hasDiscussionThread: music.hasDiscussionThread,
-      imageSrc: music.musicImageUrl ?? "/images/music/princess-bride.png",
-      imageAlt: `${ music.musicTitle } music image`,
+      imageSrc: music.musicImageUrl ?? null,
+      imageAlt: music.musicTitle,
     }));
 
   const topRatedMusics = [...filteredFinderMusics]
@@ -308,6 +320,7 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       kind: "top-rated" as const,
       id: music.id,
       name: music.musicTitle,
+      status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
@@ -316,8 +329,8 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
       love: music.loveCount,
       commentsCount: music.commentCount,
       hasDiscussionThread: music.hasDiscussionThread,
-      imageSrc: music.musicImageUrl ?? "/images/music/robin-hood.png",
-      imageAlt: `${ music.musicTitle } music image`,
+      imageSrc: music.musicImageUrl ?? null,
+      imageAlt: music.musicTitle,
     }));
 
   const stripItems = musicStripMode === "all" ? allMusics : musicStripMode === "latest" ? latestMusics : topRatedMusics;
@@ -421,14 +434,19 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
-      <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
+    <>
+      <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
+        <div id="music-home-page" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="max-w-3xl">
             <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#dbe8ff] sm:text-[0.72rem] sm:tracking-[0.34em]">Family Music Salon</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#eff5ff] transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />Go Home</Link>
-              <Link href="/music/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#eff5ff] transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><Edit3 className="mr-1 size-3 sm:size-3.5" />Music Templates</Link>
+              <div id="music-go-home">
+                <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#eff5ff] transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />Go Home</Link>
+              </div>
+              <div id="music-templates">
+                <Link href="/music/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#eff5ff] transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><Edit3 className="mr-1 size-3 sm:size-3.5" />Music Templates</Link>
+              </div>
             </div>
             {/* <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">Your family&apos;s favorite songs and lyrics in one place.</h1> */}
           </div>
@@ -450,8 +468,10 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                 <EditPostIcon tooltip="View Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD]"><Link href={ `/music/lyrics?id=${ selectedMusic }` } aria-label="View selected lyrics"><Eye className="size-3.5" /><span className="hidden sm:inline">View Lyrics</span></Link></Button></EditPostIcon>
               ) : null }
               <EditPostIcon tooltip="Add Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] sm:px-3"><Link href="/music/add-music" aria-label="Add music"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
-              <EditPostIcon tooltip="Edit Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected music"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit</span></Button></EditPostIcon>
-              <EditPostIcon tooltip="Edit Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected lyrics"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit Lyrics</span></Button></EditPostIcon>
+              <EditPostIcon tooltip="Edit Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected music"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit Music</span></Button></EditPostIcon>
+              <div id="music-add-lyrics">
+                <EditPostIcon tooltip="Edit Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected lyrics"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Add-Edit Lyrics</span></Button></EditPostIcon>
+              </div>
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2">
@@ -491,10 +511,20 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
                   <div className="space-y-4">
                     <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white">
                       <div className="aspect-16/10 overflow-hidden">
-                        <ModalMusicImage
-                          src={ selectedMusicBasic.musicImageUrl ?? "/images/music/princess-bride.png" }
-                          alt={ `${ selectedMusicBasic.musicTitle } music image` }
-                        />
+                        { selectedMusicBasic.musicImageUrl ? (
+                          <ModalMusicImage
+                            src={ selectedMusicBasic.musicImageUrl }
+                            alt={ selectedMusicBasic.musicTitle }
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#17324f,#315d8d_52%,#587fb1_100%)] px-5 py-6 text-center">
+                            <div className="max-w-[92%] rounded-[1.3rem] border border-white/15 bg-black/20 px-4 py-3 shadow-[0_14px_32px_-20px_rgba(3,18,28,0.75)] backdrop-blur-[1px]">
+                              <h3 className="max-w-full text-wrap text-3xl font-black leading-tight tracking-tight text-white drop-shadow-[0_2px_8px_rgba(4,24,34,0.58)]">
+                                { selectedMusicBasic.musicTitle }
+                              </h3>
+                            </div>
+                          </div>
+                        ) }
                       </div>
                     </div>
                     <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Artist</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
@@ -562,8 +592,10 @@ export function MusicHomePage({ musics, member }: { musics: MusicRecord[]; membe
             ) : null }
           </DialogContent>
         </Dialog>
-      </div>
-    </section>
+          </div>
+        </section>
+      <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="music_salon" />
+    </>
   );
 }
 

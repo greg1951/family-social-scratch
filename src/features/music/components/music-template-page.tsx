@@ -31,6 +31,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { saveMusicTemplateAction } from "@/app/(features)/(music)/music/actions";
+import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import { MusicTemplateRecord } from "@/components/db/types/music";
 import {
   createEmptyTipTapDocument,
@@ -54,6 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 
 type DialogMode = "create" | "edit";
 
@@ -123,7 +125,13 @@ function TemplateViewer({ templateJson }: { templateJson: string }) {
   return <EditorContent editor={ previewEditor } />;
 }
 
-export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecord[] }) {
+export function MusicTemplatePage({
+  templates,
+  initialGuidedLaunchPayload,
+}: {
+  templates: MusicTemplateRecord[];
+  initialGuidedLaunchPayload?: GuidedTourLaunchPayload | null;
+}) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>(templates[0]?.id ?? 0);
@@ -227,24 +235,34 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-6">
+    <>
+      <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+              <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
-              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p> */}
-            </div>
+              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
+              {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p> */}
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/music" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-              <ArrowLeft className="mr-1.5 size-3.5" />
-              Music Home
-              </Link>
-              <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
-              <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Update</Button>
+              <div className="flex flex-wrap gap-3 lg:pb-1">
+                <div id="music-template-go-home">
+                  <Link href="/music" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ArrowLeft className="mr-1.5 size-3.5" />
+                  Music Home
+                  </Link>
+                </div>
+                <div id="music-template-create">
+                  <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
+                </div>
+                <div id="music-template-edit">
+                  <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+                </div>
+              </div>
             </div>
+          <div id="music-available-templates"></div>
           </div>
         </div>
 
@@ -294,8 +312,8 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
         </div>
       </div>
 
-      <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
+        <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
+          <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
           <DialogHeader>
             <DialogTitle className="text-[#5c2e1a]">{ dialogMode === "create" ? "Create Music Template" : "Update Music Template" }</DialogTitle>
             <DialogDescription className="text-[#8b5a3c]">Use the rich editor to create an engaging music template.</DialogDescription>
@@ -346,8 +364,10 @@ export function MusicTemplatePage({ templates }: { templates: MusicTemplateRecor
             <Button type="button" variant="outline" onClick={ () => setIsDialogOpen(false) }>Cancel</Button>
             <Button type="button" onClick={ handleSaveTemplate } disabled={ isSaving }>{ isSaving ? "Saving..." : "Save Template" }</Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </section>
+          </DialogContent>
+        </Dialog>
+      </section>
+      <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="music_salon" />
+    </>
   );
 }
