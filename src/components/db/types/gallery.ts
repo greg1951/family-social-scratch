@@ -1,8 +1,11 @@
+export type PhotoPosition = "portrait" | "landscape";
+
 export interface GalleryPhoto {
   id: number;
   caption: string | null;
   photoYear: number;
   photoImageUrl: string;
+  photoPosition: PhotoPosition;
   fileName: string | null;
   fileSizeBytes: number | null;
   mimeType: string | null;
@@ -13,7 +16,7 @@ export interface GalleryPhoto {
 export interface MemberAlbumItem {
   id: number;
   albumName: string;
-  albumDescription: string | null;
+  albumJson: string;
   isShared: boolean;
   isLiked: boolean;
   updatedAt: Date;
@@ -26,6 +29,7 @@ export interface MemberPhotoItem {
   caption: string | null;
   photoYear: number;
   photoImageUrl: string;
+  photoPosition: PhotoPosition;
   fileName: string | null;
   createdAt: Date;
   isInAlbum: boolean;
@@ -34,7 +38,7 @@ export interface MemberPhotoItem {
 export interface SharedAlbumListItem {
   id: number;
   albumName: string;
-  albumDescription: string | null;
+  albumJson: string;
   updatedAt: Date;
   memberId: number;
   memberName: string;
@@ -59,6 +63,7 @@ export interface GalleryPhotoItem {
   albumId: number;
   caption: string | null;
   photoYear: number;
+  photoPosition: PhotoPosition;
   albumPhotoDescription: string | null;
   photoImageUrl: string;
   seqNo: number;
@@ -140,6 +145,7 @@ export interface SaveGalleryPhotoInput {
   caption: string | null;
   photoYear: number;
   photoImageUrl: string;
+  photoPosition: PhotoPosition;
   fileName: string | null;
   fileSizeBytes: number | null;
   mimeType: string | null;
@@ -149,11 +155,12 @@ export interface UpdateGalleryPhotoInput {
   id: number;
   caption: string | null;
   photoYear: number;
+  photoPosition?: PhotoPosition;
 }
 
 export interface CreateAlbumInput {
   albumName: string;
-  albumDescription: string | null;
+  albumJson: string;
   isShared: boolean;
   clientRequestId?: string;
 }
@@ -161,7 +168,7 @@ export interface CreateAlbumInput {
 export interface UpdateAlbumInput {
   id: number;
   albumName: string;
-  albumDescription: string | null;
+  albumJson: string;
   isShared: boolean;
   clientRequestId?: string;
 }

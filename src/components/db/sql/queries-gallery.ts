@@ -62,7 +62,7 @@ export async function getFamilyGalleryData(familyId: number): Promise<GetFamilyG
       .select({
         id: galleryAlbum.id,
         albumName: galleryAlbum.albumName,
-        albumDescription: galleryAlbum.albumDescription,
+        albumJson: galleryAlbum.albumJson,
         updatedAt: galleryAlbum.updatedAt,
         memberId: galleryAlbum.memberId,
         firstName: member.firstName,
@@ -115,7 +115,7 @@ export async function getFamilyGalleryData(familyId: number): Promise<GetFamilyG
         return {
           id: album.id,
           albumName: album.albumName,
-          albumDescription: album.albumDescription,
+          albumJson: album.albumJson,
           updatedAt: album.updatedAt ?? new Date(),
           memberId: album.memberId,
           memberName: buildMemberName(album.firstName, album.lastName),
@@ -149,6 +149,7 @@ export async function getAlbumPhotos(
         albumId: galleryAlbumPhoto.albumId,
         caption: galleryAlbumPhoto.caption,
         photoYear: galleryPhoto.photoYear,
+        photoPosition: galleryPhoto.photoPosition,
         albumPhotoDescription: galleryAlbumPhoto.albumPhotoDescription,
         seqNo: galleryAlbumPhoto.seqNo,
         photoImageUrl: galleryPhoto.photoImageUrl,
@@ -219,6 +220,7 @@ export async function getAlbumPhotos(
         albumId: row.albumId,
         caption: row.caption,
         photoYear: row.photoYear,
+        photoPosition: row.photoPosition as "portrait" | "landscape",
         albumPhotoDescription: row.albumPhotoDescription,
         photoImageUrl: row.photoImageUrl,
         seqNo: row.seqNo,
@@ -394,7 +396,7 @@ export async function getMemberGalleryData(memberId: number): Promise<GetMemberG
       .select({
         id: galleryAlbum.id,
         albumName: galleryAlbum.albumName,
-        albumDescription: galleryAlbum.albumDescription,
+        albumJson: galleryAlbum.albumJson,
         isShared: galleryAlbum.isShared,
         isLiked: galleryAlbum.isLiked,
         updatedAt: galleryAlbum.updatedAt,
@@ -421,7 +423,7 @@ export async function getMemberGalleryData(memberId: number): Promise<GetMemberG
         return {
           id: album.id,
           albumName: album.albumName,
-          albumDescription: album.albumDescription,
+          albumJson: album.albumJson,
           isShared: album.isShared,
           isLiked: album.isLiked,
           updatedAt: album.updatedAt ?? new Date(),
@@ -437,6 +439,7 @@ export async function getMemberGalleryData(memberId: number): Promise<GetMemberG
         id: galleryPhoto.id,
         caption: galleryPhoto.caption,
         photoYear: galleryPhoto.photoYear,
+        photoPosition: galleryPhoto.photoPosition,
         photoImageUrl: galleryPhoto.photoImageUrl,
         fileName: galleryPhoto.fileName,
         createdAt: galleryPhoto.createdAt,
@@ -458,6 +461,7 @@ export async function getMemberGalleryData(memberId: number): Promise<GetMemberG
       caption: row.caption,
       photoYear: row.photoYear,
       photoImageUrl: row.photoImageUrl,
+      photoPosition: row.photoPosition as "portrait" | "landscape",
       fileName: row.fileName,
       createdAt: row.createdAt ?? new Date(),
       isInAlbum: inAlbumIds.has(row.id),
@@ -485,6 +489,7 @@ export async function saveGalleryPhoto(
         caption: input.caption,
         photoYear: input.photoYear,
         photoImageUrl: input.photoImageUrl,
+        photoPosition: input.photoPosition,
         fileName: input.fileName,
         fileSizeBytes: input.fileSizeBytes,
         mimeType: input.mimeType,
@@ -510,12 +515,22 @@ export async function updateGalleryPhoto(
   ctx: MemberContext
 ): Promise<UpdateGalleryPhotoReturn> {
   try {
+    const nextPhotoUpdate: {
+      caption: string | null;
+      photoYear: number;
+      photoPosition?: "portrait" | "landscape";
+    } = {
+      caption: input.caption,
+      photoYear: input.photoYear,
+    };
+
+    if (input.photoPosition) {
+      nextPhotoUpdate.photoPosition = input.photoPosition;
+    }
+
     const [photo] = await db
       .update(galleryPhoto)
-      .set({
-        caption: input.caption,
-        photoYear: input.photoYear,
-      })
+      .set(nextPhotoUpdate)
       .where(
         and(
           eq(galleryPhoto.id, input.id),
@@ -628,7 +643,7 @@ export async function createGalleryAlbum(
         album: {
           id: existingAlbum.id,
           albumName: existingAlbum.albumName,
-          albumDescription: existingAlbum.albumDescription,
+          albumJson: existingAlbum.albumJson,
           isShared: existingAlbum.isShared,
           isLiked: existingAlbum.isLiked,
           updatedAt: existingAlbum.updatedAt ?? new Date(),
@@ -642,7 +657,7 @@ export async function createGalleryAlbum(
       .insert(galleryAlbum)
       .values({
         albumName: input.albumName,
-        albumDescription: input.albumDescription,
+        albumJson: input.albumJson,
         isShared: input.isShared,
         memberId: ctx.memberId,
       })
@@ -685,7 +700,7 @@ export async function createGalleryAlbum(
       album: {
         id: album.id,
         albumName: album.albumName,
-        albumDescription: album.albumDescription,
+        albumJson: album.albumJson,
         isShared: album.isShared,
         isLiked: album.isLiked,
         updatedAt: album.updatedAt ?? new Date(),
@@ -735,7 +750,7 @@ export async function updateGalleryAlbum(
       .update(galleryAlbum)
       .set({
         albumName: input.albumName,
-        albumDescription: input.albumDescription,
+        albumJson: input.albumJson,
         isShared: input.isShared,
         updatedAt: new Date(),
       })

@@ -14,6 +14,7 @@ import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import {
   clearQueuedGalleryAlbumComment,
@@ -24,6 +25,7 @@ import {
   readQueuedGalleryAlbumComments,
 } from "@/lib/pwa-background-sync";
 import type { GalleryPhotoItem, SharedAlbumListItem } from "@/components/db/types/gallery";
+import { isSerializedTipTapDocumentEmpty } from "@/components/db/types/poem-term-validation";
 import type { MemberKeyDetails } from "@/features/family/types/family-steps";
 import {
   Dialog,
@@ -115,14 +117,24 @@ function buildPhotoHoverText(
   return lines.join("\n");
 }
 
+function getPhotoTileAspect(photoPosition: "portrait" | "landscape") {
+  return photoPosition === "landscape" ? "aspect-4/3" : "aspect-3/4";
+}
+
+function getPhotoTileSpan(photoPosition: "portrait" | "landscape") {
+  return photoPosition === "landscape" ? "col-span-2" : "col-span-1";
+}
+
 // ── Photo scroll strip ────────────────────────────────────────────────────────
 
 function PhotoScrollStrip({
   photos,
+  albumJson,
   selectedAlbumName,
   member,
 }: {
   photos: GalleryPhotoItem[];
+  albumJson: string | null;
   selectedAlbumName: string | null;
   member: MemberKeyDetails;
 }) {
@@ -174,6 +186,17 @@ function PhotoScrollStrip({
           ) }
         </div>
 
+        { albumJson && !isSerializedTipTapDocumentEmpty(albumJson) ? (
+          <div className="rounded-xl border border-[#dbe9cf] bg-[#f8fdf3] p-3">
+            <p className="mb-2 text-[0.64rem] font-bold uppercase tracking-[0.24em] text-[#6f8f5d]">
+              Album Story
+            </p>
+            <div className="rounded-lg border border-[#dbe9cf] bg-white px-3 py-2 [&_.tiptap_h3]:text-lg [&_.tiptap_h3]:font-bold [&_.tiptap_h3]:text-[#355427] [&_.tiptap_li]:text-[#4c6940] [&_.tiptap_p]:text-[#4c6940]">
+              <TiptapRenderer contentJson={ albumJson } />
+            </div>
+          </div>
+        ) : null}
+
         { photos.length === 0 ? (
           <div className="flex flex-1 items-center justify-center rounded-2xl border border-dashed border-[#d6e8c4] bg-[#f8fdf3] py-14">
             <div className="text-center text-[#86a072]">
@@ -183,7 +206,7 @@ function PhotoScrollStrip({
           </div>
         ) : (
           <div className="max-h-[50vh] overflow-y-auto pr-1">
-            <div className="grid grid-cols-3 gap-2.5 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 xl:grid-cols-6 auto-rows-min">
               { photos.map((photo) => {
                 const tooltip = buildPhotoHoverText(
                   photo.caption,
@@ -193,11 +216,11 @@ function PhotoScrollStrip({
                 return (
                   <div
                     key={ photo.id }
-                    className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)] cursor-pointer"
+                    className={ `${getPhotoTileSpan(photo.photoPosition)} group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)] cursor-pointer` }
                     onDoubleClick={ () => setViewPhoto(photo) }
                   >
                     <PhotoHoverTooltip text={ tooltip } />
-                    <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
+                    <div className={ `${getPhotoTileAspect(photo.photoPosition)} w-full overflow-hidden bg-[#edf6e4]` }>
                       <GalleryImage
                         src={ photo.photoImageUrl }
                         alt={ photo.caption ?? "Gallery photo" }
@@ -336,8 +359,7 @@ function AlbumFinder({
     const q = query.toLowerCase();
     return (
       album.albumName.toLowerCase().includes(q) ||
-      album.memberName.toLowerCase().includes(q) ||
-      (album.albumDescription ?? "").toLowerCase().includes(q)
+      album.memberName.toLowerCase().includes(q)
     );
   });
 
@@ -403,7 +425,6 @@ function AlbumFinder({
                 onClick={ () => onSelectAlbum(album) }
                 title={ [
                   `Updated ${ formatUpdatedAt(album.updatedAt) }`,
-                  album.albumDescription?.trim() ? album.albumDescription.trim() : "",
                 ].filter(Boolean).join("\n") }
                 className={ [
                   "w-full rounded-2xl border p-2 text-left transition-all duration-200",
@@ -698,6 +719,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                     ) : (
                       <PhotoScrollStrip
                         photos={ albumPhotos }
+                        albumJson={ selectedAlbumRecord?.albumJson ?? null }
                         selectedAlbumName={ selectedAlbumRecord?.albumName ?? selectedAlbum?.albumName ?? null }
                         member={ _member }
                       />

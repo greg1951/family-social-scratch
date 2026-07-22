@@ -25,6 +25,7 @@ type PendingMemberPhotoSnapshot = {
   id: number;
   caption: string | null;
   photoYear: number;
+  photoPosition: "portrait" | "landscape";
   photoImageUrl: string;
   fileName: string | null;
   createdAt: string;

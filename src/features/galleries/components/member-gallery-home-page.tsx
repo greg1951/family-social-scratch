@@ -40,12 +40,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import TipTapAlbumEditor from "@/components/common/tiptap-album-editor";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import type {
   GalleryPhotoItem,
   MemberAlbumItem,
   MemberPhotoItem,
+  PhotoPosition,
 } from "@/components/db/types/gallery";
+import {
+  createEmptyTipTapDocument,
+  serializeTipTapDocument,
+} from "@/components/db/types/poem-term-validation";
 import type { MemberKeyDetails } from "@/features/family/types/family-steps";
 import {
   clearQueuedGallerySelectedAlbumSync,
@@ -58,6 +64,8 @@ import {
   queueGallerySelectedAlbumSync,
   readQueuedGallerySelectedAlbumSync,
 } from "@/lib/pwa-background-sync";
+
+const EMPTY_ALBUM_JSON = serializeTipTapDocument(createEmptyTipTapDocument());
 
 // ── S3 image component ────────────────────────────────────────────────────────
 
@@ -141,6 +149,54 @@ function buildPhotoHoverText(
   return lines.join("\n");
 }
 
+function getNextPhotoPosition(current: PhotoPosition): PhotoPosition {
+  return current === "portrait" ? "landscape" : "portrait";
+}
+
+function OrientationBadge({
+  photoPosition,
+  onClick,
+}: {
+  photoPosition: PhotoPosition;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={ (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        onClick();
+      } }
+      className="absolute right-2 top-2 z-10 rounded-full border border-[#cde0b8] bg-[#f7fde9] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#4f6f39] shadow-sm"
+      aria-label={ `Set photo as ${photoPosition === "portrait" ? "landscape" : "portrait"}` }
+      title={ `Orientation: ${photoPosition}` }
+    >
+      { photoPosition === "portrait" ? "P" : "L" }
+    </button>
+  );
+}
+
+function detectPhotoPosition(file: File): Promise<PhotoPosition> {
+  return new Promise((resolve) => {
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      const detectedPosition = image.width > image.height ? "landscape" : "portrait";
+      URL.revokeObjectURL(objectUrl);
+      resolve(detectedPosition);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve("portrait");
+    };
+
+    image.src = objectUrl;
+  });
+}
+
 function uploadFileToSignedUrl(
   signedUrl: string,
   file: File,
@@ -186,6 +242,8 @@ function PhotoScrollStrip({
   unallocatedPhotos,
   onPhotoDoubleClick,
   onUnallocatedPhotoDoubleClick,
+  onToggleAlbumPhotoPosition,
+  onToggleUnallocatedPhotoPosition,
   onClearUnallocatedPhotos,
   onUpload,
   isUploading,
@@ -199,6 +257,8 @@ function PhotoScrollStrip({
   unallocatedPhotos: MemberPhotoItem[];
   onPhotoDoubleClick?: (photo: GalleryPhotoItem) => void;
   onUnallocatedPhotoDoubleClick?: (photo: MemberPhotoItem) => void;
+  onToggleAlbumPhotoPosition?: (photo: GalleryPhotoItem) => void;
+  onToggleUnallocatedPhotoPosition?: (photo: MemberPhotoItem) => void;
   onClearUnallocatedPhotos?: () => void;
   onUpload: (files: File[]) => void;
   isUploading: boolean;
@@ -301,13 +361,17 @@ function PhotoScrollStrip({
                   key={ photo.id }
                   className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
                 >
+                  <OrientationBadge
+                    photoPosition={ memberPhoto.photoPosition }
+                    onClick={ () => onToggleUnallocatedPhotoPosition?.(memberPhoto) }
+                  />
                   <PhotoHoverTooltip text={ hoverText } />
                   <button
                     type="button"
                     className="block w-full"
                     onDoubleClick={ () => onUnallocatedPhotoDoubleClick?.(memberPhoto) }
                   >
-                    <div className="aspect-square w-full overflow-hidden bg-[#edf6e4]">
+                    <div className={ `${memberPhoto.photoPosition === "landscape" ? "aspect-4/3" : "aspect-3/4"} w-full overflow-hidden bg-[#edf6e4]` }>
                       <GalleryImage
                         src={ imageUrl }
                         alt={ caption ?? "Gallery photo" }
@@ -351,13 +415,17 @@ function PhotoScrollStrip({
                       key={ albumPhoto.id }
                       className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
                     >
+                      <OrientationBadge
+                        photoPosition={ albumPhoto.photoPosition }
+                        onClick={ () => onToggleAlbumPhotoPosition?.(albumPhoto) }
+                      />
                       <PhotoHoverTooltip text={ tooltip } />
                       <button
                         type="button"
                         className="block w-full"
                         onDoubleClick={ () => onPhotoDoubleClick?.(albumPhoto) }
                       >
-                        <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
+                        <div className={ `${albumPhoto.photoPosition === "landscape" ? "aspect-4/3" : "aspect-3/4"} w-full overflow-hidden rounded-xl bg-[#edf6e4]` }>
                           <GalleryImage
                             src={ imageUrl }
                             alt={ caption ?? "Gallery photo" }
@@ -400,13 +468,17 @@ function PhotoScrollStrip({
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 { unallocatedPhotos.map((photo) => (
                   <div key={ photo.id } className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]">
+                    <OrientationBadge
+                      photoPosition={ photo.photoPosition }
+                      onClick={ () => onToggleUnallocatedPhotoPosition?.(photo) }
+                    />
                     <PhotoHoverTooltip text={ buildPhotoHoverText(photo.caption, photo.photoYear) } />
                     <button
                       type="button"
                       className="block w-full text-left"
                       onDoubleClick={ () => onUnallocatedPhotoDoubleClick?.(photo) }
                     >
-                      <div className="aspect-square w-full overflow-hidden rounded-xl bg-[#edf6e4]">
+                      <div className={ `${photo.photoPosition === "landscape" ? "aspect-4/3" : "aspect-3/4"} w-full overflow-hidden rounded-xl bg-[#edf6e4]` }>
                         <GalleryImage
                           src={ photo.photoImageUrl }
                           alt={ photo.caption ?? "Unallocated photo" }
@@ -454,7 +526,6 @@ function AlbumListItem({
   return (
     <div
       title={ [
-        album.albumDescription?.trim() ? album.albumDescription.trim() : "",
         `Updated ${ new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).format(new Date(album.updatedAt)) }`,
       ].filter(Boolean).join("\n") }
       className={ [
@@ -539,7 +610,7 @@ function AlbumListItem({
 
 interface AlbumFormValues {
   albumName: string;
-  albumDescription: string;
+  albumJson: string;
   isShared: boolean;
   selectedPhotoIds: number[];
 }
@@ -553,22 +624,25 @@ interface AlbumPhotoFormValues {
 interface UnallocatedPhotoFormValues {
   caption: string;
   photoYear: number;
+  photoPosition: PhotoPosition;
 }
 
 function AddAlbumDialog({
   open,
   onClose,
   onSave,
+  onQuickSetPhotoPosition,
   candidatePhotos,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (values: AlbumFormValues) => void;
+  onQuickSetPhotoPosition: (photoIds: number[], photoPosition: PhotoPosition) => void;
   candidatePhotos: MemberPhotoItem[];
 }) {
   const [values, setValues] = useState<AlbumFormValues>({
     albumName: "",
-    albumDescription: "",
+    albumJson: EMPTY_ALBUM_JSON,
     isShared: false,
     selectedPhotoIds: [],
   });
@@ -581,7 +655,7 @@ function AddAlbumDialog({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues({
       albumName: "",
-      albumDescription: "",
+      albumJson: EMPTY_ALBUM_JSON,
       isShared: false,
       selectedPhotoIds: [],
     });
@@ -626,7 +700,7 @@ function AddAlbumDialog({
     }
 
     onSave(values);
-    setValues({ albumName: "", albumDescription: "", isShared: false, selectedPhotoIds: [] });
+    setValues({ albumName: "", albumJson: EMPTY_ALBUM_JSON, isShared: false, selectedPhotoIds: [] });
   }
 
   return (
@@ -648,14 +722,11 @@ function AddAlbumDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="albumDescription">Description</Label>
-            <Textarea
-              id="albumDescription"
-              value={ values.albumDescription }
-              onChange={ (e) => setValues((v) => ({ ...v, albumDescription: e.target.value })) }
-              placeholder="Optional description…"
-              rows={ 3 }
-              maxLength={ 300 }
+            <Label>Album Story</Label>
+            <TipTapAlbumEditor
+              value={ values.albumJson }
+              onChange={ (nextValue) => setValues((v) => ({ ...v, albumJson: nextValue })) }
+              placeholder="Write the story for this album..."
             />
           </div>
           <div className="flex items-center gap-2">
@@ -678,6 +749,30 @@ function AddAlbumDialog({
                 { values.selectedPhotoIds.length } selected
               </span>
             </div>
+
+            { values.selectedPhotoIds.length > 0 ? (
+              <div className="flex items-center gap-2 rounded-lg border border-[#dbe9cf] bg-[#f8fdf3] px-3 py-2">
+                <span className="text-xs font-semibold text-[#567145]">Quick set orientation:</span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-full border-[#cfe2bc] px-2.5 text-[10px] font-semibold text-[#4f6f39]"
+                  onClick={ () => onQuickSetPhotoPosition(values.selectedPhotoIds, "portrait") }
+                >
+                  Portrait
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 rounded-full border-[#cfe2bc] px-2.5 text-[10px] font-semibold text-[#4f6f39]"
+                  onClick={ () => onQuickSetPhotoPosition(values.selectedPhotoIds, "landscape") }
+                >
+                  Landscape
+                </Button>
+              </div>
+            ) : null }
 
             { candidatePhotos.length > 0 && (
               <div className="flex items-center gap-2 rounded-lg border border-[#dbe9cf] bg-[#f8fdf3] px-3 py-2">
@@ -727,6 +822,9 @@ function AddAlbumDialog({
                           <p className="truncate text-[11px] text-[#567145]">
                             { photo.caption ?? photo.fileName ?? "Photo" }
                           </p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#6f8f5d]">
+                            { photo.photoPosition === "portrait" ? "P" : "L" }
+                          </p>
                         </div>
                       </button>
                     );
@@ -765,7 +863,7 @@ function EditAlbumDialog({
   open: boolean;
   album: MemberAlbumItem | null;
   onClose: () => void;
-  onSave: (values: { albumName: string; albumDescription: string; isShared: boolean }) => void;
+  onSave: (values: { albumName: string; albumJson: string; isShared: boolean }) => void;
   albumPhotos: GalleryPhotoItem[];
   unallocatedPhotos: MemberPhotoItem[];
   isLoadingAlbumPhotos: boolean;
@@ -774,7 +872,7 @@ function EditAlbumDialog({
   onRemovePhoto: (photo: GalleryPhotoItem) => void;
 }) {
   const [albumName, setAlbumName] = useState("");
-  const [albumDescription, setAlbumDescription] = useState("");
+  const [albumJson, setAlbumJson] = useState(EMPTY_ALBUM_JSON);
   const [isShared, setIsShared] = useState(false);
 
   useEffect(() => {
@@ -784,7 +882,7 @@ function EditAlbumDialog({
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setAlbumName(album.albumName);
-    setAlbumDescription(album.albumDescription ?? "");
+    setAlbumJson(album.albumJson || EMPTY_ALBUM_JSON);
     setIsShared(album.isShared);
   }, [open, album]);
 
@@ -798,7 +896,7 @@ function EditAlbumDialog({
 
     onSave({
       albumName: albumName.trim(),
-      albumDescription: albumDescription.trim(),
+      albumJson,
       isShared,
     });
   }
@@ -823,14 +921,12 @@ function EditAlbumDialog({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="editAlbumDescription">Description</Label>
-              <Textarea
-                id="editAlbumDescription"
-                value={ albumDescription }
-                onChange={ (e) => setAlbumDescription(e.target.value) }
-                placeholder="Optional description…"
-                rows={ 2 }
-                maxLength={ 300 }
+              <Label>Album Story</Label>
+              <TipTapAlbumEditor
+                value={ albumJson }
+                onChange={ setAlbumJson }
+                placeholder="Write the story for this album..."
+                disabled={ isBusy }
               />
             </div>
             <div className="flex items-center gap-2">
@@ -1078,6 +1174,7 @@ function EditUnallocatedPhotoDialog({
   const [values, setValues] = useState<UnallocatedPhotoFormValues>({
     caption: "",
     photoYear: new Date().getFullYear(),
+    photoPosition: "portrait",
   });
 
   useEffect(() => {
@@ -1088,6 +1185,7 @@ function EditUnallocatedPhotoDialog({
     setValues({
       caption: photo.caption ?? "",
       photoYear: photo.photoYear,
+      photoPosition: photo.photoPosition,
     });
   }, [open, photo]);
 
@@ -1145,6 +1243,27 @@ function EditUnallocatedPhotoDialog({
                 value={ values.photoYear }
                 onChange={ (e) => setValues((current) => ({ ...current, photoYear: Number(e.target.value) })) }
               />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="unallocatedPhotoPosition">Orientation</Label>
+              <div className="flex items-center gap-2">
+                <Button
+                  id="unallocatedPhotoPosition"
+                  type="button"
+                  variant={ values.photoPosition === "portrait" ? "default" : "outline" }
+                  onClick={ () => setValues((current) => ({ ...current, photoPosition: "portrait" })) }
+                >
+                  Portrait
+                </Button>
+                <Button
+                  type="button"
+                  variant={ values.photoPosition === "landscape" ? "default" : "outline" }
+                  onClick={ () => setValues((current) => ({ ...current, photoPosition: "landscape" })) }
+                >
+                  Landscape
+                </Button>
+              </div>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">
@@ -1346,6 +1465,7 @@ export default function MemberGalleryHomePage({
           id: photo.id,
           caption: photo.caption,
           photoYear: photo.photoYear,
+          photoPosition: photo.photoPosition,
           photoImageUrl: photo.photoImageUrl,
           fileName: photo.fileName,
           createdAt: photo.createdAt instanceof Date ? photo.createdAt.toISOString() : new Date(photo.createdAt).toISOString(),
@@ -1542,6 +1662,122 @@ export default function MemberGalleryHomePage({
     setIsEditUnallocatedPhotoOpen(true);
   }
 
+  function applyPhotoPositionLocally(photoId: number, photoPosition: PhotoPosition) {
+    setUnallocatedPhotos((currentPhotos) => currentPhotos.map((photo) => (
+      photo.id === photoId
+        ? { ...photo, photoPosition }
+        : photo
+    )));
+
+    setPendingAddPhotos((currentPhotos) => currentPhotos.map((photo) => (
+      photo.id === photoId
+        ? { ...photo, photoPosition }
+        : photo
+    )));
+
+    setAlbumPhotos((currentPhotos) => currentPhotos.map((photo) => (
+      photo.photoId === photoId
+        ? { ...photo, photoPosition }
+        : photo
+    )));
+
+    setEditAlbumPhotos((currentPhotos) => currentPhotos.map((photo) => (
+      photo.photoId === photoId
+        ? { ...photo, photoPosition }
+        : photo
+    )));
+
+    setSelectedAlbumPhoto((currentPhoto) => {
+      if (!currentPhoto || currentPhoto.photoId !== photoId) {
+        return currentPhoto;
+      }
+
+      return {
+        ...currentPhoto,
+        photoPosition,
+      };
+    });
+
+    setSelectedUnallocatedPhoto((currentPhoto) => {
+      if (!currentPhoto || currentPhoto.id !== photoId) {
+        return currentPhoto;
+      }
+
+      return {
+        ...currentPhoto,
+        photoPosition,
+      };
+    });
+  }
+
+  async function persistPhotoPosition(photo: MemberPhotoItem, photoPosition: PhotoPosition) {
+    if (photo.photoPosition === photoPosition) {
+      return;
+    }
+
+    applyPhotoPositionLocally(photo.id, photoPosition);
+
+    const result = await updateGalleryPhotoAction({
+      id: photo.id,
+      caption: photo.caption,
+      photoYear: photo.photoYear,
+      photoPosition,
+    });
+
+    if (!result.success) {
+      applyPhotoPositionLocally(photo.id, photo.photoPosition);
+      toast.error(result.message);
+    }
+  }
+
+  function handleToggleUnallocatedPhotoPosition(photo: MemberPhotoItem) {
+    const nextPosition = getNextPhotoPosition(photo.photoPosition);
+    startTransition(async () => {
+      await persistPhotoPosition(photo, nextPosition);
+    });
+  }
+
+  function handleToggleAlbumPhotoPosition(photo: GalleryPhotoItem) {
+    const nextPosition = getNextPhotoPosition(photo.photoPosition);
+
+    if (photo.id < 0) {
+      applyPhotoPositionLocally(photo.photoId, nextPosition);
+      return;
+    }
+
+    const sourcePhoto = unallocatedPhotos.find((unallocatedPhoto) => unallocatedPhoto.id === photo.photoId);
+    const payload: MemberPhotoItem = sourcePhoto ?? {
+      id: photo.photoId,
+      caption: photo.caption,
+      photoYear: photo.photoYear,
+      photoPosition: photo.photoPosition,
+      photoImageUrl: photo.photoImageUrl,
+      fileName: null,
+      createdAt: new Date(),
+      isInAlbum: true,
+    };
+
+    startTransition(async () => {
+      await persistPhotoPosition(payload, nextPosition);
+    });
+  }
+
+  function handleQuickSetPhotoPosition(photoIds: number[], photoPosition: PhotoPosition) {
+    const selectedPhotos = unallocatedPhotos.filter((photo) => (
+      photoIds.includes(photo.id) && photo.photoPosition !== photoPosition
+    ));
+
+    if (selectedPhotos.length === 0) {
+      return;
+    }
+
+    startTransition(async () => {
+      for (const photo of selectedPhotos) {
+        await persistPhotoPosition(photo, photoPosition);
+      }
+    });
+  }
+
   // Photo upload
   async function handleUpload(files: File[]) {
     if (files.length === 0) {
@@ -1623,10 +1859,12 @@ export default function MemberGalleryHomePage({
 
         // 3. Save the photo metadata in the DB
         const storedImageUrl = s3Uri ?? fileUrl ?? `s3://${ s3Key }`;
+        const photoPosition = await detectPhotoPosition(file);
         const saveResult = await saveGalleryPhotoAction({
           caption: defaultCaption,
           photoYear: new Date().getFullYear(),
           photoImageUrl: storedImageUrl,
+          photoPosition,
           fileName: safeName,
           fileSizeBytes: file.size,
           mimeType: file.type,
@@ -1639,6 +1877,7 @@ export default function MemberGalleryHomePage({
             caption: saveResult.photo.caption,
             photoYear: saveResult.photo.photoYear,
             photoImageUrl: saveResult.photo.photoImageUrl,
+            photoPosition: saveResult.photo.photoPosition,
             fileName: saveResult.photo.fileName,
             createdAt: saveResult.photo.createdAt ?? new Date(),
             isInAlbum: false,
@@ -1688,7 +1927,7 @@ export default function MemberGalleryHomePage({
     startTransition(async () => {
       const result = await createGalleryAlbumAction({
         albumName: values.albumName,
-        albumDescription: values.albumDescription || null,
+        albumJson: values.albumJson,
         isShared: values.isShared,
       });
 
@@ -1796,6 +2035,7 @@ export default function MemberGalleryHomePage({
       albumId: selectedAlbum.id,
       caption: photo.caption,
       photoYear: photo.photoYear,
+      photoPosition: photo.photoPosition,
       albumPhotoDescription: null,
       photoImageUrl: photo.photoImageUrl,
       seqNo: currentAlbumPhotos.length + index + 1,
@@ -1829,6 +2069,7 @@ export default function MemberGalleryHomePage({
         id: removedAlbumPhoto.photoId,
         caption: removedAlbumPhoto.caption,
         photoYear: existing?.photoYear ?? new Date().getFullYear(),
+        photoPosition: existing?.photoPosition ?? "portrait",
         photoImageUrl: removedAlbumPhoto.photoImageUrl,
         fileName: existing?.fileName ?? null,
         createdAt: existing?.createdAt ?? new Date(),
@@ -1888,6 +2129,7 @@ export default function MemberGalleryHomePage({
         id: selectedUnallocatedPhoto.id,
         caption: values.caption.trim() || null,
         photoYear: values.photoYear,
+        photoPosition: values.photoPosition,
       });
 
       setIsBusy(false);
@@ -1903,6 +2145,7 @@ export default function MemberGalleryHomePage({
             ...photo,
             caption: result.photo.caption,
             photoYear: result.photo.photoYear,
+            photoPosition: result.photo.photoPosition,
           }
           : photo
       )));
@@ -1945,7 +2188,7 @@ export default function MemberGalleryHomePage({
     });
   }
 
-  async function handleSaveAlbumDetails(values: { albumName: string; albumDescription: string; isShared: boolean }) {
+  async function handleSaveAlbumDetails(values: { albumName: string; albumJson: string; isShared: boolean }) {
     if (!editTarget) {
       return;
     }
@@ -1956,7 +2199,7 @@ export default function MemberGalleryHomePage({
       const payload = {
         id: editTarget.id,
         albumName: values.albumName,
-        albumDescription: values.albumDescription || null,
+        albumJson: values.albumJson,
         isShared: values.isShared,
         clientRequestId: createClientRequestId("gallery-update-album"),
       };
@@ -1980,7 +2223,7 @@ export default function MemberGalleryHomePage({
             return {
               ...album,
               albumName: values.albumName,
-              albumDescription: values.albumDescription || null,
+              albumJson: values.albumJson,
               isShared: values.isShared,
             };
           }));
@@ -1993,7 +2236,7 @@ export default function MemberGalleryHomePage({
             return {
               ...current,
               albumName: values.albumName,
-              albumDescription: values.albumDescription || null,
+              albumJson: values.albumJson,
               isShared: values.isShared,
             };
           });
@@ -2016,7 +2259,7 @@ export default function MemberGalleryHomePage({
         return {
           ...album,
           albumName: values.albumName,
-          albumDescription: values.albumDescription || null,
+          albumJson: values.albumJson,
           isShared: values.isShared,
         };
       }));
@@ -2029,7 +2272,7 @@ export default function MemberGalleryHomePage({
         return {
           ...current,
           albumName: values.albumName,
-          albumDescription: values.albumDescription || null,
+          albumJson: values.albumJson,
           isShared: values.isShared,
         };
       });
@@ -2250,6 +2493,8 @@ export default function MemberGalleryHomePage({
                     unallocatedPhotos={ visibleUnallocatedPhotos }
                     onPhotoDoubleClick={ selectedAlbum ? handleOpenAlbumPhotoEditor : undefined }
                     onUnallocatedPhotoDoubleClick={ handleOpenUnallocatedPhotoEditor }
+                    onToggleAlbumPhotoPosition={ handleToggleAlbumPhotoPosition }
+                    onToggleUnallocatedPhotoPosition={ handleToggleUnallocatedPhotoPosition }
                     onClearUnallocatedPhotos={ handleClearUnallocatedPhotos }
                     onUpload={ handleUpload }
                     isUploading={ isUploading }
@@ -2342,6 +2587,7 @@ export default function MemberGalleryHomePage({
         open={ isAddAlbumOpen }
         onClose={ () => setIsAddAlbumOpen(false) }
         onSave={ handleCreateAlbum }
+        onQuickSetPhotoPosition={ handleQuickSetPhotoPosition }
         candidatePhotos={ unallocatedPhotos.filter((photo) => !photo.isInAlbum) }
       />
 
