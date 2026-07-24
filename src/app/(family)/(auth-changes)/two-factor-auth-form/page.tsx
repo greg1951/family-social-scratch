@@ -27,7 +27,7 @@ export default async function MfaChange() {
           <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { session.user?.name ?? session.user?.email }</CardDescription>
         </CardHeader>
         <CardDescription className="px-6 pt-3 text-center text-base font-medium text-[#315363]">
-          Scan the QR code with your authenticator app, then confirm setup with a six-digit code.
+          Enable email-based verification to receive a six-digit sign-in passcode sent to your account email.
         </CardDescription>
         <CardContent className="px-6 pb-6 pt-5">
           <TwoFactorAuthForm isActivated={ result2fa.isActivated ?? false } email={ email } />

@@ -7,11 +7,11 @@ import { getUser2fa,
 import { Update2faSecretRecordType, 
          Update2faActivatedRecordType } from "@/components/db/types/user"
 
-import { generateSecret, generateURI, generate } from 'otplib';
+import { generateSecret } from 'otplib';
 
 export const generate2faSecret = async(email:string) => {
   const result2fa = await getUser2fa(email);
-  if (!result2fa) {
+  if (!result2fa.success) {
     return {
       errror: true,
       message: "Authentication error"
@@ -35,26 +35,21 @@ export const generate2faSecret = async(email:string) => {
         message: "Authorization update error"
       }
     }
-    /* Generate a key URI to be used by the authenticator */
     return {
       error: false,
-      qrUri: generateURI({
-        issuer: "KbgAuthApp",
-        label: email,
-        secret: twoFactorSecret
-      })
+      secretCreated: true,
     };  
   }
+
+  return {
+    error: false,
+    secretCreated: false,
+  };
 }
 
-export type Activated2faRecordType = {
-  email: string,
-  otp: string,
-}
-
-export const activate2fa = async(args: Activated2faRecordType) => {
-  const result2fa = await getUser2fa(args.email);
-  if (!result2fa) {
+export const activate2fa = async(email: string) => {
+  const result2fa = await getUser2fa(email);
+  if (!result2fa.success) {
     return {
       errror: true,
       message: "Activate find error"
@@ -68,18 +63,8 @@ export const activate2fa = async(args: Activated2faRecordType) => {
     }
   };
 
-  const secret = result2fa.secret;
-  const token = await generate({secret});
-
-  if (args.otp !== token) {
-    return {
-      error: true,
-      message: "Invalid one-time passcode"
-    }
-  }
-
   const update2faActivated:Update2faActivatedRecordType = {
-    email: args.email,
+    email: email,
     isActivated: true,
   }
 
@@ -95,7 +80,7 @@ export const activate2fa = async(args: Activated2faRecordType) => {
 
 export const disable2fa = async(email: string) => {
   const result2fa = await getUser2fa(email);
-  if (!result2fa) {
+  if (!result2fa.success) {
     return {
       errror: true,
       message: "Disable 2fa find error"

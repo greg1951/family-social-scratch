@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { getFullUserCredsByEmail } from "@/components/db/sql/queries-user";
 import { hashPasswordWithSalt } from "./hash";
-import { generate } from "otplib";
+import { validateAndConsumeUser2faCode } from "@/components/db/sql/queries-user";
 
 
 export async function getSessionEmail() {
@@ -51,15 +51,23 @@ export const authValidation = async ({email, password, family, token}
         }
       };
     
-      if (selectedUser.isActivated && token) {
-        const secret = selectedUser.secret ?? "";
-        const generatedToken = await generate({secret});
-      
-        // console.log('authValidation->token: ', token, ' generatedToken:', generatedToken);
-        if (token !== generatedToken && token) {
+      if (selectedUser.isActivated) {
+        if (!token) {
           return {
             error: true,
-            message: "Invalid one-time passcode"
+            message: "One-time passcode is required"
+          }
+        }
+
+        const validateResult = await validateAndConsumeUser2faCode({
+          userId: selectedUser.id as number,
+          token,
+        });
+
+        if (validateResult.error || !validateResult.isValid) {
+          return {
+            error: true,
+            message: validateResult.message ?? "Invalid one-time passcode"
           }
         }
       };  

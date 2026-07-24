@@ -166,7 +166,7 @@ CREATE TABLE "family_schema"."gallery_album" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"caption" text,
 	"album_name" text NOT NULL,
-	"album_description" text,
+	"album_json" text DEFAULT '{}' NOT NULL,
 	"is_shared" boolean DEFAULT false NOT NULL,
 	"is_liked" boolean DEFAULT false NOT NULL,
 	"updated_at" timestamp DEFAULT now(),
@@ -205,6 +205,7 @@ CREATE TABLE "family_schema"."gallery_photo" (
 	"caption" text,
 	"photo_year" integer DEFAULT 0 NOT NULL,
 	"photo_image_url" text NOT NULL,
+	"photo_position" text DEFAULT 'portrait' NOT NULL,
 	"file_name" text,
 	"file_size_bytes" integer,
 	"mime_type" text,
@@ -716,6 +717,13 @@ CREATE TABLE "family_schema"."user" (
 	CONSTRAINT "user_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
+CREATE TABLE "family_schema"."user_2fa_code" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"code_number" integer NOT NULL,
+	"fk_user_id" integer NOT NULL,
+	"expires" timestamp NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "family_schema"."verificationToken" (
 	"identifier" text NOT NULL,
 	"token" text NOT NULL,
@@ -840,6 +848,7 @@ ALTER TABLE "family_schema"."thread_recipient_state" ADD CONSTRAINT "thread_reci
 ALTER TABLE "family_schema"."thread_recipient_state" ADD CONSTRAINT "thread_recipient_state_last_viewed_post_fkey" FOREIGN KEY ("last_viewed_post_id") REFERENCES "family_schema"."thread_recipient_state"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."user" ADD CONSTRAINT "user_fk_family_id_family_id_fk" FOREIGN KEY ("fk_family_id") REFERENCES "family_schema"."family"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "family_schema"."user" ADD CONSTRAINT "user_fk_member_id_member_id_fk" FOREIGN KEY ("fk_member_id") REFERENCES "family_schema"."member"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "family_schema"."user_2fa_code" ADD CONSTRAINT "user_2fa_code_fk_user_id_user_id_fk" FOREIGN KEY ("fk_user_id") REFERENCES "family_schema"."user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "book_member_id_idx" ON "family_schema"."book" USING btree ("fk_member_id");--> statement-breakpoint
 CREATE INDEX "book_family_id_idx" ON "family_schema"."book" USING btree ("fk_family_id");--> statement-breakpoint
 CREATE INDEX "book_category_tag_book_id_idx" ON "family_schema"."book_category_tag" USING btree ("fk_book_id");--> statement-breakpoint

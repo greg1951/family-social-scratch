@@ -3,6 +3,7 @@ export {
   sessions,
   verificationTokens,
   user, 
+  user2faCode,
   passwordReset, 
   family, 
   familyS3Credentials,

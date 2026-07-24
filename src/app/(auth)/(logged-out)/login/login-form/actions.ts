@@ -6,9 +6,10 @@ import { familySchema } from "@/features/auth/components/validation/familySchema
 import { signIn } from "@/auth";
 import { preLoginAuthValidation } from "@/features/auth/services/auth-utils";
 import { generate } from "otplib";
-import { getUser2fa } from "@/components/db/sql/queries-user";
+import { getUser2fa, upsertUser2faCode } from "@/components/db/sql/queries-user";
 import { cookies } from "next/headers";
 import { findRegisteredFamily } from "@/components/db/sql/queries-family-member";
+import { sendTwoFactorCodeEmail } from "@/components/emails/send-2fa-code-email";
 
 const OAUTH_FAMILY_COOKIE = "oauth_family_context";
 
@@ -33,7 +34,7 @@ export const fullLoginUser = async({email, password, family, token}: {email: str
       /* Kickoff the auth authentication here to the auth.ts Credentials provider */
       try {
         // console.info(`fullLoginUser->Starting Credentails signIn: ${email}, ${password}, ${family}, ${token}`);
-        const signInResult = await signIn("credentials", {
+        await signIn("credentials", {
           email,
           password,
           family,
@@ -41,7 +42,7 @@ export const fullLoginUser = async({email, password, family, token}: {email: str
           redirect: false
         })
         // console.info('fullLoginUser->signInResult: ', signInResult);
-      } catch(e) {
+      } catch {
         return {
           error: true,
           message: "Incorrect email or password"
@@ -62,20 +63,22 @@ export const emailLoginCheck = async ({email, password, family}:{email:string; p
   return validationResult;
 };
 
-export type ValidateOtpRecordType = {
-  email: string,
-  token: string,
-}
-
-export const validateOtp = async(args: ValidateOtpRecordType) => {
-  // console.log('validateOtp->args.email: ', args.email, ' args.token: ', args.token);
-  const result2fa = await getUser2fa(args.email);
-  if (!result2fa) {
+export const sendLogin2faCodeEmail = async({ email }: { email: string }) => {
+  const normalizedEmail = email.trim().toLowerCase();
+  const result2fa = await getUser2fa(normalizedEmail);
+  if (!result2fa.success) {
     return {
-      errror: true,
-      message: "Activate find error"
+      error: true,
+      message: "Unable to find your account for 2FA"
     }
   };
+
+  if (!result2fa.isActivated) {
+    return {
+      error: true,
+      message: "2FA is not activated for this account"
+    }
+  }
 
   if (!result2fa.secret) {
     return {
@@ -86,13 +89,40 @@ export const validateOtp = async(args: ValidateOtpRecordType) => {
 
   const secret = result2fa.secret;
   const token = await generate({secret});
+  const codeNumber = Number.parseInt(token, 10);
 
-  if (args.token !== token) {
+  if (!Number.isInteger(codeNumber)) {
     return {
       error: true,
-      message: "Invalid one-time passcode"
+      message: "Could not generate a valid one-time passcode"
     }
-  };
+  }
+
+  const storeResult = await upsertUser2faCode({
+    userId: result2fa.id as number,
+    codeNumber,
+    expires: new Date(Date.now() + 5 * 60 * 1000),
+  });
+
+  if (storeResult.error) {
+    return {
+      error: true,
+      message: storeResult.message ?? "Unable to save your one-time passcode"
+    }
+  }
+
+  const sendResult = await sendTwoFactorCodeEmail({
+    email: normalizedEmail,
+    code: token,
+    expiresInMinutes: 5,
+  });
+
+  if (sendResult.error) {
+    return {
+      error: true,
+      message: sendResult.message ?? "The 2FA email could not be sent"
+    }
+  }
 
   return {
     error: false,

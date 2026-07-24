@@ -1,13 +1,12 @@
 'use client';
 
-import { passwordSchema } from "@/features/auth/components/validation/passwordSchema";
 import { familySchema } from "@/features/auth/components/validation/familySchema";
 import z from "zod";
 import { useForm } from "react-hook-form";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { beginAppleLogin, beginGoogleLogin, emailLoginCheck, fullLoginUser } from "./actions";
+import { beginAppleLogin, beginGoogleLogin, emailLoginCheck, fullLoginUser, sendLogin2faCodeEmail } from "./actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -15,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot } from "@/components/ui/input-otp";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CircleHelp, Eye, EyeOff, LogIn, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleHelp, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { FamilySocialLoginSchema } from "@/features/family/components/validation/schema";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { signIn } from "next-auth/react";
@@ -31,6 +30,7 @@ export default function LoginForm() {
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [emailAuthError, setEmailAuthError] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false)
 
   const router = useRouter();
@@ -65,6 +65,16 @@ export default function LoginForm() {
     }
 
     if (precheckResult.isActive) {
+      const sendCodeResult = await sendLogin2faCodeEmail({ email: data.email });
+      if (sendCodeResult?.error) {
+        form.setError("root", {
+          message: sendCodeResult.message,
+        });
+        setEmailAuthError(sendCodeResult.message ?? "Unable to send one-time passcode");
+        return;
+      }
+      setCodeSent(true);
+      setOtpError("");
       setStep(2);
     }
     else {
@@ -98,8 +108,18 @@ export default function LoginForm() {
       setOtpError(loginResult.message as string);
     }
     else {
-      router.push('my-account');
+      router.push('/');
     };
+  };
+
+  const handleResend2faCode = async () => {
+    const sendCodeResult = await sendLogin2faCodeEmail({ email });
+    if (sendCodeResult?.error) {
+      setOtpError(sendCodeResult.message ?? "Unable to resend one-time passcode");
+      return;
+    }
+    setCodeSent(true);
+    setOtpError("A new one-time passcode was sent to your email.");
   };
 
   const handleGoogleLogin = async () => {
@@ -330,10 +350,15 @@ export default function LoginForm() {
               Secure Check
             </div>
             <CardTitle className="mt-3 text-2xl font-extrabold text-[#10364a]">One-Time Passcode</CardTitle>
-            <CardDescription className="mt-2 text-sm leading-6 text-[#315363]">Use your 2FA code to finish entering your family space.</CardDescription>
+            <CardDescription className="mt-2 text-sm leading-6 text-[#315363]">Enter the six-digit code sent to your email. It expires in five minutes.</CardDescription>
           </CardHeader>
           <CardContent className="px-6 pb-6 pt-3">
             <form onSubmit={ handle2faSubmit } className="flex flex-col gap-2">
+              { codeSent && (
+                <p className="rounded-xl border border-[#d7edf6] bg-[#f8fdff] px-3 py-2 text-center text-xs text-[#315363]">
+                  A one-time passcode was sent to { email }.
+                </p>
+              ) }
               <InputOTP maxLength={ 6 } value={ otp } onChange={ setOtp }>
                 <InputOTPGroup className="*:data-[slot=input-otp-slot]:h-12 *:data-[slot=input-otp-slot]:w-11 *:data-[slot=input-otp-slot]:text-xm">
                   <InputOTPSlot index={ 0 } />
@@ -359,6 +384,13 @@ export default function LoginForm() {
               >
                 <ShieldCheck className="h-4 w-4" />
                 Verify OTP
+              </Button>
+              <Button
+                type="button"
+                onClick={ handleResend2faCode }
+                className="h-11 rounded-2xl border border-[#c8e5f1] bg-white text-sm font-semibold text-[#315363] hover:bg-[#eef9fe]"
+              >
+                Resend Code
               </Button>
             </form>
           </CardContent>

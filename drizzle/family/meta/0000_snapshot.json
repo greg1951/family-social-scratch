@@ -1,5 +1,5 @@
 {
-  "id": "0094681d-1953-4606-a20a-96c4744a91d0",
+  "id": "a8c5309f-3a49-4afc-8287-93cdd80434cc",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1842,11 +1842,12 @@
           "primaryKey": false,
           "notNull": true
         },
-        "album_description": {
-          "name": "album_description",
+        "album_json": {
+          "name": "album_json",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'{}'"
         },
         "is_shared": {
           "name": "is_shared",
@@ -2305,6 +2306,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "photo_position": {
+          "name": "photo_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'portrait'"
         },
         "file_name": {
           "name": "file_name",
@@ -7852,6 +7860,58 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "family_schema.user_2fa_code": {
+      "name": "user_2fa_code",
+      "schema": "family_schema",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "code_number": {
+          "name": "code_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fk_user_id": {
+          "name": "fk_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires": {
+          "name": "expires",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_2fa_code_fk_user_id_user_id_fk": {
+          "name": "user_2fa_code_fk_user_id_user_id_fk",
+          "tableFrom": "user_2fa_code",
+          "tableTo": "user",
+          "schemaTo": "family_schema",
+          "columnsFrom": [
+            "fk_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

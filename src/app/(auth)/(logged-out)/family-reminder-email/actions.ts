@@ -5,6 +5,7 @@ import { getUserFamilyNameByEmail } from "@/components/db/sql/queries-family-use
 import { getUserByEmail } from "@/components/db/sql/queries-user";
 
 import { mailer } from "@/lib/email";
+import { familySocialEmail } from "@/features/family/constants/family-steps";
 
 export const sendFamilyNameEmail = async (email: string) => {
   const session = await auth();
@@ -31,7 +32,7 @@ export const sendFamilyNameEmail = async (email: string) => {
 
 
   const sendResult = await mailer.sendMail({
-    from: "test@resend.dev",
+    from: familySocialEmail,
     subject: "Your Family Name Reminder",
     to: email,
     text: `It seems you forgot your Family Name, mon dieu! ${findResultText} `,

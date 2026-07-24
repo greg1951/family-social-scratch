@@ -88,6 +88,14 @@ export const user = familySchema.table("user", {
   memberId: integer("fk_member_id").references(() => member.id),
 });
 
+export const user2faCode = familySchema.table("user_2fa_code", {
+  id: serial("id").primaryKey(),
+  code2fa: integer("code_number").notNull(),
+  userId: integer("fk_user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { mode: "date" }).notNull(),
+})
+
+
 /*------------------------------- Essential Family Schema ------------------------------ */
 export const passwordReset = familySchema.table("password_reset", {
   id: serial("id").primaryKey(),

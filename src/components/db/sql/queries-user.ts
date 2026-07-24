@@ -1,7 +1,7 @@
 "use server";
 
-import { count, eq, and, sql } from 'drizzle-orm';
-import { user } from '../schema/family-social-schema-tables';
+import { count, eq, and, sql, desc } from 'drizzle-orm';
+import { user, user2faCode } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
 import { ErrorReturnType, 
@@ -194,16 +194,17 @@ export async function getUser2fa(email: string)
     .from(user)
     .where(sql`lower(${user.email}) = ${normalizedEmail}`); 
 
-  if (!user) 
+  if (!selectedUser) 
     return {
       success: false,
       message: "There were no users found matching that email."
     };
+
   return {
     success: true, 
-    id: selectedUser.id as number,
-    secret: selectedUser.secret as string,
-    isActivated: selectedUser.isActivated as boolean,
+    id: selectedUser.id,
+    secret: selectedUser.secret ?? undefined,
+    isActivated: selectedUser.isActivated ?? false,
   }
 };
 
@@ -328,5 +329,101 @@ export async function deleteUserByMemberId(memberId: number)
 
   return {
     error: false,
+  };
+}
+
+type UpsertUser2faCodeArgs = {
+  userId: number;
+  codeNumber: number;
+  expires: Date;
+};
+
+type ValidateUser2faCodeArgs = {
+  userId: number;
+  token: string;
+};
+
+export async function upsertUser2faCode(args: UpsertUser2faCodeArgs): Promise<ErrorReturnType> {
+  try {
+    await db.delete(user2faCode).where(eq(user2faCode.userId, args.userId));
+
+    await db.insert(user2faCode).values({
+      userId: args.userId,
+      code2fa: args.codeNumber,
+      expires: args.expires,
+    });
+
+    return {
+      error: false,
+    };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Unknown database error";
+    console.error("queries-user->upsertUser2faCode->error:", message);
+
+    if (message.includes("relation \"family_schema.user_2fa_code\" does not exist")) {
+      return {
+        error: true,
+        message: "2FA code table is missing in the database. Please run family schema migrations.",
+      };
+    }
+
+    return {
+      error: true,
+      message: `Unable to save 2FA code. ${message}`,
+    };
+  }
+}
+
+export async function validateAndConsumeUser2faCode(args: ValidateUser2faCodeArgs): Promise<{ error: boolean; isValid?: boolean; message?: string; }> {
+  const parsedToken = Number.parseInt(args.token, 10);
+  if (!Number.isInteger(parsedToken)) {
+    return {
+      error: true,
+      isValid: false,
+      message: "Invalid one-time passcode",
+    };
+  }
+
+  const [foundCode] = await db
+    .select({
+      id: user2faCode.id,
+      code2fa: user2faCode.code2fa,
+      expires: user2faCode.expires,
+    })
+    .from(user2faCode)
+    .where(eq(user2faCode.userId, args.userId))
+    .orderBy(desc(user2faCode.id))
+    .limit(1);
+
+  if (!foundCode) {
+    return {
+      error: true,
+      isValid: false,
+      message: "No one-time passcode was found. Please request a new code.",
+    };
+  }
+
+  const isExpired = foundCode.expires.getTime() < Date.now();
+  if (isExpired) {
+    return {
+      error: true,
+      isValid: false,
+      message: "This one-time passcode has expired. Please request a new code.",
+    };
+  }
+
+  if (foundCode.code2fa !== parsedToken) {
+    return {
+      error: true,
+      isValid: false,
+      message: "Invalid one-time passcode",
+    };
+  }
+
+  await db.delete(user2faCode).where(eq(user2faCode.id, foundCode.id));
+
+  return {
+    error: false,
+    isValid: true,
   };
 }
