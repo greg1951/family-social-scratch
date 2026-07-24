@@ -1,74 +1,75 @@
 import { FileText, Folder, Settings, Users, HelpCircle, Info, Heart, CircleAlert } from "lucide-react";
 
-export const generalFaqItems = [
-  {
-    value: "item-20",
-    category: "Start a Family",
-    trigger: (
-      <div>
-        <p className="text-base font-semibold">How do I create a family in My Family Social?</p>
-        <p className="text-xs text-slate-600">Learn how easy the setup is for a new family.</p>
-      </div>
-    ),
-    content: (
-      <div className="flex items-center justify-center mt-4">
-        <span>
-          <p>There is a guided process to create a family account. It consists of the four steps shown below. In five minutes or less you will have your family set up and ready to go.</p>
-          <ol className="list-decimal ml-6 mt-2">
-            <li>Create the family founder account with email and password</li>
-            <li>Create a unique family name</li>
-            <li>Invite family members to join via email</li>
-            <li>Confirm and create the family account.</li>
-          </ol>
-          <p className="pt-2 italic pb-2">If you are already registered in My Family Social, you must use a different email to create a new family.</p>
-          <p className="pt-2">The link below 👇 will take you to the new family setup page.</p>
-          <p style={ { marginTop: 8 } }>
-            <a href="https://kbgfamilysocial.com/family-setup-home" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Start a Family today!</a>
-          </p>
-        <div className="flex items-center justify-center mt-4">
-          <img
-            src="images/support/faq-family-setup-start.jpg"
-            alt="Family setup screenshot"
-            style={ { maxWidth: '600px', maxHeight: '600px', marginTop: 12, borderRadius: 8 } }
-          />
+export function getGeneralFaqItems(setupStartUrl: string) {
+  return [
+    {
+      value: "item-20",
+      category: "Start a Family",
+      trigger: (
+        <div>
+          <p className="text-base font-semibold">How do I create a family in My Family Social?</p>
+          <p className="text-xs text-slate-600">Learn how easy the setup is for a new family.</p>
         </div>
-        </span>
-      </div>
-    ),
-    icon: FileText,
-  },
-  {
-    value: "item-30",
-    category: "My Family Social",
-    trigger: (
-      <div>
-        <p className="text-base font-semibold">What does the My Family Social Registration form look like?</p>
-        <p className="text-xs text-slate-600">It's a simple form but you need to fill it out correctly because of the credentials it will create when submitted.</p>
-      </div>
-    ),
-    content: (
-      <div className="flex items-center justify-center pt-2">
-        <span>
-          <p className="pb-2 text-base">👇Here is the form on My Family Social where the link in the invitation email will redirect you.👇</p>
-          <img
-            src="images/support/faq-registration.jpg"
-            alt="My Family Social Registration screenshot"
-          // style={ { maxWidth: '300px', marginTop: 12, borderRadius: 8 } }
-          />
-          <span className="flex flex-col items-start gap-2 mt-4 text-base">
-            <p>The form is filled in with the information the family founder provided to inviting you.</p>
-            <ul className="list-disc ml-6 mt-2">
-              <li>Confirm your first and last name.</li>
-              <li>The <i>nick name</i> and <i>cell phone</i> fields are optional. You can change them after registration. </li>
-              <li>The two password fields <b>must be filled in</b>. The passwords must match and be at least 8 characters with at least one uppercase letter, one number, and one special character.</li>
-            </ul>
-            <p><b>Tip:</b> Unhide the passwords when you are entering them and validate they are the same and it's something you can remember.</p>
+      ),
+      content: (
+        <div className="flex items-center justify-center mt-4">
+          <span>
+            <p>There is a guided process to create a family account. It consists of the four steps shown below. In five minutes or less you will have your family set up and ready to go.</p>
+            <ol className="list-decimal ml-6 mt-2">
+              <li>Create the family founder account with email and password</li>
+              <li>Create a unique family name</li>
+              <li>Invite family members to join via email</li>
+              <li>Confirm and create the family account.</li>
+            </ol>
+            <p className="pt-2 italic pb-2">If you are already registered in My Family Social, you must use a different email to create a new family.</p>
+            <p className="pt-2">The link below 👇 will take you to the new family setup page.</p>
+            <p style={ { marginTop: 8 } }>
+              <a href={ setupStartUrl } target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Start a Family today!</a>
+            </p>
+            <div className="flex items-center justify-center mt-4">
+              <img
+                src="images/support/faq-family-setup-start.jpg"
+                alt="Family setup screenshot"
+                style={ { maxWidth: '600px', maxHeight: '600px', marginTop: 12, borderRadius: 8 } }
+              />
+            </div>
           </span>
-        </span>
-      </div>
-    ),
-    icon: FileText,
-  },
+        </div>
+      ),
+      icon: FileText,
+    },
+    {
+      value: "item-30",
+      category: "My Family Social",
+      trigger: (
+        <div>
+          <p className="text-base font-semibold">What does the My Family Social Registration form look like?</p>
+          <p className="text-xs text-slate-600">It's a simple form but you need to fill it out correctly because of the credentials it will create when submitted.</p>
+        </div>
+      ),
+      content: (
+        <div className="flex items-center justify-center pt-2">
+          <span>
+            <p className="pb-2 text-base">👇Here is the form on My Family Social where the link in the invitation email will redirect you.👇</p>
+            <img
+              src="images/support/faq-registration.jpg"
+              alt="My Family Social Registration screenshot"
+            // style={ { maxWidth: '300px', marginTop: 12, borderRadius: 8 } }
+            />
+            <span className="flex flex-col items-start gap-2 mt-4 text-base">
+              <p>The form is filled in with the information the family founder provided to inviting you.</p>
+              <ul className="list-disc ml-6 mt-2">
+                <li>Confirm your first and last name.</li>
+                <li>The <i>nick name</i> and <i>cell phone</i> fields are optional. You can change them after registration. </li>
+                <li>The two password fields <b>must be filled in</b>. The passwords must match and be at least 8 characters with at least one uppercase letter, one number, and one special character.</li>
+              </ul>
+              <p><b>Tip:</b> Unhide the passwords when you are entering them and validate they are the same and it's something you can remember.</p>
+            </span>
+          </span>
+        </div>
+      ),
+      icon: FileText,
+    },
   {
     value: "item-40",
     category: "Account Access",
@@ -178,7 +179,9 @@ export const generalFaqItems = [
     ),
     icon: FileText,
   },
-]
+  ];
+}
+
 export const founderFaqItems = [
   {
     value: "item-10",

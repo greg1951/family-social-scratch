@@ -1,6 +1,7 @@
 'use client'
 
 import { useForm } from 'react-hook-form'
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { Trash2, UserPlus } from 'lucide-react'
@@ -31,11 +32,14 @@ type InviteMemberValues = z.infer<typeof inviteMemberSchema>
 
 type InviteFamilyDialogProps = {
   newInvites: NewFamilyInvite[]
-  onAddInvite: (values: InviteMemberValues) => void
+  onAddInvite: (values: InviteMemberValues) => Promise<{ success: boolean; message?: string }>
   onRemoveInvite: (id: string) => void
 }
 
 export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: InviteFamilyDialogProps) {
+  const [open, setOpen] = useState(false)
+  const [inviteDialogError, setInviteDialogError] = useState('')
+
   const form = useForm<InviteMemberValues>({
     resolver: zodResolver(inviteMemberSchema),
     defaultValues: {
@@ -46,8 +50,14 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
     },
   })
 
-  const onSubmit = (values: InviteMemberValues) => {
-    onAddInvite(values)
+  const onSubmit = async (values: InviteMemberValues) => {
+    setInviteDialogError('')
+    const addResult = await onAddInvite(values)
+    if (!addResult.success) {
+      setInviteDialogError(addResult.message ?? 'Unable to add this invite email.')
+      return
+    }
+
     const persistedNote = form.getValues('inviteFounderMessage') ?? ''
     form.reset({
       firstName: '',
@@ -63,7 +73,7 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
   }
 
   return (
-    <Dialog>
+    <Dialog open={ open } onOpenChange={ setOpen }>
       <DialogTrigger asChild>
         <Button type="button" className="bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold">
           <UserPlus className="mr-2 h-4 w-4" />
@@ -149,6 +159,10 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
                 Add to List
               </Button>
             </DialogFooter>
+
+            { inviteDialogError && (
+              <p className="text-sm font-medium text-red-500">{ inviteDialogError }</p>
+            ) }
           </form>
         </Form>
 
@@ -160,7 +174,7 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
           { newInvites.length === 0 ? (
             <p className="text-sm text-neutral-500">No entries yet.</p>
           ) : (
-            <ul className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
+            <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
               { newInvites.map((invite) => (
                 <li
                   key={ invite.id }
@@ -192,6 +206,12 @@ export function NewInvitesDialog({ newInvites, onAddInvite, onRemoveInvite }: In
               )) }
             </ul>
           ) }
+
+          <div className="mt-4 flex justify-end">
+            <Button type="button" variant="outline" onClick={ () => setOpen(false) }>
+              Done
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

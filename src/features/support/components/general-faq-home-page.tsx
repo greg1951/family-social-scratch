@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/accordion"
 
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
-import { generalFaqItems } from "../types/constants";
+import { getGeneralFaqItems } from "../types/constants";
 import { useEffect, useState, useMemo } from "react";
 import { HelpCircle, ArrowLeft } from "lucide-react";
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
@@ -73,8 +73,8 @@ function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
 
 
 // --- State for category selection ---
-export function GeneralFaqHomePage({ faqVideos }: { faqVideos: FaqVideoItem[] }) {
-  const faqItems = generalFaqItems;
+export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: FaqVideoItem[]; setupStartUrl: string }) {
+  const faqItems = useMemo(() => getGeneralFaqItems(setupStartUrl), [setupStartUrl]);
 
   const [selectedCategory, setSelectedCategory] = useState("");
 

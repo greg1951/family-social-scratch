@@ -47,7 +47,7 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
   }, [form, invites]);
 
 
-  const handleAddInvite = (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
+  const handleAddInvite = async (values: Pick<NewFamilyInvite, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
     const normalizedEmail = values.email.trim().toLowerCase();
     const emailExists = currentFamilyMembers.some(
       (member) => member.email.trim().toLowerCase() === normalizedEmail,
@@ -61,7 +61,10 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
         position: "top-center",
         duration: 3000,
       });
-      return;
+      return {
+        success: false,
+        message: "That email already exists in the current family invite list.",
+      };
     }
 
     if (inviteAlreadyAdded) {
@@ -69,7 +72,10 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
         position: "top-center",
         duration: 3000,
       });
-      return;
+      return {
+        success: false,
+        message: "That email is already in the new invite list.",
+      };
     }
 
     // console.log('NewMembersAccountForm->handleAddInvite->Adding invite with values:', values);
@@ -82,7 +88,9 @@ export default function NewMembersAccountForm({ founderDetails, currentFamilyMem
         email: normalizedEmail,
         inviteFounderMessage: values.inviteFounderMessage,
       },
-    ])
+    ]);
+
+    return { success: true };
   }
   const handleRemoveInvite = (id: string) => {
     setInvites((prev) => prev.filter((invite) => invite.id !== id));

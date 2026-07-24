@@ -31,7 +31,7 @@ export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: 
   });
 
   const [members, setMembers] = useState<NewFamilyMember[]>(familyMembers)
-  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email'>) => {
+  const handleAddMember = async (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
     setMembers((prev) => [
       ...prev,
       {
@@ -40,7 +40,9 @@ export default function MyFamilyAccountForm({ familyMembers }: { familyMembers: 
         lastName: values.lastName,
         email: values.email,
       },
-    ])
+    ]);
+
+    return { success: true };
   }
   const handleRemoveMember = (id: string) => {
     setMembers((prev) => prev.filter((member) => member.id !== id))

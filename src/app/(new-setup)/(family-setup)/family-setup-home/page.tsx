@@ -1,13 +1,21 @@
-'use client';
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle2, CirclePlay, Home, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, CheckCircle2, CirclePlay, ShieldQuestionMark, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { familySteps } from '@/features/family/constants/family-steps';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import Link from 'next/link';
 
 export default function FamilyHome() {
   const steps = familySteps;
+  const roadmapHelp: Record<number, string> = {
+    1: 'Use a Google (Gmail) or Apple email if possible for yourself and for people you plan to invite in Step 3.',
+    2: 'Your family name must be 10-30 characters long, and uniqueness is checked in this step.',
+    3: 'You will need first name, last name, and email for each invitee. You can add more family and friends later if you are unsure now.',
+    4: 'This is the final confirmation before creating your family and sending invite emails from "family-social".',
+  };
+  const stepOneUrl = process.env.AUTH_URL
+    ? new URL('/family-setup-steps', process.env.AUTH_URL).toString()
+    : '/family-setup-steps';
 
   return (
     <Card className="w-90 border-slate-200 bg-linear-to-b from-white to-slate-50 shadow-lg md:w-230 pt-0">
@@ -28,7 +36,7 @@ export default function FamilyHome() {
       </CardHeader>
 
       <CardContent className="space-y-5 px-4 py-5 md:px-6 md:py-6">
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+        {/* <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
           { [
             {
               title: 'Secure',
@@ -54,12 +62,12 @@ export default function FamilyHome() {
               <p className="text-xs text-slate-600 md:text-sm">{ benefit.description }</p>
             </Card>
           )) }
-        </div>
+        </div> */}
 
         <div className="rounded-lg border border-slate-200 bg-white p-3 md:p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 md:text-base">Setup Roadmap</h2>
-            <p className="text-xs text-slate-500">{ steps.length } steps total</p>
+            {/* <p className="text-xs text-slate-500">{ steps.length } steps total</p> */}
           </div>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -78,7 +86,21 @@ export default function FamilyHome() {
                     <p className="mt-1 text-xs text-slate-600 md:text-sm">{ step.description }</p>
                   </div>
 
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-slate-300" />
+                  <HoverCard openDelay={ 120 } closeDelay={ 120 }>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label={ `Step ${ step.number } details` }
+                        className="shrink-0 rounded-full p-0.5 text-slate-300 transition hover:text-[#005472]"
+                      >
+                        <ShieldQuestionMark className="h-5 w-5" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="top" align="end" className="w-72 border-[#bfeeff] bg-[#f3fbff] text-[#12384e]">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-[#005472]">Step { step.number } Tip</p>
+                      <p className="mt-1 text-sm leading-5">{ roadmapHelp[step.number] }</p>
+                    </HoverCardContent>
+                  </HoverCard>
                 </div>
               </Card>
             )) }
@@ -99,7 +121,7 @@ export default function FamilyHome() {
               </Button>
             </Link> */}
 
-            <Link href="/family-setup-steps" className="w-full sm:w-auto">
+            <Link href={ stepOneUrl } className="w-full sm:w-auto">
               <Button size="lg" className="w-full bg-[#59cdf7] text-slate-900 hover:bg-[#9de4fe] sm:w-auto">
                 Step 1: Register Family Founder
                 <ArrowRight className="ml-2 h-4 w-4" />

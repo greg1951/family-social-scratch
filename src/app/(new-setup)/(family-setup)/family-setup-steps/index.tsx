@@ -10,19 +10,16 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
-import { CheckCircle2, CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, BadgeCheck, CircleSlash, CircleCheck } from "lucide-react";
+import { CircleSlash2, CircleArrowLeft, CircleArrowRight, CircleCheckBig, Eye, EyeOff, CircleSlash, CircleCheck } from "lucide-react";
 import { useRouter } from 'next/navigation';
 import { familySteps, noSpacesOrSpecialCharsRegex, STEP_1_FOUNDER, STEP_2_FAMILY_NAME, STEP_3_INVITE_MEMBERS, STEP_4_CREATE_FAMILY_SITE } from '@/features/family/constants/family-steps';
 import { NewInvitesDialog } from '@/features/family/components/dialogs/new-members-dialog';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'; import { StatusUpdateDialog } from '../../../../features/family/components/dialogs/status-update-dialog';
-import { insertFamily, insertMember, insertUser } from '@/components/db/sql/queries-family-user';
 import { initialSubmissionSteps } from '@/features/family/constants/family-steps';
 import { RegistrationMemberDetails, SubmissionStep } from '@/features/family/types/family-steps';
-import { isMemberEmailInUse, sendEmails } from './actions';
-import { insertInvites } from "@/components/db/sql/queries-family-invite";
+import { createFamily, createFamilyInvites, createFounderInviteThread, createFounderMember, createFounderUser, isMemberEmailInUse, sendEmails } from './actions';
 import { addMemberNotifications } from '@/app/(new-setup)/(member-setup)/family-member-registration/actions';
 import { FounderDetails, NewFamilyMember } from '@/features/family/types/family-members';
-import { createThreadConversationWithInitialPost } from '@/components/db/sql/queries-thread-convos';
 
 type FormValues = z.infer<typeof FamilyFormSchema>;
 const steps = familySteps;
@@ -30,8 +27,6 @@ const steps = familySteps;
 export default function CreateFamilyAccountSteps({ familyNames }: { familyNames: string[] }) {
 
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
-  const [previousStep, setPreviousStep] = useState(0);
   const [currentStep, setCurrentStep] = useState(0);
   const [familyNameGood, setFamilyNameGood] = useState(false);
 
@@ -43,12 +38,6 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [submissionSteps, setSubmissionSteps] =
     useState<SubmissionStep[]>(initialSubmissionSteps);
-
-  const { handleSubmit, reset, trigger, formState: { errors } } = useForm<FormValues>({
-    resolver: zodResolver(FamilyFormSchema)
-  });
-
-  type FieldName = keyof FormValues
 
   const form = useForm<FormValues>({
     resolver: zodResolver(FamilyFormSchema),
@@ -62,6 +51,10 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
       familyMembers: [],
     }
   });
+
+  const { handleSubmit, reset, trigger, formState: { errors } } = form;
+
+  type FieldName = keyof FormValues
 
   const updateStepStatus = (stepId: number, status: SubmissionStep['status'], errorMessage?: string) => {
     setSubmissionSteps(prev =>
@@ -80,7 +73,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
     try {
       // Step 1: Add new family name
       updateStepStatus(1, 'inProgress');
-      const insertFamilyResult = await insertFamily(values.familyName);
+      const insertFamilyResult = await createFamily(values.familyName);
       if (!insertFamilyResult.success) {
         updateStepStatus(1, 'error', insertFamilyResult.message);
         throw new Error(insertFamilyResult.message);
@@ -98,7 +91,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         familyId: insertFamilyResult.id as number,
         isFounder: true,
       }
-      const insertMemberResult = await insertMember(registrationDetails);
+      const insertMemberResult = await createFounderMember(registrationDetails);
       if (!insertMemberResult.success) {
         updateStepStatus(2, 'error', insertMemberResult.message);
         throw new Error(insertMemberResult.message);
@@ -107,7 +100,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 3: Add Founder credentials
       updateStepStatus(3, 'inProgress');
-      const insertUserResult = await insertUser({
+      const insertUserResult = await createFounderUser({
         email: values.email as string,
         password: values.password as string,
         memberId: insertMemberResult.id as number,
@@ -141,7 +134,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
           familyId: insertFamilyResult.id as number
         }));
 
-      const insertInvitesResult = await insertInvites(invitesInput);
+      const insertInvitesResult = await createFamilyInvites(invitesInput);
       if (!insertInvitesResult.success) {
         updateStepStatus(5, 'error', insertInvitesResult.message);
         throw new Error(insertInvitesResult.message);
@@ -173,184 +166,11 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
       // Step 3: Collect invited member emails into a comma-delimited string
       const invitedEmails = members.map(member => member.email).join(', ');
-
-      // Step 4: Send private message to the family founder with instructions
-      const plainTextMessage = `Next Steps\n\nCopy the invited members list to your clipboard and paste into the To field of a new email.\n\nInvited Family Members: ${ invitedEmails }`;
-
-      const threadInput = {
-        title: 'Invited Family Members',
-        subject: 'Your Invited Family Members',
-        visibility: 'private' as const,
-        recipientMemberIds: [insertMemberResult.id],
-        content: plainTextMessage,
-        contentJson: JSON.stringify({
-          type: 'doc',
-          content: [
-            {
-              type: 'heading',
-              attrs: { level: 3 },
-              content: [{ type: 'text', text: 'Next Steps' }],
-            },
-            {
-              type: 'paragraph',
-              content: [
-                { type: 'text', text: 'The members you have invited to your new family will receive a separate email from ' },
-                { type: 'text', text: 'my-family-social', marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' with invitation links and details about the platform. Many times this email however, ends up in their spam or junk mail folders and not in their inbox. ' },
-              ],
-            },
-            {
-              type: 'paragraph',
-            },
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: 'The steps below are optional, but by sending them a personal email from your email you may be able to alert them to the email in their spam or junk mail folders.' }],
-            },
-            {
-              type: 'paragraph',
-            },
-            {
-              type: 'orderedList',
-              attrs: { start: 1, type: null },
-              content: [
-                {
-                  type: 'listItem',
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: 'Copy', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' (Ctl-C) the ' },
-                        { type: 'text', text: 'Invited Family Members', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' (the text between 👉 and 👈) to your clipboard.' },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'listItem',
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: 'Open', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' a new email in your email client (e.g. Gmail or Outlook)' },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'listItem',
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: 'Paste', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' (Ctl-V) the invited members list into the ' },
-                        { type: 'text', text: 'To:', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' field of the new email.' },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'listItem',
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: 'Copy', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' all the text between 👉 and 👈 in the ' },
-                        { type: 'text', text: 'Text To Copy', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' below (and paste into the body of your email. (Feel free to revise the text.)' },
-                      ],
-                    },
-                  ],
-                },
-                {
-                  type: 'listItem',
-                  content: [
-                    {
-                      type: 'paragraph',
-                      content: [
-                        { type: 'text', text: 'Send', marks: [{ type: 'bold' }] },
-                        { type: 'text', text: ' the email.' },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            {
-              type: 'heading',
-              attrs: { level: 3 },
-              content: [{ type: 'text', text: 'Invited Family Members' }],
-            },
-            {
-              type: 'paragraph',
-              content: [{ type: 'text', text: '👉' + invitedEmails + '👈' }],
-            },
-            {
-              type: 'paragraph',
-            },
-            {
-              type: 'heading',
-              attrs: { level: 3 },
-              content: [{ type: 'text', text: 'Text To Copy' }],
-            },
-            {
-              type: 'paragraph',
-              content: [
-                { type: 'text', text: '👉Hello to all! I have created a trial account of ' },
-                { type: 'text', text: 'My Family Social', marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' and invited all of you to join my new Family. That email has information about what My Family Social is, the cool features and things we can share there, like TV, Movies, Music reviews, Book and Poetry clubs, recipe, photos sharing, discussion groups, and much more. ' },
-              ],
-            },
-            {
-              type: 'paragraph',
-            },
-            {
-              type: 'paragraph',
-              content: [
-                { type: 'text', text: 'The problem though is that invitation email is likely in your ' },
-                { type: 'text', text: 'spam', marks: [{ type: 'underline' }] },
-                { type: 'text', text: ' or ' },
-                { type: 'text', text: 'junk', marks: [{ type: 'underline' }] },
-                { type: 'text', text: ' mail folder. If you don\'t see it in your Inbox, then look for an email from ' },
-                { type: 'text', text: 'my-family-social', marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' as the sender in spam or junk mail. If you find it there, mark it as ' },
-                { type: 'text', text: 'not spam', marks: [{ type: 'underline' }] },
-                { type: 'text', text: ' or ' },
-                { type: 'text', text: 'junk', marks: [{ type: 'underline' }] },
-                { type: 'text', text: ' mail. ' },
-              ],
-            },
-            {
-              type: 'paragraph',
-            },
-            {
-              type: 'paragraph',
-              content: [
-                { type: 'text', text: 'At the bottom of the invitation email is a link to register in the ' },
-                { type: 'text', text: values.familyName, marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' family. The registration will create credentials for you to login. When you register, you\'ll get another email with useful information on how to sign in to the ' },
-                { type: 'text', text: values.familyName, marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' and new member ' },
-                { type: 'text', text: 'next steps', marks: [{ type: 'bold' }] },
-                { type: 'text', text: ' 👈' },
-              ],
-            },
-            {
-              type: 'paragraph',
-            },
-          ],
-        }),
-      };
-
-      const threadResult = await createThreadConversationWithInitialPost(threadInput, {
+      const threadResult = await createFounderInviteThread({
+        invitedEmails,
+        familyName: values.familyName,
         familyId: insertFamilyResult.id,
-        senderMemberId: insertMemberResult.id,
-        isFounder: true,
+        founderMemberId: insertMemberResult.id,
       });
 
       if (!threadResult.success) {
@@ -396,20 +216,21 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
     }
 
     if (currentStep === STEP_3_INVITE_MEMBERS) {
+      const normalizedFounderEmail = form.getValues('email').trim().toLowerCase();
       const inviteEmailCounts = members.reduce<Record<string, number>>((acc, member) => {
         const normalizedEmail = member.email.trim().toLowerCase();
         acc[normalizedEmail] = (acc[normalizedEmail] ?? 0) + 1;
         return acc;
       }, {});
 
+      const containsFounderEmail = members.some((member) => member.email.trim().toLowerCase() === normalizedFounderEmail);
+
       const duplicateInviteEmails = Object.entries(inviteEmailCounts)
         .filter(([, count]) => count > 1)
         .map(([email]) => email);
 
-      if (duplicateInviteEmails.length > 0) {
-        setMemberEmailValidationError(
-          `Duplicate invite email address(es) found: ${ duplicateInviteEmails.join(', ') }`
-        );
+      if (duplicateInviteEmails.length > 0 || containsFounderEmail) {
+        setMemberEmailValidationError('One or more invited email addresses are not allowed.');
         return;
       }
 
@@ -420,42 +241,66 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
         })
       );
 
-      const inUseEmails = duplicateEmailMembers.filter((email): email is string => Boolean(email));
+      const hasInUseEmail = duplicateEmailMembers.some((email) => Boolean(email));
 
-      if (inUseEmails.length > 0) {
-        setMemberEmailValidationError(
-          `One or more invited email addresses are already in use in My Family Social: ${ inUseEmails.join(', ') }`
-        );
+      if (hasInUseEmail) {
+        setMemberEmailValidationError('One or more invited email addresses are not allowed.');
         return;
       }
     }
 
     if (currentStep < steps.length - 1) {
-      setPreviousStep(currentStep)
       setCurrentStep(step => step + 1)
     }
   }
 
   const prev = () => {
     if (currentStep > 0) {
-      setPreviousStep(currentStep)
       setCurrentStep(step => step - 1)
     }
   }
 
   // Handlers to add/remove members to the invited members list. 
   const [members, setMembers] = useState<NewFamilyMember[]>([])
-  const handleAddMember = (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
+  const handleAddMember = async (values: Pick<NewFamilyMember, 'firstName' | 'lastName' | 'email' | 'inviteFounderMessage'>) => {
+    const normalizedInviteEmail = values.email.trim().toLowerCase();
+    const normalizedFounderEmail = form.getValues('email').trim().toLowerCase();
+
+    if (normalizedInviteEmail === normalizedFounderEmail) {
+      return {
+        success: false,
+        message: 'One or more invited email addresses are not allowed.',
+      };
+    }
+
+    const alreadyAdded = members.some((member) => member.email.trim().toLowerCase() === normalizedInviteEmail);
+    if (alreadyAdded) {
+      return {
+        success: false,
+        message: 'One or more invited email addresses are not allowed.',
+      };
+    }
+
+    const existingMemberResult = await isMemberEmailInUse(normalizedInviteEmail);
+    if (existingMemberResult.exists) {
+      return {
+        success: false,
+        message: 'One or more invited email addresses are not allowed.',
+      };
+    }
+
     setMembers((prev) => [
       ...prev,
       {
         id: crypto.randomUUID(),
         firstName: values.firstName,
         lastName: values.lastName,
-        email: values.email,
+        email: normalizedInviteEmail,
         inviteFounderMessage: values.inviteFounderMessage,
       },
-    ])
+    ]);
+
+    return { success: true };
   }
   const handleRemoveMember = (id: string) => {
     setMembers((prev) => prev.filter((member) => member.id !== id))
@@ -491,82 +336,62 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
               </div>
             </CardHeader>
             <Form { ...form }>
-              <form onSubmit={ handleSubmit(processForm) } className="space-y-4">
-                <div className="px-4 pt-4 md:px-6">
-                  <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-                    { steps.map((step, index) => (
-                      <div
-                        key={ step.number }
-                        className={ `rounded-md border px-2 py-2 text-center text-xs font-semibold md:text-sm ${ index === currentStep
-                          ? 'border-[#59cdf7] bg-[#e6f8ff] text-[#005472]'
-                          : index < currentStep
-                            ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                            : 'border-slate-200 bg-white text-slate-500'
-                          }` }
-                      >
-                        <span className="inline-flex items-center gap-1">
-                          { index < currentStep && <CheckCircle2 className="h-3.5 w-3.5" /> }
-                          Step { step.number }
-                        </span>
-                      </div>
-                    )) }
-                  </div>
-                </div>
+              <form onSubmit={ handleSubmit(processForm) } className="space-y-3 md:space-y-4">
                 { currentStep === STEP_1_FOUNDER && (
                   <>
-                    <div className="flex items-center justify-center gap-4">
+                    <div className="px-4 pt-2 md:px-6">
                       <CardDescription>
-                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <img src="/icons/bluering1.png" alt="step 1" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
-                          <h3 className="font-extrabold inline p-0 ">
+                        <div className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+                          <img src="/icons/bluering1.png" alt="step 1" className="aspect-auto object-cover h-9 w-9 sm:h-10 sm:w-10" />
+                          <h3 className="font-extrabold text-sm sm:text-base">
                             Define Family Founder
                           </h3>
-                          <p className='text-sm'>Register yourself as the family founder by providing your information and login credentials.</p>
+                          <p className='text-xs leading-5 text-slate-700 sm:text-sm'>Register yourself as the family founder by providing your information and login credentials.</p>
                         </div>
                       </CardDescription>
                     </div>
-                    <CardContent className="pt-1 ">
-                      <div className="grid sm:grid-cols-1 ">
-                        <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl  p-[35]">
-                          <div className='pb-5'>
+                    <CardContent className="space-y-3 px-4 pt-2 md:px-6">
+                      <div className="grid grid-cols-1">
+                        <fieldset disabled={ form.formState.isSubmitting } className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
+                          <div className='pb-1'>
                             <FormField
                               control={ form.control }
                               name="firstName"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">First Name</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">First Name</FormLabel>
                                   <FormControl>
-                                    <Input { ...field } placeholder="Your first name" className="text-xs font-extralight" />
+                                    <Input { ...field } placeholder="Your first name" className="h-9 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
-                            <div className="absolute bottom">
+                            <div>
                               { errors.firstName?.message && (
-                                <p className='mt-2 text-xs text-center text-red-400'>
+                                <p className='mt-1 text-xs text-red-500'>
                                   { errors.firstName.message }
                                 </p>
                               ) }
                             </div>
                           </div>
-                          <div className='pb-5'>
+                          <div className='pb-1'>
                             <FormField
                               control={ form.control }
                               name="lastName"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">Last Name</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">Last Name</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Your last name" { ...field } className="text-xs font-extralight" />
+                                    <Input placeholder="Your last name" { ...field } className="h-9 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
-                            <div className="absolute bottom">
+                            <div>
                               { errors.lastName?.message && (
-                                <p className='mt-2 text-xs text-center text-red-400'>
+                                <p className='mt-1 text-xs text-red-500'>
                                   { errors.lastName.message }
                                 </p>
                               ) }
@@ -579,16 +404,16 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                               name="nickName"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold italic">Nickname</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">Nickname</FormLabel>
                                   <FormControl>
-                                    <Input placeholder="Optional nickname" { ...field } className="text-xs font-extralight" />
+                                    <Input placeholder="Optional nickname" { ...field } className="h-9 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
                             { errors.nickName?.message && (
-                              <p className='mt-2 text-sm text-red-400'>
+                              <p className='mt-1 text-xs text-red-500'>
                                 { errors.nickName.message }
                               </p>
                             ) }
@@ -596,54 +421,54 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                         </fieldset>
                       </div>
 
-                      <div className="grid sm:grid-cols-1">
-                        <fieldset disabled={ form.formState.isSubmitting } className="grid sm:grid-cols-3 gap-x-1 border-[1] rounded-2xl p-[35]">
-                          <div className='pb-7'>
+                      <div className="grid grid-cols-1">
+                        <fieldset disabled={ form.formState.isSubmitting } className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
+                          <div className='pb-1'>
                             <FormField
                               control={ form.control }
                               name="email"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">Founder&apos;s Email</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">Founder&apos;s Email</FormLabel>
                                   <FormControl>
-                                    <Input type="email" placeholder="your email address" { ...field } className="text-xs font-extralight" />
+                                    <Input type="email" placeholder="your email address" { ...field } className="h-9 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
-                            <div className="absolute bottom">
+                            <div>
                               { errors.email?.message && (
-                                <p className='mt-1 text-xs text-center text-red-400'>
+                                <p className='mt-1 text-xs text-red-500'>
                                   { errors.email.message }
                                 </p>
                               ) }
                             </div>
                           </div>
-                          <div className="relative pb-7">
+                          <div className="relative pb-1">
                             <FormField
                               control={ form.control }
                               name="password"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">Password</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">Password</FormLabel>
                                   <FormControl>
-                                    <Input type={ showNewPassword ? "text" : "password" } placeholder="5 or more letters" { ...field } className="text-xs font-extralight" />
+                                    <Input type={ showNewPassword ? "text" : "password" } placeholder="8+ chars, upper/lower, number, symbol, no spaces" { ...field } className="h-9 pr-10 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
-                            <div className="absolute bottom">
+                            <div>
                               { errors.password?.message && (
-                                <p className='mt-1 text-xs text-center text-red-400'>
+                                <p className='mt-1 text-xs text-red-500'>
                                   { errors.password.message }
                                 </p>
                               ) }
                             </div>
 
                             <Button type="button" variant="ghost" size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              className="absolute right-1 top-6 h-8 px-2 hover:bg-transparent"
                               onClick={ () => setShowNewPassword((prev) => !prev) }
                             >
                               { showNewPassword ? (
@@ -654,22 +479,22 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                             </Button>
                           </div>
 
-                          <div className="relative pb-7">
+                          <div className="relative pb-1">
                             <FormField
                               control={ form.control }
                               name="passwordConfirm"
                               render={ ({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="font-extrabold">Confirm Password</FormLabel>
+                                  <FormLabel className="text-xs font-bold uppercase tracking-wide text-slate-700">Confirm Password</FormLabel>
                                   <FormControl>
-                                    <Input type={ showConfirmPassword ? "text" : "password" } placeholder="Must match password" { ...field } className="text-xs font-extralight" />
+                                    <Input type={ showConfirmPassword ? "text" : "password" } placeholder="Must match password" { ...field } className="h-9 pr-10 text-sm" />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
                               ) }
                             />
                             <Button type="button" variant="ghost" size="sm"
-                              className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                              className="absolute right-1 top-6 h-8 px-2 hover:bg-transparent"
                               onClick={ () => setShowConfirmPassword((prev) => !prev) }
                             >
                               { showConfirmPassword ? (
@@ -678,9 +503,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                                 <Eye className="h-4 w-4" />
                               ) }
                             </Button>
-                            <div className="absolute bottom">
+                            <div>
                               { errors.passwordConfirm?.message && (
-                                <p className='mt-1 text-xs text-center text-red-400'>
+                                <p className='mt-1 text-xs text-red-500'>
                                   { errors.passwordConfirm.message }
                                 </p>
                               ) }
@@ -690,7 +515,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                       </div>
                     </CardContent>
                     <CardFooter className="flex justify-center">
-                      <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                      <div className="grid grid-cols-2 gap-2 p-1 sm:flex sm:justify-end sm:p-2">
                         <Link href="/family-setup-home">
                           <Button type="button" variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
@@ -701,9 +526,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           type="button"
                           onClick={ next }
                           className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
-                          disabled={ currentStep === steps.length - 1 || isLoading }
+                          disabled={ currentStep === steps.length - 1 }
                         >
-                          { isLoading ? 'Saving Founder info...' : 'Next' }
+                          Next
                           <CircleArrowRight className="ml-1 h-4 w-4" />
                         </Button>
 
@@ -713,11 +538,11 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                   </>) }
                 { currentStep === STEP_2_FAMILY_NAME && (
                   <>
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                       <CardDescription>
-                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <img src="/icons/bluering2.png" alt="step 2" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
-                          <h3 className="font-extrabold inline p-0">
+                        <div className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+                          <img src="/icons/bluering2.png" alt="step 2" className="aspect-auto object-cover h-9 w-9 sm:h-10 sm:w-10" />
+                          <h3 className="font-extrabold text-sm sm:text-base">
                             Assign Family Name
                           </h3>
                           <HoverCard openDelay={ 10 } closeDelay={ 100 }>
@@ -727,27 +552,27 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                             <HoverCardContent side='top' className="flex w-50 md:w-120 flex-col gap-0.5">
                               <div className="flex items-center gap-1" >
                                 <CircleCheck size={ 6 } className="md:h-10 md:w-10 text-green-500" />
-                                <p className='text-sm p-1'>It is case sensitive; used when you login.</p>
+                                <p className='text-xs p-1 sm:text-sm'>It is case sensitive; used when you login.</p>
                               </div>
                               <div className="flex items-center gap-1" >
                                 <CircleSlash size={ 6 } className="md:h-10 md:w-10 text-red-500" />
-                                <p className='text-sm p-1'>&quot;TexasJonesFamily&quot; is not the same as &quot;texasjonesfamily&quot;</p>
+                                <p className='text-xs p-1 sm:text-sm'>&quot;TexasJonesFamily&quot; is not the same as &quot;texasjonesfamily&quot;</p>
                               </div>
                               <div className="flex items-center gap-1" >
                                 <CircleCheck size={ 6 } className="md:h-10 md:w-10 text-green-500" />
-                                <p className='text-sm p-1'>It must be 10-30 letters long.</p>
+                                <p className='text-xs p-1 sm:text-sm'>It must be 10-30 letters long.</p>
                               </div>
                               <div className="flex items-center gap-1" >
                                 <CircleSlash size={ 6 } className="md:h-10 md:w-10 text-red-500" />
-                                <p className='text-sm p-1'>Numbers, special characters, and spaces are <u>not</u> allowed.</p>
+                                <p className='text-xs p-1 sm:text-sm'>Numbers, special characters, and spaces are <u>not</u> allowed.</p>
                               </div>
                             </HoverCardContent>
                           </HoverCard>
                         </div>
                       </CardDescription>
-                      <CardContent className="flex items-center justify-center gap-4">
-                        <div>
-                          <fieldset className="grid sm:grid-cols-3 gap-x-1 gap-y-3 border-[1] rounded-2xl  p-[35]">
+                      <CardContent className="flex items-center justify-center gap-4 px-4 md:px-6">
+                        <div className="w-full max-w-xl">
+                          <fieldset className="grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
                             <div className='relative pb-3'>
                               <FormField
                                 control={ form.control }
@@ -796,7 +621,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
                                         } }
                                         placeholder="Will be checked for uniqueness"
-                                        className="text-xs text-center font-extralight w-[340]" />
+                                        className="h-9 w-full text-center text-sm" />
                                     </FormControl>
                                     <FormMessage />
                                   </FormItem>
@@ -820,7 +645,7 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                       </CardContent>
                     </div>
                     <CardFooter className="flex justify-center">
-                      <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                      <div className="grid grid-cols-2 gap-2 p-1 sm:flex sm:justify-end sm:p-2">
                         <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                           <CircleArrowLeft className="mr-1 h-4 w-4" />
                           Back
@@ -829,9 +654,9 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           type="button"
                           onClick={ next }
                           className="w-full bg-[#59cdf7] hover:bg-[#9de4fe] text-black font-semibold md:w-auto text-xs md:text-sm"
-                          disabled={ currentStep === steps.length - 1 || isLoading || !familyNameGood }
+                          disabled={ currentStep === steps.length - 1 || !familyNameGood }
                         >
-                          { isLoading ? 'Saving Founder info...' : 'Next' }
+                          Next
                           <CircleArrowRight className="ml-1 h-4 w-4" />
                         </Button>
                       </div>
@@ -840,17 +665,17 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                   </>) }
                 { currentStep === STEP_3_INVITE_MEMBERS && (
                   <>
-                    <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-1 gap-3">
                       <CardDescription>
-                        <div className="flex items-center justify-center gap-2 pl-5 p-2">
-                          <img src="/icons/bluering3.png" alt="step 3" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 " />
-                          <h3 className="font-extrabold inline p-0">
+                        <div className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 bg-white px-3 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-4">
+                          <img src="/icons/bluering3.png" alt="step 3" className="aspect-auto object-cover h-9 w-9 sm:h-10 sm:w-10" />
+                          <h3 className="font-extrabold text-sm sm:text-base">
                             Invite Family
                           </h3>
-                          <p className='text-sm'>Emails will be used to send invitations to family and friends. You will add them to the list below and when done, proceed to the confirmation step.</p>
+                          <p className='text-xs leading-5 text-slate-700 sm:text-sm'>Emails will be used to send invitations to family and friends. Add people to the list below, then continue to confirmation.</p>
                         </div>
                       </CardDescription>
-                      <CardContent className="space-y-4 pt-5">
+                      <CardContent className="space-y-3 px-4 pt-3 md:px-6">
 
                         <NewInvitesDialog
                           newInvites={ members }
@@ -858,14 +683,14 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                           onRemoveInvite={ handleRemoveMember }
                         />
 
-                        <div className="rounded-md border p-4">
+                        <div className="rounded-xl border border-slate-200 bg-white p-3 sm:p-4">
                           <p className="mb-3 text-sm font-semibold text-neutral-800">Invited Members ({ members.length })</p>
                           { members.length === 0 ? (
                             <p className="text-sm text-neutral-500">No family members added yet.</p>
                           ) : (
-                            <ul className="space-y-2">
+                            <ul className="grid grid-cols-2 gap-2 md:grid-cols-3">
                               { members.map((member) => (
-                                <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
+                                <li key={ member.id } className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                                   <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
                                   <p className="text-xs text-neutral-600">{ member.email }</p>
                                   { member.inviteFounderMessage && (
@@ -878,12 +703,12 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
                         </div>
 
                         { memberEmailValidationError && (
-                          <p className="text-sm text-red-500">{ memberEmailValidationError }</p>
+                          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600">{ memberEmailValidationError }</p>
                         ) }
 
                       </CardContent>
                       <CardFooter className="flex justify-center">
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                        <div className="grid grid-cols-2 gap-2 p-1 sm:flex sm:justify-end sm:p-2">
                           <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
@@ -903,97 +728,119 @@ export default function CreateFamilyAccountSteps({ familyNames }: { familyNames:
 
                   </>) }
                 { currentStep === STEP_4_CREATE_FAMILY_SITE && (
-                  <div className="font-app py-2 px-4 sm:px-6 md:px-8 font-sm">
-                    <div className="max-w-2xl mx-auto">
-                      <CardDescription className="text-neutral-800 text-xs px-4">
-                        The information you provided is summarized below. Please review for accuracy before confirming to create your family site and send invitations.
+                  <div className="font-app px-4 py-2 sm:px-6 md:px-8">
+                    <div className="mx-auto max-w-5xl">
+                      <CardDescription className="rounded-lg border border-slate-200 bg-white px-3 py-3 text-xs leading-5 text-neutral-700 sm:px-4 sm:text-sm">
+                        Review each section before you create your family and send invitations.
                       </CardDescription>
 
-                      <CardContent className="space-y-4 pt-5">
-                        <div className="rounded-md border p-4">
-                          <div className="mb-3 flex items-center gap-2">
-                            <img src="/icons/bluering1.png" alt="step 1" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-60 " />
-                            <div>
-                              <span className="text-sm font-semibold text-neutral-800" >Family Founder Info: <br></br></span>
-                              <span className="text-xs font-light text-neutral-800">
-                                { form.getValues('email') }, { " " }
-                                { form.getValues('firstName') } { " " } { form.getValues('lastName') }, { " " }
-                                { form.getValues('nickName') ? `(${ form.getValues('nickName') })` : '(no nickname)' }
-                              </span>
+                      <CardContent className="space-y-4 pt-3">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <img src="/icons/bluering1.png" alt="step 1" className="h-10 w-10 object-cover opacity-70 md:h-12 md:w-12" />
                               <div>
-                                <span className="text-sm font-semibold text-neutral-800" >Family Founder Password: <br></br></span>
-                                <div className='relative'>
-                                  <input className='text-xs font-light text-neutral-800 ' type={ showNewPassword ? "text" : "password" } id="password" name="password" value={ form.getValues('password') } disabled></input>
-                                  <Button type="button" variant="ghost" size="sm"
-                                    className="absolute left-[-45] top-0 h-full px-3 py-2 hover:bg-transparent"
-                                    onClick={ () => setShowNewPassword((prev) => !prev) }
-                                  >
-                                    { showNewPassword ? (
-                                      <EyeOff className="h-4 w-4" />
-                                    ) : (
-                                      <Eye className="h-4 w-4" />
-                                    ) }
-                                  </Button>
-
-                                </div>
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-[#0f6080]">Step 1</p>
+                                <p className="text-sm font-bold text-neutral-900">Founder Details</p>
+                                <p className="text-xs text-neutral-600">Account owner information and credentials</p>
                               </div>
                             </div>
-                          </div>
+
+                            <div className="space-y-2 text-xs text-neutral-800 sm:text-sm">
+                              <p><span className="font-semibold">Name:</span> { form.getValues('firstName') } { form.getValues('lastName') }</p>
+                              <p><span className="font-semibold">Nickname:</span> { form.getValues('nickName') || 'None provided' }</p>
+                              <p className="break-all"><span className="font-semibold">Email:</span> { form.getValues('email') }</p>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">Password:</span>
+                                <input
+                                  className="w-full max-w-56 rounded border border-slate-200 bg-slate-50 px-2 py-1 text-xs"
+                                  type={ showNewPassword ? "text" : "password" }
+                                  value={ form.getValues('password') }
+                                  disabled
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 px-0"
+                                  onClick={ () => setShowNewPassword((prev) => !prev) }
+                                >
+                                  { showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" /> }
+                                </Button>
+                              </div>
+                            </div>
+                          </section>
+
+                          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <img src="/icons/bluering2.png" alt="step 2" className="h-10 w-10 object-cover opacity-70 md:h-12 md:w-12" />
+                              <div>
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-[#0f6080]">Step 2</p>
+                                <p className="text-sm font-bold text-neutral-900">Family Name</p>
+                                <p className="text-xs text-neutral-600">Unique family identity for sign in</p>
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected Name</p>
+                              <p className="mt-1 break-all text-sm font-bold text-neutral-900">{ form.getValues('familyName') }</p>
+                            </div>
+                          </section>
                         </div>
 
-                        <div className="rounded-md border p-4">
-                          <div className="mb-3 flex items-center gap-2">
-                            <img src="/icons/bluering2.png" alt="step 2" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-60 " />
-                            <p>
-                              <span className="text-sm font-semibold text-neutral-800" >Selected Family Name: <br></br></span>
-                              <span className="text-xs font-light text-neutral-800">{ form.getValues('familyName') }</span>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-[2fr_1fr]">
+                          <section className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:p-4">
+                            <div className="mb-3 flex items-center gap-2">
+                              <img src="/icons/bluering3.png" alt="step 3" className="h-10 w-10 object-cover opacity-70 md:h-12 md:w-12" />
+                              <div>
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-[#0f6080]">Step 3</p>
+                                <p className="text-sm font-bold text-neutral-900">Invitations</p>
+                                <p className="text-xs text-neutral-600">Invited family and friends ({ members.length })</p>
+                              </div>
+                            </div>
+
+                            { members.length === 0 ? (
+                              <p className="text-sm text-neutral-500">No members invited yet.</p>
+                            ) : (
+                              <ul className="grid grid-cols-2 gap-2">
+                                { members.map((member) => (
+                                  <li key={ member.id } className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                                    <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
+                                    <p className="break-all text-xs text-neutral-600">{ member.email }</p>
+                                    { member.inviteFounderMessage && (
+                                      <p className="mt-1 text-xs italic text-neutral-500">{ member.inviteFounderMessage }</p>
+                                    ) }
+                                  </li>
+                                )) }
+                              </ul>
+                            ) }
+                          </section>
+
+                          <section className="rounded-xl border-2 border-[#59cdf7] bg-[#e8f8ff] p-3 shadow-sm sm:p-4">
+                            <div className="mb-2 flex items-center gap-2">
+                              <img src="/icons/bluering4.png" alt="step 4" className="h-10 w-10 object-cover md:h-12 md:w-12" />
+                              <div>
+                                <p className="text-[11px] font-bold uppercase tracking-wide text-[#0f6080]">Step 4</p>
+                                <p className="text-sm font-bold text-neutral-900">Final Confirmation</p>
+                                <p className="text-xs text-neutral-700">Create family and send invites</p>
+                              </div>
+                            </div>
+
+                            <p className="text-xs leading-5 text-neutral-800">
+                              Use the <b>Back</b> below to edit any previous step before confirming.
                             </p>
-                          </div>
+                            <p className="mt-2 text-xs leading-5 text-neutral-800">
+                              When you select <b>Create Family</b> below, the family is created and then invitation emails are sent from <b>My Family Social</b>.
+                            </p>
+                            {/* <p className="mt-2 text-xs leading-5 text-neutral-800">
+                              After sign-in, check <b>Mail Box</b> for a founder-only next-steps message.
+                            </p> */}
+                          </section>
                         </div>
-
-                        <div className="rounded-md border p-4">
-                          <div className="mb-3 flex items-center gap-2">
-                            <img src="/icons/bluering3.png" alt="step 3" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-60 " />
-                            <p className="text-sm font-semibold text-neutral-800">Invited Family Members ({ members.length })</p>
-                          </div>
-
-                          { members.length === 0 ? (
-                            <p className="text-sm text-neutral-500">No members invited yet.</p>
-                          ) : (
-                            <ul className="space-y-2">
-                              { members.map((member) => (
-                                <li key={ member.id } className="rounded-md border bg-neutral-50 px-3 py-2">
-                                  <p className="text-sm font-medium text-neutral-900">{ member.firstName } { member.lastName }</p>
-                                  <p className="text-xs text-neutral-600">{ member.email }</p>
-                                  { member.inviteFounderMessage && (
-                                    <p className="mt-1 text-xs italic text-neutral-500">{ member.inviteFounderMessage }</p>
-                                  ) }
-                                </li>
-                              )) }
-                            </ul>
-                          ) }
-                        </div>
-
-                        <div className="rounded-md border border-[#59cdf7] bg-[#e8f8ff] p-4">
-                          <div className="mb-2 flex items-center gap-2">
-                            <img src="/icons/bluering4.png" alt="step 4" className="aspect-auto object-cover h-10 w-10 md:h-15 md:w-15 opacity-100 " />
-                            <p className="text-sm font-semibold text-neutral-900">Final Confirmation</p>
-                          </div>
-
-                          <p className="text-xs text-neutral-800">
-                            If corrections need to be made, use the <b>Back</b> button to return to the step and update the information.
-                          </p>
-                          <p className="text-xs text-neutral-800 mt-2">
-                            Otherwise, <b>Confirm</b> these setup that will create your new My Family Social site and send invitations to invited members.
-                          </p>
-                          <p className="text-xs text-neutral-800 mt-2">
-                            You will also be sent an <u>important message</u> in Mail Box, addressed to you as the family founder. However, first you must login using your new credentials and then go to <b>Mail Box</b>.
-                          </p>
-                        </div>
-
                       </CardContent>
+
                       <CardFooter className="flex justify-center">
-                        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end p-2">
+                        <div className="grid grid-cols-2 gap-2 p-2 sm:flex sm:justify-end">
                           <Button type="button" onClick={ prev } variant="outline" className="w-full border-[#59cdf7] text-[#005472] hover:bg-[#dff6ff] md:w-auto text-xs md:text-sm">
                             <CircleArrowLeft className="mr-1 h-4 w-4" />
                             Back
