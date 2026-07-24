@@ -1,11 +1,14 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle2, CirclePlay, ShieldQuestionMark, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, CirclePlay, ShieldQuestionMark } from 'lucide-react';
 import { familySteps } from '@/features/family/constants/family-steps';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { auth } from '@/auth';
 import Link from 'next/link';
 
-export default function FamilyHome() {
+export default async function FamilyHome() {
+  const session = await auth();
+  const hasLoggedInMember = Boolean(session?.user?.email);
   const steps = familySteps;
   const roadmapHelp: Record<number, string> = {
     1: 'Use a Google (Gmail) or Apple email if possible for yourself and for people you plan to invite in Step 3.',
@@ -120,14 +123,28 @@ export default function FamilyHome() {
                 Back to Home
               </Button>
             </Link> */}
-
-            <Link href={ stepOneUrl } className="w-full sm:w-auto">
-              <Button size="lg" className="w-full bg-[#59cdf7] text-slate-900 hover:bg-[#9de4fe] sm:w-auto">
-                Step 1: Register Family Founder
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
+            {hasLoggedInMember ? (
+              <div className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto" disabled>
+                  Step 1: Register Family Founder
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <Link href={ stepOneUrl } className="w-full sm:w-auto">
+                <Button size="lg" className="w-full bg-[#59cdf7] text-slate-900 hover:bg-[#9de4fe] sm:w-auto">
+                  Step 1: Register Family Founder
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            )}
           </div>
+
+          {hasLoggedInMember && (
+            <p className="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-900 sm:text-sm">
+              Existing family members must use a different email address to start a new family.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
