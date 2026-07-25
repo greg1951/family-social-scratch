@@ -7,7 +7,8 @@ export type FamilyFeatureKey =
   | "poetry"
   | "gallery"
   | "games"
-  | "threads";
+  | "threads"
+  | "blogs";
 
 const FEATURE_KEYWORD_MAP: Array<{ key: FamilyFeatureKey; keywords: string[] }> = [
   { key: "tv", keywords: ["tv"] },
@@ -19,6 +20,7 @@ const FEATURE_KEYWORD_MAP: Array<{ key: FamilyFeatureKey; keywords: string[] }> 
   { key: "gallery", keywords: ["gallery", "galleries", "photo"] },
   { key: "games", keywords: ["game", "games", "scoreboard"] },
   { key: "threads", keywords: ["thread", "threads"] },
+  { key: "blogs", keywords: ["blog", "blogs"] },
 ];
 
 export function getFeatureKeyFromReferenceName(name: string): FamilyFeatureKey | null {

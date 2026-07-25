@@ -4,6 +4,7 @@ import type { JSONContent } from "@tiptap/core";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { List, ListOrdered } from "lucide-react";
 import { useEffect } from "react";
 
 import {
@@ -55,7 +56,7 @@ export default function TipTapAlbumEditor({
       attributes: {
         "data-placeholder": placeholder,
         class:
-          "tiptap min-h-28 rounded-b-xl border border-t-0 border-[#dbe6ef] bg-white px-3 py-2 text-sm leading-6 text-[#183746] outline-none",
+          "tiptap min-h-28 rounded-b-xl border border-t-0 border-[#dbe6ef] bg-white px-3 py-2 text-sm leading-6 text-[#183746] outline-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1",
       },
     },
   });
@@ -135,7 +136,17 @@ export default function TipTapAlbumEditor({
           className={ `${toolbarButtonClassName} ${editor?.isActive("bulletList") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
           aria-label="Bullet list"
         >
-          List
+          <List className="size-4" aria-hidden="true" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={ disabled || !editor || !editor.can().chain().focus().toggleOrderedList().run() }
+          onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("orderedList") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          aria-label="Numbered list"
+        >
+          <ListOrdered className="size-4" aria-hidden="true" />
         </Button>
       </div>
       <EditorContent editor={ editor } />

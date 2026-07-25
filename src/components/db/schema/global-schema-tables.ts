@@ -105,6 +105,19 @@ export const memberOptionReference = globalSchema.table("member_option_reference
   isSelected: boolean("is_selected").notNull().default(false),
 });
 
+export const blogTagReference = globalSchema.table("blog_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull(),
+  category: text("category").notNull().default("general"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("blog_tag_reference_name_idx").on(table.tagName),
+    unique("blog_tag_reference_name_uq").on(table.tagName),
+  ]
+);
+
 export const movieTagReference = globalSchema.table("movie_tag_reference", {
   id: serial("id").primaryKey(),
   tagName: text("tag_name").notNull().default(""),

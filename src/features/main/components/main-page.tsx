@@ -1,4 +1,5 @@
 import { Card } from "../../../components/ui/card";
+import Link from "next/link";
 import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 import PublicHelpMenu from "@/components/common/public-help-menu";
@@ -10,18 +11,9 @@ import GuidedTourLauncher from "@/features/guided/components/guided-tour-launche
 import { resolveGuidedTourLaunch, type GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import { getMemberImageDetailsByMemberId } from "@/components/db/sql/queries-family-member";
 import { getUnreadThreadCountForRecipient } from "@/components/db/sql/queries-thread-convos";
-import { RoomDefinitions, PhoneRoomOrder, TabletRoomOrder   } from "../types/constants";
-
-// type MainRoomDefinition = {
-//   featureKey: FamilyFeatureKey;
-//   href: string;
-//   roomTitle: string;
-//   src: string;
-// };
+import { RoomDefinitions } from "../types/constants";
 
 const roomDefinitions = RoomDefinitions;
-const phoneRoomOrder = PhoneRoomOrder;
-const tabletRoomOrder = TabletRoomOrder;
 
 export default async function MainPage() {
   const memberKeyDetails = await getMemberPageDetails();
@@ -98,9 +90,48 @@ export default async function MainPage() {
         href={ room.href }
         src={ room.src }
         title={ room.roomTitle }
+        phoneSrc={ room.phoneSrc }
+        tabletSrc={ room.tabletSrc }
         tw="overflow-hidden rounded-xl border-[5px] border-[#9d3209] bg-[#9d3209] p-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg"
         imageClassName={ imageClassName }
       />
+    );
+  };
+
+  const renderSplitRoomTile = () => {
+    const hallwayRoom = roomDefinitions.gallery;
+    const mailboxRoom = roomDefinitions.threads;
+
+    if (!isFeatureEnabled(hallwayRoom.featureKey) && !isFeatureEnabled(mailboxRoom.featureKey)) {
+      return null;
+    }
+
+    return (
+      <Card className="h-[181px] w-full overflow-hidden rounded-xl border-[5px] border-[#9d3209] bg-[#9d3209] p-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg md:h-[191px]">
+        <div className="grid h-full grid-rows-2 gap-0.5">
+          <Link href={ hallwayRoom.href } className="relative block min-h-0">
+            <picture>
+              <source media="(min-width: 768px)" srcSet={ hallwayRoom.tabletSrc ?? hallwayRoom.src } />
+              <img
+                src={ hallwayRoom.phoneSrc ?? hallwayRoom.src }
+                alt={ hallwayRoom.roomTitle }
+                className="h-full w-full object-cover"
+              />
+            </picture>
+          </Link>
+
+          <Link href={ mailboxRoom.href } className="relative block min-h-0">
+            <picture>
+              <source media="(min-width: 768px)" srcSet={ mailboxRoom.tabletSrc ?? mailboxRoom.src } />
+              <img
+                src={ mailboxRoom.phoneSrc ?? mailboxRoom.src }
+                alt={ mailboxRoom.roomTitle }
+                className="h-full w-full object-cover"
+              />
+            </picture>
+          </Link>
+        </div>
+      </Card>
     );
   };
 
@@ -150,11 +181,27 @@ export default async function MainPage() {
 
               <div className="relative rounded-[22px] border-8 border-[#cf4505] bg-[#cf4505] p-2 shadow-[0_25px_55px_-28px_rgba(11,15,23,0.92)] md:p-3">
                 <div className="grid grid-cols-3 gap-2 md:hidden">
-                  { phoneRoomOrder.map((featureKey) => renderRoom(featureKey, "h-[172px] w-[120px] object-cover")) }
+                  { renderRoom("tv", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("movies", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("books", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("music", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("games", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("poetry", "h-[172px] w-[120px] object-cover") }
+                  { renderSplitRoomTile() }
+                  { renderRoom("foodies", "h-[172px] w-[120px] object-cover") }
+                  { renderRoom("blogs", "h-[172px] w-[120px] object-cover") }
                 </div>
 
                 <div className="hidden grid-cols-3 gap-3 md:grid">
-                  { tabletRoomOrder.map((featureKey) => renderRoom(featureKey, "h-[182px] w-[293px] object-cover")) }
+                  { renderRoom("tv", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("movies", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("books", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("music", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("games", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("poetry", "h-[182px] w-[293px] object-cover") }
+                  { renderSplitRoomTile() }
+                  { renderRoom("foodies", "h-[182px] w-[293px] object-cover") }
+                  { renderRoom("blogs", "h-[182px] w-[293px] object-cover") }
                 </div>
               </div>
             </div>

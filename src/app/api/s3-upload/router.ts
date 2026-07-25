@@ -6,7 +6,7 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { getS3ClientForFamily } from "@/lib/s3-client-factory";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
-const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads", "galleries"]);
+const ALLOWED_FOLDERS = new Set(["members", "movies", "tv", "music", "foodies", "threads", "galleries", "blogs"]);
 const ALLOWED_ACTIONS = new Set(["upload", "download"]);
 const SAFE_FILE_NAME_REGEX = /^[A-Za-z0-9._-]+$/;
 const FAMILY_PREFIX_REGEX = /^family-\d+$/i;

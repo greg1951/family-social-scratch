@@ -3,7 +3,7 @@ import { pgSchema, serial, index, boolean, pgEnum, foreignKey, unique } from "dr
 import {is, like, not, sql } from 'drizzle-orm';
 import { number } from "zod";
 import { ta } from "date-fns/locale";
-import { bookCategoryTagReference, poemCategoryTagReference, showTagReference, 
+import { bookCategoryTagReference, blogTagReference, poemCategoryTagReference, showTagReference, 
          movieTagReference, musicTagReference, featureReference, memberOptionReference,
          guidedTourReference, guidedTourStepReference  
         } from "./global-schema-tables"; 
@@ -300,6 +300,92 @@ export const discussLike = familySchema.table("discuss_like", {
     index("discuss_like_discuss_post_id_idx").on(table.discussPostId),
     index("discuss_like_member_id_idx").on(table.memberId),
     unique("discuss_like_discuss_post_member_id_uq").on(table.discussPostId, table.memberId),
+  ]
+);
+
+export const blogPost = familySchema.table("blog_post", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull(),
+  excerpt: text("excerpt").notNull().default(""),
+  contentJson: text("content_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  coverImageS3Key: text("cover_image_s3_key"),
+  coverImageAlt: text("cover_image_alt"),
+  allowComments: boolean("allow_comments").notNull().default(true),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_post_family_created_idx").on(table.familyId, table.createdAt),
+    index("blog_post_family_status_created_idx").on(table.familyId, table.status, table.createdAt),
+    index("blog_post_author_created_idx").on(table.authorMemberId, table.createdAt),
+    unique("blog_post_family_slug_uq").on(table.familyId, table.slug),
+  ]
+);
+
+export const blogPostTag = familySchema.table("blog_post_tag", {
+  id: serial("id").primaryKey(),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  blogTagId: integer("fk_blog_tag_id").notNull().references(() => blogTagReference.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_post_tag_post_id_idx").on(table.blogPostId),
+    index("blog_post_tag_tag_id_idx").on(table.blogTagId),
+    unique("blog_post_tag_post_tag_uq").on(table.blogPostId, table.blogTagId),
+  ]
+);
+
+export const blogComment = familySchema.table("blog_comment", {
+  id: serial("id").primaryKey(),
+  contentJson: text("content_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  softDeletedAt: timestamp("soft_deleted_at"),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_comment_post_id_idx").on(table.blogPostId),
+    index("blog_comment_member_id_idx").on(table.memberId),
+  ]
+);
+
+export const blogLikeness = familySchema.table("blog_likeness", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  createdAt: timestamp("created_at").defaultNow(),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_likeness_post_id_idx").on(table.blogPostId),
+    index("blog_likeness_member_id_idx").on(table.memberId),
+    unique("blog_likeness_post_member_uq").on(table.blogPostId, table.memberId),
+  ]
+);
+
+export const blogMedia = familySchema.table("blog_media", {
+  id: serial("id").primaryKey(),
+  s3ObjectKey: text("s3_object_key").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSizeBytes: integer("file_size_bytes").notNull().default(0),
+  width: integer("width"),
+  height: integer("height"),
+  altText: text("alt_text"),
+  caption: text("caption"),
+  createdAt: timestamp("created_at").defaultNow(),
+  blogPostId: integer("fk_blog_post_id").references(() => blogPost.id, { onDelete: "cascade" }),
+  uploadMemberId: integer("fk_upload_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_media_post_id_idx").on(table.blogPostId),
+    index("blog_media_uploader_id_idx").on(table.uploadMemberId),
+    index("blog_media_family_id_idx").on(table.familyId),
   ]
 );
 

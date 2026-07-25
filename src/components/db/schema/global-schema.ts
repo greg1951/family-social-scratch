@@ -1,6 +1,7 @@
 export { 
   bookCategoryReference,
   bookCategoryTagReference,
+  blogTagReference,
   bookTerm,
   featureReference,
   guidedTourReference,

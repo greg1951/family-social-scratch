@@ -1,16 +1,16 @@
 - [Slide Overview](#slide-overview)
 - [Video Tour](#video-tour)
-  - [TV Room](#tv-junkies)
+  - [TV Room](#tv-room)
     - [Show Finder](#show-finder)
     - [Scroll Strip](#scroll-strip)
     - [Show Templates](#show-templates)
-  - [Game Room](#game-scoreboards)
+  - [Game Room](#game-room)
     - [Mexican Train](#mexican-train)
     - [Cricket](#cricket)
     - [Acquire](#acquire)
     - [Other Games](#other-games)
-  - [The Kitchen](#family-foodies)
-  - [Picture Hallway](#photo-galleries)
+  - [The Kitchen](#the-kitchen)
+  - [Picture Hallway](#picture-hallway)
 
 # Slide Overview
 
@@ -26,7 +26,7 @@
 
 Hello family and friends. Welcome to the start of the **My Family Social** video series. 
 
-I'm Greg Hughlett, the **founder** of My Family Social. 
+I'm Greg Hughlett of My Family Social. 
 
 Most likely if you're watching this video, you're visiting the site for the first time you're wondering, **what is this site all about?**.
 

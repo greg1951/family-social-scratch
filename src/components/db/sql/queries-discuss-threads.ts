@@ -9,6 +9,7 @@ import {
 } from './queries-family-activity';
 
 import {
+	blogPost,
 	book,
 	discussPostReply,
 	discussThread,
@@ -62,6 +63,8 @@ function resolveDiscussionFeatureName(targetType: string): string {
 			return 'Poetry Nook';
 		case 'recipe':
 			return 'The Kitchen';
+		case 'blog':
+			return 'Family Blog';
 		case 'music':
 			return 'Music Salon';
 		default:
@@ -129,6 +132,15 @@ async function resolveDiscussionPostName(
 			.select({ title: music.musicTitle })
 			.from(music)
 			.where(and(eq(music.id, targetId), eq(music.familyId, familyId)))
+			.limit(1);
+		return rows[0]?.title ?? fallbackTopic;
+	}
+	
+	if (targetType === 'blog') {
+		const rows = await db
+			.select({ title: blogPost.title })
+			.from(blogPost)
+			.where(and(eq(blogPost.id, targetId), eq(blogPost.familyId, familyId)))
 			.limit(1);
 		return rows[0]?.title ?? fallbackTopic;
 	}

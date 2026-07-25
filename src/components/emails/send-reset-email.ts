@@ -4,7 +4,6 @@ import { insertPasswordToken } from "@/components/db/sql/queries-passwordReset";
 import { InsertRecordType } from "@/components/db/types/passwordReset";
 import * as React from "react";
 import { Resend } from 'resend';
-import { mailer } from "@/lib/email";
 import PasswordResetEmail from "@/components/emails/templates/password-reset-email";
 import { familySocialEmail } from "../../features/family/constants/family-steps";
 

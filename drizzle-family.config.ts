@@ -1,10 +1,24 @@
 import "dotenv/config";
 import * as dotenv from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { defineConfig } from 'drizzle-kit';
 
-dotenv.config({
-  path: ".env.local",
-});
+const envCandidates = [
+  ".env.google-local",
+  ".env.local",
+  ".env.development.local",
+  ".env.development",
+  ".env",
+];
+
+const envPath = envCandidates
+  .map((fileName) => resolve(process.cwd(), fileName))
+  .find((candidatePath) => existsSync(candidatePath));
+
+if (envPath) {
+  dotenv.config({ path: envPath });
+}
 
 function normalizeDatabaseUrl(connectionString: string): string {
   const normalizedUrl = new URL(connectionString);

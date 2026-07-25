@@ -5,6 +5,8 @@ type MainRoomDefinition = {
   href: string;
   roomTitle: string;
   src: string;
+  phoneSrc?: string;
+  tabletSrc?: string;
 };
 
 export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
@@ -55,12 +57,24 @@ export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
     href: "/family-gallery",
     roomTitle: "Picture Hallway",
     src: "/images/main/room-pictures-tablet.jpg",
+    phoneSrc: "/images/main/room-pictures-phone.jpg",
+    tabletSrc: "/images/main/room-pictures-tablet.jpg",
   },
   threads: {
     featureKey: "threads",
     href: "/threads",
-    roomTitle: "Living Room",
+    roomTitle: "Mailbox",
     src: "/images/main/room-mailbox-tablet.jpg",
+    phoneSrc: "/images/main/room-mailbox-phone.jpg",
+    tabletSrc: "/images/main/room-mailbox-tablet.jpg",
+  },
+  blogs: {
+    featureKey: "blogs",
+    href: "/blogs",
+    roomTitle: "Living Room",
+    src: "/images/main/room-living-room-phone.jpg",
+    phoneSrc: "/images/main/room-living-room-phone.jpg",
+    tabletSrc: "/images/main/room-living-room-tablet.jpg",
   },
 };
 
@@ -74,6 +88,7 @@ export const PhoneRoomOrder: FamilyFeatureKey[] = [
   "foodies",
   "gallery",
   "threads",
+  "blogs",
 ];
 
 export const TabletRoomOrder: FamilyFeatureKey[] = [
@@ -86,4 +101,5 @@ export const TabletRoomOrder: FamilyFeatureKey[] = [
   "gallery",
   "foodies",
   "threads",
+  "blogs",
 ];
