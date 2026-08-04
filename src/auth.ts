@@ -18,6 +18,15 @@ const APPLE_ENV_KEYS = [
   "AUTH_APPLE_SECRET",
 ] as const;
 
+function isLocalOAuthEnvironment(): boolean {
+  const authUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "";
+  return process.env.NODE_ENV !== "production" || authUrl.includes("localhost") || authUrl.includes("127.0.0.1") || authUrl.includes("local.");
+}
+
+const localOAuthChecks: Array<"none" | "pkce" | "state" | "nonce"> = isLocalOAuthEnvironment()
+  ? ["none"]
+  : ["pkce"];
+
 const OAUTH_FAMILY_COOKIE = "oauth_family_context";
 
 type OAuthFamilyContext = {
@@ -231,12 +240,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID as string,
       clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
+      checks: localOAuthChecks,
     }),
     ...(isAppleProviderConfigured()
       ? [
           Apple({
             clientId: process.env.AUTH_APPLE_ID as string,
             clientSecret: process.env.AUTH_APPLE_SECRET as string,
+            checks: localOAuthChecks,
           }),
         ]
       : []),

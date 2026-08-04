@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
-import { ArrowLeft } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { ArrowLeft, Loader2, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { deleteBlogPostAction, saveBlogPostAction } from "@/app/(features)/(blogs)/blogs/actions";
@@ -16,6 +17,85 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { resolveBlogCoverImageState } from "@/features/blogs/utils/blog-cover-image";
+import { extractS3KeyFromValue } from "@/lib/s3-object-key";
+
+function BlogEditorCoverImagePreview({ src, alt }: { src: string | null; alt: string | null }) {
+  const [resolvedSrc, setResolvedSrc] = useState(src);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    const resolveSignedUrl = async () => {
+      if (!src) {
+        if (!isCancelled) {
+          setResolvedSrc(null);
+        }
+        return;
+      }
+
+      const key = extractS3KeyFromValue(src);
+      if (!key) {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/s3-upload", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "download",
+            fileName: key,
+          }),
+        });
+
+        if (!response.ok) {
+          if (!isCancelled) {
+            setResolvedSrc(src);
+          }
+          return;
+        }
+
+        const body = await response.json();
+        if (!isCancelled) {
+          setResolvedSrc(body.url ?? src);
+        }
+      } catch {
+        if (!isCancelled) {
+          setResolvedSrc(src);
+        }
+      }
+    };
+
+    void resolveSignedUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [src]);
+
+  if (!resolvedSrc) {
+    return null;
+  }
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#f3d0bf] bg-[#fffaf6]">
+      <Image
+        src={ resolvedSrc }
+        alt={ alt ?? "Blog cover image" }
+        width={ 960 }
+        height={ 480 }
+        unoptimized
+        className="h-48 w-full object-cover"
+      />
+    </div>
+  );
+}
 
 export function BlogPostEditorPage({
   blogTags,
@@ -40,6 +120,11 @@ export function BlogPostEditorPage({
   );
   const [status, setStatus] = useState<BlogPostStatus>(initialPost?.status ?? "draft");
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(initialPost?.selectedTagIds ?? []);
+  const [coverImageS3Key, setCoverImageS3Key] = useState<string | null>(initialPost?.coverImageS3Key ?? null);
+  const [coverImageAlt, setCoverImageAlt] = useState(initialPost?.coverImageAlt ?? "");
+  const [selectedCoverImageFile, setSelectedCoverImageFile] = useState<File | null>(null);
+  const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
+  const [coverImageUploadName, setCoverImageUploadName] = useState<string | null>(null);
 
   const canEdit = !initialPost || initialPost.authorMemberId === memberId;
   const canDelete = initialPost?.authorMemberId === memberId;
@@ -67,6 +152,92 @@ export function BlogPostEditorPage({
     ));
   }
 
+  function handleCoverImageSelection(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg'].includes(file.type)) {
+      toast.error('Only PNG and JPEG images are supported for blog cover photos.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      toast.error('Cover image exceeds 4MB. Please choose a smaller file.');
+      event.target.value = '';
+      return;
+    }
+
+    setSelectedCoverImageFile(file);
+    setCoverImageUploadName(file.name);
+  }
+
+  async function handleUploadCoverImage() {
+    if (!selectedCoverImageFile) {
+      toast.error('Choose a cover image before uploading.');
+      return;
+    }
+
+    try {
+      setIsUploadingCoverImage(true);
+      const extension = selectedCoverImageFile.type === 'image/png' ? 'png' : 'jpg';
+      const safeTitle = title.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'blog-post';
+      const fileName = `blog-${ safeTitle }-${ Date.now() }.${ extension }`;
+
+      const signResponse = await fetch('/api/s3-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'upload',
+          folder: 'blogs',
+          fileName,
+          contentType: selectedCoverImageFile.type,
+          uploadTransport: 'proxy',
+        }),
+      });
+
+      if (!signResponse.ok) {
+        throw new Error('Could not create a signed upload URL for the cover image.');
+      }
+
+      const body = await signResponse.json();
+      const uploadResponse = await fetch(body.url, {
+        method: 'PUT',
+        headers: { 'Content-Type': body.signedContentType ?? selectedCoverImageFile.type },
+        body: selectedCoverImageFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('The cover image upload failed.');
+      }
+
+      const nextCoverImageS3Key = extractS3KeyFromValue(body.s3Key ?? body.fileUrl) ?? null;
+      if (!nextCoverImageS3Key) {
+        throw new Error('The cover image upload did not return a valid S3 key.');
+      }
+
+      setCoverImageS3Key(nextCoverImageS3Key);
+      setSelectedCoverImageFile(null);
+      setCoverImageUploadName(null);
+      if (!coverImageAlt.trim() && title.trim()) {
+        setCoverImageAlt(title.trim());
+      }
+      toast.success('Cover image uploaded successfully.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Cover image upload failed.');
+    } finally {
+      setIsUploadingCoverImage(false);
+    }
+  }
+
+  function handleRemoveCoverImage() {
+    setCoverImageS3Key(null);
+    setSelectedCoverImageFile(null);
+    setCoverImageUploadName(null);
+  }
+
   function handleSave() {
     if (!canEdit) {
       toast.error("You cannot edit this blog post.");
@@ -83,6 +254,17 @@ export function BlogPostEditorPage({
       return;
     }
 
+    const coverImageValidation = resolveBlogCoverImageState({
+      coverImageS3Key,
+      coverImageAlt,
+      title,
+    });
+
+    if (coverImageValidation.error) {
+      toast.error(coverImageValidation.error);
+      return;
+    }
+
     startSaveTransition(async () => {
       const result = await saveBlogPostAction({
         id: initialPost?.id,
@@ -91,6 +273,8 @@ export function BlogPostEditorPage({
         status,
         allowComments: true,
         selectedTagIds,
+        coverImageS3Key: coverImageS3Key ?? null,
+        coverImageAlt: coverImageValidation.altText.trim() || null,
       });
 
       if (!result.success) {
@@ -131,14 +315,14 @@ export function BlogPostEditorPage({
   return (
     <section className="font-app w-full px-4 pb-10 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl space-y-6">
-        <div className="rounded-3xl border border-[#d8e7cf] bg-[linear-gradient(135deg,#f5fbe8,#eef8df_55%,#e2f0cc)] p-6 shadow-sm">
+        <div className="rounded-3xl border border-[#f5d4c2] bg-[linear-gradient(135deg,#fff4eb,#fde6d8_55%,#f7c5ad)] p-6 shadow-[0_16px_40px_rgba(183,109,104,0.14)]">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#5a7d42]">Family Blog</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-[#2f4820]">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8a4d45]">Family Blog</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-[#7a3e3a]">
               {isEditing ? "Edit blog post" : "Write a new blog post"}
             </h1>
             <div className="mt-3 flex justify-start">
-              <Button asChild variant="outline" className="rounded-full border-[#bad1aa] text-[#355e24] hover:bg-[#f2f9eb]">
+              <Button asChild variant="outline" className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]">
                 <Link href="/blogs" className="inline-flex items-center gap-1.5">
                   <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   Back to Blogs
@@ -148,9 +332,9 @@ export function BlogPostEditorPage({
           </div>
         </div>
 
-        <div className="space-y-5 rounded-2xl border border-[#d8e7cf] bg-white p-5 shadow-xs">
+        <div className="space-y-5 rounded-2xl border border-[#f5d4c2] bg-white p-5 shadow-xs">
           <div className="space-y-2">
-            <label htmlFor="blog-title" className="text-sm font-semibold text-[#355228]">Title</label>
+            <label htmlFor="blog-title" className="text-sm font-semibold text-[#7a3e3a]">Title</label>
             <Input
               id="blog-title"
               value={ title }
@@ -161,7 +345,7 @@ export function BlogPostEditorPage({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="blog-content" className="text-sm font-semibold text-[#355228]">Content</label>
+            <label htmlFor="blog-content" className="text-sm font-semibold text-[#7a3e3a]">Content</label>
             <TipTapAlbumEditor
               value={ contentJson }
               onChange={ setContentJson }
@@ -171,13 +355,13 @@ export function BlogPostEditorPage({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="blog-status" className="text-sm font-semibold text-[#355228]">Status</label>
+            <label htmlFor="blog-status" className="text-sm font-semibold text-[#7a3e3a]">Status</label>
             <select
               id="blog-status"
               value={ status }
               onChange={ (event) => setStatus(event.target.value as BlogPostStatus) }
               disabled={ isSaving || isDeleting || !canEdit }
-              className="h-10 w-full rounded-md border border-[#d5e4cc] bg-white px-3 text-sm text-[#355228]"
+              className="h-10 w-full rounded-md border border-[#f2c2ab] bg-white px-3 text-sm text-[#7a3e3a]"
             >
               <option value="draft">Draft</option>
               <option value="published">Published</option>
@@ -185,15 +369,79 @@ export function BlogPostEditorPage({
             </select>
           </div>
 
+          <div className="space-y-3 rounded-2xl border border-[#f3d0bf] bg-[#fffaf6] p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-[#7a3e3a]">Cover image</p>
+                <p className="text-sm text-[#9a5a4f]">Optional. If you add a cover image, provide alt text or let it default to the title.</p>
+              </div>
+              {coverImageS3Key ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={ handleRemoveCoverImage }
+                  disabled={ isSaving || isDeleting || !canEdit }
+                  className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]"
+                >
+                  <XCircle className="mr-2 h-4 w-4" /> Remove
+                </Button>
+              ) : null}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="blog-cover-image" className="text-sm font-semibold text-[#7a3e3a]">Upload cover image</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  id="blog-cover-image"
+                  type="file"
+                  accept="image/png, image/jpeg"
+                  onChange={ handleCoverImageSelection }
+                  disabled={ isSaving || isDeleting || !canEdit || isUploadingCoverImage }
+                  className="h-auto p-2"
+                />
+                <Button
+                  type="button"
+                  onClick={ handleUploadCoverImage }
+                  disabled={ isSaving || isDeleting || !canEdit || isUploadingCoverImage || !selectedCoverImageFile }
+                  className="rounded-full bg-[#b76d68] text-white hover:bg-[#9d5954]"
+                >
+                  {isUploadingCoverImage ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  {isUploadingCoverImage ? 'Uploading...' : 'Upload'}
+                </Button>
+              </div>
+              {coverImageUploadName ? (
+                <p className="text-sm text-[#8a4d45]">Selected file: {coverImageUploadName}</p>
+              ) : null}
+              {coverImageS3Key ? (
+                <p className="text-sm text-[#8a4d45]">Current cover image is attached.</p>
+              ) : null}
+            </div>
+
+            {coverImageS3Key ? (
+              <BlogEditorCoverImagePreview src={ coverImageS3Key } alt={ coverImageAlt || title.trim() || null } />
+            ) : null}
+
+            <div className="space-y-2">
+              <label htmlFor="blog-cover-alt" className="text-sm font-semibold text-[#7a3e3a]">Alt text</label>
+              <Input
+                id="blog-cover-alt"
+                value={ coverImageAlt }
+                onChange={ (event) => setCoverImageAlt(event.target.value) }
+                placeholder={title.trim() ? title.trim() : 'Describe the cover image'}
+                disabled={ isSaving || isDeleting || !canEdit }
+              />
+            </div>
+          </div>
+
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-[#355228]">Tags</p>
+            <p className="text-sm font-semibold text-[#7a3e3a]">Tags</p>
             <div className="space-y-3">
               {groupedTags.length === 0 ? (
-                <p className="text-sm text-[#5a7450]">No tags available yet.</p>
+                <p className="text-sm text-[#9a5a4f]">No tags available yet.</p>
               ) : (
                 groupedTags.map((group) => (
-                  <div key={ group.category } className="rounded-xl border border-[#e2eed8] bg-[#fdfef9] p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6b865b]">{group.category}</p>
+                  <div key={ group.category } className="rounded-xl border border-[#f3d0bf] bg-[#fffaf6] p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#a16051]">{group.category}</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {group.tags.map((tag) => {
                         const selected = selectedTagIds.includes(tag.id);
@@ -207,8 +455,8 @@ export function BlogPostEditorPage({
                             className={ [
                               "rounded-full border px-3 py-1 text-xs font-semibold transition",
                               selected
-                                ? "border-[#3d6e2c] bg-[#e8f6dd] text-[#244419]"
-                                : "border-[#c9dcc0] bg-white text-[#4a6840] hover:bg-[#f3faec]",
+                                ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]"
+                                : "border-[#f3c1a9] bg-white text-[#8a4d45] hover:bg-[#fff3ea]",
                             ].join(" ") }
                           >
                             {tag.tagName}
@@ -227,7 +475,7 @@ export function BlogPostEditorPage({
               type="button"
               onClick={ handleSave }
               disabled={ isSaving || isDeleting || !canEdit }
-              className="rounded-full bg-[#3f6f2d] text-white hover:bg-[#315722]"
+              className="rounded-full bg-[#b76d68] text-white hover:bg-[#9d5954]"
             >
               {isSaving ? "Saving..." : isEditing ? "Update post" : "Create post"}
             </Button>
@@ -236,7 +484,7 @@ export function BlogPostEditorPage({
                 asChild
                 type="button"
                 variant="outline"
-                className="rounded-full border-[#bad1aa] text-[#355e24] hover:bg-[#f2f9eb]"
+                className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]"
                 disabled={ isSaving || isDeleting }
               >
                 <Link href="/blogs">Cancel</Link>
@@ -248,13 +496,13 @@ export function BlogPostEditorPage({
                 variant="outline"
                 onClick={ handleDelete }
                 disabled={ isSaving || isDeleting }
-                className="rounded-full border-[#d9b6b6] text-[#7d2f2f] hover:bg-[#fff3f3]"
+                className="rounded-full border-[#e3b7b7] text-[#8a3e3e] hover:bg-[#fff3f3]"
               >
                 {isDeleting ? "Deleting..." : "Delete post"}
               </Button>
             ) : null}
             {!canEdit ? (
-              <p className="text-sm text-[#7f4f4f]">You are in read-only mode for this post.</p>
+              <p className="text-sm text-[#9f5b4f]">You are in read-only mode for this post.</p>
             ) : null}
           </div>
         </div>

@@ -115,6 +115,10 @@ export type UpdateGalleryPhotoReturn =
   | { success: true; photo: GalleryPhoto }
   | { success: false; message: string };
 
+export type DeleteGalleryPhotoReturn =
+  | { success: true; removedCount: number }
+  | { success: false; message: string };
+
 export type CreateAlbumReturn =
   | { success: true; album: MemberAlbumItem }
   | { success: false; message: string };

@@ -19,7 +19,7 @@ export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
   movies: {
     featureKey: "movies",
     href: "/movies",
-    roomTitle: "Movie Theater",
+    roomTitle: "Home Theater",
     src: "/images/main/room-movies-tablet.jpg",
   },
   books: {
@@ -31,7 +31,7 @@ export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
   music: {
     featureKey: "music",
     href: "/music",
-    roomTitle: "Music Salon",
+    roomTitle: "Music Room",
     src: "/images/main/room-music-tablet.jpg",
   },
   games: {

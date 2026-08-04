@@ -244,7 +244,7 @@ export function FoodiesTemplatePage({
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
-                The Kitchen
+                The Kitchen Templates
               </p>
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Recipe Templates

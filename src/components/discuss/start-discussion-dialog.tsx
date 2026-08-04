@@ -91,7 +91,7 @@ export default function StartDiscussionDialog({
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-[12rem] text-sm leading-6 text-[#15384a] focus:outline-none",
+        class: "tiptap min-h-[12rem] text-sm leading-6 text-[#6a3f39] focus:outline-none",
       },
     },
   });
@@ -143,7 +143,6 @@ export default function StartDiscussionDialog({
       return;
     }
 
-    // Use the user-entered caption as the discussion thread title.
     const discussTopic = summary || topicLabel.trim();
 
     if (!discussTopic) {
@@ -186,22 +185,22 @@ export default function StartDiscussionDialog({
         type="button"
         onClick={ openDialog }
         disabled={ disabled }
-        className={ triggerClassName ?? "rounded-full bg-[#2d87a8] px-4 text-xs font-semibold text-white hover:bg-[#256e89]" }
+        className={ triggerClassName ?? "rounded-full bg-[#b76d68] px-4 text-xs font-semibold text-white hover:bg-[#9d5954]" }
       >
         { triggerLabel }
       </Button>
 
       <Dialog open={ isOpen } onOpenChange={ setIsOpen }>
-        <DialogContent>
+        <DialogContent className="border-[#f5d4c2] bg-[#fffaf6]">
           <DialogHeader>
-            <DialogTitle>Start New Discussion</DialogTitle>
-            <DialogDescription>
-              Start a new discussion: A short attention grabbing caption and then enter your post content below.
+            <DialogTitle className="text-[#7a3e3a]">Start New Discussion</DialogTitle>
+            <DialogDescription className="text-[#9a5a4f]">
+              Start a new discussion: a short attention-grabbing caption and the post content below.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-2">
-            <label className="mb-2 block text-xs font-semibold text-[#4f7384]" htmlFor="start-discussion-caption-input">
+            <label className="mb-2 block text-xs font-semibold text-[#8a4d45]" htmlFor="start-discussion-caption-input">
               Discussion Caption
             </label>
             <Input
@@ -210,15 +209,15 @@ export default function StartDiscussionDialog({
               value={ caption }
               onChange={ (event) => setCaption(event.target.value) }
               placeholder="Enter a short summary/caption for this post"
-              className="mb-4 w-full rounded border border-[#cfe3ec] bg-white px-3 py-2 text-sm text-[#15384a] focus:outline-none focus:ring-2 focus:ring-[#59cdf7]"
+              className="mb-4 w-full rounded border border-[#f2c2ab] bg-white px-3 py-2 text-sm text-[#6a3f39] focus:outline-none focus:ring-2 focus:ring-[#b76d68]"
               maxLength={ 120 }
               disabled={ isSubmitting }
             />
 
-            <label className="mb-2 block text-xs font-semibold text-[#4f7384]" htmlFor="start-discussion-content-editor">
+            <label className="mb-2 block text-xs font-semibold text-[#8a4d45]" htmlFor="start-discussion-content-editor">
               Discussion Content
             </label>
-            <div className="rounded-t-xl border-b border-[#cfe3ec] bg-[#f9faff] px-3 py-2">
+            <div className="rounded-t-xl border-b border-[#f2c2ab] bg-[#fff3ea] px-3 py-2">
               <div className="flex flex-wrap gap-2">
                 <Button type="button" size="sm" variant="outline" onClick={ () => editor?.chain().focus().toggleBold().run() }><Bold className="size-4" /></Button>
                 <Button type="button" size="sm" variant="outline" onClick={ () => editor?.chain().focus().toggleItalic().run() }><Italic className="size-4" /></Button>
@@ -237,7 +236,7 @@ export default function StartDiscussionDialog({
             <EditorContent
               id="start-discussion-content-editor"
               editor={ editor }
-              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_table]:w-full [&_table]:border-collapse [&_table_td]:border [&_table_td]:border-[#cfe3ec] [&_table_td]:p-2 [&_table_th]:border [&_table_th]:border-[#cfe3ec] [&_table_th]:bg-[#f0f7fa] [&_table_th]:p-2"
+              className="[&_.tiptap]:min-h-56 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:outline-none [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_table]:w-full [&_table]:border-collapse [&_table_td]:border [&_table_td]:border-[#f2c2ab] [&_table_td]:p-2 [&_table_th]:border [&_table_th]:border-[#f2c2ab] [&_table_th]:bg-[#fff7f2] [&_table_th]:p-2"
             />
           </div>
 
@@ -246,7 +245,7 @@ export default function StartDiscussionDialog({
               type="button"
               onClick={ handleSubmit }
               disabled={ isSubmitting }
-              className="rounded-full bg-[#2d87a8] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#256e89] disabled:opacity-60"
+              className="rounded-full bg-[#b76d68] px-4 py-1.5 text-xs font-semibold text-white hover:bg-[#9d5954] disabled:opacity-60"
             >
               { isSubmitting ? "Posting..." : "Post Discussion" }
             </Button>

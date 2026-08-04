@@ -49,6 +49,9 @@ import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
+import { getActiveFoodiesRecipeDetail } from "@/features/foodies/lib/active-recipe-detail";
+import { getRecipeReactionMemberNames } from "@/features/foodies/lib/reaction-member-names";
+import { canCommentOnRecipe } from "@/features/foodies/lib/recipe-comment-permissions";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -455,21 +458,55 @@ export function FoodiesHomePage({
     };
   }, [selectedRecipe]);
 
+  useEffect(() => {
+    const hasActiveRecipeDetail = selectedRecipeDetail?.id === selectedRecipe;
+
+    if (!isViewRecipeOpen || !selectedRecipe || hasActiveRecipeDetail) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    startEngageTransition(async () => {
+      const result = await getFoodiesRecipeDetailAction({ recipeId: selectedRecipe });
+
+      if (isCancelled) {
+        return;
+      }
+
+      if (!result.success) {
+        return;
+      }
+
+      setSelectedRecipeDetail(result.recipe);
+    });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [isViewRecipeOpen, selectedRecipe, selectedRecipeDetail]);
+
   const selectedRecipeBasic =
     (selectedRecipeDetail?.id === selectedRecipe
       ? selectedRecipeDetail
       : recipes.find((recipe) => recipe.id === selectedRecipe))
     ?? null;
+  const activeRecipeDetail = getActiveFoodiesRecipeDetail(selectedRecipe, selectedRecipeDetail);
   const selectedRecipeOwnerId = recipes.find((recipe) => recipe.id === selectedRecipe)?.memberId ?? null;
   const canEditSelectedRecipe = Boolean(
     selectedRecipeOwnerId !== null
     && (selectedRecipeOwnerId === member.memberId || member.isFounder)
   );
   const canReactToSelectedRecipe = Boolean(selectedRecipeBasic && selectedRecipeBasic.memberId !== member.memberId);
-  const canCommentOnSelectedRecipe = canReactToSelectedRecipe;
+  const canCommentOnSelectedRecipe = canCommentOnRecipe(selectedRecipeBasic, member.memberId);
 
   function handleSelectRecipe(recipeId: number) {
     setCommentText("");
+
+    if (recipeId === selectedRecipe) {
+      return;
+    }
+
     const recipe = recipes.find((r) => r.id === recipeId);
     if (recipe) {
       setSelectedRecipe(recipeId);
@@ -612,7 +649,7 @@ export function FoodiesHomePage({
       .map((element) => element.innerHTML.trim())
       .filter((html) => html.length > 0);
 
-    const detailRecipeProTips = selectedRecipeDetail?.recipeProTips ?? [];
+    const detailRecipeProTips = activeRecipeDetail?.recipeProTips ?? [];
     const printableProTipsHtml = detailRecipeProTips.length === 0
       ? '<p class="preview-muted">No pro tips were added for this recipe yet.</p>'
       : detailRecipeProTips.map((proTip, index) => {
@@ -629,9 +666,9 @@ export function FoodiesHomePage({
     const updatedAt = escapeHtml(formatDate(selectedRecipeBasic.updatedAt));
     const prep = selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-";
     const cook = selectedRecipeBasic.cookTimeMins > 0 ? `${ selectedRecipeBasic.cookTimeMins } min` : "-";
-    const thumbsUp = (selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0).toLocaleString();
-    const love = (selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0).toLocaleString();
-    const commentCount = selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0;
+    const thumbsUp = (activeRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0).toLocaleString();
+    const love = (activeRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0).toLocaleString();
+    const commentCount = activeRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0;
 
     printWindow.document.write(`<!doctype html>
 <html lang="en">
@@ -884,7 +921,7 @@ export function FoodiesHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#e9ffd0] sm:text-[0.72rem] sm:tracking-[0.34em]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#5a7d42] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 The Family Kitchen
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -1109,18 +1146,18 @@ export function FoodiesHomePage({
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Pro Tips</p>
                     <div className="mt-3 space-y-3">
-                      { selectedRecipeDetail?.recipeProTips.length === 0 ? (
-                        <p className="text-sm text-[#647a50]">No pro tips were added for this recipe yet.</p>
-                      ) : (
-                        selectedRecipeDetail?.recipeProTips.map((proTip) => (
-                          <div key={ proTip.id } className="space-y-2">
-                            <RecipeProTipViewer proTipJson={ proTip.proTipJson } />
-                            <p className="text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
-                              { proTip.commenterName } · { formatCreatedAt(proTip.createdAt) }
-                            </p>
-                          </div>
-                        ))
-                      ) }
+                      { activeRecipeDetail?.recipeProTips
+                        ? activeRecipeDetail.recipeProTips.length === 0
+                          ? <p className="text-sm text-[#647a50]">No pro tips were added for this recipe yet.</p>
+                          : activeRecipeDetail.recipeProTips.map((proTip) => (
+                            <div key={ proTip.id } className="space-y-2">
+                              <RecipeProTipViewer proTipJson={ proTip.proTipJson } />
+                              <p className="text-xs uppercase tracking-[0.16em] text-[#7a8f5f]">
+                                { proTip.commenterName } · { formatCreatedAt(proTip.createdAt) }
+                              </p>
+                            </div>
+                          ))
+                        : <p className="text-sm text-[#647a50]">Loading pro tips...</p> }
                     </div>
                   </div>
 
@@ -1133,18 +1170,18 @@ export function FoodiesHomePage({
                           onClick={ () => handleToggleLike(1) }
                           disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
                           className="rounded-full bg-[#578c24] text-white hover:bg-[#4a7320]"
-                          aria-label={ selectedRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                          aria-label={ activeRecipeDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
                         >
-                          <ThumbsUp className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
+                          <ThumbsUp className={ `size-4 ${ activeRecipeDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
                         </Button>
                         <Button
                           type="button"
                           onClick={ () => handleToggleLike(2) }
                           disabled={ !selectedRecipeBasic || isEngaging || !canReactToSelectedRecipe }
                           className="rounded-full bg-[#d9842a] text-white hover:bg-[#b86d20]"
-                          aria-label={ selectedRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
+                          aria-label={ activeRecipeDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
                         >
-                          <Heart className={ `size-4 ${ selectedRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
+                          <Heart className={ `size-4 ${ activeRecipeDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
                         </Button>
                       </div>
                       { !canReactToSelectedRecipe && selectedRecipeBasic ? (
@@ -1155,22 +1192,30 @@ export function FoodiesHomePage({
                       <div className="flex flex-wrap gap-3 text-sm font-semibold text-[#476232]">
                         <ReactionMemberHoverCard
                           icon={ <ThumbsUp className="size-4 text-[#578c24]" /> }
-                          count={ selectedRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0 }
-                          memberNames={ selectedRecipeDetail?.thumbsUpMemberNames ?? [] }
+                          count={ activeRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0 }
+                          memberNames={ getRecipeReactionMemberNames(
+                            activeRecipeDetail?.thumbsUpCount ?? selectedRecipeBasic.thumbsUpCount ?? 0,
+                            activeRecipeDetail?.thumbsUpMemberNames,
+                            selectedRecipeBasic?.thumbsUpMemberNames ?? []
+                          ) }
                           triggerClassName="bg-[#f7fce8]"
                           emptyLabel="Family members who liked this recipe"
                         />
                         <ReactionMemberHoverCard
                           icon={ <Heart className="size-4 fill-[#d9842a] text-[#d9842a]" /> }
-                          count={ selectedRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0 }
-                          memberNames={ selectedRecipeDetail?.loveMemberNames ?? [] }
+                          count={ activeRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0 }
+                          memberNames={ getRecipeReactionMemberNames(
+                            activeRecipeDetail?.loveCount ?? selectedRecipeBasic.loveCount ?? 0,
+                            activeRecipeDetail?.loveMemberNames,
+                            selectedRecipeBasic?.loveMemberNames ?? []
+                          ) }
                           triggerClassName="bg-[#fff4e8]"
                           textClassName="text-[#9a5e18]"
                           emptyLabel="Family members who loved this recipe"
                         />
                         <span className="inline-flex items-center gap-2 rounded-full bg-[#f7fce8] px-3 py-1">
                           <MessageSquareText className="size-4 text-[#5d7f3f]" />
-                          { selectedRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0 }
+                          { activeRecipeDetail?.commentCount ?? selectedRecipeBasic.commentCount ?? 0 }
                         </span>
                       </div>
                     </div>

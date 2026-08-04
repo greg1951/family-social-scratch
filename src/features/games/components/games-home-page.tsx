@@ -63,7 +63,7 @@ export function GamesHomePage({
 }: GamesHomePageProps) {
   const scoreboardGridRef = useRef<HTMLDivElement | null>(null);
   const router = useRouter();
-  const [hideNoPlayerColumns, setHideNoPlayerColumns] = useState(false);
+  const [hideNoPlayerColumns, setHideNoPlayerColumns] = useState(true);
 
   const {
     emptySelectedPlayers,
@@ -627,7 +627,7 @@ export function GamesHomePage({
                                     } }
                                   >
                                     <SelectTrigger className="w-full border-[#e8c4a0] bg-white text-xs text-[#5c2e1a]">
-                                      <SelectValue placeholder={ `P${ visibleIdx + 1 }` } />
+                                      <SelectValue placeholder={ player ? player.firstName : `P${ visibleIdx + 1 }` } />
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem

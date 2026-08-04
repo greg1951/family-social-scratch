@@ -469,6 +469,8 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
   const noRatingByRecipeId = new Map<number, number>();
   const thumbsUpByRecipeId = new Map<number, number>();
   const loveByRecipeId = new Map<number, number>();
+  const thumbsUpMemberNamesByRecipeId = new Map<number, string[]>();
+  const loveMemberNamesByRecipeId = new Map<number, string[]>();
   const submitterLikeByRecipeId = new Map<number, number>();
   const tagIdsByRecipeId = new Map<number, number[]>();
   const tagNamesByTypeByRecipeId = new Map<number, Partial<Record<RecipeTagType, string[]>>>();
@@ -491,11 +493,19 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
 
     if (likeRow.likenessDegree === 1) {
       thumbsUpByRecipeId.set(likeRow.recipeId, (thumbsUpByRecipeId.get(likeRow.recipeId) ?? 0) + 1);
+      const memberName = memberNameById.get(likeRow.memberId) ?? `Member #${likeRow.memberId}`;
+      const memberNames = thumbsUpMemberNamesByRecipeId.get(likeRow.recipeId) ?? [];
+      memberNames.push(memberName);
+      thumbsUpMemberNamesByRecipeId.set(likeRow.recipeId, memberNames);
       continue;
     }
 
     if (likeRow.likenessDegree === 2) {
       loveByRecipeId.set(likeRow.recipeId, (loveByRecipeId.get(likeRow.recipeId) ?? 0) + 1);
+      const memberName = memberNameById.get(likeRow.memberId) ?? `Member #${likeRow.memberId}`;
+      const memberNames = loveMemberNamesByRecipeId.get(likeRow.recipeId) ?? [];
+      memberNames.push(memberName);
+      loveMemberNamesByRecipeId.set(likeRow.recipeId, memberNames);
       continue;
     }
 
@@ -534,6 +544,8 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
     noRatingCount: noRatingByRecipeId.get(row.id) ?? 0,
     thumbsUpCount: thumbsUpByRecipeId.get(row.id) ?? 0,
     loveCount: loveByRecipeId.get(row.id) ?? 0,
+    thumbsUpMemberNames: (thumbsUpMemberNamesByRecipeId.get(row.id) ?? []).sort((leftName, rightName) => leftName.localeCompare(rightName)),
+    loveMemberNames: (loveMemberNamesByRecipeId.get(row.id) ?? []).sort((leftName, rightName) => leftName.localeCompare(rightName)),
     selectedTagIds: tagIdsByRecipeId.get(row.id) ?? [],
     tagNamesByType: tagNamesByTypeByRecipeId.get(row.id) ?? {},
     templateId: row.templateId ?? null,

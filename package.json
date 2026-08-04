@@ -12,6 +12,7 @@
     "lint": "eslint .",
     "test:db-logging": "vitest run src/components/db/sql/db-error-logger.test.ts",
     "test:db-logging-debug": "vitest run src/components/db/sql/db-error-logger.debug.test.ts",
+    "test:foodies-state": "vitest run src/features/foodies/tests/foodies-home-page.state.test.ts",
     "test:sentry-live": "vitest run src/app/global-error.sentry-live.test.ts",
     "test:threads": "vitest run --dir src/features/threads/tests",
     "test:threads-ui": "vitest run src/features/threads/tests/thread-conversation-detail-ui-regression.test.tsx",

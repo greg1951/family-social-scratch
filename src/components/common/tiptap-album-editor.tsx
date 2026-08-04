@@ -56,7 +56,7 @@ export default function TipTapAlbumEditor({
       attributes: {
         "data-placeholder": placeholder,
         class:
-          "tiptap min-h-28 rounded-b-xl border border-t-0 border-[#dbe6ef] bg-white px-3 py-2 text-sm leading-6 text-[#183746] outline-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1",
+          "tiptap min-h-28 rounded-b-xl border border-t-0 border-[#f2c2ab] bg-white px-3 py-2 text-sm leading-6 text-[#6a3f39] outline-none [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:my-1",
       },
     },
   });
@@ -83,17 +83,17 @@ export default function TipTapAlbumEditor({
   }, [editor, value]);
 
   const toolbarButtonClassName =
-    "h-8 rounded-full border border-[#c8d7df] bg-white px-3 text-xs font-semibold text-[#3d5c6d] hover:bg-white";
+    "h-8 rounded-full border border-[#f2c2ab] bg-white px-3 text-xs font-semibold text-[#8a4d45] hover:bg-[#fff3ea]";
 
   return (
     <div className="overflow-hidden rounded-xl">
-      <div className="flex flex-wrap gap-2 rounded-t-xl border border-b-0 border-[#dbe6ef] bg-[#f6fbff] p-2">
+      <div className="flex flex-wrap gap-2 rounded-t-xl border border-b-0 border-[#f2c2ab] bg-[#fff3ea] p-2">
         <Button
           type="button"
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleHeading({ level: 3 }).run() }
           onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("heading", { level: 3 }) ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("heading", { level: 3 }) ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Heading 3"
         >
           H3
@@ -103,7 +103,7 @@ export default function TipTapAlbumEditor({
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleBold().run() }
           onClick={ () => editor?.chain().focus().toggleBold().run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("bold") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("bold") ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Bold"
         >
           B
@@ -113,7 +113,7 @@ export default function TipTapAlbumEditor({
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleItalic().run() }
           onClick={ () => editor?.chain().focus().toggleItalic().run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("italic") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("italic") ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Italic"
         >
           I
@@ -123,7 +123,7 @@ export default function TipTapAlbumEditor({
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleUnderline().run() }
           onClick={ () => editor?.chain().focus().toggleUnderline().run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("underline") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("underline") ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Underline"
         >
           U
@@ -133,7 +133,7 @@ export default function TipTapAlbumEditor({
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleBulletList().run() }
           onClick={ () => editor?.chain().focus().toggleBulletList().run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("bulletList") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("bulletList") ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Bullet list"
         >
           <List className="size-4" aria-hidden="true" />
@@ -143,7 +143,7 @@ export default function TipTapAlbumEditor({
           variant="outline"
           disabled={ disabled || !editor || !editor.can().chain().focus().toggleOrderedList().run() }
           onClick={ () => editor?.chain().focus().toggleOrderedList().run() }
-          className={ `${toolbarButtonClassName} ${editor?.isActive("orderedList") ? "border-[#39637a] bg-[#dff4ff] text-[#12374a]" : ""}` }
+          className={ `${toolbarButtonClassName} ${editor?.isActive("orderedList") ? "border-[#b76d68] bg-[#fde0d2] text-[#7a3e3a]" : ""}` }
           aria-label="Numbered list"
         >
           <ListOrdered className="size-4" aria-hidden="true" />

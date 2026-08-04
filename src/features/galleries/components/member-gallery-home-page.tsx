@@ -20,6 +20,7 @@ import {
   addPhotoToAlbumAction,
   createGalleryAlbumAction,
   deleteGalleryAlbumAction,
+  deleteGalleryPhotoAction,
   getAlbumPhotosAction,
   saveGalleryPhotoAction,
   updateGalleryPhotoAction,
@@ -64,6 +65,7 @@ import {
   queueGallerySelectedAlbumSync,
   readQueuedGallerySelectedAlbumSync,
 } from "@/lib/pwa-background-sync";
+import { pickAlbumCoverPhotoUrl } from "../utils/album-cover";
 
 const EMPTY_ALBUM_JSON = serializeTipTapDocument(createEmptyTipTapDocument());
 
@@ -242,6 +244,7 @@ function PhotoScrollStrip({
   unallocatedPhotos,
   onPhotoDoubleClick,
   onUnallocatedPhotoDoubleClick,
+  onRemoveUnallocatedPhoto,
   onToggleAlbumPhotoPosition,
   onToggleUnallocatedPhotoPosition,
   onClearUnallocatedPhotos,
@@ -257,6 +260,7 @@ function PhotoScrollStrip({
   unallocatedPhotos: MemberPhotoItem[];
   onPhotoDoubleClick?: (photo: GalleryPhotoItem) => void;
   onUnallocatedPhotoDoubleClick?: (photo: MemberPhotoItem) => void;
+  onRemoveUnallocatedPhoto?: (photo: MemberPhotoItem) => void;
   onToggleAlbumPhotoPosition?: (photo: GalleryPhotoItem) => void;
   onToggleUnallocatedPhotoPosition?: (photo: MemberPhotoItem) => void;
   onClearUnallocatedPhotos?: () => void;
@@ -361,6 +365,19 @@ function PhotoScrollStrip({
                   key={ photo.id }
                   className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]"
                 >
+                  <button
+                    type="button"
+                    aria-label={ `Remove ${ caption ?? "photo" } from unallocated queue` }
+                    title="Remove photo"
+                    className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#e5c4c4] bg-white/90 text-[#a24b4b] shadow-sm transition hover:bg-[#fff1f1]"
+                    onClick={ (event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      onRemoveUnallocatedPhoto?.(memberPhoto);
+                    } }
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
                   <OrientationBadge
                     photoPosition={ memberPhoto.photoPosition }
                     onClick={ () => onToggleUnallocatedPhotoPosition?.(memberPhoto) }
@@ -468,6 +485,19 @@ function PhotoScrollStrip({
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 { unallocatedPhotos.map((photo) => (
                   <div key={ photo.id } className="group relative overflow-hidden rounded-2xl border border-[#dcebd0] bg-white p-1 shadow-[0_18px_36px_-28px_rgba(74,96,55,0.5)]">
+                    <button
+                      type="button"
+                      aria-label={ `Remove ${ photo.caption ?? photo.fileName ?? "photo" } from unallocated queue` }
+                      title="Remove photo"
+                      className="absolute right-2 top-2 z-10 inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#e5c4c4] bg-white/90 text-[#a24b4b] shadow-sm transition hover:bg-[#fff1f1]"
+                      onClick={ (event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onRemoveUnallocatedPhoto?.(photo);
+                      } }
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                     <OrientationBadge
                       photoPosition={ photo.photoPosition }
                       onClick={ () => onToggleUnallocatedPhotoPosition?.(photo) }
@@ -1165,11 +1195,13 @@ function EditUnallocatedPhotoDialog({
   photo,
   onClose,
   onSave,
+  onRemove,
 }: {
   open: boolean;
   photo: MemberPhotoItem | null;
   onClose: () => void;
   onSave: (values: UnallocatedPhotoFormValues) => void;
+  onRemove: () => void;
 }) {
   const [values, setValues] = useState<UnallocatedPhotoFormValues>({
     caption: "",
@@ -1266,11 +1298,16 @@ function EditUnallocatedPhotoDialog({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-1">
-              <Button type="button" variant="outline" onClick={ onClose }>
-                Cancel
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <Button type="button" variant="destructive" onClick={ onRemove }>
+                Remove from Queue
               </Button>
-              <Button type="submit">Save Details</Button>
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" onClick={ onClose }>
+                  Cancel
+                </Button>
+                <Button type="submit">Save Details</Button>
+              </div>
             </div>
           </form>
         ) }
@@ -1662,6 +1699,35 @@ export default function MemberGalleryHomePage({
     setIsEditUnallocatedPhotoOpen(true);
   }
 
+  async function handleRemoveUnallocatedPhoto(photo: MemberPhotoItem) {
+    if (selectedAlbum && hasPendingSelectedAlbumChanges) {
+      const didSave = await saveSelectedAlbumChanges();
+      if (!didSave) {
+        return;
+      }
+    }
+
+    setIsBusy(true);
+
+    try {
+      const result = await deleteGalleryPhotoAction(photo.id);
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setPendingAddPhotos((currentPhotos) => currentPhotos.filter((currentPhoto) => currentPhoto.id !== photo.id));
+      setPendingRemoveAlbumPhotos((currentPhotos) => currentPhotos.filter((currentPhoto) => currentPhoto.photoId !== photo.id));
+      setUnallocatedPhotos((currentPhotos) => currentPhotos.filter((currentPhoto) => currentPhoto.id !== photo.id));
+      setSelectedUnallocatedPhoto((currentPhoto) => (currentPhoto?.id === photo.id ? null : currentPhoto));
+      setIsEditUnallocatedPhotoOpen(false);
+      toast.success("Photo removed from your unallocated queue.");
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   function applyPhotoPositionLocally(photoId: number, photoPosition: PhotoPosition) {
     setUnallocatedPhotos((currentPhotos) => currentPhotos.map((photo) => (
       photo.id === photoId
@@ -1969,6 +2035,7 @@ export default function MemberGalleryHomePage({
         const nextAlbum: MemberAlbumItem = {
           ...result.album,
           photoCount: linkedCount,
+          coverPhotoUrl: pickAlbumCoverPhotoUrl(values.selectedPhotoIds, unallocatedPhotos),
         };
 
         setAlbums((prev) => [nextAlbum, ...prev]);
@@ -2493,6 +2560,7 @@ export default function MemberGalleryHomePage({
                     unallocatedPhotos={ visibleUnallocatedPhotos }
                     onPhotoDoubleClick={ selectedAlbum ? handleOpenAlbumPhotoEditor : undefined }
                     onUnallocatedPhotoDoubleClick={ handleOpenUnallocatedPhotoEditor }
+                    onRemoveUnallocatedPhoto={ handleRemoveUnallocatedPhoto }
                     onToggleAlbumPhotoPosition={ handleToggleAlbumPhotoPosition }
                     onToggleUnallocatedPhotoPosition={ handleToggleUnallocatedPhotoPosition }
                     onClearUnallocatedPhotos={ handleClearUnallocatedPhotos }
@@ -2634,6 +2702,11 @@ export default function MemberGalleryHomePage({
           setSelectedUnallocatedPhoto(null);
         } }
         onSave={ handleSaveUnallocatedPhoto }
+        onRemove={ () => {
+          if (selectedUnallocatedPhoto) {
+            void handleRemoveUnallocatedPhoto(selectedUnallocatedPhoto);
+          }
+        } }
       />
     </section>
   );

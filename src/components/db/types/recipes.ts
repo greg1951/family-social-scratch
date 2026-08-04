@@ -69,6 +69,8 @@ export interface FoodiesRecipe {
   templateId: number | null;
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
+  thumbsUpMemberNames?: string[];
+  loveMemberNames?: string[];
 }
 
 export interface RecipeTagOption {

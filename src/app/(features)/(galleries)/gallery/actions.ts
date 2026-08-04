@@ -9,6 +9,7 @@ import {
   getMemberGalleryData,
   saveGalleryPhoto,
   updateGalleryPhoto,
+  deleteGalleryPhoto,
   clearUnallocatedGalleryPhotos,
   createGalleryAlbum,
   updateGalleryAlbum,
@@ -23,6 +24,7 @@ import {
 import type {
   SaveGalleryPhotoInput,
   UpdateGalleryPhotoInput,
+  DeleteGalleryPhotoReturn,
   CreateAlbumInput,
   UpdateAlbumInput,
   AddPhotoToAlbumInput,
@@ -134,6 +136,25 @@ export async function updateGalleryPhotoAction(input: UpdateGalleryPhotoInput) {
   if (result.success) {
     revalidatePath('/member-gallery');
     revalidatePath('/family-gallery');
+  }
+
+  return result;
+}
+
+export async function deleteGalleryPhotoAction(photoId: number): Promise<DeleteGalleryPhotoReturn> {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return { success: false, message: 'You must be signed in to remove photos.' };
+  }
+
+  const result = await deleteGalleryPhoto(photoId, {
+    memberId: memberDetails.memberId,
+    familyId: memberDetails.familyId,
+  });
+
+  if (result.success) {
+    revalidatePath('/member-gallery');
   }
 
   return result;

@@ -181,7 +181,8 @@ export function useGameBoardSession({
   ]);
 
   function getPlayerOptionLabel(player: { firstName: string; lastName: string; isGuest?: boolean }) {
-    return `${ player.firstName } ${ player.lastName }${ player.isGuest ? " (guest)" : "" }`;
+    const firstName = player.firstName?.trim() || player.lastName?.trim() || "Player";
+    return `${ firstName }${ player.isGuest ? " (guest)" : "" }`;
   }
 
   function addPlayerColumn() {

@@ -21,6 +21,7 @@ import type {
   MemberAlbumItem,
   MemberPhotoItem,
   SharedAlbumListItem,
+  DeleteGalleryPhotoReturn,
   GetFamilyGalleryDataReturn,
   GetAlbumPhotosReturn,
   GetMemberGalleryDataReturn,
@@ -548,6 +549,42 @@ export async function updateGalleryPhoto(
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update photo",
+    };
+  }
+}
+
+export async function deleteGalleryPhoto(
+  photoId: number,
+  ctx: MemberContext
+): Promise<DeleteGalleryPhotoReturn> {
+  try {
+    const existingPhotoRows = await db
+      .select({ id: galleryPhoto.id })
+      .from(galleryPhoto)
+      .where(and(eq(galleryPhoto.id, photoId), eq(galleryPhoto.memberId, ctx.memberId)));
+
+    if (existingPhotoRows.length === 0) {
+      return { success: false, message: "Photo not found." };
+    }
+
+    const albumPhotoRows = await db
+      .select({ photoId: galleryAlbumPhoto.photoId })
+      .from(galleryAlbumPhoto)
+      .where(and(eq(galleryAlbumPhoto.photoId, photoId), eq(galleryAlbumPhoto.memberId, ctx.memberId)));
+
+    if (albumPhotoRows.length > 0) {
+      return { success: false, message: "Photo is currently part of an album." };
+    }
+
+    await db
+      .delete(galleryPhoto)
+      .where(and(eq(galleryPhoto.id, photoId), eq(galleryPhoto.memberId, ctx.memberId)));
+
+    return { success: true, removedCount: 1 };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Failed to remove photo from queue",
     };
   }
 }
