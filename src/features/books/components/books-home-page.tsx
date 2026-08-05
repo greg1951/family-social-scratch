@@ -94,7 +94,7 @@ export default function BooksHomePage({
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
-  const [expandBookCards, setExpandBookCards] = useState(false);
+  const [expandBookCards, setExpandBookCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("all");
   const deferredSearchValue = useDeferredValue(searchValue);
   const initialDraft = useMemo(() => {
@@ -483,7 +483,7 @@ export default function BooksHomePage({
                   Terms
                 </Link>
                   <Link
-                    href="/add-club"
+                    href="/add-club?from=books"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
                     <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
@@ -805,7 +805,7 @@ export default function BooksHomePage({
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
                               <div className="min-w-24 max-w-full">
-                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Submitter</p>
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Reviewer</p>
                                 <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
                               </div>
                               <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">

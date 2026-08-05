@@ -271,6 +271,7 @@ export function TvHomePage({
     date: formatShortDate(show.updatedAt),
     submitterName: show.submitterName,
     submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+    noRating: show.noRatingCount,
     commentsCount: show.commentCount,
     thumbsUp: show.thumbsUpCount,
     love: show.loveCount,
@@ -321,6 +322,7 @@ export function TvHomePage({
       date: formatShortDate(show.updatedAt),
       submitterName: show.submitterName,
       submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      noRating: show.noRatingCount,
       commentsCount: show.commentCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
@@ -454,6 +456,7 @@ export function TvHomePage({
       date: formatShortDate(show.updatedAt),
       submitterName: show.submitterName,
       submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      noRating: show.noRatingCount,
       commentsCount: show.commentCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
@@ -505,6 +508,7 @@ export function TvHomePage({
       date: formatShortDate(show.updatedAt),
       submitterName: show.submitterName,
       submitterLikenessDegree: show.memberId === member.memberId ? null : show.submitterLikenessDegree,
+      noRating: show.noRatingCount,
       commentsCount: show.commentCount,
       thumbsUp: show.thumbsUpCount,
       love: show.loveCount,
@@ -558,6 +562,11 @@ export function TvHomePage({
   const canEditSelectedShow = Boolean(selectedShowBasic && (selectedShowBasic.memberId === member.memberId || member.isFounder));
   const canReactToSelectedShow = Boolean(selectedShowBasic && selectedShowBasic.memberId !== member.memberId);
   const canCommentOnSelectedShow = canReactToSelectedShow;
+  const selectedShowNoRatingCount = selectedShowDetail?.id === selectedShow
+    ? selectedShowDetail.noRatingCount
+    : canReactToSelectedShow
+      ? (selectedShowBasic?.noRatingCount ?? 0)
+      : 0;
   const selectedShowThumbsUpCount = selectedShowDetail?.id === selectedShow
     ? selectedShowDetail.thumbsUpCount
     : canReactToSelectedShow
@@ -874,6 +883,15 @@ export function TvHomePage({
                       <div className="flex flex-wrap items-center gap-3">
                         <Button
                           type="button"
+                          onClick={ () => handleToggleLike(-1) }
+                          disabled={ !selectedShowBasic || isEngaging || !canReactToSelectedShow }
+                          className="rounded-full bg-[#5c6c76] text-white hover:bg-[#4c5961]"
+                          aria-label={ selectedShowDetail?.likenessDegree === -1 ? "Remove thumbs down" : "Add thumbs down" }
+                        >
+                          <ThumbsDown className={ `size-4 ${ selectedShowDetail?.likenessDegree === -1 ? "fill-white" : "" }` } />
+                        </Button>
+                        <Button
+                          type="button"
                           onClick={ () => handleToggleLike(1) }
                           disabled={ !selectedShowBasic || isEngaging || !canReactToSelectedShow }
                           className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
@@ -893,10 +911,14 @@ export function TvHomePage({
                       </div>
                       { !canReactToSelectedShow && selectedShowBasic ? (
                         <p className="text-xs text-[#5f7987]">
-                          Come on, you cannot like or love your own show! Ask another family member to react to it.
+                          You cannot react to your own show. Ask another family member to react to it.
                         </p>
                       ) : null }
                       <div className="flex flex-wrap items-center gap-4">
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#5c6c76]">
+                          <ThumbsDown className="size-4 text-[#5c6c76]" />
+                          { selectedShowNoRatingCount.toLocaleString() }
+                        </span>
                         <span className="inline-flex items-center gap-1.5 font-semibold text-[#285b73]">
                           <ThumbsUp className="size-4 text-[#2d87a8]" />
                           { selectedShowThumbsUpCount.toLocaleString() }
@@ -987,7 +1009,47 @@ export function TvHomePage({
 
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Reactions</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(-1) }
+                        disabled={ !selectedShowBasic || isEngaging || !canReactToSelectedShow }
+                        className="rounded-full bg-[#5c6c76] text-white hover:bg-[#4c5961]"
+                        aria-label={ selectedShowDetail?.likenessDegree === -1 ? "Remove thumbs down" : "Add thumbs down" }
+                      >
+                        <ThumbsDown className={ `size-4 ${ selectedShowDetail?.likenessDegree === -1 ? "fill-white" : "" }` } />
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(1) }
+                        disabled={ !selectedShowBasic || isEngaging || !canReactToSelectedShow }
+                        className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
+                        aria-label={ selectedShowDetail?.likenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                      >
+                        <ThumbsUp className={ `size-4 ${ selectedShowDetail?.likenessDegree === 1 ? "fill-white" : "" }` } />
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(2) }
+                        disabled={ !selectedShowBasic || isEngaging || !canReactToSelectedShow }
+                        className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]"
+                        aria-label={ selectedShowDetail?.likenessDegree === 2 ? "Remove love" : "Add love" }
+                      >
+                        <Heart className={ `size-4 ${ selectedShowDetail?.likenessDegree === 2 ? "fill-white" : "" }` } />
+                      </Button>
+                      { !canReactToSelectedShow ? (
+                        <p className="text-xs text-[#5f7987]">You cannot react to your own show. Ask another family member to react to it.</p>
+                      ) : null }
+                    </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#285b73]">
+                      <ReactionMemberHoverCard
+                        icon={ <ThumbsDown className="size-4 text-[#5c6c76]" /> }
+                        count={ selectedShowNoRatingCount }
+                        memberNames={ selectedShowDetail?.noRatingMemberNames ?? [] }
+                        triggerClassName="bg-[#eef3f6]"
+                        textClassName="text-[#5c6c76]"
+                        emptyLabel="Family members who disliked this show"
+                      />
                       <ReactionMemberHoverCard
                         icon={ <ThumbsUp className="size-4 text-[#2d87a8]" /> }
                         count={ selectedShowThumbsUpCount }

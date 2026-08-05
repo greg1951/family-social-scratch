@@ -144,26 +144,36 @@ function ReactionMemberHoverCard({
   emptyLabel: string;
 }) {
   return (
-    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
-      <HoverCardTrigger asChild>
-        <span className={ `inline-flex cursor-default items-center gap-2 rounded-full px-3 py-0.5 ${ triggerClassName } ${ textClassName ?? "" }` }>
-          { icon }
-          { count.toLocaleString() }
-        </span>
-      </HoverCardTrigger>
-      <HoverCardContent side="top" align="start" className="font-app w-56 border-[#f0d9c4] bg-white text-xs text-[#734f3a]">
-        <p className="font-semibold text-[#5c2e1a]">{ emptyLabel }</p>
-        { memberNames.length > 0 ? (
-          <ul className="mt-2 space-y-1">
-            { memberNames.map((memberName) => (
-              <li key={ memberName }>{ memberName }</li>
-            )) }
-          </ul>
-        ) : (
-          <p className="mt-2 text-[#8b5a3c]">No family members yet.</p>
-        ) }
-      </HoverCardContent>
-    </HoverCard>
+    <span className={ `inline-flex items-center gap-2 rounded-full px-3 py-0.5 ${ triggerClassName } ${ textClassName ?? "" }` }>
+      <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+        <HoverCardTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center"
+            aria-label={ emptyLabel }
+            onClick={ (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            } }
+          >
+            { icon }
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent side="top" align="start" className="font-app w-56 border-[#f0d9c4] bg-white text-xs text-[#734f3a]">
+          <p className="font-semibold text-[#5c2e1a]">{ emptyLabel }</p>
+          { memberNames.length > 0 ? (
+            <ul className="mt-2 space-y-1">
+              { memberNames.map((memberName) => (
+                <li key={ memberName }>{ memberName }</li>
+              )) }
+            </ul>
+          ) : (
+            <p className="mt-2 text-[#8b5a3c]">No family members yet.</p>
+          ) }
+        </HoverCardContent>
+      </HoverCard>
+      <span className="pointer-events-none select-none">{ count.toLocaleString() }</span>
+    </span>
   );
 }
 
@@ -283,6 +293,7 @@ export function MovieHomePage({
       date: formatStripDate(movie.updatedAt),
       submitterName: movie.submitterName,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
+      noRating: movie.noRatingCount,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
@@ -333,6 +344,7 @@ export function MovieHomePage({
       date: formatStripDate(movie.updatedAt),
       submitterName: movie.submitterName,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
+      noRating: movie.noRatingCount,
       commentsCount: movie.commentCount,
       thumbsUp: movie.thumbsUpCount,
       love: movie.loveCount,
@@ -784,7 +796,7 @@ export function MovieHomePage({
                     </div>
                   ) : null }
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-2 space-y-1.5 text-sm leading-5 text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
-                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><ReactionMemberHoverCard icon={ <ThumbsDown className="size-4 text-[#6d5c52]" /> } count={ selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0 } memberNames={ selectedMovieDetail?.noRatingMemberNames ?? [] } triggerClassName="bg-[#f7f0eb]" emptyLabel="Family members who disliked this movie" /><ReactionMemberHoverCard icon={ <ThumbsUp className="size-4 text-[#b8581a]" /> } count={ selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0 } memberNames={ selectedMovieDetail?.thumbsUpMemberNames ?? [] } triggerClassName="bg-[#fff1e8]" textClassName="text-[#8a5a22]" emptyLabel="Family members who liked this movie" /><ReactionMemberHoverCard icon={ <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" /> } count={ selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0 } memberNames={ selectedMovieDetail?.loveMemberNames ?? [] } triggerClassName="bg-[#fff0f7]" textClassName="text-[#8f2f58]" emptyLabel="Family members who loved this movie" /><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" />{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></div></div>
+                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMovieDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button>{ !canReactToSelectedMovie ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own movie. Ask another family member to rate it.</p> : null }</div><div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><ReactionMemberHoverCard icon={ <ThumbsDown className="size-4 text-[#6d5c52]" /> } count={ selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0 } memberNames={ selectedMovieDetail?.noRatingMemberNames ?? [] } triggerClassName="bg-[#f7f0eb]" emptyLabel="Family members who disliked this movie" /><ReactionMemberHoverCard icon={ <ThumbsUp className="size-4 text-[#b8581a]" /> } count={ selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0 } memberNames={ selectedMovieDetail?.thumbsUpMemberNames ?? [] } triggerClassName="bg-[#fff1e8]" textClassName="text-[#8a5a22]" emptyLabel="Family members who liked this movie" /><ReactionMemberHoverCard icon={ <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" /> } count={ selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0 } memberNames={ selectedMovieDetail?.loveMemberNames ?? [] } triggerClassName="bg-[#fff0f7]" textClassName="text-[#8f2f58]" emptyLabel="Family members who loved this movie" /><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" /><span className="pointer-events-none select-none">{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></span></div></div>
                 </div>
               </div>
 

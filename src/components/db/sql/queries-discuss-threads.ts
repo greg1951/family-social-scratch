@@ -64,12 +64,87 @@ function resolveDiscussionFeatureName(targetType: string): string {
 		case 'recipe':
 			return 'The Kitchen';
 		case 'blog':
-			return 'Family Blog';
+			return 'Blogs';
 		case 'music':
 			return 'Music Salon';
 		default:
 			return 'Family Discussions';
 	}
+}
+
+async function doesDiscussionTargetExist(
+	familyId: number,
+	targetType: string,
+	targetId: number,
+): Promise<boolean> {
+	if (!Number.isInteger(targetId) || targetId <= 0) {
+		return false;
+	}
+
+	if (targetType === 'show') {
+		const rows = await db
+			.select({ id: show.id })
+			.from(show)
+			.where(and(eq(show.id, targetId), eq(show.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'movie') {
+		const rows = await db
+			.select({ id: movie.id })
+			.from(movie)
+			.where(and(eq(movie.id, targetId), eq(movie.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'book') {
+		const rows = await db
+			.select({ id: book.id })
+			.from(book)
+			.where(and(eq(book.id, targetId), eq(book.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'poem') {
+		const rows = await db
+			.select({ id: poem.id })
+			.from(poem)
+			.where(and(eq(poem.id, targetId), eq(poem.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'recipe') {
+		const rows = await db
+			.select({ id: recipe.id })
+			.from(recipe)
+			.where(and(eq(recipe.id, targetId), eq(recipe.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'music') {
+		const rows = await db
+			.select({ id: music.id })
+			.from(music)
+			.where(and(eq(music.id, targetId), eq(music.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	if (targetType === 'blog') {
+		const rows = await db
+			.select({ id: blogPost.id })
+			.from(blogPost)
+			.where(and(eq(blogPost.id, targetId), eq(blogPost.familyId, familyId)))
+			.limit(1);
+		return Boolean(rows[0]?.id);
+	}
+
+	return false;
 }
 
 async function resolveDiscussionPostName(
@@ -421,6 +496,19 @@ export async function createDiscussionThreadWithInitialPost(
 		return {
 			success: false,
 			message: 'A valid discussion target is required.',
+		};
+	}
+
+	const targetExists = await doesDiscussionTargetExist(
+		actor.familyId,
+		input.targetType,
+		input.targetId,
+	);
+
+	if (!targetExists) {
+		return {
+			success: false,
+			message: 'Discussion target was not found. Please refresh and try again.',
 		};
 	}
 

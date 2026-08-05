@@ -40,6 +40,7 @@ export interface TvShow {
 export interface TvShowDetail extends TvShow {
   showComments: ShowComment[];
   discussionThreads: DiscussionThreadSummary[];
+  noRatingMemberNames: string[];
   thumbsUpMemberNames: string[];
   loveMemberNames: string[];
 }

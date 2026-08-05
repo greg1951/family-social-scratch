@@ -23,6 +23,7 @@ import FeatureDiscussChart, {
 import ThreadGameChart, {
   type ThreadGameChartData,
 } from "@/components/charts/family/thread-game-chart";
+import { ArrowLeft } from "lucide-react";
 
 const FEATURE_POST_NAMES = [
   "TV Room",
@@ -31,6 +32,7 @@ const FEATURE_POST_NAMES = [
   "Poetry Nook",
   "Reading Room",
   "Family Gallery",
+  "Blogs",
 ] as const;
 
 function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartData {
@@ -146,6 +148,7 @@ export default async function FamilyMemberDashboard({
             href="/"
             className="inline-flex items-center rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
           >
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Main Page
           </Link>
         </header>

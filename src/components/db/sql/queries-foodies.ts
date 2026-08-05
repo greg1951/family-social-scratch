@@ -1361,6 +1361,13 @@ export async function toggleRecipeLike(
     };
   }
 
+  if (existingRecipe.memberId === actor.memberId) {
+    return {
+      success: false,
+      message: "You cannot react to your own recipe posting.",
+    };
+  }
+
   if (![1, 2].includes(likenessDegree)) {
     return {
       success: false,

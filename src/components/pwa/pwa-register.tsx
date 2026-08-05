@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 const IS_PWA_ENABLED = process.env.NEXT_PUBLIC_PWA_ENABLED === "true";
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export default function PwaRegister() {
   useEffect(() => {
@@ -14,7 +15,7 @@ export default function PwaRegister() {
       return;
     }
 
-    if (!IS_PWA_ENABLED) {
+    if (!IS_PWA_ENABLED || !IS_PRODUCTION) {
       // Ensure stale registrations from prior local runs do not keep serving offline fallback.
       void navigator.serviceWorker
         .getRegistrations()

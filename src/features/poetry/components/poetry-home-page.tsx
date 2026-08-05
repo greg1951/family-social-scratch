@@ -217,7 +217,7 @@ export default function PoetryHomePage({
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
-  const [expandPoemCards, setExpandPoemCards] = useState(false);
+  const [expandPoemCards, setExpandPoemCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("all");
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
   const [verseLineCount, setVerseLineCount] = useState(1);
@@ -569,7 +569,7 @@ export default function PoetryHomePage({
                   Terms
                 </Link>
                   <Link
-                    href="/add-club"
+                    href="/add-club?from=poetry"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
                     <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
@@ -877,7 +877,7 @@ export default function PoetryHomePage({
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
                               <div className="min-w-32 max-w-full">
-                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Submitter</p>
+                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Reviewer</p>
                                 <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
                               </div>
                               <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">

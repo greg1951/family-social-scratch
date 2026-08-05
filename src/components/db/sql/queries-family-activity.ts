@@ -1,4 +1,4 @@
-import { count, eq, and, inArray, gte, lte } from "drizzle-orm";
+import { count, eq, and, inArray, gte, lte, sql } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import { familyActivity, member } from "@/components/db/schema/family-social-schema-tables";
 
@@ -9,7 +9,10 @@ const FEATURE_POST_NAMES = [
   "Poetry Nook",
   "Reading Room",
   "Family Gallery",
+  "Blogs",
 ] as const;
+
+const FEATURE_POST_FILTER_NAMES = [...FEATURE_POST_NAMES, "Family Blog"] as const;
 
 const POST_ACTION_TYPES = [
   "POST_CREATED",
@@ -87,9 +90,11 @@ export async function getFeaturePostsActivity(
   familyId: number,
   dateRange: DateRangeFilter,
 ): Promise<FeaturePostsRawRow[]> {
+  const normalizedFeatureName = sql<string>`CASE WHEN ${familyActivity.featureName} = 'Family Blog' THEN 'Blogs' ELSE ${familyActivity.featureName} END`;
+
   const rows = await db
     .select({
-      featureName: familyActivity.featureName,
+      featureName: normalizedFeatureName,
       actionType: familyActivity.actionType,
       count: count(),
     })
@@ -97,13 +102,13 @@ export async function getFeaturePostsActivity(
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.featureName, [...FEATURE_POST_NAMES]),
+        inArray(familyActivity.featureName, [...FEATURE_POST_FILTER_NAMES]),
         inArray(familyActivity.actionType, [...POST_ACTION_TYPES]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),
       ),
     )
-    .groupBy(familyActivity.featureName, familyActivity.actionType);
+    .groupBy(normalizedFeatureName, familyActivity.actionType);
 
   return rows.map((r) => ({ ...r, count: Number(r.count) }));
 }
@@ -124,7 +129,7 @@ export async function getMemberPostsActivity(
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.featureName, [...FEATURE_POST_NAMES]),
+        inArray(familyActivity.featureName, [...FEATURE_POST_FILTER_NAMES]),
         inArray(familyActivity.actionType, [...POST_ACTION_TYPES]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),
@@ -211,7 +216,7 @@ export async function getMemberDashboardActivitySummary(
     .where(
       and(
         eq(familyActivity.familyId, familyId),
-        inArray(familyActivity.featureName, [...FEATURE_POST_NAMES]),
+        inArray(familyActivity.featureName, [...FEATURE_POST_FILTER_NAMES]),
         inArray(familyActivity.actionType, [...MEMBER_DASHBOARD_ACTION_TYPES]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),

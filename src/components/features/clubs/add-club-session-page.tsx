@@ -27,6 +27,7 @@ type AddClubSessionPageProps = {
   clubs: Club[];
   existingSession: ClubSession | null;
   member: MemberKeyDetails;
+  returnTo?: 'books' | 'poetry' | null;
 };
 
 function formatDateValue(date = new Date()) {
@@ -80,7 +81,9 @@ export default function AddClubSessionPage({
   clubs,
   existingSession,
   member,
+  returnTo = null,
 }: AddClubSessionPageProps) {
+        const clubsBackHref = returnTo ? `/add-club?from=${returnTo}` : '/add-club';
   const router = useRouter();
   const [isSubmitting, startSubmittingTransition] = useTransition();
   const isEditMode = mode === 'edit';
@@ -147,7 +150,7 @@ export default function AddClubSessionPage({
 
       toast.success(result.message);
       if (isEditMode) {
-        router.push('/add-club');
+        router.push(clubsBackHref);
         router.refresh();
         return;
       }
@@ -180,7 +183,7 @@ export default function AddClubSessionPage({
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
-                  href="/add-club"
+                  href={ clubsBackHref }
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0f7ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
@@ -219,7 +222,7 @@ export default function AddClubSessionPage({
                 <p className="mt-2 text-sm">Create a club first, then return here to start the session.</p>
                 <div className="mt-4">
                   <Button asChild type="button" className="rounded-full bg-[#204a69] text-white hover:bg-[#17384f]">
-                    <Link href="/add-club">
+                    <Link href={ clubsBackHref }>
                       <Plus className="size-4" />
                       Add Club
                     </Link>

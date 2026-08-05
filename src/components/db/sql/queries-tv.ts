@@ -612,6 +612,10 @@ async function loadShowDetail(
   const noRatingCount = audienceLikeRows.filter((row) => row.likenessDegree === -1).length;
   const thumbsUpCount = audienceLikeRows.filter((row) => row.likenessDegree === 1).length;
   const loveCount = audienceLikeRows.filter((row) => row.likenessDegree === 2).length;
+  const noRatingMemberNames = audienceLikeRows
+    .filter((row) => row.likenessDegree === -1)
+    .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
+    .sort((leftName, rightName) => leftName.localeCompare(rightName));
   const thumbsUpMemberNames = audienceLikeRows
     .filter((row) => row.likenessDegree === 1)
     .map((row) => memberNameById.get(row.memberId) ?? `Member #${row.memberId}`)
@@ -677,6 +681,7 @@ async function loadShowDetail(
     likenessDegree: viewerLike?.likenessDegree ?? null,
     selectedTagIds: tagIdsByShowId.get(showId) ?? [],
     tagNamesByType: tagNamesByTypeByShowId.get(showId) ?? {},
+    noRatingMemberNames,
     thumbsUpMemberNames,
     loveMemberNames,
     showComments,
@@ -1173,10 +1178,10 @@ export async function toggleShowLike(
     };
   }
 
-  if (![1, 2].includes(likenessDegree)) {
+  if (![-1, 1, 2].includes(likenessDegree)) {
     return {
       success: false,
-      message: "Invalid like type.",
+      message: "Show reactions must be thumbs down, thumbs up, or love.",
     };
   }
 
@@ -1225,7 +1230,7 @@ export async function toggleShowLike(
         });
     }
 
-    if (!existingLike || existingLike.likenessDegree !== likenessDegree) {
+    if ((likenessDegree === 1 || likenessDegree === 2) && (!existingLike || existingLike.likenessDegree !== likenessDegree)) {
       await createFamilyReactionActivityRecord({
         reactionType: likenessDegree === 2 ? "love" : "like",
         featureName: "TV Room",

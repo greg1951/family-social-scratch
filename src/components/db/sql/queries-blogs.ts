@@ -44,7 +44,7 @@ import {
 import { loadDiscussionThreadSummariesForTargetId } from './queries-discuss-threads';
 import { logDbQueryError } from './db-error-logger';
 
-const BLOG_FEATURE_NAME = 'Family Blog';
+const BLOG_FEATURE_NAME = 'Blogs';
 const BLOG_STATUS_OPTIONS = new Set<BlogPostStatus>(['draft', 'published', 'archived']);
 const BLOG_LIKENESS_OPTIONS = new Set([-1, 1, 2]);
 

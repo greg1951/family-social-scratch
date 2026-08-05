@@ -23,35 +23,33 @@ import { MemberKeyDetails } from '@/features/family/types/family-steps';
 type ClubsHomePageProps = {
   clubs: Club[];
   member: MemberKeyDetails;
+  initialReturnTo?: 'books' | 'poetry' | null;
 };
-
-function formatCreatedAt(createdAt: Date) {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(createdAt));
-}
 
 function formatSessionDate(date: Date | null | undefined) {
   if (!date) {
     return 'Not set';
   }
 
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  }).format(new Date(date));
+  const safeDate = new Date(date);
+  const month = String(safeDate.getMonth() + 1).padStart(2, '0');
+  const day = String(safeDate.getDate()).padStart(2, '0');
+  const year = String(safeDate.getFullYear()).slice(-2);
+  return `${month}-${day}-${year}`;
 }
 
-export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
+export default function ClubsHomePage({ clubs, member, initialReturnTo = null }: ClubsHomePageProps) {
   const router = useRouter();
   const [isSaving, startSavingTransition] = useTransition();
   const [isDeleting, startDeletingTransition] = useTransition();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingClub, setEditingClub] = useState<Club | null>(null);
   const [clubName, setClubName] = useState('');
+  const [returnTo] = useState<'books' | 'poetry' | null>(initialReturnTo);
+
+  const backHref = returnTo === 'poetry' ? '/poetry' : returnTo === 'books' ? '/books' : '/';
+  const backLabel = returnTo === 'poetry' ? 'Back to Poetry' : returnTo === 'books' ? 'Back to Books' : 'Back';
+  const sourceQuery = returnTo ? `&from=${returnTo}` : '';
 
   function openAddClubDialog() {
     setEditingClub(null);
@@ -119,15 +117,6 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
     });
   }
 
-  function handleGoBack() {
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
-
-    router.push('/');
-  }
-
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -138,14 +127,13 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
                 Book & Poetry Clubs
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
-                <button
-                  type="button"
-                  onClick={ handleGoBack }
+                <Link
+                  href={ backHref }
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f0f7ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
                   <ArrowLeft className="mr-2 size-4" />
-                  Back
-                </button>
+                  { backLabel }
+                </Link>
               </div>
 
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
@@ -222,14 +210,12 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
                       </div>
                     </div>
 
-                    <div className="mt-4 space-y-2 text-sm text-[#587089]">
+                    <div className="mt-2 text-sm text-[#587089]">
                       <p>Founder: { club.founderName ?? `Member #${ club.clubFounderId ?? member.memberId }` }</p>
-                      <p>Created: { formatCreatedAt(club.createdAt) }</p>
-                      <p>Sessions: { club.sessionCount ?? 0 }</p>
                     </div>
 
                     { club.sessions && club.sessions.length > 0 ? (
-                      <div className="mt-4 space-y-3 border-t border-[#edf2f7] pt-4">
+                      <div className="mt-2 space-y-3 border-t border-[#edf2f7] pt-4">
                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[#5f7d9a]">
                           <CalendarDays className="size-4" />
                           Club Sessions
@@ -250,7 +236,7 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
 
                                 <div className="flex shrink-0 flex-wrap gap-2">
                                   <Button asChild type="button" variant="outline" className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]">
-                                    <Link href={ `/add-club-session?sessionId=${ session.id }` }>
+                                    <Link href={ `/add-club-session?sessionId=${ session.id }${ sourceQuery }` }>
                                       <PenSquare className="size-3.5" />
                                     </Link>
                                   </Button>
@@ -267,11 +253,10 @@ export default function ClubsHomePage({ clubs, member }: ClubsHomePageProps) {
                                 </div>
                               </div>
 
-                              <div className="mt-3 grid gap-2 text-sm text-[#587089] sm:grid-cols-2">
-                                <p>Moderator: { session.moderatorName ?? `Member #${ session.moderatorId ?? member.memberId }` }</p>
-                                <p>Started: { formatSessionDate(session.startedAt) }</p>
-                                <p>Ends: { formatSessionDate(session.finishesAt) }</p>
-                                <p>Discussion: { session.discussTopic ?? session.targetTitle ?? 'Open session' }</p>
+                              <div className="mt-3 flex flex-col gap-1 text-sm text-[#587089] md:flex-row md:flex-wrap md:items-center md:gap-x-6 md:gap-y-2">
+                                <p><span className="font-semibold text-[#20364f]">Moderator:</span> { session.moderatorName ?? `Member #${ session.moderatorId ?? member.memberId }` }</p>
+                                <p><span className="font-semibold text-[#20364f]">Starts:</span> { formatSessionDate(session.startedAt) }</p>
+                                <p><span className="font-semibold text-[#20364f]">Ends:</span> { formatSessionDate(session.finishesAt) }</p>
                               </div>
                             </div>
                           )) }

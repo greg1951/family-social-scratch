@@ -15,6 +15,7 @@ type LatestShow = {
   date: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
+  noRating: number;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -50,6 +51,7 @@ type AllShow = {
   date: string;
   submitterName: string;
   submitterLikenessDegree: number | null;
+  noRating: number;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -226,7 +228,7 @@ export function TvScrollStrip({
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>
                         { item.kind === "top-rated" ? (
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
+                          <div className="pointer-events-none mt-1 flex select-none flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
                               <ThumbsDown className="size-3.5 text-[#5c6c76]" />
                               { item.noRating.toLocaleString() }
@@ -245,7 +247,11 @@ export function TvScrollStrip({
                             </span>
                           </div>
                         ) : (
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
+                          <div className="pointer-events-none mt-1 flex select-none flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
+                            <span className="inline-flex items-center gap-1 font-semibold text-[#5c6c76]">
+                              <ThumbsDown className="size-3.5 text-[#5c6c76]" />
+                              { item.noRating.toLocaleString() }
+                            </span>
                             <span className="inline-flex items-center gap-1 font-semibold text-[#21536a]">
                               <ThumbsUp className="size-3.5 text-[#2d87a8]" />
                               { item.thumbsUp.toLocaleString() }

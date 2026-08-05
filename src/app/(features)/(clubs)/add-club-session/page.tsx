@@ -11,6 +11,7 @@ export default async function AddClubSessionRoute({
     sessionId?: string;
     targetType?: string;
     targetId?: string;
+    from?: string;
   }>;
 }) {
   const memberKeyDetails = await getMemberPageDetails();
@@ -22,12 +23,18 @@ export default async function AddClubSessionRoute({
 
   const sessionId = Number(resolvedSearchParams?.sessionId);
   const hasSessionId = Number.isInteger(sessionId) && sessionId > 0;
+  const returnTo = resolvedSearchParams?.from === 'poetry'
+    ? 'poetry'
+    : resolvedSearchParams?.from === 'books'
+      ? 'books'
+      : null;
+  const clubsBackHref = returnTo ? `/add-club?from=${returnTo}` : '/add-club';
 
   if (hasSessionId) {
     const existingSession = await getClubSessionById(memberKeyDetails.familyId, sessionId);
 
     if (!existingSession) {
-      redirect('/add-club');
+      redirect(clubsBackHref);
     }
 
     const [clubs, targetTitle] = await Promise.all([
@@ -51,6 +58,7 @@ export default async function AddClubSessionRoute({
         clubs={ clubs }
         existingSession={ existingSession }
         member={ memberKeyDetails }
+        returnTo={ returnTo }
       />
     );
   }
@@ -59,7 +67,7 @@ export default async function AddClubSessionRoute({
   const targetId = Number(resolvedSearchParams?.targetId);
 
   if (!targetType || !Number.isInteger(targetId) || targetId <= 0) {
-    redirect('/add-club');
+    redirect(clubsBackHref);
   }
 
   const [clubs, targetTitle, existingSession] = await Promise.all([
@@ -81,6 +89,7 @@ export default async function AddClubSessionRoute({
       clubs={ clubs }
       existingSession={ existingSession }
       member={ memberKeyDetails }
+      returnTo={ returnTo }
     />
   );
 }

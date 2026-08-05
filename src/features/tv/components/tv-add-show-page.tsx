@@ -67,7 +67,7 @@ const TAG_TYPE_LABELS: Array<{ type: ShowTagType; label: string }> = [
   { type: "channel", label: "Channel" },
 ];
 
-const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
+const MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
 
 type ShowSiteBackground = (typeof SHOW_SITE_BACKGROUND_COLOR_SCHEMES)[number]["value"];
@@ -356,7 +356,7 @@ export function TvAddShowPage({
     }
 
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
-      toast.error("Image size exceeds 4MB. Please choose a smaller file.");
+      toast.error("Image size exceeds 10MB. Please choose a smaller file.");
       event.target.value = "";
       return;
     }
