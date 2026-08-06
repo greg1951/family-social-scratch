@@ -62,16 +62,17 @@ const TEMPLATE_MUSIC_TYPES = new Set<MusicType>(["album", "song"]);
 const PLAYLIST_MEDIA_SOURCES = new Set<PlaylistMediaSource>(["spotify", "apple_play"]);
 const PLAYLIST_MEDIA_TYPES = new Set<PlaylistMediaType>(["song", "playlist"]);
 
-function normalizeMusicType(musicType: string | null | undefined, isSong: boolean): MusicType {
+function normalizeMusicType(musicType: string | null | undefined): MusicType {
   if (musicType && SUPPORTED_MUSIC_TYPES.includes(musicType as MusicType)) {
     return musicType as MusicType;
   }
 
-  return isSong ? "song" : "album";
+  return "album";
 }
 
 function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]): {
   mediaSource: PlaylistMediaSource;
+  mediaSeqNo: number;
   mediaType: PlaylistMediaType;
   mediaUrl: string;
   mediaArtist: string;
@@ -82,11 +83,13 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
   }
 
   return entries
-    .map((entry) => {
+    .map((entry, index) => {
       const normalizedSource = String(entry.mediaSource ?? "").toLowerCase() as PlaylistMediaSource;
       const normalizedType = String(entry.mediaType ?? "").toLowerCase() as PlaylistMediaType;
+      const parsedSeqNo = Number(entry.mediaSeqNo);
       return {
         mediaSource: PLAYLIST_MEDIA_SOURCES.has(normalizedSource) ? normalizedSource : "spotify",
+        mediaSeqNo: Number.isInteger(parsedSeqNo) && parsedSeqNo > 0 ? parsedSeqNo : index + 1,
         mediaType: PLAYLIST_MEDIA_TYPES.has(normalizedType) ? normalizedType : "song",
         mediaUrl: entry.mediaUrl.trim(),
         mediaArtist: entry.mediaArtist?.trim() ?? "",
@@ -99,6 +102,7 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
 function toPlaylistMediaRecord(row: {
   id: number;
   mediaSource: string;
+  mediaSeqNo: number;
   mediaType: string;
   mediaUrl: string;
   mediaArtist: string;
@@ -116,6 +120,7 @@ function toPlaylistMediaRecord(row: {
   return {
     id: row.id,
     mediaSource,
+    mediaSeqNo: row.mediaSeqNo,
     mediaType,
     mediaUrl: row.mediaUrl,
     mediaArtist: row.mediaArtist,
@@ -627,8 +632,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     artistName: row.artistName,
     musicJson: row.musicJson,
     status: row.status,
-    isSong: row.isSong,
-    musicType: normalizeMusicType(row.musicType, row.isSong),
+    musicType: normalizeMusicType(row.musicType),
     musicImageUrl: row.musicImageUrl,
     hasLyrics: hasLyricsByMusicId.has(row.id),
     musicDebutYear: row.musicDebutYear,
@@ -698,6 +702,7 @@ async function loadMusicDetail(
       .select({
         id: musicPlaylistMedia.id,
         mediaSource: musicPlaylistMedia.mediaSource,
+        mediaSeqNo: musicPlaylistMedia.mediaSeqNo,
         mediaType: musicPlaylistMedia.mediaType,
         mediaUrl: musicPlaylistMedia.mediaUrl,
         mediaArtist: musicPlaylistMedia.mediaArtist,
@@ -707,7 +712,7 @@ async function loadMusicDetail(
       })
       .from(musicPlaylistMedia)
       .where(eq(musicPlaylistMedia.musicId, musicId))
-      .orderBy(asc(musicPlaylistMedia.id)),
+      .orderBy(asc(musicPlaylistMedia.mediaSeqNo), asc(musicPlaylistMedia.id)),
     loadDiscussionThreadSummariesByTargetIds(familyId, 'music', [musicId]),
   ]);
 
@@ -772,8 +777,7 @@ async function loadMusicDetail(
     artistName: musicRow.artistName,
     musicJson: musicRow.musicJson,
     status: musicRow.status,
-    isSong: musicRow.isSong,
-    musicType: normalizeMusicType(musicRow.musicType, musicRow.isSong),
+    musicType: normalizeMusicType(musicRow.musicType),
     musicImageUrl: musicRow.musicImageUrl,
     hasLyrics: Boolean(lyrics),
     musicDebutYear: musicRow.musicDebutYear,
@@ -1048,7 +1052,6 @@ export async function saveMusic(
           artistName: input.artistName,
           musicJson: musicJsonToStore,
           status: input.status,
-          isSong: validMusicType === "song",
           musicType: validMusicType,
           musicImageUrl: input.musicImageUrl ?? null,
           musicDebutYear: input.musicDebutYear,
@@ -1063,7 +1066,6 @@ export async function saveMusic(
           artistName: input.artistName,
           musicJson: musicJsonToStore,
           status: input.status,
-          isSong: validMusicType === "song",
           musicType: validMusicType,
           musicImageUrl: input.musicImageUrl ?? null,
           musicDebutYear: input.musicDebutYear,
@@ -1096,6 +1098,7 @@ export async function saveMusic(
       await db.insert(musicPlaylistMedia).values(
         playlistMediaEntries.map((entry) => ({
           mediaSource: entry.mediaSource,
+          mediaSeqNo: entry.mediaSeqNo,
           mediaType: entry.mediaType,
           mediaUrl: entry.mediaUrl,
           mediaArtist: entry.mediaArtist,
@@ -1304,7 +1307,6 @@ export async function saveMusicLyrics(
     .select({
       id: music.id,
       familyId: music.familyId,
-      isSong: music.isSong,
       musicType: music.musicType,
       memberId: music.memberId,
     })
@@ -1318,7 +1320,7 @@ export async function saveMusicLyrics(
     };
   }
 
-  const musicType = normalizeMusicType(musicRow.musicType, musicRow.isSong);
+  const musicType = normalizeMusicType(musicRow.musicType);
 
   if (musicType !== "song") {
     return {

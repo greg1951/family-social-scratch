@@ -8,6 +8,7 @@ export type PlaylistMediaType = "song" | "playlist";
 export interface MusicPlaylistMediaRecord {
   id: number;
   mediaSource: PlaylistMediaSource;
+  mediaSeqNo: number;
   mediaType: PlaylistMediaType;
   mediaUrl: string;
   mediaArtist: string;
@@ -18,6 +19,7 @@ export interface MusicPlaylistMediaRecord {
 
 export interface SaveMusicPlaylistMediaInput {
   mediaSource: PlaylistMediaSource;
+  mediaSeqNo?: number;
   mediaType: PlaylistMediaType;
   mediaUrl: string;
   mediaArtist?: string;
@@ -37,7 +39,6 @@ export interface MusicRecord {
   artistName: string;
   musicJson: string;
   status: string;
-  isSong: boolean;
   musicType: MusicType;
   musicImageUrl: string | null;
   hasLyrics?: boolean;

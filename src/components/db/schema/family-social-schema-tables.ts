@@ -1077,7 +1077,6 @@ export const music = familySchema.table("music", {
   artistName: text("artist_name").notNull().default(""),
   musicJson: text("music_json").notNull().default("{}"),
   status: text("status").notNull().default("published"),
-  isSong: boolean("is_song").notNull().default(true),
   musicType: text("music_type").notNull().default("album"),
   musicImageUrl: text("music_image_url"),
   musicDebutYear: integer("music_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
@@ -1094,6 +1093,7 @@ export const music = familySchema.table("music", {
 export const musicPlaylistMedia = familySchema.table("music_playlist_media", {
   id: serial("id").primaryKey(),
   mediaSource: text("media_source").notNull().default(""),
+  mediaSeqNo: integer("media_seq_no").notNull().default(1),
   mediaType: text("media_type").notNull().default("song"),
   mediaUrl: text("media_url").notNull().default(""),
   mediaArtist: text("media_artist").notNull().default(""),

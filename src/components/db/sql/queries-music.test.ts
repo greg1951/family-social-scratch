@@ -77,7 +77,6 @@ describe("saveMusic playlist behavior", () => {
           artistName: "",
           musicJson: "{}",
           status: "published",
-          isSong: false,
           musicType: "playlist",
           musicImageUrl: null,
           musicDebutYear: 2026,
@@ -127,6 +126,7 @@ describe("saveMusic playlist behavior", () => {
     expect(insertPlaylistMediaValuesMock).toHaveBeenCalledWith([
       {
         mediaSource: "spotify",
+        mediaSeqNo: 1,
         mediaType: "song",
         mediaUrl: "https://open.spotify.com/track/abc123",
         mediaArtist: "Aster Lake",

@@ -134,7 +134,6 @@ function buildMusicRecord(overrides: Partial<MusicRecord>): MusicRecord {
     artistName: "Some Artist",
     musicJson: '{"type":"doc","content":[]}',
     status: "published",
-    isSong: false,
     musicType: "album",
     musicImageUrl: null,
     hasLyrics: false,
@@ -175,6 +174,7 @@ describe("MusicAddPage music type UI", () => {
           id: 1,
           musicId: 500,
           mediaSource: "spotify",
+          mediaSeqNo: 1,
           mediaType: "song",
           mediaUrl: "https://open.spotify.com/track/abc",
           mediaArtist: "Aster Lake",
@@ -197,6 +197,7 @@ describe("MusicAddPage music type UI", () => {
     expect(html).toContain("Music Type");
     expect(html).toContain("Playlist Media");
     expect(html).toContain("Playlist Title");
+    expect(html).not.toContain("Media 1");
     expect(html).not.toContain("id=\"artist-name\"");
     expect(html).not.toContain("Debut Year");
     expect(html).not.toContain("Templates are not used for playlist entries.");

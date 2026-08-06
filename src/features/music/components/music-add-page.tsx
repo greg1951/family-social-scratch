@@ -81,10 +81,72 @@ type PlaylistMediaFormEntry = SaveMusicPlaylistMediaInput & {
   id: string;
 };
 
+function sortPlaylistMediaEntries(entries: PlaylistMediaFormEntry[]) {
+  return [...entries].sort((leftEntry, rightEntry) => {
+    const leftSeqNo = Number(leftEntry.mediaSeqNo) || 0;
+    const rightSeqNo = Number(rightEntry.mediaSeqNo) || 0;
+    if (leftSeqNo !== rightSeqNo) {
+      return leftSeqNo - rightSeqNo;
+    }
+
+    return leftEntry.id.localeCompare(rightEntry.id);
+  });
+}
+
+function normalizePlaylistMediaEntries(entries: PlaylistMediaFormEntry[]) {
+  return sortPlaylistMediaEntries(entries).map((entry, index) => ({
+    ...entry,
+    mediaSeqNo: index + 1,
+  }));
+}
+
+function reorderPlaylistMediaEntries(entries: PlaylistMediaFormEntry[], entryId: string, requestedSeqNo: number) {
+  const normalizedEntries = normalizePlaylistMediaEntries(entries);
+  const movingEntryIndex = normalizedEntries.findIndex((entry) => entry.id === entryId);
+  if (movingEntryIndex === -1) {
+    return normalizedEntries;
+  }
+
+  const currentSeqNo = normalizedEntries[movingEntryIndex].mediaSeqNo ?? movingEntryIndex + 1;
+  const targetSeqNo = Math.max(1, Math.min(normalizedEntries.length, requestedSeqNo));
+  if (targetSeqNo === currentSeqNo) {
+    return normalizedEntries;
+  }
+
+  const reorderedEntries = normalizedEntries.map((entry) => {
+    const entrySeqNo = entry.mediaSeqNo ?? 1;
+    if (entry.id === entryId) {
+      return {
+        ...entry,
+        mediaSeqNo: targetSeqNo,
+      };
+    }
+
+    if (targetSeqNo < currentSeqNo && entrySeqNo >= targetSeqNo && entrySeqNo < currentSeqNo) {
+      return {
+        ...entry,
+        mediaSeqNo: entrySeqNo + 1,
+      };
+    }
+
+    if (targetSeqNo > currentSeqNo && entrySeqNo <= targetSeqNo && entrySeqNo > currentSeqNo) {
+      return {
+        ...entry,
+        mediaSeqNo: entrySeqNo - 1,
+      };
+    }
+
+    return entry;
+  });
+
+  return sortPlaylistMediaEntries(reorderedEntries);
+}
+
 function createPlaylistMediaEntry(): PlaylistMediaFormEntry {
   return {
     id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${ Date.now() }-${ Math.random().toString(36).slice(2) }`,
     mediaSource: "spotify",
+    mediaSeqNo: 1,
     mediaType: "song",
     mediaUrl: "",
     mediaArtist: "",
@@ -169,18 +231,19 @@ export function MusicAddPage({
   const [musicTitle, setMusicTitle] = useState(initialMusic?.musicTitle ?? "");
   const [artistName, setArtistName] = useState(initialMusic?.artistName ?? "");
   const [musicDebutYear, setMusicDebutYear] = useState(String(initialMusic?.musicDebutYear ?? new Date().getFullYear()));
-  const [musicType, setMusicType] = useState<MusicType>(initialMusic?.musicType ?? (initialMusic?.isSong ? "song" : "album"));
+  const [musicType, setMusicType] = useState<MusicType>(initialMusic?.musicType ?? "album");
   const [status, setStatus] = useState(initialMusic?.status ?? "published");
-  const [playlistMediaEntries, setPlaylistMediaEntries] = useState<PlaylistMediaFormEntry[]>(
+  const [playlistMediaEntries, setPlaylistMediaEntries] = useState<PlaylistMediaFormEntry[]>(() =>
     initialMusic?.playlistMedia?.length
-      ? initialMusic.playlistMedia.map((media) => ({
+      ? normalizePlaylistMediaEntries(initialMusic.playlistMedia.map((media, index) => ({
         id: String(media.id),
         mediaSource: media.mediaSource,
+        mediaSeqNo: Number.isInteger(media.mediaSeqNo) && media.mediaSeqNo > 0 ? media.mediaSeqNo : index + 1,
         mediaType: media.mediaType,
         mediaUrl: media.mediaUrl,
         mediaArtist: media.mediaArtist,
         mediaCaption: media.mediaCaption,
-      }))
+      })))
       : [createPlaylistMediaEntry()]
   );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MusicTagType, string>>>(() => {
@@ -371,7 +434,16 @@ export function MusicAddPage({
   }
 
   function addPlaylistMediaEntry() {
-    setPlaylistMediaEntries((entries) => [...entries, createPlaylistMediaEntry()]);
+    setPlaylistMediaEntries((entries) => {
+      const normalizedEntries = normalizePlaylistMediaEntries(entries);
+      return [
+        ...normalizedEntries,
+        {
+          ...createPlaylistMediaEntry(),
+          mediaSeqNo: normalizedEntries.length + 1,
+        },
+      ];
+    });
   }
 
   function removePlaylistMediaEntry(entryId: string) {
@@ -380,11 +452,20 @@ export function MusicAddPage({
         return entries;
       }
 
-      return entries.filter((entry) => entry.id !== entryId);
+      return normalizePlaylistMediaEntries(entries.filter((entry) => entry.id !== entryId));
     });
   }
 
   function updatePlaylistMediaEntry(entryId: string, key: keyof SaveMusicPlaylistMediaInput, value: string) {
+    if (key === "mediaSeqNo") {
+      const parsedSeqNo = Number(value);
+      if (!Number.isInteger(parsedSeqNo) || parsedSeqNo <= 0) {
+        return;
+      }
+      setPlaylistMediaEntries((entries) => reorderPlaylistMediaEntries(entries, entryId, parsedSeqNo));
+      return;
+    }
+
     setPlaylistMediaEntries((entries) => entries.map((entry) => entry.id === entryId ? { ...entry, [key]: value } : entry));
   }
 
@@ -403,15 +484,20 @@ export function MusicAddPage({
       return;
     }
 
-    const sanitizedPlaylistMedia = playlistMediaEntries
+    const sanitizedPlaylistMedia = normalizePlaylistMediaEntries(playlistMediaEntries)
+      .filter((entry) => entry.mediaUrl.trim().length > 0)
       .map((entry) => ({
         mediaSource: entry.mediaSource,
+        mediaSeqNo: Number(entry.mediaSeqNo),
         mediaType: entry.mediaType,
         mediaUrl: entry.mediaUrl.trim(),
         mediaArtist: entry.mediaArtist?.trim() ?? "",
         mediaCaption: entry.mediaCaption?.trim() ?? "",
       }))
-      .filter((entry) => entry.mediaUrl.length > 0);
+      .map((entry, index) => ({
+        ...entry,
+        mediaSeqNo: index + 1,
+      }));
 
     if (isPlaylistType && sanitizedPlaylistMedia.length === 0) {
       toast.error("Add at least one playlist media URL.");
@@ -420,6 +506,11 @@ export function MusicAddPage({
 
     if (isPlaylistType && sanitizedPlaylistMedia.some((entry) => !entry.mediaArtist || !entry.mediaCaption)) {
       toast.error("Each playlist media entry requires Artist Name and Caption.");
+      return;
+    }
+
+    if (isPlaylistType && sanitizedPlaylistMedia.some((entry) => !Number.isInteger(entry.mediaSeqNo) || entry.mediaSeqNo <= 0)) {
+      toast.error("Each playlist media entry requires a positive sequence number.");
       return;
     }
 
@@ -732,15 +823,18 @@ export function MusicAddPage({
                 </div>
                 <p className="text-xs text-[#4a6fae]">Add one or more public song or playlist URLs. At least one entry is required.</p>
                 <div className="space-y-3">
-                  { playlistMediaEntries.map((entry, index) => (
+                  { playlistMediaEntries.map((entry) => (
                     <div key={ entry.id } className="space-y-2 rounded-xl border border-[#d7e5f8] bg-white p-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">Media { index + 1 }</p>
+                      <div className="flex items-center justify-end">
                         <Button type="button" size="sm" variant="ghost" onClick={ () => removePlaylistMediaEntry(entry.id) } disabled={ playlistMediaEntries.length === 1 || isFounderModerating }>
                           Remove
                         </Button>
                       </div>
-                      <div className="grid gap-2 md:grid-cols-4">
+                      <div className="grid gap-2 md:grid-cols-5">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-[#203b66]">Seq</label>
+                          <Input type="number" min={ 1 } value={ String(entry.mediaSeqNo ?? 1) } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaSeqNo", event.target.value) } placeholder="1" disabled={ isFounderModerating } />
+                        </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-[#203b66]">Media Source</label>
                           <Select value={ entry.mediaSource } onValueChange={ (value) => updatePlaylistMediaEntry(entry.id, "mediaSource", value) } disabled={ isFounderModerating }>

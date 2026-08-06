@@ -561,7 +561,15 @@ export function MusicHomePage({
                       <p className="text-sm text-[#4a6fae]">No media links were provided.</p>
                     ) : (
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
-                        { selectedMusicDetail.playlistMedia.map((media) => (
+                        { [...selectedMusicDetail.playlistMedia]
+                          .sort((leftMedia, rightMedia) => {
+                            if (leftMedia.mediaSeqNo !== rightMedia.mediaSeqNo) {
+                              return leftMedia.mediaSeqNo - rightMedia.mediaSeqNo;
+                            }
+
+                            return leftMedia.id - rightMedia.id;
+                          })
+                          .map((media) => (
                           <article key={ media.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
                             <div className="mb-2 flex items-center justify-between gap-2">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
