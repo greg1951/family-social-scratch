@@ -1065,10 +1065,10 @@ export const movieLike = familySchema.table("movie_like", {
   memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
   updatedAt: timestamp("updated_at").defaultNow(),
 },
-  (table) => [
-    index("movie_like_movie_id_idx").on(table.movieId),
-    index("movie_like_member_id_idx").on(table.memberId),
-  ]
+(table) => [
+  index("movie_like_movie_id_idx").on(table.movieId),
+  index("movie_like_member_id_idx").on(table.memberId),
+]
 );
 
 export const music = familySchema.table("music", {
@@ -1076,17 +1076,33 @@ export const music = familySchema.table("music", {
   musicTitle: text("music_title").notNull().unique(),
   artistName: text("artist_name").notNull().default(""),
   musicJson: text("music_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
+  status: text("status").notNull().default("published"),
   isSong: boolean("is_song").notNull().default(true),
+  musicType: text("music_type").notNull().default("album"),
   musicImageUrl: text("music_image_url"),
   musicDebutYear: integer("music_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
   updatedAt: timestamp("updated_at").defaultNow(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
 },
+(table) => [
+  index('music_member_id_idx').on(table.memberId),
+  index('music_family_id_idx').on(table.familyId),
+]
+);
+
+export const musicPlaylistMedia = familySchema.table("music_playlist_media", {
+  id: serial("id").primaryKey(),
+  mediaSource: text("media_source").notNull().default(""),
+  mediaType: text("media_type").notNull().default("song"),
+  mediaUrl: text("media_url").notNull().default(""),
+  mediaArtist: text("media_artist").notNull().default(""),
+  mediaCaption: text("media_caption").notNull().default(""),
+  createdAt: timestamp("created_at").defaultNow(),
+  musicId: integer("fk_music_id").notNull().references(() => music.id, { onDelete: 'cascade' }),
+},
   (table) => [
-    index('music_member_id_idx').on(table.memberId),
-    index('music_family_id_idx').on(table.familyId),
+    index("music_media_music_id_idx").on(table.musicId),
   ]
 );
 

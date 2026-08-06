@@ -39,6 +39,7 @@ export {
   gamePlayerState,
   gamePlayerRound,
   movie,
+  musicPlaylistMedia,
   movieLike,
   movieComment,
   movieTemplate,

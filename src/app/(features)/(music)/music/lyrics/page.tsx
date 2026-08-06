@@ -23,7 +23,7 @@ export default async function LyricsPage({ searchParams }: { searchParams: Promi
     getMusicLyricsByMusicId(memberKeyDetails.familyId, musicId),
   ]);
 
-  if (!musicResult.success || !musicResult.music.isSong || !lyricsResult.success) {
+  if (!musicResult.success || musicResult.music.musicType !== "song" || !lyricsResult.success) {
     redirect("/music");
   }
 

@@ -36,7 +36,14 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
-import { MusicRecord, MusicTagOption, MusicTagType, MusicTemplateOption } from "@/components/db/types/music";
+import {
+  MusicRecord,
+  MusicTagOption,
+  MusicTagType,
+  MusicTemplateOption,
+  MusicType,
+  SaveMusicPlaylistMediaInput,
+} from "@/components/db/types/music";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,6 +71,26 @@ const TAG_TYPE_LABELS: Array<{ type: MusicTagType; label: string }> = [
 
 const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 const TEMPLATE_NONE_VALUE = "none";
+const MUSIC_TYPE_OPTIONS: Array<{ value: MusicType; label: string }> = [
+  { value: "album", label: "Album" },
+  { value: "song", label: "Song" },
+  { value: "playlist", label: "Playlist" },
+];
+
+type PlaylistMediaFormEntry = SaveMusicPlaylistMediaInput & {
+  id: string;
+};
+
+function createPlaylistMediaEntry(): PlaylistMediaFormEntry {
+  return {
+    id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${ Date.now() }-${ Math.random().toString(36).slice(2) }`,
+    mediaSource: "spotify",
+    mediaType: "song",
+    mediaUrl: "",
+    mediaArtist: "",
+    mediaCaption: "",
+  };
+}
 
 type ToolbarButtonProps = {
   label: string;
@@ -85,7 +112,7 @@ function ToolbarButton({ label, active = false, onClick, disabled = false, child
       aria-label={ label }
       className={ [
         "h-8 w-8 p-0",
-        active ? "border-[#b8581a] bg-[#fff1e8] text-[#7b3306]" : "border-[#e8c4a0]",
+        active ? "border-[#2C5EAD] bg-[#edf4ff] text-[#203b66]" : "border-[#c8d9f3] text-[#2C5EAD]",
       ].join(" ") }
     >
       <span className="inline-flex items-center justify-center gap-0.5">{ children }</span>
@@ -142,8 +169,20 @@ export function MusicAddPage({
   const [musicTitle, setMusicTitle] = useState(initialMusic?.musicTitle ?? "");
   const [artistName, setArtistName] = useState(initialMusic?.artistName ?? "");
   const [musicDebutYear, setMusicDebutYear] = useState(String(initialMusic?.musicDebutYear ?? new Date().getFullYear()));
-  const [isSong, setIsSong] = useState(initialMusic?.isSong ?? true);
-  const [status, setStatus] = useState(initialMusic?.status ?? "draft");
+  const [musicType, setMusicType] = useState<MusicType>(initialMusic?.musicType ?? (initialMusic?.isSong ? "song" : "album"));
+  const [status, setStatus] = useState(initialMusic?.status ?? "published");
+  const [playlistMediaEntries, setPlaylistMediaEntries] = useState<PlaylistMediaFormEntry[]>(
+    initialMusic?.playlistMedia?.length
+      ? initialMusic.playlistMedia.map((media) => ({
+        id: String(media.id),
+        mediaSource: media.mediaSource,
+        mediaType: media.mediaType,
+        mediaUrl: media.mediaUrl,
+        mediaArtist: media.mediaArtist,
+        mediaCaption: media.mediaCaption,
+      }))
+      : [createPlaylistMediaEntry()]
+  );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MusicTagType, string>>>(() => {
     if (!initialMusic) {
       return {};
@@ -173,21 +212,32 @@ export function MusicAddPage({
     () => selectedTemplateId === TEMPLATE_NONE_VALUE ? undefined : musicTemplates.find((template) => String(template.id) === selectedTemplateId),
     [selectedTemplateId, musicTemplates]
   );
+  const usesTemplate = musicType === "album" || musicType === "song";
+  const isPlaylistType = musicType === "playlist";
 
   const editor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
     content: getTemplateDocument(selectedTemplate),
     immediatelyRender: false,
     shouldRerenderOnTransaction: true,
-    editorProps: { attributes: { class: "tiptap min-h-112 rounded-2xl border border-[#f0d9c4] bg-white px-4 py-4 text-[#4b2a18] shadow-xs outline-none focus:outline-none" } },
+    editorProps: {
+      attributes: {
+        class: `tiptap ${ isPlaylistType ? "min-h-44" : "min-h-112" } rounded-2xl border border-[#c8d9f3] bg-white px-4 py-4 text-[#203b66] shadow-xs outline-none focus:outline-none`,
+      },
+    },
   });
 
   useEffect(() => {
     if (!editor || isEditing) {
       return;
     }
-    editor.commands.setContent(getTemplateDocument(selectedTemplate));
-  }, [editor, isEditing, selectedTemplate]);
+    if (usesTemplate) {
+      editor.commands.setContent(getTemplateDocument(selectedTemplate));
+      return;
+    }
+
+    editor.commands.setContent(createEmptyTipTapDocument());
+  }, [editor, isEditing, selectedTemplate, usesTemplate]);
 
   useEffect(() => {
     if (!editor || !initialMusic || !isEditing) {
@@ -320,6 +370,24 @@ export function MusicAddPage({
     return musicTags.filter((tag) => tag.tagType === tagType).sort((leftTag, rightTag) => leftTag.seqNo !== rightTag.seqNo ? leftTag.seqNo - rightTag.seqNo : leftTag.tagName.localeCompare(rightTag.tagName));
   }
 
+  function addPlaylistMediaEntry() {
+    setPlaylistMediaEntries((entries) => [...entries, createPlaylistMediaEntry()]);
+  }
+
+  function removePlaylistMediaEntry(entryId: string) {
+    setPlaylistMediaEntries((entries) => {
+      if (entries.length === 1) {
+        return entries;
+      }
+
+      return entries.filter((entry) => entry.id !== entryId);
+    });
+  }
+
+  function updatePlaylistMediaEntry(entryId: string, key: keyof SaveMusicPlaylistMediaInput, value: string) {
+    setPlaylistMediaEntries((entries) => entries.map((entry) => entry.id === entryId ? { ...entry, [key]: value } : entry));
+  }
+
   function handleSave(nextStatus: string = status) {
     if (!editor) {
       toast.error("Editor is still loading.");
@@ -330,8 +398,28 @@ export function MusicAddPage({
       return;
     }
     const templateId = Number(selectedTemplateId);
-    if (!templateId || Number.isNaN(templateId)) {
+    if (usesTemplate && (!templateId || Number.isNaN(templateId))) {
       toast.error("Select a template before saving the music.");
+      return;
+    }
+
+    const sanitizedPlaylistMedia = playlistMediaEntries
+      .map((entry) => ({
+        mediaSource: entry.mediaSource,
+        mediaType: entry.mediaType,
+        mediaUrl: entry.mediaUrl.trim(),
+        mediaArtist: entry.mediaArtist?.trim() ?? "",
+        mediaCaption: entry.mediaCaption?.trim() ?? "",
+      }))
+      .filter((entry) => entry.mediaUrl.length > 0);
+
+    if (isPlaylistType && sanitizedPlaylistMedia.length === 0) {
+      toast.error("Add at least one playlist media URL.");
+      return;
+    }
+
+    if (isPlaylistType && sanitizedPlaylistMedia.some((entry) => !entry.mediaArtist || !entry.mediaCaption)) {
+      toast.error("Each playlist media entry requires Artist Name and Caption.");
       return;
     }
 
@@ -341,7 +429,20 @@ export function MusicAddPage({
         return;
       }
       const selectedTagIds = TAG_TYPE_LABELS.map(({ type }) => selectedTagsByType[type]).filter(Boolean).map((value) => Number(value));
-      const result = await saveMusicAction({ id: initialMusic?.id, musicTitle: musicTitle.trim(), artistName: artistName.trim(), submitterLikenessDegree: undefined, musicJson: serializeTipTapDocument(editor.getJSON()), status: nextStatus, isSong, musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null, musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(), templateId, selectedTagIds });
+      const result = await saveMusicAction({
+        id: initialMusic?.id,
+        musicTitle: musicTitle.trim(),
+        artistName: artistName.trim(),
+        submitterLikenessDegree: undefined,
+        musicJson: serializeTipTapDocument(editor.getJSON()),
+        status: nextStatus,
+        musicType,
+        musicImageUrl: uploadedImageUrl ?? musicImageUrl ?? null,
+        musicDebutYear: Number(musicDebutYear) || new Date().getFullYear(),
+        templateId: usesTemplate ? templateId : undefined,
+        selectedTagIds,
+        playlistMedia: isPlaylistType ? sanitizedPlaylistMedia : [],
+      });
       if (!result.success) {
         toast.error(result.message);
         return;
@@ -421,68 +522,110 @@ export function MusicAddPage({
           </div>
 
           { isFounderModerating ? (
-            <div className="border-b border-[#f0d9c4] bg-[#fff8f2] px-5 py-4 sm:px-6">
-              <div className="flex items-center gap-3 rounded-lg border border-[#d8a85b] bg-[#fff7ea] p-3 text-sm text-[#7b4a00]">
+            <div className="border-b border-[#c8d9f3] bg-[#f7fbff] px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3 rounded-lg border border-[#a8c6ef] bg-[#edf4ff] p-3 text-sm text-[#203b66]">
                 <span>You are viewing this as Family Founder. Use Archive or Delete to moderate this post.</span>
               </div>
             </div>
           ) : null }
           <div className="grid gap-6 md:gap-2 px-3 py-3 sm:px-6 md:grid-cols-2">
-            <div className="space-y-4">
-              <div className="">
-                <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-title">Music Title</label>
-                <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter music title" />
-              </div>
-              <div className="width-full">
-                <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="artist-name">Artist Name</label>
-                <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder="Enter artist name" maxLength={ 100 } />
-              </div>
-              <div className="grid gap-1 md:grid-cols-2 py-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
-                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
-                    <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
-                      { musicTemplates.map((template) => (
-                        <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
-                      )) }
-                    </SelectContent>
-                  </Select>
+            <div className={ isPlaylistType ? "space-y-2" : "space-y-4" }>
+              { isPlaylistType ? (
+                <div className="grid gap-3 py-2 md:grid-cols-[1fr_2fr_1fr] md:items-end">
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]">Music Type</label>
+                    <Select value={ musicType } onValueChange={ (value) => setMusicType(value as MusicType) } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select music type" /></SelectTrigger>
+                      <SelectContent>
+                        { MUSIC_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={ option.value } value={ option.value }>{ option.label }</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-title">Playlist Title</label>
+                    <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter playlist title" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]">Status</label>
+                    <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Status</label>
-                  <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
-                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
+              ) : (
+                <>
+                  <div className="space-y-2 py-2">
+                    <label className="text-sm font-semibold text-[#203b66]">Music Type</label>
+                    <Select value={ musicType } onValueChange={ (value) => setMusicType(value as MusicType) } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select music type" /></SelectTrigger>
+                      <SelectContent>
+                        { MUSIC_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={ option.value } value={ option.value }>{ option.label }</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="">
+                    <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-title">Music Title</label>
+                    <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter music title" />
+                  </div>
+                </>
+              ) }
+              { !isPlaylistType ? (
+                <div className="width-full">
+                <label className="text-sm font-semibold text-[#203b66]" htmlFor="artist-name">Artist Name</label>
+                <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder={ isPlaylistType ? "Optional: curator or main artist" : "Enter artist name" } maxLength={ 100 } />
                 </div>
-              </div>
+              ) : null }
+              { !isPlaylistType ? (
+                <div className="grid gap-1 md:grid-cols-2 py-4">
+                  { usesTemplate ? (
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]">Template</label>
+                    <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
+                        { musicTemplates.map((template) => (
+                          <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
+                        )) }
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  ) : null }
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]">Status</label>
+                    <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
+                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                        <SelectItem value="archived">Archived</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : null }
+              { !isPlaylistType ? (
               <div className="grid gap-1 sm:grid-cols-2 py-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Type</label>
-                  <Select value={ isSong ? "song" : "album" } onValueChange={ (value) => setIsSong(value === "song") } disabled={ isFounderModerating }>
-                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="song">Song</SelectItem>
-                      <SelectItem value="album">Album</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="music-year">Debut Year</label>
+                  <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-year">Debut Year</label>
                   <Input id="music-year" type="number" disabled={ isFounderModerating } value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } className="w-30" />
                 </div>
               </div>
-              <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
-                <label className="text-sm font-semibold text-[#5c2e1a]">Music Image</label>
-                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage || isFounderModerating } />
+              ) : null }
+              <div className="space-y-2 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                <label className="text-sm font-semibold text-[#203b66]">{ isPlaylistType ? "Playlist Image" : "Music Image" }</label>
+                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#c8d9f3] bg-white p-2 text-sm text-[#203b66]" disabled={ uploadingImage || isFounderModerating } />
                 { imagePreviewUrl ? (
-                  <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
+                  <div className="relative mt-3 overflow-hidden rounded-xl border border-[#c8d9f3] bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */ }
                     <img src={ imagePreviewUrl } alt="Selected music preview" className="h-48 w-full object-cover" />
                     <button
@@ -500,14 +643,15 @@ export function MusicAddPage({
                     </button>
                   </div>
                 ) : null }
-                <div className="flex items-center gap-2 text-xs text-[#8b5a3c]"><Upload className="size-3.5" />Upload a music image around 800x450 pixels for best results.</div>
+                <div className="flex items-center gap-2 text-xs text-[#4a6fae]"><Upload className="size-3.5" />Upload a music image around 800x450 pixels for best results.</div>
               </div>
-              <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
-                <p className="text-sm font-semibold text-[#5c2e1a]">Music Tags</p>
+              { !isPlaylistType ? (
+              <div className="space-y-2 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                <p className="text-sm font-semibold text-[#203b66]">Music Tags</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   { TAG_TYPE_LABELS.map(({ type, label }) => (
                     <div key={ type } className="space-y-2">
-                      <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8b5a3c]">{ label }</label>
+                      <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">{ label }</label>
                       <Select value={ selectedTagsByType[type] ?? "none" } onValueChange={ (value) => setSelectedTagForType(type, value === "none" ? "" : value) }>
                         <SelectTrigger><SelectValue placeholder={ `Select ${ label.toLowerCase() }` } /></SelectTrigger>
                         <SelectContent>
@@ -521,19 +665,48 @@ export function MusicAddPage({
                   )) }
                 </div>
               </div>
+              ) : (
+                <div className="space-y-2 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                  <p className="text-sm font-semibold text-[#203b66]">Playlist Tags</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    { TAG_TYPE_LABELS.map(({ type, label }) => (
+                      <div key={ type } className="space-y-2">
+                        <label className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">{ label }</label>
+                        <Select value={ selectedTagsByType[type] ?? "none" } onValueChange={ (value) => setSelectedTagForType(type, value === "none" ? "" : value) }>
+                          <SelectTrigger><SelectValue placeholder={ `Select ${ label.toLowerCase() }` } /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            { getTagOptionsForType(type).map((tag) => (
+                              <SelectItem key={ tag.id } value={ String(tag.id) }>{ tag.tagName }</SelectItem>
+                            )) }
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )) }
+                  </div>
+                </div>
+              ) }
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-2 rounded-xl border border-[#f0d9c4] bg-[#fff8f2] px-3 py-2 text-sm text-[#734f3a]">Use the editor below to create a good looking review!</div>
-              <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
-                <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
-                  <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor?.can().chain().focus().toggleHeading({ level: 2 }).run() }><Heading2 /></ToolbarButton>
+              <div className="flex items-center gap-2 rounded-xl border border-[#c8d9f3] bg-[#f7fbff] px-3 py-2 text-sm text-[#35557f]">
+                { isPlaylistType
+                    ? "Describe why this playlist matters and what listeners should notice."
+                    : "Use the editor below to create a good looking review!" }
+              </div>
+              <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                <div className="flex flex-wrap gap-2 border-b border-[#c8d9f3] px-3 py-3">
+                  { !isPlaylistType ? (
+                    <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor?.can().chain().focus().toggleHeading({ level: 2 }).run() }><Heading2 /></ToolbarButton>
+                  ) : null }
                   <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor?.can().chain().focus().toggleHeading({ level: 3 }).run() }><Heading3 /></ToolbarButton>
                   <ToolbarButton label="Bold" onClick={ () => editor?.chain().focus().toggleBold().run() } active={ editor?.isActive("bold") } disabled={ !editor?.can().chain().focus().toggleBold().run() }><Bold /></ToolbarButton>
                   <ToolbarButton label="Italic" onClick={ () => editor?.chain().focus().toggleItalic().run() } active={ editor?.isActive("italic") } disabled={ !editor?.can().chain().focus().toggleItalic().run() }><Italic /></ToolbarButton>
                   <ToolbarButton label="Underline" onClick={ () => editor?.chain().focus().toggleUnderline().run() } active={ editor?.isActive("underline") } disabled={ !editor?.can().chain().focus().toggleUnderline().run() }><UnderlineIcon /></ToolbarButton>
                   <ToolbarButton label="Bullet list" onClick={ () => editor?.chain().focus().toggleBulletList().run() } active={ editor?.isActive("bulletList") } disabled={ !editor?.can().chain().focus().toggleBulletList().run() }><List /></ToolbarButton>
                   <ToolbarButton label="Ordered list" onClick={ () => editor?.chain().focus().toggleOrderedList().run() } active={ editor?.isActive("orderedList") } disabled={ !editor?.can().chain().focus().toggleOrderedList().run() }><ListOrdered /></ToolbarButton>
+                  { !isPlaylistType ? (
+                    <>
                   <ToolbarButton label="Set link" onClick={ handleInsertLink } active={ editor?.isActive("link") } disabled={ !editor }><Link2 /></ToolbarButton>
                   <ToolbarButton label="Remove link" onClick={ () => editor?.chain().focus().extendMarkRange("link").unsetLink().run() } disabled={ !editor?.isActive("link") }><Unlink /></ToolbarButton>
                   <ToolbarButton label="Horizontal rule" onClick={ () => editor?.chain().focus().setHorizontalRule().run() } disabled={ !editor?.can().chain().focus().setHorizontalRule().run() }><Minus /></ToolbarButton>
@@ -541,11 +714,77 @@ export function MusicAddPage({
                   <ToolbarButton label="Add row" onClick={ () => editor?.chain().focus().addRowAfter().run() } disabled={ !editor?.isActive("table") }><Rows2 /></ToolbarButton>
                   <ToolbarButton label="Add column" onClick={ () => editor?.chain().focus().addColumnAfter().run() } disabled={ !editor?.isActive("table") }><Columns2 /></ToolbarButton>
                   <ToolbarButton label="Delete table" onClick={ () => editor?.chain().focus().deleteTable().run() } disabled={ !editor?.isActive("table") }><Table2 /><X className="size-3" /></ToolbarButton>
+                    </>
+                  ) : null }
                 </div>
                 <EditorContent editor={ editor } />
               </div>
             </div>
           </div>
+          { isPlaylistType ? (
+            <div className="px-3 pb-4 sm:px-6 sm:pb-6">
+              <div className="space-y-3 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[#203b66]">Playlist Media</p>
+                  <Button type="button" variant="outline" onClick={ addPlaylistMediaEntry } disabled={ isFounderModerating }>
+                    Add Media
+                  </Button>
+                </div>
+                <p className="text-xs text-[#4a6fae]">Add one or more public song or playlist URLs. At least one entry is required.</p>
+                <div className="space-y-3">
+                  { playlistMediaEntries.map((entry, index) => (
+                    <div key={ entry.id } className="space-y-2 rounded-xl border border-[#d7e5f8] bg-white p-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">Media { index + 1 }</p>
+                        <Button type="button" size="sm" variant="ghost" onClick={ () => removePlaylistMediaEntry(entry.id) } disabled={ playlistMediaEntries.length === 1 || isFounderModerating }>
+                          Remove
+                        </Button>
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-4">
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-[#203b66]">Media Source</label>
+                          <Select value={ entry.mediaSource } onValueChange={ (value) => updatePlaylistMediaEntry(entry.id, "mediaSource", value) } disabled={ isFounderModerating }>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="spotify">Spotify</SelectItem>
+                              <SelectItem value="apple_play">Apple Play</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-[#203b66]">Media Type</label>
+                          <Select value={ entry.mediaType } onValueChange={ (value) => updatePlaylistMediaEntry(entry.id, "mediaType", value) } disabled={ isFounderModerating }>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="song">Song</SelectItem>
+                              <SelectItem value="playlist">Playlist</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-[#203b66]">Artist Name</label>
+                          <Input value={ entry.mediaArtist ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaArtist", event.target.value) } placeholder="Artist name" disabled={ isFounderModerating } />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-xs font-semibold text-[#203b66]">Caption</label>
+                          <Input value={ entry.mediaCaption ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaCaption", event.target.value) } placeholder="Caption" disabled={ isFounderModerating } />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-semibold text-[#203b66]">URL</label>
+                        <Input
+                          value={ entry.mediaUrl }
+                          onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaUrl", event.target.value) }
+                          placeholder="https://open.spotify.com/..."
+                          disabled={ isFounderModerating }
+                        />
+                      </div>
+                    </div>
+                  )) }
+                </div>
+              </div>
+            </div>
+          ) : null }
         </div>
 
         <Dialog open={ isArchiveConfirmOpen } onOpenChange={ setIsArchiveConfirmOpen }>

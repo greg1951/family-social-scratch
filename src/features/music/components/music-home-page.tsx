@@ -98,7 +98,19 @@ function getMusicDocument(musicJson?: string): JSONContent {
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
-function MusicViewer({ musicJson }: { musicJson?: string }) {
+function getMusicTypeLabel(type: MusicRecord["musicType"]): "Song" | "Album" | "Playlist" {
+  if (type === "song") {
+    return "Song";
+  }
+
+  if (type === "playlist") {
+    return "Playlist";
+  }
+
+  return "Album";
+}
+
+function MusicViewer({ musicJson, compact = false }: { musicJson?: string; compact?: boolean }) {
   const viewer = useEditor({
     editable: false,
     extensions: [
@@ -114,7 +126,7 @@ function MusicViewer({ musicJson }: { musicJson?: string }) {
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-112 text-[#4b2a18] focus:outline-none",
+        class: `tiptap ${ compact ? "min-h-56" : "min-h-112" } text-[#4b2a18] focus:outline-none`,
       },
     },
   });
@@ -128,7 +140,7 @@ function MusicViewer({ musicJson }: { musicJson?: string }) {
   }, [viewer, musicJson]);
 
   return (
-    <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+    <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
       <EditorContent editor={ viewer } />
     </div>
   );
@@ -194,7 +206,7 @@ export function MusicHomePage({
       music.musicTitle,
       music.tagNamesByType.genre?.[0] ?? "",
       music.tagNamesByType.subGenre?.[0] ?? "",
-      music.isSong ? "song" : "album",
+      music.musicType,
       music.submitterName,
     ].join(" ").toLowerCase().includes(query);
   });
@@ -272,7 +284,7 @@ export function MusicHomePage({
       status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
-      reviewType: music.isSong ? "Song" as const : "Album" as const,
+      reviewType: getMusicTypeLabel(music.musicType),
       hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
       commentsCount: music.commentCount,
@@ -294,7 +306,7 @@ export function MusicHomePage({
       status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
-      reviewType: music.isSong ? "Song" as const : "Album" as const,
+      reviewType: getMusicTypeLabel(music.musicType),
       hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
       commentsCount: music.commentCount,
@@ -336,7 +348,7 @@ export function MusicHomePage({
   const stripItems = musicStripMode === "all" ? allMusics : musicStripMode === "latest" ? latestMusics : topRatedMusics;
   const stripTitle = musicStripMode === "all" ? "All Music" : musicStripMode === "latest" ? "Latest Music" : "Top Rated Music";
   const stripDescription = musicStripMode === "all"
-    ? "All songs and albums, ordered by the most recently updated."
+    ? "All music posts (song, album, playlist), ordered by the most recently updated."
     : musicStripMode === "latest"
       ? "Latest music first, based on added date."
       : "Top rated music based on total likes and loves.";
@@ -350,12 +362,15 @@ export function MusicHomePage({
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
   const canCommentOnSelectedMusic = canReactToSelectedMusic;
   const canEditSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder));
-  const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder) && selectedMusicBasic.isSong);
+  const canEditLyricsSelectedMusic = Boolean(selectedMusicBasic && (selectedMusicBasic.memberId === member.memberId || member.isFounder) && selectedMusicBasic.musicType === "song");
   const canViewLyricsSelectedMusic = Boolean(
-    selectedMusicBasic?.isSong
+    selectedMusicBasic?.musicType === "song"
     && selectedMusicDetail?.id === selectedMusic
     && selectedMusicDetail.lyrics,
   );
+  const selectedMusicType = selectedMusicBasic?.musicType ?? "album";
+  const isSelectedPlaylist = selectedMusicType === "playlist";
+  const isSelectedSong = selectedMusicType === "song";
 
   function handleSelectMusic(musicId: number) {
     setSelectedMusic(musicId);
@@ -498,18 +513,24 @@ export function MusicHomePage({
         </div>
 
         <Dialog open={ isViewMusicOpen } onOpenChange={ setIsViewMusicOpen }>
-          <DialogContent className="border-[#f0d9c4] bg-[#fff8f2] sm:max-w-5xl">
+          <DialogContent className="border-[#c8d9f3] bg-[#f7fbff] sm:max-w-5xl">
             <DialogHeader>
-              <DialogTitle className="text-[#5c2e1a]">{ selectedMusicBasic?.musicTitle ?? "Music" }</DialogTitle>
-              <DialogDescription className="text-[#8b5a3c]">Full music details and family notes.</DialogDescription>
+              <DialogTitle className="text-[#203b66]">{ selectedMusicBasic?.musicTitle ?? "Music" }</DialogTitle>
+              <DialogDescription className="text-[#4a6fae]">
+                { isSelectedPlaylist
+                    ? "Playlist details, links, and family notes."
+                    : isSelectedSong
+                      ? "Song details, lyrics, and family notes."
+                      : "Album details and family notes." }
+              </DialogDescription>
             </DialogHeader>
 
             { selectedMusicBasic ? (
               <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
                 <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-                  <MusicViewer musicJson={ selectedMusicBasic.musicJson } />
+                  <MusicViewer musicJson={ selectedMusicBasic.musicJson } compact={ isSelectedPlaylist } />
                   <div className="space-y-4">
-                    <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white">
+                    <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white">
                       <div className="aspect-16/10 overflow-hidden">
                         { selectedMusicBasic.musicImageUrl ? (
                           <ModalMusicImage
@@ -527,42 +548,72 @@ export function MusicHomePage({
                         ) }
                       </div>
                     </div>
-                    <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Artist</p><p className="mt-2 text-sm leading-6 text-[#734f3a]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
+                    { !isSelectedPlaylist ? (
+                      <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#2C5EAD]">Artist</p><p className="mt-2 text-sm leading-6 text-[#35557f]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
+                    ) : null }
                   </div>
                 </div>
 
-                { selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.lyrics ? (
-                  <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-white p-4">
+                { isSelectedPlaylist && selectedMusicDetail?.id === selectedMusic ? (
+                  <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Playlist Media</p>
+                    { selectedMusicDetail.playlistMedia.length === 0 ? (
+                      <p className="text-sm text-[#4a6fae]">No media links were provided.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
+                        { selectedMusicDetail.playlistMedia.map((media) => (
+                          <article key={ media.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
+                            <div className="mb-2 flex items-center justify-between gap-2">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={ media.mediaSource === "apple_play" ? "/icons/apple-music-icon.jpg" : "/icons/spotify-icon.png" }
+                                alt={ media.mediaSource === "apple_play" ? "Apple Music" : "Spotify" }
+                                className="h-10 w-10 rounded-sm object-contain"
+                              />
+                            </div>
+                            <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block text-[#2C5EAD] underline break-words">
+                              { media.mediaCaption || "Open media" }
+                            </a>
+                            { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">Artist: { media.mediaArtist }</p> : null }
+                          </article>
+                        )) }
+                      </div>
+                    ) }
+                  </div>
+                ) : null }
+
+                { isSelectedSong && selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.lyrics ? (
+                  <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
                     <div>
-                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Lyrics</p>
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Lyrics</p>
                     </div>
                     <MusicViewer musicJson={ selectedMusicDetail.lyrics.lyricsJson } />
                   </div>
                 ) : null }
 
-                <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
                   <div>
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Family Comments</p>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Comments</p>
                   </div>
                   <div className="space-y-2">
                     { selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? (
-                      <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">No comments yet. Be the first family member to add one.</p>
+                      <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">No comments yet. Be the first family member to add one.</p>
                     ) : selectedMusicDetail?.id !== selectedMusic ? (
-                      <p className="rounded-2xl border border-dashed border-[#f0d9c4] bg-white px-3 py-2 text-sm text-[#8b5a3c]">Loading comments...</p>
+                      <p className="rounded-2xl border border-dashed border-[#c8d9f3] bg-white px-3 py-2 text-sm text-[#4a6fae]">Loading comments...</p>
                     ) : (
                       (selectedMusicDetail?.musicComments ?? []).map((comment) => (
-                        <article key={ comment.id } className="rounded-2xl border border-[#f0d9c4] bg-white px-3 py-3 text-sm text-[#734f3a]">
+                        <article key={ comment.id } className="rounded-2xl border border-[#c8d9f3] bg-white px-3 py-3 text-sm text-[#35557f]">
                           <TiptapRenderer contentJson={ comment.commentJson } />
-                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#8b5a3c]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p>
+                          <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4a6fae]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p>
                         </article>
                       ))
                     ) }
                   </div>
                 </div>
 
-                <div className="space-y-3 rounded-[1.4rem] border border-[#f0d9c4] bg-white p-4">
+                <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#a85a3a]">Discussion Threads</p>
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Discussion Threads</p>
                     <StartDiscussionDialog
                       targetType="music"
                       targetId={ selectedMusicBasic.id }
@@ -575,14 +626,14 @@ export function MusicHomePage({
                     />
                   </div>
                   { selectedMusicDetail?.id !== selectedMusic ? (
-                    <p className="text-sm text-[#8b5a3c]">Loading discussion threads...</p>
+                    <p className="text-sm text-[#4a6fae]">Loading discussion threads...</p>
                   ) : selectedMusicDetail.discussionThreads.length === 0 ? (
-                    <p className="text-sm text-[#8b5a3c]">No discussion threads have been added for this music yet.</p>
+                    <p className="text-sm text-[#4a6fae]">No discussion threads have been added for this music yet.</p>
                   ) : (
                     <div className="space-y-2">
                       { selectedMusicDetail.discussionThreads.map((discussionThread) => (
-                        <article key={ discussionThread.id } className="rounded-xl border border-[#f0d9c4] bg-[#fff8f2] p-3 text-sm text-[#734f3a]">
-                          <p className="font-semibold text-[#5c2e1a]">{ discussionThread.discussTopic }</p>
+                        <article key={ discussionThread.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
+                          <p className="font-semibold text-[#203b66]">{ discussionThread.discussTopic }</p>
                         </article>
                       )) }
                     </div>

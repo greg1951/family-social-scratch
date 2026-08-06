@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1784900959609,
-      "tag": "0000_jazzy_juggernaut",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784928949480,
-      "tag": "0001_loose_anthem",
+      "when": 1785963643608,
+      "tag": "0000_lumpy_silverclaw",
       "breakpoints": true
     }
   ]

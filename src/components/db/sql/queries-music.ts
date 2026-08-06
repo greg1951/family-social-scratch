@@ -8,6 +8,7 @@ import {
   musicComment,
   musicLike,
   musicLyrics,
+  musicPlaylistMedia,
   musicTag,
   pwaMutationRequest,
   musicTemplate,
@@ -20,9 +21,13 @@ import {
   MusicDetail,
   MusicHomePageDataReturn,
   MusicLyricsRecord,
+  MusicPlaylistMediaRecord,
   MusicRecord,
   MusicTagOption,
   MusicTagType,
+  MusicType,
+  PlaylistMediaSource,
+  PlaylistMediaType,
   MusicTemplateManagementDataReturn,
   MusicTemplateOption,
   MusicTemplateRecord,
@@ -52,6 +57,73 @@ import { logDbQueryError } from "./db-error-logger";
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
+const SUPPORTED_MUSIC_TYPES: MusicType[] = ["album", "song", "lyrics", "playlist"];
+const TEMPLATE_MUSIC_TYPES = new Set<MusicType>(["album", "song"]);
+const PLAYLIST_MEDIA_SOURCES = new Set<PlaylistMediaSource>(["spotify", "apple_play"]);
+const PLAYLIST_MEDIA_TYPES = new Set<PlaylistMediaType>(["song", "playlist"]);
+
+function normalizeMusicType(musicType: string | null | undefined, isSong: boolean): MusicType {
+  if (musicType && SUPPORTED_MUSIC_TYPES.includes(musicType as MusicType)) {
+    return musicType as MusicType;
+  }
+
+  return isSong ? "song" : "album";
+}
+
+function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]): {
+  mediaSource: PlaylistMediaSource;
+  mediaType: PlaylistMediaType;
+  mediaUrl: string;
+  mediaArtist: string;
+  mediaCaption: string;
+}[] {
+  if (!entries?.length) {
+    return [];
+  }
+
+  return entries
+    .map((entry) => {
+      const normalizedSource = String(entry.mediaSource ?? "").toLowerCase() as PlaylistMediaSource;
+      const normalizedType = String(entry.mediaType ?? "").toLowerCase() as PlaylistMediaType;
+      return {
+        mediaSource: PLAYLIST_MEDIA_SOURCES.has(normalizedSource) ? normalizedSource : "spotify",
+        mediaType: PLAYLIST_MEDIA_TYPES.has(normalizedType) ? normalizedType : "song",
+        mediaUrl: entry.mediaUrl.trim(),
+        mediaArtist: entry.mediaArtist?.trim() ?? "",
+        mediaCaption: entry.mediaCaption?.trim() ?? "",
+      };
+    })
+    .filter((entry) => entry.mediaUrl.length > 0);
+}
+
+function toPlaylistMediaRecord(row: {
+  id: number;
+  mediaSource: string;
+  mediaType: string;
+  mediaUrl: string;
+  mediaArtist: string;
+  mediaCaption: string;
+  createdAt: Date | null;
+  musicId: number;
+}): MusicPlaylistMediaRecord {
+  const mediaSource = PLAYLIST_MEDIA_SOURCES.has(row.mediaSource as PlaylistMediaSource)
+    ? (row.mediaSource as PlaylistMediaSource)
+    : "spotify";
+  const mediaType = PLAYLIST_MEDIA_TYPES.has(row.mediaType as PlaylistMediaType)
+    ? (row.mediaType as PlaylistMediaType)
+    : "song";
+
+  return {
+    id: row.id,
+    mediaSource,
+    mediaType,
+    mediaUrl: row.mediaUrl,
+    mediaArtist: row.mediaArtist,
+    mediaCaption: row.mediaCaption,
+    createdAt: row.createdAt ?? new Date(),
+    musicId: row.musicId,
+  };
+}
 
 async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
   if (!viewerMemberId) {
@@ -556,6 +628,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     musicJson: row.musicJson,
     status: row.status,
     isSong: row.isSong,
+    musicType: normalizeMusicType(row.musicType, row.isSong),
     musicImageUrl: row.musicImageUrl,
     hasLyrics: hasLyricsByMusicId.has(row.id),
     musicDebutYear: row.musicDebutYear,
@@ -598,7 +671,7 @@ async function loadMusicDetail(
     return null;
   }
 
-  const [commentRows, likeRows, tagRows, lyrics, discussionThreadsByMusicId] = await Promise.all([
+  const [commentRows, likeRows, tagRows, lyrics, playlistMediaRows, discussionThreadsByMusicId] = await Promise.all([
     db
       .select()
       .from(musicComment)
@@ -621,6 +694,20 @@ async function loadMusicDetail(
       .innerJoin(musicTagReference, eq(musicTagReference.id, musicTag.tagId))
       .where(eq(musicTag.musicId, musicId)),
     loadLyricsByMusicId(musicId),
+    db
+      .select({
+        id: musicPlaylistMedia.id,
+        mediaSource: musicPlaylistMedia.mediaSource,
+        mediaType: musicPlaylistMedia.mediaType,
+        mediaUrl: musicPlaylistMedia.mediaUrl,
+        mediaArtist: musicPlaylistMedia.mediaArtist,
+        mediaCaption: musicPlaylistMedia.mediaCaption,
+        createdAt: musicPlaylistMedia.createdAt,
+        musicId: musicPlaylistMedia.musicId,
+      })
+      .from(musicPlaylistMedia)
+      .where(eq(musicPlaylistMedia.musicId, musicId))
+      .orderBy(asc(musicPlaylistMedia.id)),
     loadDiscussionThreadSummariesByTargetIds(familyId, 'music', [musicId]),
   ]);
 
@@ -686,6 +773,7 @@ async function loadMusicDetail(
     musicJson: musicRow.musicJson,
     status: musicRow.status,
     isSong: musicRow.isSong,
+    musicType: normalizeMusicType(musicRow.musicType, musicRow.isSong),
     musicImageUrl: musicRow.musicImageUrl,
     hasLyrics: Boolean(lyrics),
     musicDebutYear: musicRow.musicDebutYear,
@@ -702,6 +790,7 @@ async function loadMusicDetail(
     likenessDegree: viewerLike?.likenessDegree ?? null,
     selectedTagIds: tagIdsByMusicId.get(musicId) ?? [],
     tagNamesByType: tagNamesByTypeByMusicId.get(musicId) ?? {},
+    playlistMedia: playlistMediaRows.map((row) => toPlaylistMediaRecord(row)),
     discussionThreads: discussionThreadsByMusicId.get(musicId) ?? [],
     hasDiscussionThread: (discussionThreadsByMusicId.get(musicId) ?? []).length > 0,
     musicComments,
@@ -714,8 +803,7 @@ export async function getMusicById(
   musicId: number,
   viewerMemberId?: number
 ): Promise<{ success: false; message: string } | { success: true; music: MusicRecord }> {
-  const musics = await loadMusics(familyId, viewerMemberId);
-  const selectedMusic = musics.find((musicRecord) => musicRecord.id === musicId);
+  const selectedMusic = await loadMusicDetail(familyId, musicId, viewerMemberId);
 
   if (!selectedMusic) {
     return {
@@ -818,11 +906,31 @@ export async function saveMusic(
   }
 ): Promise<SaveMusicReturn> {
   const normalizedTitle = input.musicTitle.trim();
+  const normalizedMusicType = String(input.musicType ?? "").toLowerCase() as MusicType;
+  const validMusicType = SUPPORTED_MUSIC_TYPES.includes(normalizedMusicType)
+    ? normalizedMusicType
+    : null;
 
   if (!normalizedTitle) {
     return {
       success: false,
       message: "Music title is required.",
+    };
+  }
+
+  if (!validMusicType) {
+    return {
+      success: false,
+      message: "Music type is invalid.",
+    };
+  }
+
+  const playlistMediaEntries = sanitizePlaylistMediaEntries(input.playlistMedia);
+
+  if (validMusicType === "playlist" && playlistMediaEntries.length === 0) {
+    return {
+      success: false,
+      message: "At least one playlist media entry is required.",
     };
   }
 
@@ -902,15 +1010,20 @@ export async function saveMusic(
     }
   }
 
-  const templates = await loadMusicTemplates(actor.familyId, actor.memberId, {
-    includeDraft: true,
-    includeGlobal: true,
-    ensureGlobalTemplate: true,
-  });
+  const requiresTemplate = TEMPLATE_MUSIC_TYPES.has(validMusicType);
+  const templates = requiresTemplate
+    ? await loadMusicTemplates(actor.familyId, actor.memberId, {
+      includeDraft: true,
+      includeGlobal: true,
+      ensureGlobalTemplate: true,
+    })
+    : [];
 
-  const selectedTemplate = templates.find((template) => template.id === input.templateId);
+  const selectedTemplate = requiresTemplate
+    ? templates.find((template) => template.id === input.templateId)
+    : null;
 
-  if (!selectedTemplate) {
+  if (requiresTemplate && !selectedTemplate) {
     return {
       success: false,
       message: "A music template must be selected.",
@@ -924,7 +1037,7 @@ export async function saveMusic(
   const parsedMusicJson = normalizedMusicJson ? parseSerializedTipTapDocument(normalizedMusicJson) : null;
   const musicJsonToStore = parsedMusicJson?.success
     ? normalizedMusicJson
-    : selectedTemplate.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
+    : selectedTemplate?.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
 
   try {
     const [persistedMusic] = input.id
@@ -935,7 +1048,8 @@ export async function saveMusic(
           artistName: input.artistName,
           musicJson: musicJsonToStore,
           status: input.status,
-          isSong: input.isSong,
+          isSong: validMusicType === "song",
+          musicType: validMusicType,
           musicImageUrl: input.musicImageUrl ?? null,
           musicDebutYear: input.musicDebutYear,
           updatedAt: new Date(),
@@ -949,7 +1063,8 @@ export async function saveMusic(
           artistName: input.artistName,
           musicJson: musicJsonToStore,
           status: input.status,
-          isSong: input.isSong,
+          isSong: validMusicType === "song",
+          musicType: validMusicType,
           musicImageUrl: input.musicImageUrl ?? null,
           musicDebutYear: input.musicDebutYear,
           memberId: actor.memberId,
@@ -971,6 +1086,21 @@ export async function saveMusic(
         sanitizedTagIds.map((tagId) => ({
           musicId: persistedMusic.id,
           tagId,
+        }))
+      );
+    }
+
+    await db.delete(musicPlaylistMedia).where(eq(musicPlaylistMedia.musicId, persistedMusic.id));
+
+    if (validMusicType === "playlist" && playlistMediaEntries.length > 0) {
+      await db.insert(musicPlaylistMedia).values(
+        playlistMediaEntries.map((entry) => ({
+          mediaSource: entry.mediaSource,
+          mediaType: entry.mediaType,
+          mediaUrl: entry.mediaUrl,
+          mediaArtist: entry.mediaArtist,
+          mediaCaption: entry.mediaCaption,
+          musicId: persistedMusic.id,
         }))
       );
     }
@@ -1175,6 +1305,7 @@ export async function saveMusicLyrics(
       id: music.id,
       familyId: music.familyId,
       isSong: music.isSong,
+      musicType: music.musicType,
       memberId: music.memberId,
     })
     .from(music)
@@ -1187,7 +1318,9 @@ export async function saveMusicLyrics(
     };
   }
 
-  if (!musicRow.isSong) {
+  const musicType = normalizeMusicType(musicRow.musicType, musicRow.isSong);
+
+  if (musicType !== "song") {
     return {
       success: false,
       message: "Lyrics can only be added for songs.",

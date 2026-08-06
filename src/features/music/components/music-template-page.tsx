@@ -79,7 +79,7 @@ function ToolbarButton({ label, active = false, onClick, disabled = false, child
       aria-label={ label }
       className={ [
         "h-8 w-8 p-0",
-        active ? "border-[#b8581a] bg-[#fff1e8] text-[#7b3306]" : "border-[#e8c4a0]",
+        active ? "border-[#2C5EAD] bg-[#edf4ff] text-[#203b66]" : "border-[#c8d9f3]",
       ].join(" ") }
     >
       <span className="inline-flex items-center justify-center gap-0.5">{ children }</span>
@@ -166,7 +166,7 @@ export function MusicTemplatePage({
     shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-[18rem] rounded-b-2xl border border-t-0 border-[#e8c4a0] bg-white px-4 py-4 text-[#4b2a18] shadow-xs outline-none focus:outline-none",
+        class: "tiptap min-h-[18rem] rounded-b-2xl border border-t-0 border-[#c8d9f3] bg-white px-4 py-4 text-[#203b66] shadow-xs outline-none focus:outline-none",
       },
     },
   });
@@ -267,7 +267,7 @@ export function MusicTemplatePage({
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-[1.6rem] border border-[#c8d9f3] bg-white/92">
+          <aside className="overflow-hidden rounded-[1.6rem] border border-[#c8d9f3] bg-white/92 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.7)]">
             <div className="border-b border-[#c8d9f3] px-5 py-4">
               <h2 className="text-lg font-black tracking-tight text-[#203b66]">Available Templates</h2>
               <p className="mt-1 text-xs text-[#4a6fae]">Select a template to preview.</p>
@@ -281,12 +281,12 @@ export function MusicTemplatePage({
                     const isSelected = selectedTemplateId === template.id;
 
                     return (
-                      <button key={ template.id } type="button" onClick={ () => setSelectedTemplateId(template.id) } className={ `w-full rounded-xl border px-3 py-3 text-left transition ${ isSelected ? "border-[#d8a06b] bg-[#fff1e8]" : "border-[#f0d9c4] bg-white hover:border-[#e5c2a0] hover:bg-[#fff8f2]" }` }>
-                        <p className="font-bold text-[#5c2e1a]">{ template.templateName }</p>
-                        <p className="mt-1 text-xs text-[#8b5a3c]">Owner: { template.ownerName }</p>
+                      <button key={ template.id } type="button" onClick={ () => setSelectedTemplateId(template.id) } className={ `w-full rounded-xl border px-3 py-3 text-left transition ${ isSelected ? "border-[#2C5EAD] bg-[#edf4ff]" : "border-[#c8d9f3] bg-white hover:border-[#7aa0dd] hover:bg-[#f7fbff]" }` }>
+                        <p className="font-bold text-[#203b66]">{ template.templateName }</p>
+                        <p className="mt-1 text-xs text-[#4a6fae]">Owner: { template.ownerName }</p>
                         <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.08em]">
-                          <span className="rounded-full bg-[#fff1e8] px-2 py-1 text-[#8a4b1d]">{ template.status }</span>
-                          { template.isGlobalTemplate ? <span className="rounded-full bg-[#f3ead9] px-2 py-1 text-[#7a5323]">Global</span> : null }
+                          <span className="rounded-full bg-[#edf4ff] px-2 py-1 text-[#2C5EAD]">{ template.status }</span>
+                          { template.isGlobalTemplate ? <span className="rounded-full bg-[#dbe8ff] px-2 py-1 text-[#2C5EAD]">Global</span> : null }
                           { template.canEdit ? <span className="rounded-full bg-[#e8f5da] px-2 py-1 text-[#3d6c21]">Editable</span> : <span className="rounded-full bg-[#ececec] px-2 py-1 text-[#666]">Read only</span> }
                         </div>
                       </button>
@@ -297,47 +297,47 @@ export function MusicTemplatePage({
             </div>
           </aside>
 
-          <div className="overflow-hidden rounded-[1.8rem] border border-[#f0d9c4] bg-white/92 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.75)]">
-            <div className="border-b border-[#f0d9c4] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(255,248,240,0.88))] px-5 py-5 sm:px-6">
-              <h2 className="text-2xl font-black tracking-tight text-[#5c2e1a]">{ selectedTemplate ? selectedTemplate.templateName : "Template Preview" }</h2>
-              <p className="mt-2 text-sm text-[#8b5a3c]">{ selectedTemplate ? `Status: ${ selectedTemplate.status } • Owner: ${ selectedTemplate.ownerName }` : "Select a template from the list to preview its content." }</p>
+          <div className="overflow-hidden rounded-[1.8rem] border border-[#c8d9f3] bg-white/92 shadow-[0_24px_70px_-40px_rgba(15,36,74,0.72)]">
+            <div className="border-b border-[#c8d9f3] bg-[linear-gradient(180deg,rgba(255,255,255,0.95),rgba(239,245,255,0.9))] px-5 py-5 sm:px-6">
+              <h2 className="text-2xl font-black tracking-tight text-[#203b66]">{ selectedTemplate ? selectedTemplate.templateName : "Template Preview" }</h2>
+              <p className="mt-2 text-sm text-[#4a6fae]">{ selectedTemplate ? `Status: ${ selectedTemplate.status } • Owner: ${ selectedTemplate.ownerName }` : "Select a template from the list to preview its content." }</p>
             </div>
 
             <div className="p-5 sm:p-6">
               { selectedTemplate ? (
-                <div className="rounded-xl border border-[#f0d9c4] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><TemplateViewer templateJson={ selectedTemplate.templateJson } /></div>
-              ) : <p className="text-sm text-[#8b5a3c]">No template selected.</p> }
+                <div className="rounded-xl border border-[#c8d9f3] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><TemplateViewer templateJson={ selectedTemplate.templateJson } /></div>
+              ) : <p className="text-sm text-[#4a6fae]">No template selected.</p> }
             </div>
           </div>
         </div>
       </div>
 
         <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-          <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
+          <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#c8d9f3] bg-[#f7fbff]">
           <DialogHeader>
-            <DialogTitle className="text-[#5c2e1a]">{ dialogMode === "create" ? "Create Music Template" : "Update Music Template" }</DialogTitle>
-            <DialogDescription className="text-[#8b5a3c]">Use the rich editor to create an engaging music template.</DialogDescription>
+            <DialogTitle className="text-[#203b66]">{ dialogMode === "create" ? "Create Music Template" : "Update Music Template" }</DialogTitle>
+            <DialogDescription className="text-[#4a6fae]">Use the rich editor to create an engaging music template.</DialogDescription>
           </DialogHeader>
 
           <div className="font-app space-y-4 overflow-y-auto pr-1">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-[#5c2e1a]" htmlFor="templateName">Template name</label>
-                <Input id="templateName" value={ templateName } onChange={ (event) => setTemplateName(event.target.value) } placeholder="Enter template name" className="border-[#e8c4a0] bg-white" />
+                <label className="text-sm font-bold text-[#203b66]" htmlFor="templateName">Template name</label>
+                <Input id="templateName" value={ templateName } onChange={ (event) => setTemplateName(event.target.value) } placeholder="Enter template name" className="border-[#c8d9f3] bg-white" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-bold text-[#5c2e1a]" htmlFor="templateStatus">Status</label>
+                <label className="text-sm font-bold text-[#203b66]" htmlFor="templateStatus">Status</label>
                 <Select value={ templateStatus } onValueChange={ setTemplateStatus }>
-                  <SelectTrigger id="templateStatus" className="border-[#e8c4a0] bg-white"><SelectValue /></SelectTrigger>
+                  <SelectTrigger id="templateStatus" className="border-[#c8d9f3] bg-white"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="draft">Draft</SelectItem><SelectItem value="published">Published</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-[#5c2e1a]">Template Content</p>
+              <p className="text-sm font-bold text-[#203b66]">Template Content</p>
               <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-[#e8c4a0] bg-[#fff1e8] px-1.5 py-2">
+                <div className="rounded-2xl border border-[#c8d9f3] bg-[#edf4ff] px-1.5 py-2">
                   <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
                     <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor }><Heading2 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor }><Heading3 className="size-4" /></ToolbarButton>
@@ -355,7 +355,7 @@ export function MusicTemplatePage({
                     <ToolbarButton label="Add row after" onClick={ () => editor?.chain().focus().addRowAfter().run() } disabled={ !editor || !editor.isActive("table") }><Rows2 className="size-4" /></ToolbarButton>
                   </div>
                 </div>
-                <div className="overflow-hidden rounded-2xl border border-[#e8c4a0] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><EditorContent editor={ editor } /></div>
+                <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><EditorContent editor={ editor } /></div>
               </div>
             </div>
           </div>

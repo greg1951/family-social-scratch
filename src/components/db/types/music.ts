@@ -1,6 +1,28 @@
 import type { DiscussionThreadSummary } from './discuss-threads';
 
 export type MusicTagType = "genre" | "subGenre";
+export type MusicType = "album" | "song" | "lyrics" | "playlist";
+export type PlaylistMediaSource = "spotify" | "apple_play";
+export type PlaylistMediaType = "song" | "playlist";
+
+export interface MusicPlaylistMediaRecord {
+  id: number;
+  mediaSource: PlaylistMediaSource;
+  mediaType: PlaylistMediaType;
+  mediaUrl: string;
+  mediaArtist: string;
+  mediaCaption: string;
+  createdAt: Date;
+  musicId: number;
+}
+
+export interface SaveMusicPlaylistMediaInput {
+  mediaSource: PlaylistMediaSource;
+  mediaType: PlaylistMediaType;
+  mediaUrl: string;
+  mediaArtist?: string;
+  mediaCaption?: string;
+}
 
 export interface MusicComment {
   id: number;
@@ -16,6 +38,7 @@ export interface MusicRecord {
   musicJson: string;
   status: string;
   isSong: boolean;
+  musicType: MusicType;
   musicImageUrl: string | null;
   hasLyrics?: boolean;
   musicDebutYear: number;
@@ -32,6 +55,7 @@ export interface MusicRecord {
   likenessDegree: number | null;
   selectedTagIds: number[];
   tagNamesByType: Partial<Record<MusicTagType, string[]>>;
+  playlistMedia?: MusicPlaylistMediaRecord[];
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
 }
@@ -48,6 +72,7 @@ export interface MusicLyricsRecord {
 export interface MusicDetail extends MusicRecord {
   musicComments: MusicComment[];
   lyrics: MusicLyricsRecord | null;
+  playlistMedia: MusicPlaylistMediaRecord[];
   discussionThreads: DiscussionThreadSummary[];
   hasDiscussionThread: boolean;
 }
@@ -108,11 +133,12 @@ export interface SaveMusicInput {
   submitterLikenessDegree?: number;
   musicJson: string;
   status: string;
-  isSong: boolean;
+  musicType: MusicType;
   musicImageUrl?: string | null;
   musicDebutYear: number;
-  templateId: number;
+  templateId?: number;
   selectedTagIds: number[];
+  playlistMedia?: SaveMusicPlaylistMediaInput[];
 }
 
 export interface SaveMusicTemplateInput {

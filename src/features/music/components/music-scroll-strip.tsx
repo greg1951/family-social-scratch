@@ -1,6 +1,6 @@
 "use client";
 
-import { Disc, DiscAlbum, Heart, MessageSquare, MessageSquareText, MicVocal, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Disc, DiscAlbum, Heart, ListMusic, MessageSquare, MessageSquareText, MicVocal, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +14,7 @@ type LatestMusicItem = {
   status: string;
   date: string;
   submitterName: string;
-  reviewType: "Song" | "Album";
+  reviewType: "Song" | "Album" | "Playlist";
   hasLyrics: boolean;
   hasDiscussionThread: boolean;
   submitterLikenessDegree: number | null;
@@ -49,7 +49,7 @@ type AllMusicItem = {
   status: string;
   date: string;
   submitterName: string;
-  reviewType: "Song" | "Album";
+  reviewType: "Song" | "Album" | "Playlist";
   hasLyrics: boolean;
   hasDiscussionThread: boolean;
   submitterLikenessDegree: number | null;
@@ -109,6 +109,14 @@ function MusicTypeIconBadge({ item }: { item: LatestMusicItem | AllMusicItem }) 
     return (
       <span className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#eef6fb] text-[#2d6a82]" title="Album">
         <DiscAlbum className="size-4" aria-label="Album" />
+      </span>
+    );
+  }
+
+  if (item.reviewType === "Playlist") {
+    return (
+      <span className="ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-[#eef6fb] text-[#2d6a82]" title="Playlist">
+        <ListMusic className="size-4" aria-label="Playlist" />
       </span>
     );
   }
