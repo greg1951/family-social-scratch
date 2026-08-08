@@ -43,6 +43,7 @@ import {
 } from './queries-family-activity';
 import { loadDiscussionThreadSummariesForTargetId } from './queries-discuss-threads';
 import { logDbQueryError } from './db-error-logger';
+import { normalizeYouTubeUrl } from '@/features/blogs/utils/youtube-url';
 
 const BLOG_FEATURE_NAME = 'Blogs';
 const BLOG_STATUS_OPTIONS = new Set<BlogPostStatus>(['draft', 'published', 'archived']);
@@ -327,6 +328,8 @@ async function loadBlogHomePosts(
       updatedAt: postRow.updatedAt as Date,
       coverImageS3Key: postRow.coverImageS3Key,
       coverImageAlt: postRow.coverImageAlt,
+      videoUrl: postRow.videoUrl,
+      videoMinutes: postRow.videoMinutes,
       allowComments: postRow.allowComments,
       authorMemberId: postRow.authorMemberId,
       familyId: postRow.familyId,
@@ -540,6 +543,9 @@ export async function saveBlogPost(
   const normalizedStatus = input.status;
   const normalizedCoverImageS3Key = (input.coverImageS3Key ?? '').trim() || null;
   const normalizedCoverImageAlt = (input.coverImageAlt ?? '').trim() || null;
+  const rawVideoUrl = (input.videoUrl ?? '').trim();
+  const normalizedVideoUrl = normalizeYouTubeUrl(rawVideoUrl);
+  const normalizedVideoMinutes = Math.trunc(input.videoMinutes ?? 0);
   const uniqueTagIds = [...new Set(input.selectedTagIds)];
 
   if (normalizedTitle.length < 2) {
@@ -553,6 +559,20 @@ export async function saveBlogPost(
     return {
       success: false,
       message: 'Select a valid blog status.',
+    };
+  }
+
+  if (rawVideoUrl && !normalizedVideoUrl) {
+    return {
+      success: false,
+      message: 'Video URL must be a valid HTTPS YouTube URL.',
+    };
+  }
+
+  if (normalizedVideoUrl && (!Number.isFinite(normalizedVideoMinutes) || normalizedVideoMinutes <= 0)) {
+    return {
+      success: false,
+      message: 'Video minutes must be greater than 0 when a YouTube URL is entered.',
     };
   }
 
@@ -626,6 +646,8 @@ export async function saveBlogPost(
           updatedAt: new Date(),
           coverImageS3Key: normalizedCoverImageS3Key,
           coverImageAlt: normalizedCoverImageAlt,
+          videoUrl: normalizedVideoUrl,
+          videoMinutes: normalizedVideoUrl ? normalizedVideoMinutes : 0,
           allowComments: input.allowComments,
         })
         .where(eq(blogPost.id, existingPost.id));
@@ -660,6 +682,8 @@ export async function saveBlogPost(
           publishedAt,
           coverImageS3Key: normalizedCoverImageS3Key,
           coverImageAlt: normalizedCoverImageAlt,
+          videoUrl: normalizedVideoUrl,
+          videoMinutes: normalizedVideoUrl ? normalizedVideoMinutes : 0,
           allowComments: input.allowComments,
           authorMemberId: actor.memberId,
           familyId: actor.familyId,

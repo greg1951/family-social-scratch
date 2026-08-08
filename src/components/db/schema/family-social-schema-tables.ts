@@ -315,6 +315,8 @@ export const blogPost = familySchema.table("blog_post", {
   updatedAt: timestamp("updated_at").defaultNow(),
   coverImageS3Key: text("cover_image_s3_key"),
   coverImageAlt: text("cover_image_alt"),
+  videoUrl: text("video_url"),
+  videoMinutes: integer("video_minutes").notNull().default(0),
   allowComments: boolean("allow_comments").notNull().default(true),
   authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
   familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),

@@ -72,30 +72,6 @@ type MusicScrollStripProps = {
   onOpenItem?: (id: number) => void;
 };
 
-function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
-  if (likenessDegree === 1) {
-    return <ThumbsUp className="size-4 text-[#245475]" aria-label="Submitter rated thumbs up" />;
-  }
-
-  if (likenessDegree === 2) {
-    return <Heart className="size-4 text-[#b33f6c]" aria-label="Submitter rated love" />;
-  }
-
-  return null;
-}
-
-function SubmitterRatingBadge({ likenessDegree }: { likenessDegree: number | null }) {
-  if (![1, 2].includes(likenessDegree ?? -1)) {
-    return null;
-  }
-
-  return (
-    <span className="inline-flex shrink-0 items-center justify-center rounded-full border border-[#f2d28f] bg-[#fff3c9] p-2.5 shadow-[0_8px_18px_-12px_rgba(145,100,0,0.65)]">
-      <SubmitterRatingIcon likenessDegree={ likenessDegree } />
-    </span>
-  );
-}
-
 function MusicTypeIconBadge({ item }: { item: LatestMusicItem | AllMusicItem }) {
   if (item.reviewType === "Song" && item.hasLyrics) {
     return (
@@ -283,7 +259,6 @@ export function MusicScrollStrip({
                           ) : null }
                         </div>
 
-                        { item.imageSrc ? <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } /> : null }
                       </div>
 
                       <div className="flex flex-wrap items-center gap-3 text-sm font-semibold text-[#21536a]">

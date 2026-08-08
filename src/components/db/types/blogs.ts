@@ -45,6 +45,8 @@ export interface BlogHomePost {
   updatedAt: Date;
   coverImageS3Key: string | null;
   coverImageAlt: string | null;
+  videoUrl: string | null;
+  videoMinutes: number;
   allowComments: boolean;
   authorMemberId: number;
   familyId: number;
@@ -93,6 +95,8 @@ export interface SaveBlogPostInput {
   publishedAt?: string | null;
   coverImageS3Key?: string | null;
   coverImageAlt?: string | null;
+  videoUrl?: string | null;
+  videoMinutes?: number;
   allowComments: boolean;
   selectedTagIds: number[];
 }

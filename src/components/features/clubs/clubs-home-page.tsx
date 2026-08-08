@@ -226,7 +226,7 @@ export default function ClubsHomePage({ clubs, member, initialReturnTo = null }:
                             <div key={ session.id } className="rounded-4xl border border-[#dbe5ef] bg-[#fbfdff] p-4">
                               <div className="flex items-start gap-3">
                                 <div className="min-w-0 flex-1">
-                                  <p className="truncate text-sm font-bold text-[#20364f]">
+                                    <p className="truncate select-none text-sm font-bold text-[#20364f]">
                                     { session.targetTitle ?? session.discussTopic ?? 'Club Session' }
                                   </p>
                                   <p className="text-[0.68rem] font-bold uppercase tracking-[0.22em] text-[#5f7d9a]">

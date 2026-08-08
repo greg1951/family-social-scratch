@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { resolveBlogCoverImageState } from "@/features/blogs/utils/blog-cover-image";
+import { normalizeYouTubeUrl } from "@/features/blogs/utils/youtube-url";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 
 function BlogEditorCoverImagePreview({ src, alt }: { src: string | null; alt: string | null }) {
@@ -122,6 +123,10 @@ export function BlogPostEditorPage({
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>(initialPost?.selectedTagIds ?? []);
   const [coverImageS3Key, setCoverImageS3Key] = useState<string | null>(initialPost?.coverImageS3Key ?? null);
   const [coverImageAlt, setCoverImageAlt] = useState(initialPost?.coverImageAlt ?? "");
+  const [videoUrl, setVideoUrl] = useState(initialPost?.videoUrl ?? "");
+  const [videoMinutes, setVideoMinutes] = useState(
+    initialPost?.videoMinutes ? String(initialPost.videoMinutes) : "",
+  );
   const [selectedCoverImageFile, setSelectedCoverImageFile] = useState<File | null>(null);
   const [isUploadingCoverImage, setIsUploadingCoverImage] = useState(false);
   const [coverImageUploadName, setCoverImageUploadName] = useState<string | null>(null);
@@ -254,6 +259,20 @@ export function BlogPostEditorPage({
       return;
     }
 
+    const trimmedVideoUrl = videoUrl.trim();
+    const normalizedVideoUrl = normalizeYouTubeUrl(trimmedVideoUrl);
+    const parsedVideoMinutes = Math.trunc(Number(videoMinutes));
+
+    if (trimmedVideoUrl && !normalizedVideoUrl) {
+      toast.error("Video URL must be a valid HTTPS YouTube URL.");
+      return;
+    }
+
+    if (normalizedVideoUrl && (!Number.isFinite(parsedVideoMinutes) || parsedVideoMinutes <= 0)) {
+      toast.error("Video minutes must be greater than 0 when a YouTube URL is entered.");
+      return;
+    }
+
     const coverImageValidation = resolveBlogCoverImageState({
       coverImageS3Key,
       coverImageAlt,
@@ -275,6 +294,8 @@ export function BlogPostEditorPage({
         selectedTagIds,
         coverImageS3Key: coverImageS3Key ?? null,
         coverImageAlt: coverImageValidation.altText.trim() || null,
+        videoUrl: normalizedVideoUrl,
+        videoMinutes: normalizedVideoUrl ? parsedVideoMinutes : 0,
       });
 
       if (!result.success) {
@@ -352,6 +373,38 @@ export function BlogPostEditorPage({
               placeholder="Write your post body"
               disabled={ isSaving || isDeleting || !canEdit }
             />
+          </div>
+
+          <div className="space-y-3 rounded-2xl border border-[#f3d0bf] bg-[#fffaf6] p-4">
+            <div>
+              <p className="text-sm font-semibold text-[#7a3e3a]">YouTube video</p>
+              <p className="text-sm text-[#9a5a4f]">Optional. The video must be public and appropriate for your family audience.</p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_9rem]">
+              <div className="space-y-2">
+                <label htmlFor="blog-video-url" className="text-sm font-semibold text-[#7a3e3a]">YouTube URL</label>
+                <Input
+                  id="blog-video-url"
+                  type="url"
+                  value={ videoUrl }
+                  onChange={ (event) => setVideoUrl(event.target.value) }
+                  placeholder="https://youtu.be/..."
+                  disabled={ isSaving || isDeleting || !canEdit }
+                />
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="blog-video-minutes" className="text-sm font-semibold text-[#7a3e3a]">Minutes</label>
+                <Input
+                  id="blog-video-minutes"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={ videoMinutes }
+                  onChange={ (event) => setVideoMinutes(event.target.value) }
+                  disabled={ isSaving || isDeleting || !canEdit }
+                />
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">

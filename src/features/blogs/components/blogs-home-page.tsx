@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Heart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Film, Heart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import MainDropMenu from "@/components/common/main-dropmenu";
 import { BlogHomePost } from "@/components/db/types/blogs";
@@ -322,17 +322,40 @@ export function BlogsHomePage({
                   const isSelected = post.id === selectedBlogId;
 
                   return (
-                    <button
+                    <div
                       key={ post.id }
-                      type="button"
+                      role="button"
+                      tabIndex={ 0 }
                       onClick={ () => setSelectedBlogId(post.id) }
                       onDoubleClick={ () => router.push(`/blogs/${post.slug}`) }
-                      className={ `flex h-full flex-col rounded-2xl border p-4 text-left shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b76d68] ${isSelected
+                      onKeyDown={ (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedBlogId(post.id);
+                        }
+                      } }
+                      className={ `flex h-full select-none flex-col rounded-2xl border p-4 text-left shadow-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b76d68] ${isSelected
                         ? "border-[#e7a67a] bg-[linear-gradient(135deg,rgba(255,240,231,0.95),rgba(255,249,244,0.95))]"
                         : "border-[#f5d4c2] bg-[#fffaf6] hover:border-[#f0b08d]"
                         }` }
                     >
-                      <h2 className="mt-2 line-clamp-2 text-lg font-bold text-[#7a3e3a]">{post.title}</h2>
+                      <div className="mt-2 flex items-start gap-2">
+                        <h2 className="line-clamp-2 flex-1 text-lg font-bold text-[#7a3e3a]">{post.title}</h2>
+                        {post.videoUrl ? (
+                          <a
+                            href={ post.videoUrl }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={ (event) => event.stopPropagation() }
+                            onDoubleClick={ (event) => event.stopPropagation() }
+                            className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-[#f3c1a9] bg-white text-[#9d5954] hover:bg-[#fff1e9]"
+                            aria-label={ `Watch ${ post.title } on YouTube` }
+                            title={ `Watch on YouTube (${ post.videoMinutes } min)` }
+                          >
+                            <Film className="size-4" aria-hidden="true" />
+                          </a>
+                        ) : null}
+                      </div>
                       <p className="mt-1 text-sm text-[#9a5a4f]">By {post.authorName} • {formatDate(post.publishedAt ?? post.createdAt)}</p>
 
                       <BlogCardCoverImage src={ post.coverImageS3Key } alt={ post.coverImageAlt } />
@@ -391,7 +414,7 @@ export function BlogsHomePage({
                         ) : null}
                       </div>
 
-                    </button>
+                    </div>
                   );
                 })}
               </div>

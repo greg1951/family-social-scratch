@@ -22,26 +22,33 @@
 ```
 
 ## Greetings
-Hello, welcome to *My Family Social*. 
 
-If you're watching this video, you are Very likely visiting the site for the first time and wondering, **what is** *My Family Social?*
 
-I'm Greg Hughlett of My Family Social and in this video I will answer that question for you.
+Hello, I'm Greg Hughlett of *My Family Social*. 
+
+If you're watching this video, you are very likely visiting the site for the first time and you're wondering what is My Family Social about?
 
 ```
    <CTL-Shift: Pause>
     hide my mug shot
-    <CTL-Shift: Resumee>
+    <CTL-Shift: Resume>
 ```
+
+To answer that question I'll address three key points about it and then I will take you on a video tour of some of the features you'll find in My Family Social.
+
 
 ## For Families and Friends
 *My Family Social* is all about what families do in this **virtual** world we live in. 
 
-If your family is anything like mine, it is spread out everywhere across the country. Although we get together on some major holidays and occasional family events, it never seems like it's often enough. 
+If your family is anything like mine, it is spread out everywhere across the country. 
 
-- Although remote from one another, we still manage to communicate but doing more sharing online. 
-- But, think about it, most of the family content we share is fractured and spread around to many different digital platforms. 
-- If you want to share some pictures of family or an interesting book you've read recently, or your mom's favorite recipes, **is there a platform that supports all of that?** 
+Although we get together on some major holidays and occasional family events, it never seems like it's often enough. 
+
+- Although we're remote from one another, we communicate by sharing pictures, message online. 
+
+- If you think about how we share things, most of the content we share is fractured and spread around to many different digital platforms. 
+
+- If you want to share some pictures of family or an interesting book you've read recently, or one of your mom's favorite recipes, **is there a platform that supports ALL of that?** 
 
 ## All in One Place
 
@@ -55,6 +62,12 @@ If your family is anything like mine, it is spread out everywhere across the cou
 - The content posted in your family is **only visible** to members of your family. Members in your family can only interact with members of your family and not with other families. 
   - The content and access is isolated to the family unit.
 - The content in your family cannot be seen or shared with other families on My Family Social.
+
+```
+   <CTL-Shift: Pause>
+    Transition OBS to next scene
+    <CTL-Shift: Resume>
+```
 
 # The My Family Social House
 

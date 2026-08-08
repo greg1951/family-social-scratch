@@ -126,7 +126,7 @@ function MusicViewer({ musicJson, compact = false }: { musicJson?: string; compa
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: `tiptap ${ compact ? "min-h-56" : "min-h-112" } text-[#4b2a18] focus:outline-none`,
+        class: `tiptap ${ compact ? "min-h-56" : "min-h-112" } text-[#203b66] focus:outline-none`,
       },
     },
   });
@@ -368,6 +368,18 @@ export function MusicHomePage({
     && selectedMusicDetail?.id === selectedMusic
     && selectedMusicDetail.lyrics,
   );
+  const selectedMusicLikenessDegree = selectedMusicDetail?.id === selectedMusic
+    ? selectedMusicDetail.likenessDegree
+    : (selectedMusicBasic?.likenessDegree ?? null);
+  const selectedMusicNoRatingCount = selectedMusicDetail?.id === selectedMusic
+    ? selectedMusicDetail.noRatingCount
+    : (selectedMusicBasic?.noRatingCount ?? 0);
+  const selectedMusicThumbsUpCount = selectedMusicDetail?.id === selectedMusic
+    ? selectedMusicDetail.thumbsUpCount
+    : (selectedMusicBasic?.thumbsUpCount ?? 0);
+  const selectedMusicLoveCount = selectedMusicDetail?.id === selectedMusic
+    ? selectedMusicDetail.loveCount
+    : (selectedMusicBasic?.loveCount ?? 0);
   const selectedMusicType = selectedMusicBasic?.musicType ?? "album";
   const isSelectedPlaylist = selectedMusicType === "playlist";
   const isSelectedSong = selectedMusicType === "song";
@@ -551,6 +563,60 @@ export function MusicHomePage({
                     { !isSelectedPlaylist ? (
                       <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#2C5EAD]">Artist</p><p className="mt-2 text-sm leading-6 text-[#35557f]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
                     ) : null }
+
+                    <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                      <div>
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Reactions</p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(-1) }
+                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                          className="rounded-full bg-[#5c6c76] text-white hover:bg-[#4c5961]"
+                          aria-label={ selectedMusicLikenessDegree === -1 ? "Remove thumbs down" : "Add thumbs down" }
+                        >
+                          <ThumbsDown className={ `size-4 ${ selectedMusicLikenessDegree === -1 ? "fill-white" : "" }` } />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(1) }
+                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                          className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
+                          aria-label={ selectedMusicLikenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                        >
+                          <ThumbsUp className={ `size-4 ${ selectedMusicLikenessDegree === 1 ? "fill-white" : "" }` } />
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={ () => handleToggleLike(2) }
+                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                          className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]"
+                          aria-label={ selectedMusicLikenessDegree === 2 ? "Remove love" : "Add love" }
+                        >
+                          <Heart className={ `size-4 ${ selectedMusicLikenessDegree === 2 ? "fill-white" : "" }` } />
+                        </Button>
+                      </div>
+                      { !canReactToSelectedMusic ? (
+                        <p className="text-xs text-[#4a6fae]">
+                          You cannot react to your own music posting. Ask another family member to react to it.
+                        </p>
+                      ) : null }
+                      <div className="flex flex-wrap items-center gap-4">
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#5c6c76]">
+                          <ThumbsDown className="size-4 text-[#5c6c76]" />
+                          { selectedMusicNoRatingCount.toLocaleString() }
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#245475]">
+                          <ThumbsUp className="size-4 text-[#2d87a8]" />
+                          { selectedMusicThumbsUpCount.toLocaleString() }
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                          <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
+                          { selectedMusicLoveCount.toLocaleString() }
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -602,6 +668,7 @@ export function MusicHomePage({
                 <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
                   <div>
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Comments</p>
+                    <p className="text-xs text-[#4a6fae]">Share your thoughts about this music with your family.</p>
                   </div>
                   <div className="space-y-2">
                     { selectedMusicDetail?.id === selectedMusic && selectedMusicDetail.musicComments.length === 0 ? (
@@ -611,12 +678,42 @@ export function MusicHomePage({
                     ) : (
                       (selectedMusicDetail?.musicComments ?? []).map((comment) => (
                         <article key={ comment.id } className="rounded-2xl border border-[#c8d9f3] bg-white px-3 py-3 text-sm text-[#35557f]">
-                          <TiptapRenderer contentJson={ comment.commentJson } />
+                          <div className="[&_.tiptap]:text-[#203b66] [&_.tiptap_a]:text-[#2C5EAD] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:text-[#203b66] [&_.tiptap_td]:text-[#203b66]">
+                            <TiptapRenderer contentJson={ comment.commentJson } />
+                          </div>
                           <p className="mt-2 text-xs uppercase tracking-[0.16em] text-[#4a6fae]">{ comment.commenterName } · { formatCreatedAt(comment.createdAt) }</p>
                         </article>
                       ))
                     ) }
                   </div>
+
+                  { canCommentOnSelectedMusic ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-comment-input-dialog">Add Comment</label>
+                      <div id="music-comment-input-dialog">
+                        <TipTapCommentEditor
+                          value={ commentText }
+                          onChange={ setCommentText }
+                          placeholder="What did you think about this song, album, or playlist?"
+                          disabled={ !selectedMusicBasic || isEngaging }
+                          toolbarClassName="border-[#c8d9f3] bg-[#edf4ff]"
+                          editorClassName="border-[#c8d9f3] text-[#203b66]"
+                          buttonClassName="border-[#9eb9e8] text-[#2C5EAD]"
+                          activeButtonClassName="border-[#2C5EAD] bg-[#dbe8ff] text-[#203b66]"
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button
+                          type="button"
+                          onClick={ handleAddComment }
+                          disabled={ !selectedMusicBasic || isEngaging || isSerializedTipTapDocumentEmpty(commentText) }
+                          className="rounded-full bg-[#2C5EAD] text-white hover:bg-[#234c8e]"
+                        >
+                          Post Comment
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null }
                 </div>
 
                 <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
@@ -630,7 +727,7 @@ export function MusicHomePage({
                       onSuccessRoute="/music/discussions/:threadId"
                       disabled={ isEngaging || selectedMusicDetail?.id !== selectedMusic }
                       triggerLabel="Add Discussion"
-                      triggerClassName="rounded-full bg-[#b8581a] px-4 text-xs font-semibold text-white hover:bg-[#964815]"
+                      triggerClassName="rounded-full bg-[#2C5EAD] px-4 text-xs font-semibold text-white hover:bg-[#234c8e]"
                     />
                   </div>
                   { selectedMusicDetail?.id !== selectedMusic ? (

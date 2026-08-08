@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { ArrowLeft, Heart, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowLeft, ExternalLink, Film, Heart, ThumbsDown, ThumbsUp } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -257,6 +257,18 @@ export function BlogPostDetailPage({
           <div className="min-w-0">
             <TiptapRenderer contentJson={ post.contentJson } />
           </div>
+          {post.videoUrl ? (
+            <a
+              href={ post.videoUrl }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 flex items-center gap-3 rounded-xl border border-[#e7a67a] bg-[#fff1e9] px-4 py-3 font-semibold text-[#7a3e3a] transition hover:bg-[#fde6d8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b76d68]"
+            >
+              <Film className="size-5 shrink-0" aria-hidden="true" />
+              <span className="flex-1">Watch this video on YouTube ({post.videoMinutes} min)</span>
+              <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+            </a>
+          ) : null}
         </article>
 
         <div className="grid gap-4 md:grid-cols-2">
