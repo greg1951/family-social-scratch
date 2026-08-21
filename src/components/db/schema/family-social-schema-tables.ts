@@ -1100,6 +1100,8 @@ export const musicPlaylistMedia = familySchema.table("music_playlist_media", {
   mediaUrl: text("media_url").notNull().default(""),
   mediaArtist: text("media_artist").notNull().default(""),
   mediaCaption: text("media_caption").notNull().default(""),
+  mediaImageUrl: text("media_image_url"),
+  useImageUrl: boolean("use_image_url").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
   musicId: integer("fk_music_id").notNull().references(() => music.id, { onDelete: 'cascade' }),
 },

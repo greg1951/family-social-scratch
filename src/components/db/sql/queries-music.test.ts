@@ -38,6 +38,8 @@ import { saveMusic } from "./queries-music";
 describe("saveMusic playlist behavior", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    delete process.env.SPOTIFY_CLIENT_ID;
+    delete process.env.SPOTIFY_CLIENT_SECRET;
   });
 
   it("requires at least one playlist media URL for playlist music type", async () => {
@@ -131,6 +133,8 @@ describe("saveMusic playlist behavior", () => {
         mediaUrl: "https://open.spotify.com/track/abc123",
         mediaArtist: "Aster Lake",
         mediaCaption: "Sunset highway song",
+        mediaImageUrl: null,
+        useImageUrl: true,
         musicId: 501,
       },
     ]);
@@ -138,6 +142,98 @@ describe("saveMusic playlist behavior", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.message).toContain("stop-after-playlist-media");
+    }
+  });
+
+  it("retrieves a Spotify artist image and stores it for playlist media when enabled", async () => {
+    const deleteWhereMock = vi.fn().mockResolvedValue(undefined);
+    dbMock.delete.mockReturnValue({ where: deleteWhereMock });
+
+    const insertMusicValuesMock = vi.fn().mockReturnValue({
+      returning: vi.fn().mockResolvedValue([
+        {
+          id: 502,
+          musicTitle: "Night Drive",
+          artistName: "",
+          musicJson: "{}",
+          status: "published",
+          musicType: "playlist",
+          musicImageUrl: null,
+          musicDebutYear: 2026,
+          updatedAt: new Date(),
+          memberId: 77,
+          familyId: 10,
+        },
+      ]),
+    });
+
+    const insertPlaylistMediaValuesMock = vi.fn().mockResolvedValue(undefined);
+    const insertReviewerCommentValuesMock = vi
+      .fn()
+      .mockRejectedValue(new Error("stop-after-spotify-image"));
+
+    dbMock.insert
+      .mockReturnValueOnce({ values: insertMusicValuesMock })
+      .mockReturnValueOnce({ values: insertPlaylistMediaValuesMock })
+      .mockReturnValueOnce({ values: insertReviewerCommentValuesMock });
+
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ access_token: "spotify-token" }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          artists: {
+            items: [{ images: [{ url: "https://i.scdn.co/image-artist.jpg" }] }],
+          },
+        }),
+      });
+
+    vi.stubGlobal("fetch", fetchMock as typeof fetch);
+    process.env.SPOTIFY_CLIENT_ID = "client-id";
+    process.env.SPOTIFY_CLIENT_SECRET = "client-secret";
+
+    const result = await saveMusic(
+      {
+        musicTitle: "Night Drive",
+        artistName: "",
+        musicJson: "{}",
+        status: "published",
+        musicType: "playlist",
+        musicDebutYear: 2026,
+        selectedTagIds: [],
+        playlistMedia: [
+          {
+            mediaSource: "spotify",
+            mediaType: "song",
+            mediaUrl: "https://open.spotify.com/track/abc123",
+            mediaArtist: "Aster Lake",
+            mediaCaption: "Night drive song",
+            useImageUrl: true,
+          },
+        ],
+      },
+      {
+        familyId: 10,
+        memberId: 77,
+      },
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(insertPlaylistMediaValuesMock).toHaveBeenCalledWith([
+      expect.objectContaining({
+        mediaArtist: "Aster Lake",
+        mediaImageUrl: "https://i.scdn.co/image-artist.jpg",
+        useImageUrl: true,
+        musicId: 502,
+      }),
+    ]);
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.message).toContain("stop-after-spotify-image");
     }
   });
 });

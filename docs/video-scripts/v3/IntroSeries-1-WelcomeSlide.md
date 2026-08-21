@@ -1,6 +1,7 @@
 - [Intro Slides](#intro-slides)
   - [Greetings](#greetings)
   - [For Families and Friends](#for-families-and-friends)
+  - [For Families and Friends](#for-families-and-friends-1)
   - [All in One Place](#all-in-one-place)
   - [Data Privacy](#data-privacy)
 - [The My Family Social House](#the-my-family-social-house)
@@ -26,23 +27,28 @@
 
 Hello, I'm Greg Hughlett of *My Family Social*. 
 
-If you're watching this video, you are very likely visiting the site for the first time and you're wondering what is My Family Social about?
-
 ```
-   <CTL-Shift: Pause>
-    hide my mug shot
-    <CTL-Shift: Resume>
+    **click** to hide my mug shot
 ```
 
-To answer that question I'll address three key points about it and then I will take you on a video tour of some of the features you'll find in My Family Social.
+If you're watching this video, you are very likely visiting the site for the first time, and you're wondering *what is My Family Social*
 
+## For Families and Friends
+
+```
+    **click** to show point 2
+```
+My Family Social is a dedicated private web site for families and family friends.
+
+
+```
+    **click** to show point 2
+```
 
 ## For Families and Friends
 *My Family Social* is all about what families do in this **virtual** world we live in. 
 
-If your family is anything like mine, it is spread out everywhere across the country. 
-
-- Although remote from one another, we communicate by sharing pictures and message online. 
+Families theses days largely communicate online, sending pictures and messages online, most of the content is spread around to many different digital platforms.
 
 - If you think about how we share things however, most of the content is spread around to many different digital platforms. 
 
@@ -69,14 +75,16 @@ If your family is anything like mine, it is spread out everywhere across the cou
 
 # The My Family Social House
 
-Let's move to the next slide that shows the My Family Social home page; It is a home with many rooms where the family can go. 
+Let's move to the next slide that shows the My Family Social home; Each of the families registered in My Family Social have heir own home, and in their home there are different things the members of the family can do. It's a big fun house.   
 
 ## The Ground Floor
 
-Let's start on the ground floor and in The Kitchen, of course.
+In the My Family home, there are ten rooms on three levels, so let's start at the beginning on the ground floor. 
+What a better place to start than the kitchen? Everybody hangs out in the kitchen. 
 
-- There's the **kitchen** table where most people hang out and share delicious food and recipes. 
+- The kitchen of course is where the foodies in the family will share their best recipes with each other. 
   - Wouldn't it be nice if your family recipes were in one place, for everyone to enjoy?
+  - The guided tour is first going to visit the kitchen because that is the feature in the house where I believe many members will find good value. 
 
 When you leave the kitchen you might pass through the Photo Hallway. 
 - Here's where the family can shared their **family pictures**, all in one place for everyone to see 
@@ -89,13 +97,13 @@ When you leave the kitchen you might pass through the Photo Hallway.
 
 ## The Middle Floor
 
-Directly above the kitchen is the middle floor where you'll find the Game Room. 
+In the center of the middle floor is where you'll find the Game Room. 
 
-- There are currently eight games supported in the Game Room, everything from Mexican Train, to Dart games like Cricket, Acquire, monopoly. 
+- There are currently eight games supported in the Game Room, from Mexican Train and Acquire (my family favorites), monopoly. triominos, to Dart games like Cricket. 
   - It's not just score keeping but game history, leader boards and player stats are kept for each of the games. 
   - There's no more arguing about who won the last time you played. 
 
-- The **Music Salon** is a place to share your favorite albums, songs, song lyrics and playlists. 
+- The **Music Salon** is a place to share your favorite albums, songs, song lyrics and **playlists**. 
 
 - In a family there **may be an aspiring poet who doesn't yet know it** in their midst. 
   - The Poetry Nook is not for everyone, as it is a very technical art form but the My Family Social poetry feature is just excellent. 

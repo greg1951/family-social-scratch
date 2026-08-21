@@ -29,9 +29,22 @@ CREATE TABLE IF NOT EXISTS family_schema.music_playlist_media (
   media_url text NOT NULL DEFAULT '',
   media_artist text NOT NULL DEFAULT '',
   media_caption text NOT NULL DEFAULT '',
+  media_image_url text,
+  use_image_url boolean NOT NULL DEFAULT false,
   created_at timestamp DEFAULT now(),
   fk_music_id integer NOT NULL REFERENCES family_schema.music(id) ON DELETE CASCADE
 );
+
+ALTER TABLE IF EXISTS family_schema.music_playlist_media
+  ADD COLUMN IF NOT EXISTS media_image_url text,
+  ADD COLUMN IF NOT EXISTS use_image_url boolean DEFAULT false;
+
+UPDATE family_schema.music_playlist_media
+SET use_image_url = false
+WHERE use_image_url IS NULL;
+
+ALTER TABLE IF EXISTS family_schema.music_playlist_media
+  ALTER COLUMN use_image_url SET NOT NULL;
 
 CREATE INDEX IF NOT EXISTS music_media_music_id_idx
 ON family_schema.music_playlist_media (fk_music_id);

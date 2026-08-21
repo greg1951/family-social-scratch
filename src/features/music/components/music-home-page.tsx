@@ -637,18 +637,23 @@ export function MusicHomePage({
                           })
                           .map((media) => (
                           <article key={ media.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
-                            <div className="mb-2 flex items-center justify-between gap-2">
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={ media.mediaSource === "apple_play" ? "/icons/apple-music-icon.jpg" : "/icons/spotify-icon.png" }
-                                alt={ media.mediaSource === "apple_play" ? "Apple Music" : "Spotify" }
-                                className="h-10 w-10 rounded-sm object-contain"
-                              />
+                            <div className="flex items-center gap-3">
+                              <div className="min-w-0 flex-1">
+                                <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block break-words text-[#2C5EAD] underline decoration-[#7aa6ef] underline-offset-2">
+                                  { media.mediaCaption || "Open media" }
+                                </a>
+                                { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">Artist: { media.mediaArtist }</p> : null }
+                              </div>
+
+                              <div className="shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={ media.mediaImageUrl && media.useImageUrl ? media.mediaImageUrl : (media.mediaSource === "apple_play" ? "/icons/apple-music-icon.jpg" : "/icons/spotify-icon.png") }
+                                  alt={ media.mediaSource === "apple_play" ? "Apple Music" : "Spotify" }
+                                  className="h-16 w-16 rounded-lg object-cover shadow-sm ring-2 ring-[#dfeafc]"
+                                />
+                              </div>
                             </div>
-                            <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block text-[#2C5EAD] underline break-words">
-                              { media.mediaCaption || "Open media" }
-                            </a>
-                            { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">Artist: { media.mediaArtist }</p> : null }
                           </article>
                         )) }
                       </div>

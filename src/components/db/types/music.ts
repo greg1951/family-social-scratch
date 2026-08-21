@@ -13,6 +13,8 @@ export interface MusicPlaylistMediaRecord {
   mediaUrl: string;
   mediaArtist: string;
   mediaCaption: string;
+  mediaImageUrl: string | null;
+  useImageUrl: boolean;
   createdAt: Date;
   musicId: number;
 }
@@ -24,6 +26,8 @@ export interface SaveMusicPlaylistMediaInput {
   mediaUrl: string;
   mediaArtist?: string;
   mediaCaption?: string;
+  mediaImageUrl?: string | null;
+  useImageUrl?: boolean;
 }
 
 export interface MusicComment {

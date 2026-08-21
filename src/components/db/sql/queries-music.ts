@@ -77,6 +77,8 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
   mediaUrl: string;
   mediaArtist: string;
   mediaCaption: string;
+  mediaImageUrl: string | null;
+  useImageUrl: boolean;
 }[] {
   if (!entries?.length) {
     return [];
@@ -94,9 +96,67 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
         mediaUrl: entry.mediaUrl.trim(),
         mediaArtist: entry.mediaArtist?.trim() ?? "",
         mediaCaption: entry.mediaCaption?.trim() ?? "",
+        mediaImageUrl: entry.mediaImageUrl?.trim() || null,
+        useImageUrl: entry.useImageUrl ?? true,
       };
     })
     .filter((entry) => entry.mediaUrl.length > 0);
+}
+
+async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMediaSource, useImageUrl: boolean): Promise<string | null> {
+  if (!useImageUrl || source !== "spotify" || !artistName.trim()) {
+    return null;
+  }
+
+  const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
+  if (!clientId || !clientSecret) {
+    return null;
+  }
+
+  try {
+    const tokenResponse = await fetch("https://accounts.spotify.com/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${ Buffer.from(`${ clientId }:${ clientSecret }`).toString("base64") }`,
+      },
+      body: new URLSearchParams({ grant_type: "client_credentials" }),
+    });
+
+    if (!tokenResponse.ok) {
+      return null;
+    }
+
+    const tokenBody = await tokenResponse.json() as { access_token?: string };
+    const accessToken = tokenBody.access_token;
+    if (!accessToken) {
+      return null;
+    }
+
+    const searchResponse = await fetch(`https://api.spotify.com/v1/search?q=${ encodeURIComponent(artistName) }&type=artist&limit=1`, {
+      headers: {
+        Authorization: `Bearer ${ accessToken }`,
+      },
+    });
+
+    if (!searchResponse.ok) {
+      return null;
+    }
+
+    const searchBody = await searchResponse.json() as {
+      artists?: {
+        items?: Array<{
+          images?: Array<{ url?: string }>;
+        }>;
+      };
+    };
+
+    const images = searchBody.artists?.items?.[0]?.images ?? [];
+    return images.length > 0 ? (images.at(-1)?.url ?? images[0]?.url ?? null) : null;
+  } catch {
+    return null;
+  }
 }
 
 function toPlaylistMediaRecord(row: {
@@ -107,6 +167,8 @@ function toPlaylistMediaRecord(row: {
   mediaUrl: string;
   mediaArtist: string;
   mediaCaption: string;
+  mediaImageUrl?: string | null;
+  useImageUrl?: boolean | null;
   createdAt: Date | null;
   musicId: number;
 }): MusicPlaylistMediaRecord {
@@ -125,9 +187,61 @@ function toPlaylistMediaRecord(row: {
     mediaUrl: row.mediaUrl,
     mediaArtist: row.mediaArtist,
     mediaCaption: row.mediaCaption,
+    mediaImageUrl: row.mediaImageUrl ?? null,
+    useImageUrl: row.useImageUrl ?? true,
     createdAt: row.createdAt ?? new Date(),
     musicId: row.musicId,
   };
+}
+
+function isMissingPlaylistMediaColumnError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  return /column .*media_image_url.*does not exist|column .*use_image_url.*does not exist|undefined column/i.test(error.message);
+}
+
+async function loadPlaylistMediaRowsByMusicId(musicId: number) {
+  try {
+    return await db
+      .select({
+        id: musicPlaylistMedia.id,
+        mediaSource: musicPlaylistMedia.mediaSource,
+        mediaSeqNo: musicPlaylistMedia.mediaSeqNo,
+        mediaType: musicPlaylistMedia.mediaType,
+        mediaUrl: musicPlaylistMedia.mediaUrl,
+        mediaArtist: musicPlaylistMedia.mediaArtist,
+        mediaCaption: musicPlaylistMedia.mediaCaption,
+        mediaImageUrl: musicPlaylistMedia.mediaImageUrl,
+        useImageUrl: musicPlaylistMedia.useImageUrl,
+        createdAt: musicPlaylistMedia.createdAt,
+        musicId: musicPlaylistMedia.musicId,
+      })
+      .from(musicPlaylistMedia)
+      .where(eq(musicPlaylistMedia.musicId, musicId))
+      .orderBy(asc(musicPlaylistMedia.mediaSeqNo), asc(musicPlaylistMedia.id));
+  } catch (error) {
+    if (!isMissingPlaylistMediaColumnError(error)) {
+      throw error;
+    }
+
+    return await db
+      .select({
+        id: musicPlaylistMedia.id,
+        mediaSource: musicPlaylistMedia.mediaSource,
+        mediaSeqNo: musicPlaylistMedia.mediaSeqNo,
+        mediaType: musicPlaylistMedia.mediaType,
+        mediaUrl: musicPlaylistMedia.mediaUrl,
+        mediaArtist: musicPlaylistMedia.mediaArtist,
+        mediaCaption: musicPlaylistMedia.mediaCaption,
+        createdAt: musicPlaylistMedia.createdAt,
+        musicId: musicPlaylistMedia.musicId,
+      })
+      .from(musicPlaylistMedia)
+      .where(eq(musicPlaylistMedia.musicId, musicId))
+      .orderBy(asc(musicPlaylistMedia.mediaSeqNo), asc(musicPlaylistMedia.id));
+  }
 }
 
 async function isViewerFounderForDrafts(familyId: number, viewerMemberId?: number): Promise<boolean> {
@@ -698,21 +812,7 @@ async function loadMusicDetail(
       .innerJoin(musicTagReference, eq(musicTagReference.id, musicTag.tagId))
       .where(eq(musicTag.musicId, musicId)),
     loadLyricsByMusicId(musicId),
-    db
-      .select({
-        id: musicPlaylistMedia.id,
-        mediaSource: musicPlaylistMedia.mediaSource,
-        mediaSeqNo: musicPlaylistMedia.mediaSeqNo,
-        mediaType: musicPlaylistMedia.mediaType,
-        mediaUrl: musicPlaylistMedia.mediaUrl,
-        mediaArtist: musicPlaylistMedia.mediaArtist,
-        mediaCaption: musicPlaylistMedia.mediaCaption,
-        createdAt: musicPlaylistMedia.createdAt,
-        musicId: musicPlaylistMedia.musicId,
-      })
-      .from(musicPlaylistMedia)
-      .where(eq(musicPlaylistMedia.musicId, musicId))
-      .orderBy(asc(musicPlaylistMedia.mediaSeqNo), asc(musicPlaylistMedia.id)),
+    loadPlaylistMediaRowsByMusicId(musicId),
     loadDiscussionThreadSummariesByTargetIds(familyId, 'music', [musicId]),
   ]);
 
@@ -929,7 +1029,16 @@ export async function saveMusic(
     };
   }
 
-  const playlistMediaEntries = sanitizePlaylistMediaEntries(input.playlistMedia);
+  const playlistMediaEntries = await Promise.all(
+    sanitizePlaylistMediaEntries(input.playlistMedia).map(async (entry) => {
+      const resolvedMediaImageUrl = entry.mediaImageUrl ?? await resolveSpotifyArtistImage(entry.mediaArtist, entry.mediaSource, entry.useImageUrl);
+      return {
+        ...entry,
+        mediaImageUrl: resolvedMediaImageUrl,
+        useImageUrl: entry.useImageUrl,
+      };
+    })
+  );
 
   if (validMusicType === "playlist" && playlistMediaEntries.length === 0) {
     return {
@@ -1095,17 +1204,41 @@ export async function saveMusic(
     await db.delete(musicPlaylistMedia).where(eq(musicPlaylistMedia.musicId, persistedMusic.id));
 
     if (validMusicType === "playlist" && playlistMediaEntries.length > 0) {
-      await db.insert(musicPlaylistMedia).values(
-        playlistMediaEntries.map((entry) => ({
-          mediaSource: entry.mediaSource,
-          mediaSeqNo: entry.mediaSeqNo,
-          mediaType: entry.mediaType,
-          mediaUrl: entry.mediaUrl,
-          mediaArtist: entry.mediaArtist,
-          mediaCaption: entry.mediaCaption,
-          musicId: persistedMusic.id,
-        }))
-      );
+      const playlistMediaInsertValues = playlistMediaEntries.map((entry) => ({
+        mediaSource: entry.mediaSource,
+        mediaSeqNo: entry.mediaSeqNo,
+        mediaType: entry.mediaType,
+        mediaUrl: entry.mediaUrl,
+        mediaArtist: entry.mediaArtist,
+        mediaCaption: entry.mediaCaption,
+        musicId: persistedMusic.id,
+        ...(entry.mediaImageUrl !== null || entry.useImageUrl !== undefined
+          ? {
+              mediaImageUrl: entry.mediaImageUrl ?? null,
+              useImageUrl: entry.useImageUrl,
+            }
+          : {}),
+      }));
+
+      try {
+        await db.insert(musicPlaylistMedia).values(playlistMediaInsertValues);
+      } catch (error) {
+        if (!isMissingPlaylistMediaColumnError(error)) {
+          throw error;
+        }
+
+        await db.insert(musicPlaylistMedia).values(
+          playlistMediaEntries.map((entry) => ({
+            mediaSource: entry.mediaSource,
+            mediaSeqNo: entry.mediaSeqNo,
+            mediaType: entry.mediaType,
+            mediaUrl: entry.mediaUrl,
+            mediaArtist: entry.mediaArtist,
+            mediaCaption: entry.mediaCaption,
+            musicId: persistedMusic.id,
+          }))
+        );
+      }
     }
 
     if (!existingMusic) {
