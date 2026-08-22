@@ -506,7 +506,7 @@ export default function BooksHomePage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
                   <h2 className="text-2xl font-black tracking-tight text-[#183746]">Select a Book Submission</h2>
                   <FeatureFaqHelp
-                    href=" /feature-faq?category=Book%20Besties"
+                    href=" /feature-faq?category=Library"
                     buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#9dd8f0] bg-gradient-to-b from-[#f4fcff] to-[#d9f2ff] text-[#1d6d8f] shadow-[0_8px_18px_rgba(29,109,143,0.2)] group-hover:shadow-[0_12px_26px_rgba(29,109,143,0.3)]"
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
                     tooltipClassName="bg-[#0f435c] text-[#ecfaff]"

@@ -42,6 +42,7 @@ import {
   MusicTagType,
   MusicTemplateOption,
   MusicType,
+  PlaylistMediaSource,
   SaveMusicPlaylistMediaInput,
 } from "@/components/db/types/music";
 import { Button } from "@/components/ui/button";
@@ -235,11 +236,12 @@ export function MusicAddPage({
   const [musicDebutYear, setMusicDebutYear] = useState(String(initialMusic?.musicDebutYear ?? new Date().getFullYear()));
   const [musicType, setMusicType] = useState<MusicType>(initialMusic?.musicType ?? "album");
   const [status, setStatus] = useState(initialMusic?.status ?? "published");
+  const [playlistMediaSource, setPlaylistMediaSource] = useState<PlaylistMediaSource>(initialMusic?.playlistMedia?.[0]?.mediaSource ?? "spotify");
   const [playlistMediaEntries, setPlaylistMediaEntries] = useState<PlaylistMediaFormEntry[]>(() =>
     initialMusic?.playlistMedia?.length
       ? normalizePlaylistMediaEntries(initialMusic.playlistMedia.map((media, index) => ({
         id: String(media.id),
-        mediaSource: media.mediaSource,
+        mediaSource: initialMusic.playlistMedia?.[0]?.mediaSource ?? "spotify",
         mediaSeqNo: Number.isInteger(media.mediaSeqNo) && media.mediaSeqNo > 0 ? media.mediaSeqNo : index + 1,
         mediaType: media.mediaType,
         mediaUrl: media.mediaUrl,
@@ -444,10 +446,17 @@ export function MusicAddPage({
         ...normalizedEntries,
         {
           ...createPlaylistMediaEntry(),
+          mediaSource: playlistMediaSource,
           mediaSeqNo: normalizedEntries.length + 1,
         },
       ];
     });
+  }
+
+  function updatePlaylistMediaSource(value: string) {
+    const source = value as PlaylistMediaSource;
+    setPlaylistMediaSource(source);
+    setPlaylistMediaEntries((entries) => entries.map((entry) => ({ ...entry, mediaSource: source })));
   }
 
   function removePlaylistMediaEntry(entryId: string) {
@@ -491,7 +500,7 @@ export function MusicAddPage({
     const sanitizedPlaylistMedia = normalizePlaylistMediaEntries(playlistMediaEntries)
       .filter((entry) => entry.mediaUrl.trim().length > 0)
       .map((entry) => ({
-        mediaSource: entry.mediaSource,
+        mediaSource: playlistMediaSource,
         mediaSeqNo: Number(entry.mediaSeqNo),
         mediaType: entry.mediaType,
         mediaUrl: entry.mediaUrl.trim(),
@@ -822,7 +831,16 @@ export function MusicAddPage({
             <div className="px-3 pb-4 sm:px-6 sm:pb-6">
               <div className="space-y-3 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#203b66]">Playlist Media</p>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <p className="shrink-0 text-sm font-semibold text-[#203b66]">Playlist Media</p>
+                    <Select value={ playlistMediaSource } onValueChange={ updatePlaylistMediaSource } disabled={ isFounderModerating }>
+                      <SelectTrigger aria-label="Playlist media source" className="h-9 w-36"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="spotify">Spotify</SelectItem>
+                        <SelectItem value="apple_play">Apple Music</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button type="button" variant="outline" onClick={ addPlaylistMediaEntry } disabled={ isFounderModerating }>
                     Add Media
                   </Button>
@@ -836,20 +854,10 @@ export function MusicAddPage({
                           Remove
                         </Button>
                       </div>
-                      <div className="grid gap-2 md:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,2.2fr)_minmax(0,1.8fr)]">
+                      <div className="grid gap-2 md:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)_minmax(0,2.2fr)_minmax(0,1.8fr)]">
                         <div className="space-y-1">
                           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Seq</label>
                           <Input type="number" min={ 1 } value={ String(entry.mediaSeqNo ?? 1) } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaSeqNo", event.target.value) } placeholder="1" disabled={ isFounderModerating } className="h-9" />
-                        </div>
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Source</label>
-                          <Select value={ entry.mediaSource } onValueChange={ (value) => updatePlaylistMediaEntry(entry.id, "mediaSource", value) } disabled={ isFounderModerating }>
-                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="spotify">Spotify</SelectItem>
-                              <SelectItem value="apple_play">Apple Play</SelectItem>
-                            </SelectContent>
-                          </Select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Type</label>
@@ -888,7 +896,7 @@ export function MusicAddPage({
                           <Input
                             value={ entry.mediaUrl }
                             onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaUrl", event.target.value) }
-                            placeholder="https://open.spotify.com/..."
+                            placeholder={ playlistMediaSource === "spotify" ? "https://open.spotify.com/..." : "https://music.apple.com/..." }
                             disabled={ isFounderModerating }
                           />
                         </div>
@@ -897,7 +905,7 @@ export function MusicAddPage({
                             type="checkbox"
                             checked={ !!entry.useImageUrl }
                             onChange={ (event) => updatePlaylistMediaEntry(entry.id, "useImageUrl", event.target.checked) }
-                            disabled={ isFounderModerating || entry.mediaSource !== "spotify" || !(entry.mediaArtist ?? "").trim() }
+                            disabled={ isFounderModerating || playlistMediaSource !== "spotify" || !(entry.mediaArtist ?? "").trim() }
                           />
                           Use Spotify artist image
                         </label>

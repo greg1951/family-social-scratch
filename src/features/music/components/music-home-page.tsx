@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, Heart, MessageSquare, MessageSquareText, Music, Plus, Search, ThumbsDown, ThumbsUp, ArrowLeft } from "lucide-react";
+import { ArrowLeft, CircleQuestionMark, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Music, Pause, Play, Plus, Search, SkipBack, SkipForward, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -15,6 +15,12 @@ import { toast } from "sonner";
 import {
   addMusicCommentAction,
   getMusicDetailAction,
+  pauseSpotifyPlaylistAction,
+  playSpotifyPlaylistAction,
+  resumeSpotifyPlaylistAction,
+  skipToNextSpotifyTrackAction,
+  skipToPreviousSpotifyTrackAction,
+  stopSpotifyPlaylistAction,
   toggleMusicLikeAction,
 } from "@/app/(features)/(music)/music/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
@@ -38,6 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
@@ -51,6 +58,7 @@ import {
   queueFeatureComment,
   readQueuedFeatureComments,
 } from "@/lib/pwa-background-sync";
+import { getPlaylistPlaybackAvailability } from "@/features/music/utils/playback-availability";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -110,6 +118,27 @@ function getMusicTypeLabel(type: MusicRecord["musicType"]): "Song" | "Album" | "
   return "Album";
 }
 
+function getSpotifyTrackUrisFromPlaylistMedia(playlistMedia: MusicDetail["playlistMedia"]): string[] {
+  const trackUris = new Set<string>();
+
+  for (const media of playlistMedia) {
+    if (media.mediaSource !== "spotify") {
+      continue;
+    }
+
+    const match = media.mediaUrl.match(/spotify\.com\/track\/([A-Za-z0-9]+)/i)
+      ?? media.mediaUrl.match(/spotify:track:([A-Za-z0-9]+)/i);
+
+    if (!match?.[1]) {
+      continue;
+    }
+
+    trackUris.add(`spotify:track:${ match[1] }`);
+  }
+
+  return Array.from(trackUris);
+}
+
 function MusicViewer({ musicJson, compact = false }: { musicJson?: string; compact?: boolean }) {
   const viewer = useEditor({
     editable: false,
@@ -150,15 +179,21 @@ export function MusicHomePage({
   musics,
   member,
   initialGuidedLaunchPayload,
+  hasSpotifyAccessToken,
+  musicPlayerOptions,
 }: {
   musics: MusicRecord[];
   member: MemberKeyDetails;
   initialGuidedLaunchPayload?: GuidedTourLaunchPayload | null;
+  hasSpotifyAccessToken: boolean;
+  musicPlayerOptions: Array<{ optionName: string; isSelected: boolean }>;
 }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
   const [selectedMusicDetail, setSelectedMusicDetail] = useState<MusicDetail | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [isSpotifyPlaybackBusy, setIsSpotifyPlaybackBusy] = useState(false);
+  const [spotifyPlaybackState, setSpotifyPlaybackState] = useState<"idle" | "playing" | "paused">("idle");
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const [searchValue, setSearchValue] = useState("");
@@ -250,6 +285,92 @@ export function MusicHomePage({
       window.removeEventListener(getPwaSyncNowEventName(), handleSync);
     };
   }, [selectedMusic]);
+
+  const handlePlaySelectedPlaylist = async () => {
+    if (!selectedMusicDetail) {
+      return;
+    }
+
+    const trackUris = getSpotifyTrackUrisFromPlaylistMedia(selectedMusicDetail.playlistMedia);
+
+    if (trackUris.length === 0) {
+      toast.error("No Spotify track URLs were found for this playlist.");
+      return;
+    }
+
+    setIsSpotifyPlaybackBusy(true);
+
+    try {
+      const result = spotifyPlaybackState === "paused"
+        ? await resumeSpotifyPlaylistAction()
+        : await playSpotifyPlaylistAction({ uris: trackUris });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSpotifyPlaybackState("playing");
+      toast.success(spotifyPlaybackState === "paused" ? "Playback resumed." : "Playlist playback started.");
+    } finally {
+      setIsSpotifyPlaybackBusy(false);
+    }
+  };
+
+  const handlePauseSelectedPlaylist = async () => {
+    setIsSpotifyPlaybackBusy(true);
+
+    try {
+      const result = await pauseSpotifyPlaylistAction();
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSpotifyPlaybackState("paused");
+      toast.success("Playback paused.");
+    } finally {
+      setIsSpotifyPlaybackBusy(false);
+    }
+  };
+
+  const handleStopSelectedPlaylist = async () => {
+    setIsSpotifyPlaybackBusy(true);
+
+    try {
+      const result = await stopSpotifyPlaylistAction();
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      setSpotifyPlaybackState("idle");
+      toast.success("Playback stopped.");
+    } finally {
+      setIsSpotifyPlaybackBusy(false);
+    }
+  };
+
+  const handleSkipSelectedPlaylist = async (direction: "previous" | "next") => {
+    setIsSpotifyPlaybackBusy(true);
+
+    try {
+      const result = direction === "previous"
+        ? await skipToPreviousSpotifyTrackAction()
+        : await skipToNextSpotifyTrackAction();
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(direction === "previous" ? "Skipped to previous track." : "Skipped to next track.");
+    } finally {
+      setIsSpotifyPlaybackBusy(false);
+    }
+  };
 
   useEffect(() => {
     if (!selectedMusic) {
@@ -358,6 +479,14 @@ export function MusicHomePage({
       ? "bg-[linear-gradient(135deg,#4f7fd6,#2C5EAD)]"
       : "bg-[linear-gradient(135deg,#7aa0dd,#4a6fae)]";
 
+  const preferredMusicPlayerName = musicPlayerOptions.find((option) => option.isSelected)?.optionName ?? null;
+  const selectedPlaylistPlaybackState = selectedMusicDetail && selectedMusicDetail.id === selectedMusic
+    ? getPlaylistPlaybackAvailability({
+        selectedProviderName: preferredMusicPlayerName,
+        hasSpotifyAccessToken,
+        playlistMedia: selectedMusicDetail.playlistMedia,
+      })
+    : { canPlay: false, canPause: false, provider: "none" as const };
   const selectedMusicBasic = (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail : musics.find((music) => music.id === selectedMusic)) ?? visibleMusics[0] ?? null;
   const canReactToSelectedMusic = Boolean(selectedMusicBasic && selectedMusicBasic.memberId !== member.memberId);
   const canCommentOnSelectedMusic = canReactToSelectedMusic;
@@ -386,6 +515,7 @@ export function MusicHomePage({
 
   function handleSelectMusic(musicId: number) {
     setSelectedMusic(musicId);
+    setSpotifyPlaybackState("idle");
   }
 
   function handleOpenMusicFromCard(musicId: number) {
@@ -485,7 +615,7 @@ export function MusicHomePage({
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#4a6fae]">
               <h2 className="text-2xl font-black tracking-tight text-[#203b66]">Music Finder</h2>
               <FeatureFaqHelp 
-                  href="/feature-faq?category=Music%20Lovers" 
+                  href="/feature-faq?category=Music%20Salon" 
                   buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c8d9f3] bg-gradient-to-b from-[#f7fbff] to-[#eaf1ff] text-[#2C5EAD]" 
                   iconClassName="h-3 w-3 text-[#2C5EAD]" 
                   tooltipClassName="bg-[#203b66] text-[#eff5ff]" 
@@ -622,7 +752,107 @@ export function MusicHomePage({
 
                 { isSelectedPlaylist && selectedMusicDetail?.id === selectedMusic ? (
                   <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
-                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Playlist Media</p>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Playlist Media</p>
+                        { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "spotify") ? (
+                          <HoverCard>
+                            <HoverCardTrigger asChild>
+                              <button type="button" aria-label="Spotify playlist account requirements" className="size-9 rounded-md shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2C5EAD] focus-visible:ring-offset-2">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src="/icons/spotify-icon.png" alt="" className="size-9 rounded-md object-cover" />
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent side="top" align="start" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
+                              You must have a Spotify account and sign in with Spotify to play this playlist.
+                            </HoverCardContent>
+                          </HoverCard>
+                        ) : null }
+                        { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "apple_play") ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src="/icons/apple-music-icon.jpg" alt="Apple Music playlist" title="Apple Music" className="size-6 rounded-md object-cover shadow-sm" />
+                        ) : null }
+                      </div>
+                      { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "spotify") ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            type="button"
+                            size="icon"
+                            onClick={ handlePlaySelectedPlaylist }
+                            disabled={ isSpotifyPlaybackBusy || !selectedPlaylistPlaybackState.canPlay }
+                            className="size-9 rounded-full bg-[#2C5EAD] text-white hover:bg-[#214e9d] disabled:opacity-50"
+                            aria-label={ spotifyPlaybackState === "paused" ? "Resume playlist" : "Play playlist" }
+                            title={ selectedPlaylistPlaybackState.canPlay ? (spotifyPlaybackState === "paused" ? "Resume" : "Play") : "Select Spotify as your preferred music player and verify your Spotify session is connected." }
+                          >
+                            <Play className="size-4 fill-current" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={ () => handleSkipSelectedPlaylist("previous") }
+                            disabled={ isSpotifyPlaybackBusy || !selectedPlaylistPlaybackState.canPlay }
+                            className="size-9 rounded-full border-[#9db8e2] text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#214e9d]"
+                            aria-label="Skip to previous track"
+                            title="Previous"
+                          >
+                            <SkipBack className="size-4 fill-current" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={ handlePauseSelectedPlaylist }
+                            disabled={ isSpotifyPlaybackBusy || !selectedPlaylistPlaybackState.canPause }
+                            className="size-9 rounded-full border-[#9db8e2] text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#214e9d]"
+                            aria-label="Pause playlist"
+                            title={ selectedPlaylistPlaybackState.canPause ? "Pause" : "Select Spotify as your preferred music player and verify your Spotify session is connected." }
+                          >
+                            <Pause className="size-4 fill-current" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={ handleStopSelectedPlaylist }
+                            disabled={ isSpotifyPlaybackBusy || !selectedPlaylistPlaybackState.canPause }
+                            className="size-9 rounded-full border-[#9db8e2] text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#214e9d]"
+                            aria-label="Stop playlist"
+                            title="Stop"
+                          >
+                            <Square className="size-3.5 fill-current" />
+                          </Button>
+                          <Button
+                            type="button"
+                            size="icon"
+                            variant="outline"
+                            onClick={ () => handleSkipSelectedPlaylist("next") }
+                            disabled={ isSpotifyPlaybackBusy || !selectedPlaylistPlaybackState.canPlay }
+                            className="size-9 rounded-full border-[#9db8e2] text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#214e9d]"
+                            aria-label="Skip to next track"
+                            title="Next"
+                          >
+                            <SkipForward className="size-4 fill-current" />
+                          </Button>
+                          { !selectedPlaylistPlaybackState.canPlay ? (
+                            <HoverCard>
+                              <HoverCardTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Why are these playback buttons disabled?"
+                                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#c8d9f3] bg-white shadow-sm transition hover:bg-[#edf4ff]"
+                                >
+                                  <CircleQuestionMark className="h-3.5 w-3.5 text-[#2C5EAD]" />
+                                </button>
+                              </HoverCardTrigger>
+                              <HoverCardContent side="left" align="center" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
+                                These buttons are disabled because Spotify is not selected as your preferred music player, or your Spotify connection is not active for this account.
+                              </HoverCardContent>
+                            </HoverCard>
+                          ) : null }
+                        </div>
+                      ) : null }
+                    </div>
                     { selectedMusicDetail.playlistMedia.length === 0 ? (
                       <p className="text-sm text-[#4a6fae]">No media links were provided.</p>
                     ) : (
@@ -639,7 +869,7 @@ export function MusicHomePage({
                           <article key={ media.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
                             <div className="flex items-center gap-3">
                               <div className="min-w-0 flex-1">
-                                <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block break-words text-[#2C5EAD] underline decoration-[#7aa6ef] underline-offset-2">
+                                <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block break-all text-[#2C5EAD] underline decoration-[#7aa6ef] underline-offset-2">
                                   { media.mediaCaption || "Open media" }
                                 </a>
                                 { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">Artist: { media.mediaArtist }</p> : null }

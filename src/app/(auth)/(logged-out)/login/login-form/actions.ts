@@ -200,3 +200,38 @@ export const beginAppleLogin = async ({ family }: { family: string }) => {
     error: false,
   };
 };
+
+export const beginSpotifyLogin = async ({ family }: { family: string }) => {
+  const validation = familySchema.safeParse(family);
+  if (!validation.success) {
+    return {
+      error: true,
+      message: validation.error.issues[0]?.message ?? "Family name is required",
+    };
+  }
+
+  const familyResult = await findRegisteredFamily(family);
+  if (!familyResult.success || !familyResult.familyId) {
+    return {
+      error: true,
+      message: "Family name is not registered in My Family Social",
+    };
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    OAUTH_FAMILY_COOKIE,
+    JSON.stringify({ familyName: familyResult.familyName, familyId: familyResult.familyId }),
+    {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 10,
+    }
+  );
+
+  return {
+    error: false,
+  };
+};

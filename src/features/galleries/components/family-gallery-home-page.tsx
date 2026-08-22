@@ -736,7 +736,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                       <div className="mt-2 flex items-center gap-2">
                         <h2 className="text-2xl font-black tracking-tight text-[#355427]">Album Finder</h2>
                         <FeatureFaqHelp
-                          href="/feature-faq?category=Photo%20Galleries"
+                          href="/feature-faq?category=Picture%20Hallway"
                           buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c5dbb4] bg-gradient-to-b from-[#f8fdf3] to-[#e7f3db] text-[#4e7430] shadow-[0_8px_18px_rgba(78,116,48,0.18)] group-hover:shadow-[0_12px_26px_rgba(78,116,48,0.26)]"
                           iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4e7430]"
                           tooltipClassName="bg-[#355427] text-[#f4fee9]"

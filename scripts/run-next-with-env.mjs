@@ -33,10 +33,6 @@ function resolvePreferredEnvFile(explicitEnvFile) {
 
 const envFilePath = resolvePreferredEnvFile(envFileArg);
 
-// Avoid stale shell-level auth host values leaking into local dev runs.
-delete childEnv.AUTH_URL;
-delete childEnv.NEXTAUTH_URL;
-
 async function ensureAppleClientSecret(env) {
   const hasSecret = typeof env.AUTH_APPLE_SECRET === "string" && env.AUTH_APPLE_SECRET.trim().length > 0;
   if (hasSecret) {
@@ -101,6 +97,11 @@ if (envFilePath && existsSync(envFilePath)) {
 } else {
   console.warn("No env file found. Continuing with existing process environment only.");
 }
+
+console.log("Auth host diagnostics", {
+  authUrl: childEnv.AUTH_URL ?? null,
+  nextAuthUrl: childEnv.NEXTAUTH_URL ?? null,
+});
 
 const hasFamilySocialDatabaseUrl = typeof childEnv.FAMILY_SOCIAL_DATABASE_URL === "string" && childEnv.FAMILY_SOCIAL_DATABASE_URL.trim().length > 0;
 const hasDatabaseUrl = typeof childEnv.DATABASE_URL === "string" && childEnv.DATABASE_URL.trim().length > 0;

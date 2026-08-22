@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { beginAppleLogin, beginGoogleLogin, emailLoginCheck, fullLoginUser, sendLogin2faCodeEmail } from "./actions";
+import { beginAppleLogin, beginGoogleLogin, beginSpotifyLogin, emailLoginCheck, fullLoginUser, sendLogin2faCodeEmail } from "./actions";
 import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
@@ -166,6 +166,28 @@ export default function LoginForm() {
     await signIn("apple", { callbackUrl: "/" });
   };
 
+  const handleSpotifyLogin = async () => {
+    const family = form.getValues("family");
+    const familyValidation = familySchema.safeParse(family);
+    if (!familyValidation.success) {
+      form.setError("family", {
+        message: familyValidation.error.issues[0]?.message ?? "Family name is required",
+      });
+      return;
+    }
+
+    const response = await beginSpotifyLogin({ family });
+    if (response?.error) {
+      form.setError("root", {
+        message: response.message,
+      });
+      setEmailAuthError(response.message ?? "Unable to begin Spotify sign-in");
+      return;
+    }
+
+    await signIn("spotify", { callbackUrl: "/" });
+  };
+
   return (
     <main className="font-app flex justify-center items-center h-2/12">
       { step === 1 &&
@@ -289,6 +311,14 @@ export default function LoginForm() {
                     onClick={ handleAppleLogin }
                   >
                     OR Continue with Apple
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    className="h-11 rounded-2xl border border-[#d8eef7] bg-white text-sm font-bold text-[#10364a] shadow-[0_18px_30px_-24px_rgba(16,54,74,0.8)] hover:bg-[#f1fbff]"
+                    type="button"
+                    onClick={ handleSpotifyLogin }
+                  >
+                    OR Continue with Spotify
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </fieldset>

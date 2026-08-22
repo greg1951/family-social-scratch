@@ -23,6 +23,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
   const sectionHeadingMap: Record<string, string> = {
     browser: "Preferred Browser",
     device: "Preferred Device",
+    player: "Preferred Music Player",
     feature: "Feature Notifications",
     notification: "Other Notifications",
     user: "User Settings",
@@ -31,6 +32,9 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
   const sectionHelpTextMap: Record<string, string[]> = {
     browser: ["If accessing My Family Social with a browser, indicate your preferred browser."],
     device: ["What device would prefer to use in My Family Social or othe web apps."],
+    player: [
+      "If you have a preferred music account, such as Spotify or Apple Music, select your player to play music playlists.",
+    ],
     feature: ["Choose which feature categories you want notifications for."],
     notification: [
       "The Activity Summary: Send me a weekly email summary of the family activyt.",
@@ -46,9 +50,10 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
   const sectionDisplayOrder: Record<string, number> = {
     device: 1,
     browser: 2,
-    feature: 3,
-    notification: 4,
-    user: 5,
+    player: 3,
+    feature: 4,
+    notification: 5,
+    user: 6,
   };
 
   const notificationOptions = (notifications ?? []).map((notification) => ({

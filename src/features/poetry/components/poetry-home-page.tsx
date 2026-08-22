@@ -592,7 +592,7 @@ export default function PoetryHomePage({
                 <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
                   <h2 className="text-2xl font-black tracking-tight text-[#43245d]">Find a Poem</h2>
                   <FeatureFaqHelp
-                    href=" /feature-faq?category=Poetry%20Cafe"
+                    href=" /feature-faq?category=Poetry%20Nook"
                     buttonClassName="h-4 w-4 md:h-7 md:w-7border-[#d8b5ff] bg-gradient-to-b from-[#fbf4ff] to-[#eddcff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
                     tooltipClassName="bg-[#4e2374] text-[#f6ebff]"

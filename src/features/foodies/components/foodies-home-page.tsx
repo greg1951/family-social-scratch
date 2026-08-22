@@ -962,7 +962,7 @@ export function FoodiesHomePage({
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#647a50]">
                     <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
                     <FeatureFaqHelp
-                      href="/feature-faq?category=Family+Foodies"
+                      href="/feature-faq?category=The%20Kitchen"
                       buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
                       iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"

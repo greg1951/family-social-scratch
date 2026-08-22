@@ -2,22 +2,25 @@ import NextAuth from "next-auth";
 import Credentials from 'next-auth/providers/credentials';
 import Google from "next-auth/providers/google";
 import Apple from "next-auth/providers/apple";
+import Spotify from "next-auth/providers/spotify";
+import {
+  getProviderEnvValue,
+  isAppleProviderConfigured,
+  isGoogleProviderConfigured,
+  isSpotifyProviderConfigured,
+} from "@/auth/provider-config";
+import { refreshSpotifyAccessToken } from "@/auth/spotify-token";
 import { authValidation } from "./features/auth/services/auth-utils";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import { accounts, user } from "@/components/db/schema/family-social-schema-tables";
 import { findRegisteredFamily } from "@/components/db/sql/queries-family-member";
 import type { AdapterAccount } from "@auth/core/adapters";
 
-const OAUTH_PROVIDERS = ["google", "apple"] as const;
+const OAUTH_PROVIDERS = ["google", "apple", "spotify"] as const;
 type OAuthProvider = typeof OAUTH_PROVIDERS[number];
-const APPLE_ENV_KEYS = [
-  "AUTH_APPLE_ID",
-  "AUTH_APPLE_SECRET",
-] as const;
-
 function isLocalOAuthEnvironment(): boolean {
   const authUrl = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? "";
   return process.env.NODE_ENV !== "production" || authUrl.includes("localhost") || authUrl.includes("127.0.0.1") || authUrl.includes("local.");
@@ -28,6 +31,16 @@ const localOAuthChecks: Array<"none" | "pkce" | "state" | "nonce"> = isLocalOAut
   : ["pkce"];
 
 const OAUTH_FAMILY_COOKIE = "oauth_family_context";
+
+console.log("[auth][startup] spotify env diagnostics", {
+  authSpotifyId: process.env.AUTH_SPOTIFY_ID ?? null,
+  authSpotifySecret: process.env.AUTH_SPOTIFY_SECRET ? "present" : null,
+  spotifyClientId: process.env.SPOTIFY_CLIENT_ID ?? null,
+  spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET ? "present" : null,
+  spotifyProviderConfigured: isSpotifyProviderConfigured(),
+  authGoogleConfigured: isGoogleProviderConfigured(),
+  authAppleConfigured: isAppleProviderConfigured(),
+});
 
 type OAuthFamilyContext = {
   familyName: string;
@@ -91,6 +104,23 @@ async function upsertOAuthAccount(params: {
     );
 
   if (existingAccount) {
+    await db
+      .update(accounts)
+      .set({
+        refresh_token: params.refresh_token ?? undefined,
+        access_token: params.access_token ?? undefined,
+        expires_at: params.expires_at ?? undefined,
+        token_type: params.token_type ?? undefined,
+        scope: params.scope ?? undefined,
+        id_token: params.id_token ?? undefined,
+        session_state: params.session_state ?? undefined,
+      })
+      .where(
+        and(
+          eq(accounts.provider, params.provider),
+          eq(accounts.providerAccountId, params.providerAccountId)
+        )
+      );
     return;
   }
 
@@ -133,12 +163,6 @@ async function findUserByProviderAccount(provider: string, providerAccountId: st
   return foundUser ?? null;
 }
 
-function isAppleProviderConfigured(): boolean {
-  return APPLE_ENV_KEYS.every((key) => {
-    const value = process.env[key];
-    return typeof value === "string" && value.trim().length > 0;
-  });
-}
 type AuthRecord = {
   email: string;
   family: string;
@@ -155,6 +179,56 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
 
       const provider = account.provider as OAuthProvider;
+
+      if (provider === "spotify") {
+        console.log("[auth][spotify-callback] incoming values", {
+          email: oauthUser.email ?? null,
+          providerAccountId: account.providerAccountId ?? null,
+          accessTokenPresent: Boolean(account.access_token),
+          refreshTokenPresent: Boolean(account.refresh_token),
+          expiresAt: account.expires_at ?? null,
+          scope: account.scope ?? null,
+          tokenType: account.token_type ?? null,
+        });
+
+        if (!oauthUser.email) {
+          return false;
+        }
+
+        const [existingUser] = await db
+          .select({ id: user.id, email: user.email, familyId: user.familyId })
+          .from(user)
+          .where(eq(user.email, oauthUser.email));
+
+        console.log("[auth][spotify-callback] existing user lookup", {
+          email: oauthUser.email,
+          matchedUser: existingUser ? { id: existingUser.id, email: existingUser.email, familyId: existingUser.familyId } : null,
+        });
+
+        if (!existingUser) {
+          return false;
+        }
+
+        if (account.providerAccountId) {
+          await upsertOAuthAccount({
+            userId: existingUser.id,
+            provider,
+            providerAccountId: account.providerAccountId,
+            type: "oauth",
+            refresh_token: account.refresh_token,
+            access_token: account.access_token,
+            expires_at: account.expires_at,
+            token_type: account.token_type,
+            scope: account.scope,
+            id_token: account.id_token,
+            session_state: account.session_state?.toString() ?? null,
+          });
+        }
+
+        (oauthUser as { id: string }).id = String(existingUser.id);
+        (oauthUser as { familyId: number }).familyId = existingUser.familyId;
+        return true;
+      }
 
       const cookieStore = await cookies();
       const rawFamilyContext = cookieStore.get(OAUTH_FAMILY_COOKIE)?.value;
@@ -219,35 +293,135 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
       return true;
     },
-    jwt({token, user: jwtUser}) {
+    jwt({token, user: jwtUser, account}) {
       if (jwtUser) {
         token.id = jwtUser.id;
         token.name = jwtUser.name;
         token.familyId = (jwtUser as { familyId?: number }).familyId;
         token.familyName = (jwtUser as { familyName?: string }).familyName;
       }
+
+      if (account?.provider === "spotify") {
+        token.spotifyAccessToken = account.access_token;
+        token.spotifyRefreshToken = account.refresh_token;
+        token.spotifyAccessTokenExpiresAt = account.expires_at;
+      }
+
       return token;
     },
-    session({session, token}) {
+    async session({session, token}) {
         session.user.id = token.id as string;
         session.user.name = token.name;
         (session.user as { familyId?: number }).familyId = token.familyId as number | undefined;
         (session.user as { familyName?: string }).familyName = token.familyName as string | undefined;
+
+        let spotifyAccessToken = (token.spotifyAccessToken as string | null | undefined) ?? null;
+        let spotifyRefreshToken = (token.spotifyRefreshToken as string | null | undefined) ?? null;
+        let spotifyAccessTokenExpiresAt = (token.spotifyAccessTokenExpiresAt as number | null | undefined) ?? null;
+        let spotifyAccountUserId = Number(token.id) || null;
+
+        if (!spotifyAccessToken && session.user.email) {
+          const normalizedEmail = session.user.email.trim().toLowerCase();
+          const [userRecord] = await db
+            .select({ id: user.id })
+            .from(user)
+            .where(eq(user.email, normalizedEmail));
+
+          if (userRecord?.id) {
+            spotifyAccountUserId = userRecord.id;
+            const [storedSpotifyAccount] = await db
+              .select({
+                accessToken: accounts.access_token,
+                refreshToken: accounts.refresh_token,
+                expiresAt: accounts.expires_at,
+              })
+              .from(accounts)
+              .where(and(eq(accounts.userId, userRecord.id), eq(accounts.provider, "spotify")))
+              .orderBy(desc(accounts.expires_at));
+
+            spotifyAccessToken = storedSpotifyAccount?.accessToken ?? null;
+            spotifyRefreshToken = storedSpotifyAccount?.refreshToken ?? null;
+            spotifyAccessTokenExpiresAt = storedSpotifyAccount?.expiresAt ?? null;
+          }
+        }
+
+        const spotifyClientId = getProviderEnvValue("AUTH_SPOTIFY_ID", "SPOTIFY_CLIENT_ID");
+        const spotifyClientSecret = getProviderEnvValue("AUTH_SPOTIFY_SECRET", "SPOTIFY_CLIENT_SECRET");
+
+        if ((spotifyAccessToken || spotifyRefreshToken) && spotifyClientId && spotifyClientSecret) {
+          const refreshedSpotifyToken = await refreshSpotifyAccessToken({
+            token: {
+              accessToken: spotifyAccessToken,
+              refreshToken: spotifyRefreshToken,
+              expiresAt: spotifyAccessTokenExpiresAt,
+            },
+            clientId: spotifyClientId,
+            clientSecret: spotifyClientSecret,
+          });
+
+          const didRefresh = Boolean(
+            refreshedSpotifyToken.accessToken
+            && refreshedSpotifyToken.accessToken !== spotifyAccessToken,
+          );
+
+          spotifyAccessToken = refreshedSpotifyToken.accessToken;
+          spotifyRefreshToken = refreshedSpotifyToken.refreshToken;
+          spotifyAccessTokenExpiresAt = refreshedSpotifyToken.expiresAt;
+          token.spotifyAccessToken = spotifyAccessToken;
+          token.spotifyRefreshToken = spotifyRefreshToken;
+          token.spotifyAccessTokenExpiresAt = spotifyAccessTokenExpiresAt;
+
+          if (didRefresh && spotifyAccountUserId) {
+            await db
+              .update(accounts)
+              .set({
+                access_token: spotifyAccessToken,
+                refresh_token: spotifyRefreshToken,
+                expires_at: spotifyAccessTokenExpiresAt,
+              })
+              .where(and(eq(accounts.userId, spotifyAccountUserId), eq(accounts.provider, "spotify")));
+          }
+        }
+
+        (session as { spotifyAccessToken?: string | null }).spotifyAccessToken = spotifyAccessToken;
+        (session as { spotifyRefreshToken?: string | null }).spotifyRefreshToken = spotifyRefreshToken;
+        (session as { spotifyAccessTokenExpiresAt?: number | null }).spotifyAccessTokenExpiresAt = spotifyAccessTokenExpiresAt;
         return session;
     }
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID as string,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET as string,
-      checks: localOAuthChecks,
-    }),
+    ...(isGoogleProviderConfigured()
+      ? [
+          Google({
+            clientId: getProviderEnvValue("AUTH_GOOGLE_ID", "GOOGLE_CLIENT_ID") as string,
+            clientSecret: getProviderEnvValue("AUTH_GOOGLE_SECRET", "GOOGLE_CLIENT_SECRET") as string,
+            checks: localOAuthChecks,
+          }),
+        ]
+      : []),
     ...(isAppleProviderConfigured()
       ? [
           Apple({
-            clientId: process.env.AUTH_APPLE_ID as string,
-            clientSecret: process.env.AUTH_APPLE_SECRET as string,
+            clientId: getProviderEnvValue("AUTH_APPLE_ID", "APPLE_CLIENT_ID") as string,
+            clientSecret: getProviderEnvValue("AUTH_APPLE_SECRET", "APPLE_CLIENT_SECRET") as string,
             checks: localOAuthChecks,
+          }),
+        ]
+      : []),
+    ...(isSpotifyProviderConfigured()
+      ? [
+          Spotify({
+            clientId: getProviderEnvValue("AUTH_SPOTIFY_ID", "SPOTIFY_CLIENT_ID") as string,
+            clientSecret: getProviderEnvValue("AUTH_SPOTIFY_SECRET", "SPOTIFY_CLIENT_SECRET") as string,
+            checks: localOAuthChecks,
+            // Must include `url`: an object-only `authorization` wipes the provider's default
+            // endpoint during config merge and falls back to discovery via `issuer` (unset here).
+            authorization: {
+              url: "https://accounts.spotify.com/authorize",
+              params: {
+                scope: "user-read-email user-read-private user-modify-playback-state user-read-playback-state",
+              },
+            },
           }),
         ]
       : []),
