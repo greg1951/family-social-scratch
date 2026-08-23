@@ -24,7 +24,8 @@ export async function refreshSpotifyAccessToken({
   const expiresAtMilliseconds = token.expiresAt ? token.expiresAt * 1000 : null;
   const isAccessTokenUsable = Boolean(
     token.accessToken
-    && (!expiresAtMilliseconds || now < expiresAtMilliseconds - EXPIRY_SKEW_SECONDS * 1000),
+    && expiresAtMilliseconds
+    && now < expiresAtMilliseconds - EXPIRY_SKEW_SECONDS * 1000,
   );
 
   if (isAccessTokenUsable) {

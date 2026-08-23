@@ -46,6 +46,29 @@ describe("refreshSpotifyAccessToken", () => {
     });
   });
 
+  it("refreshes a token when its expiry metadata is missing", async () => {
+    const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
+      access_token: "new-access-token",
+      expires_in: 3600,
+    }), { status: 200 }));
+
+    await expect(refreshSpotifyAccessToken({
+      token: {
+        accessToken: "unknown-age-access-token",
+        refreshToken: "current-refresh-token",
+        expiresAt: null,
+      },
+      clientId: "client-id",
+      clientSecret: "client-secret",
+      now: NOW,
+      fetchImplementation,
+    })).resolves.toEqual({
+      accessToken: "new-access-token",
+      refreshToken: "current-refresh-token",
+      expiresAt: NOW / 1000 + 3600,
+    });
+  });
+
   it("clears an expired access token when refresh fails", async () => {
     const fetchImplementation = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({
       error: "invalid_grant",

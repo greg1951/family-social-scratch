@@ -320,7 +320,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         let spotifyAccessTokenExpiresAt = (token.spotifyAccessTokenExpiresAt as number | null | undefined) ?? null;
         let spotifyAccountUserId = Number(token.id) || null;
 
-        if (!spotifyAccessToken && session.user.email) {
+        if ((!spotifyAccessToken || !spotifyRefreshToken || !spotifyAccessTokenExpiresAt) && session.user.email) {
           const normalizedEmail = session.user.email.trim().toLowerCase();
           const [userRecord] = await db
             .select({ id: user.id })
@@ -339,9 +339,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               .where(and(eq(accounts.userId, userRecord.id), eq(accounts.provider, "spotify")))
               .orderBy(desc(accounts.expires_at));
 
-            spotifyAccessToken = storedSpotifyAccount?.accessToken ?? null;
-            spotifyRefreshToken = storedSpotifyAccount?.refreshToken ?? null;
-            spotifyAccessTokenExpiresAt = storedSpotifyAccount?.expiresAt ?? null;
+            spotifyAccessToken = storedSpotifyAccount?.accessToken ?? spotifyAccessToken;
+            spotifyRefreshToken = storedSpotifyAccount?.refreshToken ?? spotifyRefreshToken;
+            spotifyAccessTokenExpiresAt = storedSpotifyAccount?.expiresAt ?? spotifyAccessTokenExpiresAt;
           }
         }
 

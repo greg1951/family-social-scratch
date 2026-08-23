@@ -35,7 +35,6 @@ export default async function MusicPage() {
     familyId: memberKeyDetails.familyId,
     isLoggedIn: memberKeyDetails.isLoggedIn,
     hasSpotifyAccessToken,
-    spotifySessionTokenValue: (session as { spotifyAccessToken?: string | null } | null)?.spotifyAccessToken ?? null,
     selectedPlayerOption: selectedSpotifyPlayer?.optionName ?? null,
     musicPlayerOptions: musicPlayerOptions.map((option) => ({
       optionName: option.optionName,
