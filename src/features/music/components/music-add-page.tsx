@@ -80,6 +80,7 @@ const MUSIC_TYPE_OPTIONS: Array<{ value: MusicType; label: string }> = [
 
 type PlaylistMediaFormEntry = SaveMusicPlaylistMediaInput & {
   id: string;
+  searchArtistImage: boolean;
 };
 
 function sortPlaylistMediaEntries(entries: PlaylistMediaFormEntry[]) {
@@ -153,7 +154,8 @@ function createPlaylistMediaEntry(): PlaylistMediaFormEntry {
     mediaArtist: "",
     mediaCaption: "",
     mediaImageUrl: null,
-    useImageUrl: true,
+    useImageUrl: false,
+    searchArtistImage: false,
   };
 }
 
@@ -248,7 +250,8 @@ export function MusicAddPage({
         mediaArtist: media.mediaArtist,
         mediaCaption: media.mediaCaption,
         mediaImageUrl: media.mediaImageUrl ?? null,
-        useImageUrl: media.useImageUrl ?? true,
+        useImageUrl: media.useImageUrl ?? false,
+        searchArtistImage: false,
       })))
       : [createPlaylistMediaEntry()]
   );
@@ -502,12 +505,13 @@ export function MusicAddPage({
       .map((entry) => ({
         mediaSource: playlistMediaSource,
         mediaSeqNo: Number(entry.mediaSeqNo),
-        mediaType: entry.mediaType,
+        mediaType: "song" as const,
         mediaUrl: entry.mediaUrl.trim(),
         mediaArtist: entry.mediaArtist?.trim() ?? "",
         mediaCaption: entry.mediaCaption?.trim() ?? "",
         mediaImageUrl: entry.mediaImageUrl ?? null,
         useImageUrl: Boolean(entry.useImageUrl),
+        searchArtistImage: entry.searchArtistImage,
       }))
       .map((entry, index) => ({
         ...entry,
@@ -520,7 +524,7 @@ export function MusicAddPage({
     }
 
     if (isPlaylistType && sanitizedPlaylistMedia.some((entry) => !entry.mediaArtist || !entry.mediaCaption)) {
-      toast.error("Each playlist media entry requires Artist Name and Caption.");
+      toast.error("Each playlist media entry requires Artist Name and Song Title.");
       return;
     }
 
@@ -848,67 +852,48 @@ export function MusicAddPage({
                 <p className="text-xs text-[#4a6fae]">Add one or more public song or playlist URLs. At least one entry is required.</p>
                 <div className="space-y-3">
                   { playlistMediaEntries.map((entry) => (
-                    <div key={ entry.id } className="space-y-2 rounded-xl border border-[#d7e5f8] bg-white p-3">
-                      <div className="flex items-center justify-end">
-                        <Button type="button" size="sm" variant="ghost" onClick={ () => removePlaylistMediaEntry(entry.id) } disabled={ playlistMediaEntries.length === 1 || isFounderModerating }>
-                          Remove
-                        </Button>
-                      </div>
-                      <div className="grid gap-2 md:grid-cols-[minmax(0,0.6fr)_minmax(0,1.2fr)_minmax(0,2.2fr)_minmax(0,1.8fr)]">
+                    <div key={ entry.id } className="rounded-xl border border-[#d7e5f8] bg-white p-3">
+                      <div className="grid items-end gap-2 lg:grid-cols-[3.5rem_minmax(7rem,1.15fr)_minmax(7rem,1.15fr)_minmax(9rem,1.6fr)_auto_auto_auto]">
                         <div className="space-y-1">
                           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Seq</label>
                           <Input type="number" min={ 1 } value={ String(entry.mediaSeqNo ?? 1) } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaSeqNo", event.target.value) } placeholder="1" disabled={ isFounderModerating } className="h-9" />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Type</label>
-                          <Select value={ entry.mediaType } onValueChange={ (value) => updatePlaylistMediaEntry(entry.id, "mediaType", value) } disabled={ isFounderModerating }>
-                            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="song">Song</SelectItem>
-                              <SelectItem value="playlist">Playlist</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
                           <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Artist</label>
-                          <div className="flex items-center gap-2">
-                            <Input value={ entry.mediaArtist ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaArtist", event.target.value) } placeholder="Artist name" disabled={ isFounderModerating } className="h-9 flex-1" />
-                            { entry.mediaImageUrl && entry.useImageUrl ? (
-                              <div className="flex shrink-0 items-center justify-center rounded-lg border border-[#c8d9f3] bg-[#f7fbff] p-1">
-                                {/* eslint-disable-next-line @next/next/no-img-element */ }
-                                <img
-                                  src={ entry.mediaImageUrl }
-                                  alt={ `${ entry.mediaArtist || "Spotify artist" } cover art` }
-                                  className="h-10 w-10 rounded-md object-cover shadow-sm ring-1 ring-[#dfeafc]"
-                                />
-                              </div>
-                            ) : null }
-                          </div>
+                          <Input value={ entry.mediaArtist ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaArtist", event.target.value) } placeholder="Artist name" disabled={ isFounderModerating } className="h-9" />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Caption</label>
-                          <Input value={ entry.mediaCaption ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaCaption", event.target.value) } placeholder="Caption" disabled={ isFounderModerating } className="h-9" />
+                          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">Song Title</label>
+                          <Input value={ entry.mediaCaption ?? "" } onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaCaption", event.target.value) } placeholder="Song title" disabled={ isFounderModerating } className="h-9" />
                         </div>
-                      </div>
-                      <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                        <div className="flex-1 space-y-1">
-                          <label className="text-xs font-semibold text-[#203b66]">URL</label>
+                        <div className="min-w-0 space-y-1">
+                          <label className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#203b66]">URL</label>
                           <Input
                             value={ entry.mediaUrl }
                             onChange={ (event) => updatePlaylistMediaEntry(entry.id, "mediaUrl", event.target.value) }
                             placeholder={ playlistMediaSource === "spotify" ? "https://open.spotify.com/..." : "https://music.apple.com/..." }
                             disabled={ isFounderModerating }
+                            className="h-9"
                           />
                         </div>
-                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#c8d9f3] bg-[#f7fbff] px-3 py-2 text-xs font-medium text-[#203b66]">
+                        <label className="flex h-9 cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-medium text-[#203b66]">
                           <input
                             type="checkbox"
-                            checked={ !!entry.useImageUrl }
-                            onChange={ (event) => updatePlaylistMediaEntry(entry.id, "useImageUrl", event.target.checked) }
+                            checked={ entry.searchArtistImage }
+                            onChange={ (event) => updatePlaylistMediaEntry(entry.id, "searchArtistImage", event.target.checked) }
                             disabled={ isFounderModerating || playlistMediaSource !== "spotify" || !(entry.mediaArtist ?? "").trim() }
                           />
-                          Use Spotify artist image
+                          Find artist image
                         </label>
+                        { entry.mediaImageUrl && entry.useImageUrl ? (
+                          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-[#c8d9f3] bg-[#f7fbff] p-0.5">
+                            {/* eslint-disable-next-line @next/next/no-img-element */ }
+                            <img src={ entry.mediaImageUrl } alt={ `${ entry.mediaArtist || "Spotify artist" } cover art` } className="size-8 rounded-md object-cover" />
+                          </div>
+                        ) : <div className="hidden size-9 lg:block" aria-hidden="true" /> }
+                        <Button type="button" size="sm" variant="ghost" onClick={ () => removePlaylistMediaEntry(entry.id) } disabled={ playlistMediaEntries.length === 1 || isFounderModerating } className="h-9">
+                          Remove
+                        </Button>
                       </div>
                     </div>
                   )) }

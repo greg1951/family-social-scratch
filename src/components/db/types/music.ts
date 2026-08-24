@@ -22,12 +22,13 @@ export interface MusicPlaylistMediaRecord {
 export interface SaveMusicPlaylistMediaInput {
   mediaSource: PlaylistMediaSource;
   mediaSeqNo?: number;
-  mediaType: PlaylistMediaType;
+  mediaType?: PlaylistMediaType;
   mediaUrl: string;
   mediaArtist?: string;
   mediaCaption?: string;
   mediaImageUrl?: string | null;
   useImageUrl?: boolean;
+  searchArtistImage?: boolean;
 }
 
 export interface MusicComment {

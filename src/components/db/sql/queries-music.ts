@@ -79,6 +79,7 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
   mediaCaption: string;
   mediaImageUrl: string | null;
   useImageUrl: boolean;
+  searchArtistImage: boolean;
 }[] {
   if (!entries?.length) {
     return [];
@@ -97,14 +98,15 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
         mediaArtist: entry.mediaArtist?.trim() ?? "",
         mediaCaption: entry.mediaCaption?.trim() ?? "",
         mediaImageUrl: entry.mediaImageUrl?.trim() || null,
-        useImageUrl: entry.useImageUrl ?? true,
+        useImageUrl: entry.useImageUrl ?? false,
+        searchArtistImage: entry.searchArtistImage ?? false,
       };
     })
     .filter((entry) => entry.mediaUrl.length > 0);
 }
 
-async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMediaSource, useImageUrl: boolean): Promise<string | null> {
-  if (!useImageUrl || source !== "spotify" || !artistName.trim()) {
+async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMediaSource): Promise<string | null> {
+  if (source !== "spotify" || !artistName.trim()) {
     return null;
   }
 
@@ -1031,11 +1033,26 @@ export async function saveMusic(
 
   const playlistMediaEntries = await Promise.all(
     sanitizePlaylistMediaEntries(input.playlistMedia).map(async (entry) => {
-      const resolvedMediaImageUrl = entry.mediaImageUrl ?? await resolveSpotifyArtistImage(entry.mediaArtist, entry.mediaSource, entry.useImageUrl);
-      return {
-        ...entry,
-        mediaImageUrl: resolvedMediaImageUrl,
+      const persistedEntry = {
+        mediaSource: entry.mediaSource,
+        mediaSeqNo: entry.mediaSeqNo,
+        mediaType: entry.mediaType,
+        mediaUrl: entry.mediaUrl,
+        mediaArtist: entry.mediaArtist,
+        mediaCaption: entry.mediaCaption,
+        mediaImageUrl: entry.mediaImageUrl,
         useImageUrl: entry.useImageUrl,
+      };
+
+      if (!entry.searchArtistImage) {
+        return persistedEntry;
+      }
+
+      const resolvedMediaImageUrl = await resolveSpotifyArtistImage(entry.mediaArtist, entry.mediaSource);
+      return {
+        ...persistedEntry,
+        mediaImageUrl: resolvedMediaImageUrl,
+        useImageUrl: Boolean(resolvedMediaImageUrl),
       };
     })
   );

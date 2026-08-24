@@ -134,7 +134,7 @@ describe("saveMusic playlist behavior", () => {
         mediaArtist: "Aster Lake",
         mediaCaption: "Sunset highway song",
         mediaImageUrl: null,
-        useImageUrl: true,
+        useImageUrl: false,
         musicId: 501,
       },
     ]);
@@ -211,7 +211,7 @@ describe("saveMusic playlist behavior", () => {
             mediaUrl: "https://open.spotify.com/track/abc123",
             mediaArtist: "Aster Lake",
             mediaCaption: "Night drive song",
-            useImageUrl: true,
+            searchArtistImage: true,
           },
         ],
       },
@@ -235,5 +235,51 @@ describe("saveMusic playlist behavior", () => {
     if (!result.success) {
       expect(result.message).toContain("stop-after-spotify-image");
     }
+  });
+
+  it("stores useImageUrl as false when a requested Spotify artist image is not found", async () => {
+    dbMock.delete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
+    const insertPlaylistMediaValuesMock = vi.fn().mockResolvedValue(undefined);
+    dbMock.insert
+      .mockReturnValueOnce({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{
+            id: 503,
+            musicTitle: "No Image Mix",
+            musicType: "playlist",
+            memberId: 77,
+            familyId: 10,
+          }]),
+        }),
+      })
+      .mockReturnValueOnce({ values: insertPlaylistMediaValuesMock })
+      .mockReturnValueOnce({ values: vi.fn().mockRejectedValue(new Error("stop-after-no-image")) });
+
+    vi.stubGlobal("fetch", vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "spotify-token" }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ artists: { items: [] } }) }) as unknown as typeof fetch);
+    process.env.SPOTIFY_CLIENT_ID = "client-id";
+    process.env.SPOTIFY_CLIENT_SECRET = "client-secret";
+
+    await saveMusic({
+      musicTitle: "No Image Mix",
+      artistName: "",
+      musicJson: "{}",
+      status: "published",
+      musicType: "playlist",
+      musicDebutYear: 2026,
+      selectedTagIds: [],
+      playlistMedia: [{
+        mediaSource: "spotify",
+        mediaUrl: "https://open.spotify.com/track/abc123",
+        mediaArtist: "Unknown Artist",
+        mediaCaption: "Unknown Song",
+        searchArtistImage: true,
+      }],
+    }, { familyId: 10, memberId: 77 });
+
+    expect(insertPlaylistMediaValuesMock).toHaveBeenCalledWith([
+      expect.objectContaining({ mediaType: "song", mediaImageUrl: null, useImageUrl: false }),
+    ]);
   });
 });
