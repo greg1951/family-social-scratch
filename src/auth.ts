@@ -10,6 +10,7 @@ import {
   isSpotifyProviderConfigured,
 } from "@/auth/provider-config";
 import { refreshSpotifyAccessToken } from "@/auth/spotify-token";
+import { parseSpotifyConnectionContext, SPOTIFY_CONNECTION_COOKIE } from "@/auth/spotify-connection-context";
 import { authValidation } from "./features/auth/services/auth-utils";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
@@ -107,6 +108,7 @@ async function upsertOAuthAccount(params: {
     await db
       .update(accounts)
       .set({
+        userId: params.userId,
         refresh_token: params.refresh_token ?? undefined,
         access_token: params.access_token ?? undefined,
         expires_at: params.expires_at ?? undefined,
@@ -191,14 +193,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           tokenType: account.token_type ?? null,
         });
 
-        if (!oauthUser.email) {
-          return false;
-        }
+        const cookieStore = await cookies();
+        const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "";
+        const connectionContext = parseSpotifyConnectionContext(
+          cookieStore.get(SPOTIFY_CONNECTION_COOKIE)?.value,
+          authSecret,
+        );
+        cookieStore.delete(SPOTIFY_CONNECTION_COOKIE);
 
-        const [existingUser] = await db
-          .select({ id: user.id, email: user.email, familyId: user.familyId })
-          .from(user)
-          .where(eq(user.email, oauthUser.email));
+        const [existingUser] = connectionContext
+          ? await db
+            .select({ id: user.id, email: user.email, familyId: user.familyId })
+            .from(user)
+            .where(eq(user.id, connectionContext.userId))
+          : oauthUser.email
+            ? await db
+              .select({ id: user.id, email: user.email, familyId: user.familyId })
+              .from(user)
+              .where(eq(user.email, oauthUser.email.trim().toLowerCase()))
+            : [];
 
         console.log("[auth][spotify-callback] existing user lookup", {
           email: oauthUser.email,
@@ -210,6 +223,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         if (account.providerAccountId) {
+          const [linkedAccount] = await db
+            .select({ userId: accounts.userId })
+            .from(accounts)
+            .where(and(
+              eq(accounts.provider, provider),
+              eq(accounts.providerAccountId, account.providerAccountId),
+            ));
+
+          if (linkedAccount && linkedAccount.userId !== existingUser.id) {
+            return false;
+          }
+
           await upsertOAuthAccount({
             userId: existingUser.id,
             provider,
@@ -318,17 +343,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         let spotifyAccessToken = (token.spotifyAccessToken as string | null | undefined) ?? null;
         let spotifyRefreshToken = (token.spotifyRefreshToken as string | null | undefined) ?? null;
         let spotifyAccessTokenExpiresAt = (token.spotifyAccessTokenExpiresAt as number | null | undefined) ?? null;
-        let spotifyAccountUserId = Number(token.id) || null;
+        const spotifyAccountUserId = Number(token.id) || null;
 
-        if ((!spotifyAccessToken || !spotifyRefreshToken || !spotifyAccessTokenExpiresAt) && session.user.email) {
-          const normalizedEmail = session.user.email.trim().toLowerCase();
-          const [userRecord] = await db
-            .select({ id: user.id })
-            .from(user)
-            .where(eq(user.email, normalizedEmail));
-
-          if (userRecord?.id) {
-            spotifyAccountUserId = userRecord.id;
+        if ((!spotifyAccessToken || !spotifyRefreshToken || !spotifyAccessTokenExpiresAt) && spotifyAccountUserId) {
             const [storedSpotifyAccount] = await db
               .select({
                 accessToken: accounts.access_token,
@@ -336,13 +353,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 expiresAt: accounts.expires_at,
               })
               .from(accounts)
-              .where(and(eq(accounts.userId, userRecord.id), eq(accounts.provider, "spotify")))
+              .where(and(eq(accounts.userId, spotifyAccountUserId), eq(accounts.provider, "spotify")))
               .orderBy(desc(accounts.expires_at));
 
             spotifyAccessToken = storedSpotifyAccount?.accessToken ?? spotifyAccessToken;
             spotifyRefreshToken = storedSpotifyAccount?.refreshToken ?? spotifyRefreshToken;
             spotifyAccessTokenExpiresAt = storedSpotifyAccount?.expiresAt ?? spotifyAccessTokenExpiresAt;
-          }
         }
 
         const spotifyClientId = getProviderEnvValue("AUTH_SPOTIFY_ID", "SPOTIFY_CLIENT_ID");

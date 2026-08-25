@@ -8,6 +8,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { ArrowLeft, CircleQuestionMark, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Music, Pause, Play, Plus, Search, SkipBack, SkipForward, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
+import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
   getMusicDetailAction,
   pauseSpotifyPlaylistAction,
   playSpotifyPlaylistAction,
+  prepareSpotifyConnectionAction,
   resumeSpotifyPlaylistAction,
   skipToNextSpotifyTrackAction,
   skipToPreviousSpotifyTrackAction,
@@ -193,6 +195,7 @@ export function MusicHomePage({
   const [selectedMusicDetail, setSelectedMusicDetail] = useState<MusicDetail | null>(null);
   const [commentText, setCommentText] = useState("");
   const [isSpotifyPlaybackBusy, setIsSpotifyPlaybackBusy] = useState(false);
+  const [spotifyConnectionNeedsReconnect, setSpotifyConnectionNeedsReconnect] = useState(!hasSpotifyAccessToken);
   const [spotifyPlaybackState, setSpotifyPlaybackState] = useState<"idle" | "playing" | "paused">("idle");
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"all" | "latest" | "top-rated">("all");
@@ -306,12 +309,31 @@ export function MusicHomePage({
         : await playSpotifyPlaylistAction({ uris: trackUris });
 
       if (!result.success) {
+        if ("code" in result && result.code === "reconnect_required") {
+          setSpotifyConnectionNeedsReconnect(true);
+        }
         toast.error(result.message);
         return;
       }
 
       setSpotifyPlaybackState("playing");
       toast.success(spotifyPlaybackState === "paused" ? "Playback resumed." : "Playlist playback started.");
+    } finally {
+      setIsSpotifyPlaybackBusy(false);
+    }
+  };
+
+  const handleConnectSpotify = async () => {
+    setIsSpotifyPlaybackBusy(true);
+
+    try {
+      const result = await prepareSpotifyConnectionAction();
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      await signIn("spotify", { callbackUrl: "/music" });
     } finally {
       setIsSpotifyPlaybackBusy(false);
     }
@@ -324,6 +346,9 @@ export function MusicHomePage({
       const result = await pauseSpotifyPlaylistAction();
 
       if (!result.success) {
+        if ("code" in result && result.code === "reconnect_required") {
+          setSpotifyConnectionNeedsReconnect(true);
+        }
         toast.error(result.message);
         return;
       }
@@ -342,6 +367,9 @@ export function MusicHomePage({
       const result = await stopSpotifyPlaylistAction();
 
       if (!result.success) {
+        if ("code" in result && result.code === "reconnect_required") {
+          setSpotifyConnectionNeedsReconnect(true);
+        }
         toast.error(result.message);
         return;
       }
@@ -362,6 +390,9 @@ export function MusicHomePage({
         : await skipToNextSpotifyTrackAction();
 
       if (!result.success) {
+        if ("code" in result && result.code === "reconnect_required") {
+          setSpotifyConnectionNeedsReconnect(true);
+        }
         toast.error(result.message);
         return;
       }
@@ -483,7 +514,7 @@ export function MusicHomePage({
   const selectedPlaylistPlaybackState = selectedMusicDetail && selectedMusicDetail.id === selectedMusic
     ? getPlaylistPlaybackAvailability({
         selectedProviderName: preferredMusicPlayerName,
-        hasSpotifyAccessToken,
+        hasSpotifyAccessToken: hasSpotifyAccessToken && !spotifyConnectionNeedsReconnect,
         playlistMedia: selectedMusicDetail.playlistMedia,
       })
     : { canPlay: false, canPause: false, provider: "none" as const };
@@ -775,6 +806,17 @@ export function MusicHomePage({
                       </div>
                       { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "spotify") ? (
                         <div className="flex flex-wrap items-center gap-2">
+                          { spotifyConnectionNeedsReconnect ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={ handleConnectSpotify }
+                              disabled={ isSpotifyPlaybackBusy }
+                              className="h-9 border-[#1DB954] bg-white px-3 text-[#137a38] hover:bg-[#eaf8ef] hover:text-[#0d642d]"
+                            >
+                              { hasSpotifyAccessToken ? "Reconnect Spotify" : "Connect Spotify" }
+                            </Button>
+                          ) : null }
                           <Button
                             type="button"
                             size="icon"
@@ -846,7 +888,9 @@ export function MusicHomePage({
                                 </button>
                               </HoverCardTrigger>
                               <HoverCardContent side="left" align="center" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
-                                These buttons are disabled because Spotify is not selected as your preferred music player, or your Spotify connection is not active for this account.
+                                { spotifyConnectionNeedsReconnect
+                                  ? "Connect Spotify to this My Family Social account to enable playback."
+                                  : "These buttons are disabled because Spotify is not selected as your preferred music player." }
                               </HoverCardContent>
                             </HoverCard>
                           ) : null }
