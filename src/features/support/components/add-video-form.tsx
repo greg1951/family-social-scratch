@@ -27,8 +27,6 @@ import { Label } from "@/components/ui/label";
 import type { VideoListItem, VideoTagOption } from "@/components/db/sql/queries-videos";
 
 const ACCEPTED_VIDEO_TYPE = "video/mp4";
-const RECOMMENDED_MIN_SIZE_BYTES = 14 * 1024 * 1024;
-const RECOMMENDED_MAX_SIZE_BYTES = 20 * 1024 * 1024;
 const HARD_MAX_SIZE_BYTES = 60 * 1024 * 1024;
 
 type FormState = {
@@ -126,7 +124,14 @@ function uploadWithProgress(url: string, file: File, contentType: string, onProg
             reject(new Error(`Upload failed with status ${xhr.status}.`));
         };
 
-        xhr.onerror = () => reject(new Error("Network error while uploading video to S3."));
+        xhr.onerror = () => {
+            console.error("[add-video-form] S3 video upload failed", {
+                status: xhr.status,
+                readyState: xhr.readyState,
+                urlOrigin: new URL(url).origin,
+            });
+            reject(new Error("Network error while uploading video to S3. Check the S3 bucket CORS configuration."));
+        };
         xhr.send(file);
     });
 }
@@ -402,10 +407,6 @@ export default function AddVideosForm() {
         if (!Number.isInteger(parsedFaqPageSeqNo) || parsedFaqPageSeqNo <= 0) {
             toast.error("FAQ page sequence number must be a positive whole number.");
             return;
-        }
-
-        if (selectedFile && (selectedFile.size < RECOMMENDED_MIN_SIZE_BYTES || selectedFile.size > RECOMMENDED_MAX_SIZE_BYTES)) {
-            toast("Video uploaded outside the expected 14-20MB range.");
         }
 
         setIsSubmitting(true);

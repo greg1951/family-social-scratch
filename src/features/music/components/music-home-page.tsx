@@ -596,7 +596,7 @@ export function MusicHomePage({
         <div id="music-home-page" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="max-w-3xl">
-            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#dbe8ff] sm:text-[0.72rem] sm:tracking-[0.34em]">Family Music Salon</p>
+            <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#dbe8ff] sm:text-[0.72rem] sm:tracking-[0.34em]">Family Music Room</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <div id="music-go-home">
                 <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#eff5ff] transition hover:bg-white/25 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />Go Home</Link>
@@ -615,7 +615,7 @@ export function MusicHomePage({
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#4a6fae]">
               <h2 className="text-2xl font-black tracking-tight text-[#203b66]">Music Finder</h2>
               <FeatureFaqHelp 
-                  href="/feature-faq?category=Music%20Salon" 
+                  href="/feature-faq?category=Music%20Room" 
                   buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c8d9f3] bg-gradient-to-b from-[#f7fbff] to-[#eaf1ff] text-[#2C5EAD]" 
                   iconClassName="h-3 w-3 text-[#2C5EAD]" 
                   tooltipClassName="bg-[#203b66] text-[#eff5ff]" 

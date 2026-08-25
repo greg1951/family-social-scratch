@@ -172,7 +172,16 @@ async function getSpotifyPlaybackToken(): Promise<string | null> {
   const session = await auth();
   const token = (session as { spotifyAccessToken?: string | null } | null)?.spotifyAccessToken ?? null;
 
-  return token?.trim() || null;
+  if (token?.trim()) {
+    return token.trim();
+  }
+
+  return (
+    process.env.SPOTIFY_PLAYBACK_ACCESS_TOKEN
+    ?? process.env.SPOTIFY_ACCESS_TOKEN
+    ?? process.env.SPOTIFY_USER_ACCESS_TOKEN
+    ?? null
+  )?.trim() || null;
 }
 
 type SpotifyPlaybackPath =
@@ -216,10 +225,6 @@ async function callSpotifyPlaybackEndpoint(method: 'PUT' | 'POST', path: Spotify
 
   if (response.status === 404 && /no active device/i.test(detail)) {
     detail = 'No active Spotify device found. Open Spotify on a device (app or web player) and try again.';
-  } else if (response.status === 401) {
-    detail = 'Your Spotify connection has expired or is invalid. Sign out, then sign back in with Spotify to reconnect it.';
-  } else if (response.status === 403) {
-    detail = 'Spotify denied playback. Confirm this is a Premium account and, while the Spotify app is in Development Mode, that this user is on its allowlist.';
   }
 
   return {

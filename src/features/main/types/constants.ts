@@ -31,7 +31,7 @@ export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
   music: {
     featureKey: "music",
     href: "/music",
-    roomTitle: "Music Room",
+    roomTitle: "Music Salon",
     src: "/images/main/room-music-tablet.jpg",
   },
   games: {

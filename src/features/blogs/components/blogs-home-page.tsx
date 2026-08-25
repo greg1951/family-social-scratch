@@ -7,6 +7,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Film, Heart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import MainDropMenu from "@/components/common/main-dropmenu";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import { BlogHomePost } from "@/components/db/types/blogs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -220,7 +221,15 @@ export function BlogsHomePage({
 
         <div className="rounded-2xl border border-[#f5d4c2] bg-white p-4 shadow-xs sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#8a4d45]">Blog Finder</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#8a4d45]">Blog Finder</p>
+              <FeatureFaqHelp
+                href="/feature-faq?category=Living%20Room"
+                buttonClassName="border-[#f5d4c2] bg-gradient-to-b from-[#fffaf7] to-[#fde8dd] text-[#a45a4f]"
+                iconClassName="h-3 w-3 text-[#a45a4f]"
+                tooltipClassName="bg-[#7a3e3a] text-[#fff7f2]"
+              />
+            </div>
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-2">

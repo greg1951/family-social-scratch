@@ -9,20 +9,20 @@ export default function MainLinkCard({ isLoggedIn, href, title, src, tw, imageCl
 
   return (
     (isLoggedIn ? (
-      <Link href={ href } >
-        <Card className={ tw }>
-          <picture>
+      <Link href={ href } className="select-none">
+        <Card className={ `${ tw } select-none` }>
+          <picture className="pointer-events-none select-none">
             <source media="(min-width: 768px)" srcSet={ pictureTabletSrc } />
-            <img src={ picturePhoneSrc } alt={ title } className={ imageClasses } />
+            <img src={ picturePhoneSrc } alt={ title } draggable={ false } className={ `${ imageClasses } pointer-events-none select-none` } />
           </picture>
         </Card>
       </Link>
 
     ) : (
-      <Card className={ tw }>
-        <picture>
+      <Card className={ `${ tw } select-none` }>
+        <picture className="pointer-events-none select-none">
           <source media="(min-width: 768px)" srcSet={ pictureTabletSrc } />
-          <img src={ picturePhoneSrc } alt={ title } className={ imageClasses } />
+          <img src={ picturePhoneSrc } alt={ title } draggable={ false } className={ `${ imageClasses } pointer-events-none select-none` } />
         </picture>
       </Card>
     )

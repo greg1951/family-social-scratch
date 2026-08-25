@@ -109,24 +109,26 @@ export default async function MainPage() {
     return (
       <Card className="h-[181px] w-full overflow-hidden rounded-xl border-[5px] border-[#9d3209] bg-[#9d3209] p-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-lg md:h-[191px]">
         <div className="grid h-full grid-rows-2 gap-0.5">
-          <Link href={ hallwayRoom.href } className="relative block min-h-0">
-            <picture>
+          <Link href={ hallwayRoom.href } className="relative block min-h-0 select-none">
+            <picture className="pointer-events-none select-none">
               <source media="(min-width: 768px)" srcSet={ hallwayRoom.tabletSrc ?? hallwayRoom.src } />
               <img
                 src={ hallwayRoom.phoneSrc ?? hallwayRoom.src }
                 alt={ hallwayRoom.roomTitle }
-                className="h-full w-full object-cover"
+                draggable={ false }
+                className="pointer-events-none h-full w-full select-none object-cover"
               />
             </picture>
           </Link>
 
-          <Link href={ mailboxRoom.href } className="relative block min-h-0">
-            <picture>
+          <Link href={ mailboxRoom.href } className="relative block min-h-0 select-none">
+            <picture className="pointer-events-none select-none">
               <source media="(min-width: 768px)" srcSet={ mailboxRoom.tabletSrc ?? mailboxRoom.src } />
               <img
                 src={ mailboxRoom.phoneSrc ?? mailboxRoom.src }
                 alt={ mailboxRoom.roomTitle }
-                className="h-full w-full object-cover"
+                draggable={ false }
+                className="pointer-events-none h-full w-full select-none object-cover"
               />
             </picture>
           </Link>

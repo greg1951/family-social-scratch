@@ -32,15 +32,15 @@ const localOAuthChecks: Array<"none" | "pkce" | "state" | "nonce"> = isLocalOAut
 
 const OAUTH_FAMILY_COOKIE = "oauth_family_context";
 
-console.log("[auth][startup] spotify env diagnostics", {
-  authSpotifyId: process.env.AUTH_SPOTIFY_ID ?? null,
-  authSpotifySecret: process.env.AUTH_SPOTIFY_SECRET ? "present" : null,
-  spotifyClientId: process.env.SPOTIFY_CLIENT_ID ?? null,
-  spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET ? "present" : null,
-  spotifyProviderConfigured: isSpotifyProviderConfigured(),
-  authGoogleConfigured: isGoogleProviderConfigured(),
-  authAppleConfigured: isAppleProviderConfigured(),
-});
+// console.log("[auth][startup] spotify env diagnostics", {
+//   authSpotifyId: process.env.AUTH_SPOTIFY_ID ?? null,
+//   authSpotifySecret: process.env.AUTH_SPOTIFY_SECRET ? "present" : null,
+//   spotifyClientId: process.env.SPOTIFY_CLIENT_ID ?? null,
+//   spotifyClientSecret: process.env.SPOTIFY_CLIENT_SECRET ? "present" : null,
+//   spotifyProviderConfigured: isSpotifyProviderConfigured(),
+//   authGoogleConfigured: isGoogleProviderConfigured(),
+//   authAppleConfigured: isAppleProviderConfigured(),
+// });
 
 type OAuthFamilyContext = {
   familyName: string;

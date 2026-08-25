@@ -30,6 +30,7 @@ import {
   removePhotoFromAlbumAction,
 } from "@/app/(features)/(galleries)/gallery/actions";
 import { Button } from "@/components/ui/button";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import {
   Dialog,
   DialogContent,
@@ -2587,7 +2588,15 @@ export default function MemberGalleryHomePage({
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#6f8f5d]">
                       Album Manager
                     </p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-[#355427]">My Albums</h2>
+                    <div className="mt-2 flex items-center gap-2">
+                      <h2 className="text-2xl font-black tracking-tight text-[#355427]">My Albums</h2>
+                      <FeatureFaqHelp
+                        href="/feature-faq?category=Member%20Gallery"
+                        buttonClassName="h-4 w-4 border-[#c5dbb4] bg-gradient-to-b from-[#f8fdf3] to-[#e7f3db] text-[#4e7430] shadow-[0_8px_18px_rgba(78,116,48,0.18)] group-hover:shadow-[0_12px_26px_rgba(78,116,48,0.26)] md:h-7 md:w-7"
+                        iconClassName="h-3 w-3 text-[#4e7430] md:h-4 md:w-4"
+                        tooltipClassName="bg-[#355427] text-[#f4fee9]"
+                      />
+                    </div>
                     <p className="mt-2 text-xs leading-5 text-[#6f8f5d]">
                       Build, reorder, and share albums.
                     </p>

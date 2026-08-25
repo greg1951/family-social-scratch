@@ -30,17 +30,17 @@ export default async function MusicPage() {
   const hasSpotifyAccessToken = Boolean((session as { spotifyAccessToken?: string | null } | null)?.spotifyAccessToken?.trim());
   const selectedSpotifyPlayer = musicPlayerOptions.find((notification) => notification.isSelected && notification.optionName.toLowerCase().includes("spotify"));
 
-  console.log("[music-page] spotify gating debug", {
-    memberId: memberKeyDetails.memberId,
-    familyId: memberKeyDetails.familyId,
-    isLoggedIn: memberKeyDetails.isLoggedIn,
-    hasSpotifyAccessToken,
-    selectedPlayerOption: selectedSpotifyPlayer?.optionName ?? null,
-    musicPlayerOptions: musicPlayerOptions.map((option) => ({
-      optionName: option.optionName,
-      isSelected: option.isSelected,
-    })),
-  });
+  // console.log("[music-page] spotify gating debug", {
+  //   memberId: memberKeyDetails.memberId,
+  //   familyId: memberKeyDetails.familyId,
+  //   isLoggedIn: memberKeyDetails.isLoggedIn,
+  //   hasSpotifyAccessToken,
+  //   selectedPlayerOption: selectedSpotifyPlayer?.optionName ?? null,
+  //   musicPlayerOptions: musicPlayerOptions.map((option) => ({
+  //     optionName: option.optionName,
+  //     isSelected: option.isSelected,
+  //   })),
+  // });
 
   const guidedLaunchResult = await resolveGuidedTourLaunch({
     memberId: memberKeyDetails.memberId,
