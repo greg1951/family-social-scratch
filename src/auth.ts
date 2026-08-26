@@ -9,7 +9,7 @@ import {
   isGoogleProviderConfigured,
   isSpotifyProviderConfigured,
 } from "@/auth/provider-config";
-import { refreshSpotifyAccessToken } from "@/auth/spotify-token";
+import { reconcileSpotifyToken, refreshSpotifyAccessToken } from "@/auth/spotify-token";
 import { parseSpotifyConnectionContext, SPOTIFY_CONNECTION_COOKIE } from "@/auth/spotify-connection-context";
 import { authValidation } from "./features/auth/services/auth-utils";
 import { cookies } from "next/headers";
@@ -345,20 +345,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         let spotifyAccessTokenExpiresAt = (token.spotifyAccessTokenExpiresAt as number | null | undefined) ?? null;
         const spotifyAccountUserId = Number(token.id) || null;
 
-        if ((!spotifyAccessToken || !spotifyRefreshToken || !spotifyAccessTokenExpiresAt) && spotifyAccountUserId) {
-            const [storedSpotifyAccount] = await db
-              .select({
-                accessToken: accounts.access_token,
-                refreshToken: accounts.refresh_token,
-                expiresAt: accounts.expires_at,
-              })
-              .from(accounts)
-              .where(and(eq(accounts.userId, spotifyAccountUserId), eq(accounts.provider, "spotify")))
-              .orderBy(desc(accounts.expires_at));
+        if (spotifyAccountUserId) {
+          const [storedSpotifyAccount] = await db
+            .select({
+              accessToken: accounts.access_token,
+              refreshToken: accounts.refresh_token,
+              expiresAt: accounts.expires_at,
+            })
+            .from(accounts)
+            .where(and(eq(accounts.userId, spotifyAccountUserId), eq(accounts.provider, "spotify")))
+            .orderBy(desc(accounts.expires_at));
 
-            spotifyAccessToken = storedSpotifyAccount?.accessToken ?? spotifyAccessToken;
-            spotifyRefreshToken = storedSpotifyAccount?.refreshToken ?? spotifyRefreshToken;
-            spotifyAccessTokenExpiresAt = storedSpotifyAccount?.expiresAt ?? spotifyAccessTokenExpiresAt;
+          const reconciledSpotifyToken = reconcileSpotifyToken(
+            {
+              accessToken: spotifyAccessToken,
+              refreshToken: spotifyRefreshToken,
+              expiresAt: spotifyAccessTokenExpiresAt,
+            },
+            storedSpotifyAccount ?? null,
+          );
+          spotifyAccessToken = reconciledSpotifyToken.accessToken;
+          spotifyRefreshToken = reconciledSpotifyToken.refreshToken;
+          spotifyAccessTokenExpiresAt = reconciledSpotifyToken.expiresAt;
         }
 
         const spotifyClientId = getProviderEnvValue("AUTH_SPOTIFY_ID", "SPOTIFY_CLIENT_ID");

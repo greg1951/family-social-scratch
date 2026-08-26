@@ -333,7 +333,7 @@ export function MusicHomePage({
         return;
       }
 
-      await signIn("spotify", { callbackUrl: "/music" });
+      await signIn("spotify", { callbackUrl: "/music" }, { show_dialog: "true" });
     } finally {
       setIsSpotifyPlaybackBusy(false);
     }

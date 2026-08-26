@@ -8,6 +8,27 @@ export type SpotifyTokenState = {
   error?: "RefreshAccessTokenError";
 };
 
+export function reconcileSpotifyToken(
+  sessionToken: SpotifyTokenState,
+  persistedToken: SpotifyTokenState | null,
+): SpotifyTokenState {
+  if (!persistedToken?.accessToken && !persistedToken?.refreshToken) {
+    return sessionToken;
+  }
+
+  const sessionExpiry = sessionToken.expiresAt ?? 0;
+  const persistedExpiry = persistedToken.expiresAt ?? 0;
+  if (!sessionToken.accessToken || persistedExpiry >= sessionExpiry) {
+    return {
+      accessToken: persistedToken.accessToken ?? sessionToken.accessToken,
+      refreshToken: persistedToken.refreshToken ?? sessionToken.refreshToken,
+      expiresAt: persistedToken.expiresAt ?? sessionToken.expiresAt,
+    };
+  }
+
+  return sessionToken;
+}
+
 export async function refreshSpotifyAccessToken({
   token,
   clientId,

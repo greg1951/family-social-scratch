@@ -1,8 +1,43 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { refreshSpotifyAccessToken } from "./spotify-token";
+import { reconcileSpotifyToken, refreshSpotifyAccessToken } from "./spotify-token";
 
 const NOW = 1_800_000_000_000;
+
+describe("reconcileSpotifyToken", () => {
+  it("prefers a newly persisted token after reconnect even when the stale session token is populated", () => {
+    expect(reconcileSpotifyToken(
+      {
+        accessToken: "revoked-session-token",
+        refreshToken: "old-refresh-token",
+        expiresAt: NOW / 1000 + 1800,
+      },
+      {
+        accessToken: "reconnected-access-token",
+        refreshToken: "new-refresh-token",
+        expiresAt: NOW / 1000 + 3600,
+      },
+    )).toEqual({
+      accessToken: "reconnected-access-token",
+      refreshToken: "new-refresh-token",
+      expiresAt: NOW / 1000 + 3600,
+    });
+  });
+
+  it("keeps a newer session token when persistence has not caught up", () => {
+    const sessionToken = {
+      accessToken: "refreshed-session-token",
+      refreshToken: "rotated-refresh-token",
+      expiresAt: NOW / 1000 + 3600,
+    };
+
+    expect(reconcileSpotifyToken(sessionToken, {
+      accessToken: "older-database-token",
+      refreshToken: "old-refresh-token",
+      expiresAt: NOW / 1000 + 1800,
+    })).toEqual(sessionToken);
+  });
+});
 
 describe("refreshSpotifyAccessToken", () => {
   it("keeps an access token that is not near expiry", async () => {
