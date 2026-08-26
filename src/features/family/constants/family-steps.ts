@@ -68,9 +68,9 @@
   // Family name RegEx: only letters, no spaces, numbers, or special characters allowed.
   export const noSpacesOrSpecialCharsRegex = /^[a-zA-Z]+$/;
 
-  export const familySocialEmail="my-family-social@updates.knotboardgames.com";
+  export const familySocialEmail="support@my-family-social.com";
 
-  export const familySocialHostReference = "https://kbgfamilysocial.com";
+  export const familySocialHostReference = "https://my-family-social.com";
 
   export const inviteStatusJoined = "joined";
   export const inviteStatusActive = "active";
