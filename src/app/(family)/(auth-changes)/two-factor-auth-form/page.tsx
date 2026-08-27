@@ -23,12 +23,12 @@ export default async function MfaChange() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Account Security
           </div>
-          <CardTitle className="mt-3 text-center text-2xl font-extrabold text-[#10364a]">Two-Factor Authentication</CardTitle>
-          <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { session.user?.name ?? session.user?.email }</CardDescription>
+          <CardTitle className="mt-3 text-center text-2xl font-extrabold text-[#10364a]">Multi-factor Authentication</CardTitle>
+          {/* <CardDescription className="mt-2 text-sm font-medium text-[#315363]">Signed in as { session.user?.name ?? session.user?.email }</CardDescription> */}
         </CardHeader>
-        <CardDescription className="px-6 pt-3 text-center text-base font-medium text-[#315363]">
+        {/* <CardDescription className="px-6 pt-3 text-center text-base font-medium text-[#315363]">
           Enable email-based verification to receive a six-digit sign-in passcode sent to your account email.
-        </CardDescription>
+        </CardDescription> */}
         <CardContent className="px-6 pb-6 pt-5">
           <TwoFactorAuthForm isActivated={ result2fa.isActivated ?? false } email={ email } />
         </CardContent>

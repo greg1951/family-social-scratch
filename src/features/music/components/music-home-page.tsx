@@ -60,7 +60,7 @@ import {
   queueFeatureComment,
   readQueuedFeatureComments,
 } from "@/lib/pwa-background-sync";
-import { getPlaylistPlaybackAvailability } from "@/features/music/utils/playback-availability";
+import { getPlaylistPlaybackAvailability, normalizeMusicProviderName } from "@/features/music/utils/playback-availability";
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -511,6 +511,7 @@ export function MusicHomePage({
       : "bg-[linear-gradient(135deg,#7aa0dd,#4a6fae)]";
 
   const preferredMusicPlayerName = musicPlayerOptions.find((option) => option.isSelected)?.optionName ?? null;
+  const isSpotifyPreferredPlayer = normalizeMusicProviderName(preferredMusicPlayerName).includes("spotify");
   const selectedPlaylistPlaybackState = selectedMusicDetail && selectedMusicDetail.id === selectedMusic
     ? getPlaylistPlaybackAvailability({
         selectedProviderName: preferredMusicPlayerName,
@@ -806,7 +807,7 @@ export function MusicHomePage({
                       </div>
                       { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "spotify") ? (
                         <div className="flex flex-wrap items-center gap-2">
-                          { spotifyConnectionNeedsReconnect ? (
+                          { isSpotifyPreferredPlayer && spotifyConnectionNeedsReconnect ? (
                             <Button
                               type="button"
                               variant="outline"
@@ -888,9 +889,11 @@ export function MusicHomePage({
                                 </button>
                               </HoverCardTrigger>
                               <HoverCardContent side="left" align="center" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
-                                { spotifyConnectionNeedsReconnect
-                                  ? "Connect Spotify to this My Family Social account to enable playback."
-                                  : "These buttons are disabled because Spotify is not selected as your preferred music player." }
+                                { !isSpotifyPreferredPlayer
+                                  ? "These buttons are disabled because Spotify is not selected as your preferred music player. Choose Spotify in your member account settings."
+                                  : spotifyConnectionNeedsReconnect
+                                    ? "Connect Spotify to this My Family Social account to enable playback."
+                                    : "No Spotify tracks were found for this playlist." }
                               </HoverCardContent>
                             </HoverCard>
                           ) : null }

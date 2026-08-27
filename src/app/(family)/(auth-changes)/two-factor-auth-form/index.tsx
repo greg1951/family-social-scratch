@@ -62,7 +62,7 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
             onClick={ handleDisableClick }
             className="h-11 rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] px-6 text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
           >
-            Disable 2FA Authentication
+            Disable Multi-Factor Authentication
           </Button>
         </div>
       ) }
@@ -70,14 +70,14 @@ export default function TwoFactorAuthForm({ isActivated, email }: Props) {
         <div className="flex justify-center py-1">
           <div className="w-full max-w-md rounded-[1.6rem] border border-[#d7edf6] bg-[#f8fdff] p-5 text-center shadow-inner">
             <p className="text-sm font-medium text-[#315363]">
-              Enable two-factor authentication to receive a one-time passcode by email each time you sign in.
+              Enable multi-factor authentication to receive a one-time passcode by email each time you sign in.
             </p>
             <Button
               onClick={ handleEnableClick }
               className="mt-4 h-11 w-full rounded-2xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] px-6 text-base font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110"
             >
               <ShieldCheck className="h-4 w-4" />
-              Enable 2FA Authentication
+              Enable Multi-Factor Authentication
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>

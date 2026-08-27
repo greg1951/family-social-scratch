@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ImagePlus, KeyRound, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ImagePlus, KeyRound, Mail, ShieldCheck, Users } from "lucide-react";
 
 import MemberAvatar from "@/components/common/member-avatar";
+import MemberFaqHelp from "@/components/common/member-faq-help";
 import SyncStatusConsole from "@/components/pwa/sync-status-console";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { getCurrentMemberAvatarDetails } from "@/features/family/services/member-avatar-details";
@@ -28,11 +29,27 @@ export default async function TrialLayout({
               Account Settings
             </p> */}
             <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
-              <h3 className="mt-2 text-1xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
-                { accountHeading }
-              </h3>
+              <div className="mt-2 flex items-center gap-3">
+                <h3 className="text-1xl font-extrabold tracking-[0.02em] text-[#10364a] md:text-[2rem]">
+                  { accountHeading }
+                </h3>
+                <MemberFaqHelp
+                  href="/member-faq?category=Member%20Profile"
+                  iconClassName="h-5 w-5 text-[#10364a]"
+                />
+              </div>
               { memberAvatarDetails.isLoggedIn ? (
-                <div className="flex justify-end" >
+                <div className="flex items-center justify-end gap-3" >
+                  <div className="flex max-w-full flex-col gap-1 rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-right shadow-sm backdrop-blur">
+                    <span className="flex items-center justify-end gap-1.5 text-[11px] font-semibold text-[#10364a] sm:text-xs">
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-[#005472]" />
+                      <span className="truncate">{ memberAvatarDetails.email }</span>
+                    </span>
+                    <span className="flex items-center justify-end gap-1.5 text-[11px] font-semibold text-[#10364a] sm:text-xs">
+                      <Users className="h-3.5 w-3.5 shrink-0 text-[#005472]" />
+                      <span className="truncate">{ memberAvatarDetails.familyName }</span>
+                    </span>
+                  </div>
                   <MemberAvatar
                     imageUrl={ memberAvatarDetails.memberImageUrl }
                     firstName={ memberAvatarDetails.firstName }
@@ -49,20 +66,14 @@ export default async function TrialLayout({
             <div className="flex flex-wrap items-start justify-between gap-3">
             </div>
             <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-5">
-              <div id="back-button">
-                <Link
-                  href="/"
-                  prefetch={ false }
-                  className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M19 12H5" />
-                    <path d="M12 5l-7 7 7 7" />
-                  </svg>
-                  Home
+              <Link id="back-button"
+                href="/"
+                prefetch={ false }
+                className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+              >
+                <ArrowLeft className="h-4 w-4 text-[#005472]" />
+                Go Home
               </Link>
-
-              </div>
               <Link
                 href="/change-password"
                 prefetch={ false }
@@ -77,7 +88,7 @@ export default async function TrialLayout({
                 className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
               >
                 <ShieldCheck className="h-4 w-4 text-[#005472]" />
-                Update 2FA
+                Update MFA
               </Link>
               <Link id="upload-avatar-link"
                 href="/family-image-upload"
@@ -85,7 +96,7 @@ export default async function TrialLayout({
                 className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
               >
                 <ImagePlus className="h-4 w-4 text-[#005472]" />
-                Upload Avatar
+                Upload Profile Mugshot
               </Link>
             </div>
           </div>

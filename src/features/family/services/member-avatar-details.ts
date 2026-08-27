@@ -6,6 +6,7 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 export type CurrentMemberAvatarDetails = {
   isLoggedIn: boolean;
   email: string;
+  familyName: string;
   firstName: string;
   lastName: string;
   isFounder: boolean;
@@ -21,6 +22,7 @@ export async function getCurrentMemberAvatarDetails(): Promise<CurrentMemberAvat
     return {
       isLoggedIn: false,
       email: "",
+      familyName: "",
       firstName: "",
       lastName: "",
       isFounder: false,
@@ -35,6 +37,7 @@ export async function getCurrentMemberAvatarDetails(): Promise<CurrentMemberAvat
   return {
     isLoggedIn: true,
     email: memberKeyDetails.email,
+    familyName: memberKeyDetails.familyName,
     firstName: memberKeyDetails.firstName,
     lastName: memberKeyDetails.lastName,
     isFounder: memberKeyDetails.isFounder,
