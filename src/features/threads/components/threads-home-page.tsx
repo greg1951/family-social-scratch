@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -218,9 +219,15 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                     </div>
                   </div>
                 </div>
-                <h2 className="mt-2 text-2xl font-black tracking-tight text-[#4a1a6a]">
-                  Message Finder
-                </h2>
+                <div className="mt-2 flex items-center gap-3">
+                  <h2 className="text-2xl font-black tracking-tight text-[#4a1a6a]">
+                    Message Finder
+                  </h2>
+                  <FeatureFaqHelp
+                    href="/feature-faq?category=Mail%20Box"
+                    iconClassName="h-5 w-5 text-[#4a1a6a]"
+                  />
+                </div>
                 {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#7a4a9a]">
                   Search and filter your mail box messages by sender, recipient, read status, or time.
                 </p> */}

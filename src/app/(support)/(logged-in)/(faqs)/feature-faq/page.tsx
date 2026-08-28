@@ -1,5 +1,5 @@
 import { FeaturesFaqHomePage } from "@/features/support/components/features-faq-home-page";
-import { getPublishedFaqVideos } from "@/components/db/sql/queries-videos";
+import { getPublishedFeatureFaqVideos } from "@/components/db/sql/queries-videos";
 
 export default async function FeaturesFaqPage({
   searchParams,
@@ -8,7 +8,7 @@ export default async function FeaturesFaqPage({
 }) {
   const { category } = await searchParams;
   const defaultCategory = Array.isArray(category) ? category[0] : category;
-  const faqVideos = await getPublishedFaqVideos();
+  const faqVideos = await getPublishedFeatureFaqVideos(defaultCategory);
 
   return (
     <FeaturesFaqHomePage defaultCategory={ defaultCategory } faqVideos={ faqVideos } />

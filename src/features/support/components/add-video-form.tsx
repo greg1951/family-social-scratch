@@ -152,7 +152,7 @@ function createDefaultFormState(): FormState {
         caption: "",
         durationMinutes: "",
         descriptionJson: DEFAULT_DESCRIPTION_JSON,
-        status: "draft",
+        status: "published",
         selectedTagIds: [],
         selectedFile: null,
     };

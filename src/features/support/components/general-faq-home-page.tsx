@@ -14,10 +14,16 @@ import {
 
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import { getGeneralFaqItems } from "../types/constants";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useSyncExternalStore } from "react";
 import { HelpCircle, ArrowLeft } from "lucide-react";
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
 import Link from "next/link";
+
+const subscribeToHydration = () => () => {};
+
+function useIsHydrated() {
+  return useSyncExternalStore(subscribeToHydration, () => true, () => false);
+}
 
 function getVideoDescriptionDocument(videoJson?: string): JSONContent {
   if (!videoJson) {
@@ -77,6 +83,7 @@ export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: Fa
   const faqItems = useMemo(() => getGeneralFaqItems(setupStartUrl), [setupStartUrl]);
 
   const [selectedCategory, setSelectedCategory] = useState("");
+  const isHydrated = useIsHydrated();
 
   // Get unique categories from faqItems
   const categories = useMemo(() => {
@@ -127,7 +134,7 @@ export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: Fa
                 <p className="text-base font-semibold text-[#164657]">No published videos are available right now.</p>
                 <p className="mt-1 text-sm">Please check back soon.</p>
               </div>
-            ) : (
+            ) : !isHydrated ? null : (
               <Accordion type="multiple" className="rounded-[1.3rem] border border-[#d5e4e9] bg-[linear-gradient(180deg,#ffffff,#f8fcff)] px-3 py-2 sm:px-4">
                 {faqVideos.map((videoItem) => (
                   <AccordionItem key={videoItem.id} value={`video-${videoItem.id}`}>
@@ -186,7 +193,7 @@ export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: Fa
                 <p className="text-base font-semibold text-[#164657]">No published FAQs are available right now.</p>
                 <p className="mt-1 text-sm">Please check back soon.</p>
               </div>
-            ) : (
+            ) : !isHydrated ? null : (
               <div className="grid gap-1.5">
                 { filteredFaqItems.map((faqItem) => (
                   <article

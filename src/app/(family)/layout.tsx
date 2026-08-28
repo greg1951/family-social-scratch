@@ -34,7 +34,9 @@ export default async function TrialLayout({
                   { accountHeading }
                 </h3>
                 <MemberFaqHelp
-                  href="/member-faq?category=Member%20Profile"
+                  href={ memberAvatarDetails.isFounder
+                    ? "/founder-faq?category=Founder%20Profile"
+                    : "/member-faq?category=Member%20Profile" }
                   iconClassName="h-5 w-5 text-[#10364a]"
                 />
               </div>

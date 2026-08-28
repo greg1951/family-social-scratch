@@ -1,5 +1,5 @@
 import { MemberFaqHomePage } from "@/features/support/components/member-faq-home-page";
-import { getPublishedFaqVideos } from "@/components/db/sql/queries-videos";
+import { getPublishedAccountFaqVideos } from "@/components/db/sql/queries-videos";
 
 export default async function MemberFaqPage({
   searchParams,
@@ -8,7 +8,7 @@ export default async function MemberFaqPage({
 }) {
   const { category } = await searchParams;
   const defaultCategory = Array.isArray(category) ? category[0] : category;
-  const faqVideos = await getPublishedFaqVideos();
+  const faqVideos = await getPublishedAccountFaqVideos("member", defaultCategory ?? "Member Profile", "Detailed");
 
   return (
     <MemberFaqHomePage defaultCategory={ defaultCategory } faqVideos={ faqVideos } />

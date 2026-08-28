@@ -14,7 +14,7 @@ import { parseSpotifyConnectionContext, SPOTIFY_CONNECTION_COOKIE } from "@/auth
 import { authValidation } from "./features/auth/services/auth-utils";
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import { accounts, user } from "@/components/db/schema/family-social-schema-tables";
 import { findRegisteredFamily } from "@/components/db/sql/queries-family-member";
@@ -346,6 +346,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const spotifyAccountUserId = Number(token.id) || null;
 
         if (spotifyAccountUserId) {
+          // NULL expires_at sorts first under plain DESC, which would resurrect a dead row.
           const [storedSpotifyAccount] = await db
             .select({
               accessToken: accounts.access_token,
@@ -354,7 +355,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             })
             .from(accounts)
             .where(and(eq(accounts.userId, spotifyAccountUserId), eq(accounts.provider, "spotify")))
-            .orderBy(desc(accounts.expires_at));
+            .orderBy(sql`${ accounts.refresh_token } is null`, desc(sql`coalesce(${ accounts.expires_at }, 0)`))
+            .limit(1);
 
           const reconciledSpotifyToken = reconcileSpotifyToken(
             {

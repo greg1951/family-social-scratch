@@ -1,5 +1,10 @@
 "use client";
 
+import type { JSONContent } from "@tiptap/core";
+import LinkExtension from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import { EditorContent, useEditor } from "@tiptap/react";
 import {
   Accordion,
   AccordionContent,
@@ -7,6 +12,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
+import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
 import { featureFaqItems } from "../types/constants";
 import { useMemo, useState } from "react";
@@ -25,6 +31,50 @@ function normalizeFeatureFaqCategory(category: string) {
   }
 
   return FEATURE_FAQ_CATEGORY_ALIASES[normalizedCategory.toLowerCase()] ?? normalizedCategory;
+}
+
+function getVideoDescriptionDocument(videoJson?: string): JSONContent {
+  if (!videoJson) {
+    return createEmptyTipTapDocument();
+  }
+
+  const parsed = parseSerializedTipTapDocument(videoJson);
+  return parsed.success ? parsed.content : createEmptyTipTapDocument();
+}
+
+function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
+  const viewer = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [3],
+        },
+        blockquote: false,
+        codeBlock: false,
+        horizontalRule: false,
+      }),
+      Underline,
+      LinkExtension.configure({
+        autolink: true,
+        defaultProtocol: "https",
+        openOnClick: true,
+      }),
+    ],
+    content: getVideoDescriptionDocument(videoJson),
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap text-[#12384e] focus:outline-none",
+      },
+    },
+  });
+
+  return (
+    <div className="rounded-xl border border-[#cfe0e8] bg-white p-3 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_p]:leading-6 [&_.tiptap_a]:text-[#0f6080] [&_.tiptap_a]:underline">
+      <EditorContent editor={viewer} />
+    </div>
+  );
 }
 
 // --- State for category selection ---
@@ -95,12 +145,12 @@ export function FeaturesFaqHomePage({
                   <AccordionItem key={ videoItem.id } value={ `video-${ videoItem.id }` }>
                     <AccordionTrigger>
                       <div className="text-left">
-                        <p className="text-base font-semibold text-[#164657]">{ videoItem.videoName }</p>
-                        <p className="text-xs text-slate-600">{ videoItem.caption } | video #{ videoItem.seqNo } | { videoItem.durationMinutes } min</p>
+                        <p className="text-base font-semibold text-[#164657]">{ videoItem.caption }</p>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="space-y-3 text-sm text-[#305867]">
+                        <VideoJsonViewer videoJson={ videoItem.videoJson } />
                         <div className="overflow-hidden rounded-lg border border-[#d8e8ed] bg-black">
                           <video
                             controls

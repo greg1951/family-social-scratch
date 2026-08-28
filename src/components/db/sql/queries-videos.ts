@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { aliasedTable, and, asc, eq, ilike, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 
@@ -162,6 +162,7 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
       durationMinutes: video.durationMinutes,
       videoJson: video.videoJson,
       videoUrl: video.videoUrl,
+      faqPageSeqNo: video.faqPageSeqNo,
     })
     .from(video)
     .where(and(eq(video.status, "published"), inArray(video.id, qualifiedVideoIds)))
@@ -186,6 +187,124 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
       } satisfies FaqVideoItem;
     })
     .filter((row): row is FaqVideoItem => row !== null);
+}
+
+export async function getPublishedAccountFaqVideos(audience: string, featureName: string, focus: string): Promise<FaqVideoItem[]> {
+  const audienceVideoTag = aliasedTable(videoTag, "audience_video_tag");
+  const audienceTagReference = aliasedTable(videoTagReference, "audience_tag_reference");
+  const featureVideoTag = aliasedTable(videoTag, "account_feature_video_tag");
+  const featureTagReference = aliasedTable(videoTagReference, "account_feature_tag_reference");
+  const focusVideoTag = aliasedTable(videoTag, "focus_video_tag");
+  const focusTagReference = aliasedTable(videoTagReference, "focus_tag_reference");
+
+  const rows = await db
+    .selectDistinct({
+      id: video.id,
+      videoName: video.videoName,
+      caption: video.caption,
+      seqNo: video.seqNo,
+      durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
+      videoUrl: video.videoUrl,
+      faqPageSeqNo: video.faqPageSeqNo,
+    })
+    .from(video)
+    .innerJoin(audienceVideoTag, eq(audienceVideoTag.videoId, video.id))
+    .innerJoin(audienceTagReference, eq(audienceTagReference.id, audienceVideoTag.tagId))
+    .innerJoin(featureVideoTag, eq(featureVideoTag.videoId, video.id))
+    .innerJoin(featureTagReference, eq(featureTagReference.id, featureVideoTag.tagId))
+    .innerJoin(focusVideoTag, eq(focusVideoTag.videoId, video.id))
+    .innerJoin(focusTagReference, eq(focusTagReference.id, focusVideoTag.tagId))
+    .where(and(
+      eq(video.status, "published"),
+      ilike(audienceTagReference.category, "audience"),
+      ilike(audienceTagReference.tagName, audience),
+      ilike(featureTagReference.category, "feature"),
+      ilike(featureTagReference.tagName, featureName),
+      ilike(focusTagReference.category, "focus"),
+      ilike(focusTagReference.tagName, focus),
+    ))
+    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
+
+  return rows
+    .map((row) => {
+      const key = extractS3KeyFromValue(row.videoUrl);
+      if (!key) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        videoName: row.videoName,
+        caption: row.caption,
+        seqNo: row.seqNo,
+        durationMinutes: row.durationMinutes,
+        videoJson: row.videoJson,
+        videoUrl: row.videoUrl ?? "",
+        playbackUrl: `/api/video-faq-playback?videoId=${row.id}`,
+      } satisfies FaqVideoItem;
+    })
+    .filter((row): row is FaqVideoItem => row !== null);
+}
+
+export async function getPublishedFeatureFaqVideos(featureName?: string): Promise<FaqVideoItem[]> {
+  const normalizedFeatureName = featureName?.trim();
+
+  if (!normalizedFeatureName) {
+    return [];
+  }
+
+  const featureVideoTag = aliasedTable(videoTag, "feature_video_tag");
+  const featureTagReference = aliasedTable(videoTagReference, "feature_tag_reference");
+  const detailVideoTag = aliasedTable(videoTag, "detail_video_tag");
+  const detailTagReference = aliasedTable(videoTagReference, "detail_tag_reference");
+
+  const rows = await db
+    .selectDistinct({
+      id: video.id,
+      videoName: video.videoName,
+      caption: video.caption,
+      seqNo: video.seqNo,
+      durationMinutes: video.durationMinutes,
+      videoJson: video.videoJson,
+      videoUrl: video.videoUrl,
+      faqPageSeqNo: video.faqPageSeqNo,
+    })
+    .from(video)
+    .innerJoin(featureVideoTag, eq(featureVideoTag.videoId, video.id))
+    .innerJoin(featureTagReference, eq(featureTagReference.id, featureVideoTag.tagId))
+    .innerJoin(detailVideoTag, eq(detailVideoTag.videoId, video.id))
+    .innerJoin(detailTagReference, eq(detailTagReference.id, detailVideoTag.tagId))
+    .where(and(
+      eq(video.status, "published"),
+      eq(featureTagReference.category, "Feature"),
+      eq(featureTagReference.tagName, normalizedFeatureName),
+      eq(detailTagReference.category, "Focus"),
+      eq(detailTagReference.tagName, "Detailed"),
+    ))
+    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
+
+  const formattedRows = rows
+    .map((row) => {
+      const key = extractS3KeyFromValue(row.videoUrl);
+      if (!key) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        videoName: row.videoName,
+        caption: row.caption,
+        seqNo: row.seqNo,
+        durationMinutes: row.durationMinutes,
+        videoJson: row.videoJson,
+        videoUrl: row.videoUrl ?? "",
+        playbackUrl: `/api/video-faq-playback?videoId=${row.id}`,
+      } satisfies FaqVideoItem;
+    })
+    .filter((row): row is FaqVideoItem => row !== null);
+
+  return formattedRows;
 }
 
 function dedupeTagIds(tagIds: number[]) {
