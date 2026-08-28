@@ -1,6 +1,6 @@
 import { FileText, Info, Heart } from "lucide-react";
 
-export const tvAndMovieReviewsFaqItems = [
+export const tvReviewsFaqItems = [
   {
     value: "item-10",
     category: "TV Reviews",
@@ -147,7 +147,7 @@ export const tvAndMovieReviewsFaqItems = [
           <p className="text-base font-semibold pt-2">On the home page, this show will display the title and background in place of an image which was not provided.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Where an image would be shown, now the title and background are shown instead.</li>
-            <li>The Show Title below the image is a link that will take you to the show's page.</li>
+            <li>The Show Title below the image is a link that will take you to the show&apos;s page.</li>
           </ol>
           <div className="flex justify-center pt-4">
             <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-160"

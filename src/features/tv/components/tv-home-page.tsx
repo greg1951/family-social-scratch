@@ -720,7 +720,7 @@ export function TvHomePage({
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f7987]">
                       <h2 className="text-2xl font-black tracking-tight text-[#15384a]">Show Finder</h2>
                       <FeatureFaqHelp
-                        href="/feature-faq?category=TV%20and%20Movie%20Reviews"
+                        href="/feature-faq?category=TV%20Reviews"
                         buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"

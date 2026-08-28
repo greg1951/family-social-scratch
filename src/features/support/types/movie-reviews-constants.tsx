@@ -1,12 +1,12 @@
 import { FileText, Info, Heart } from "lucide-react";
 
-export const tvAndMovieReviewsFaqItems = [
+export const movieReviewsFaqItems = [
   {
     value: "item-10",
     category: "Movie Reviews",
     trigger: (
       <div>
-        <p className="text-base font-semibold">What&apos;s the general layout of the TV Room home page?</p>
+        <p className="text-base font-semibold">What&apos;s the general layout of the Movie Theater home page?</p>
         <p className="text-xs text-slate-600">The <i>Movie Theater</i>, <i>Music Salon</i>, and <i>The Kitchen</i> layouts are similar in behavior.</p>
       </div>
     ),
@@ -16,12 +16,12 @@ export const tvAndMovieReviewsFaqItems = [
           <div className="flex justify-center pb-4">
             <img
               src="/images/support/faq-tv-home.jpg"
-              alt="TV Room Home"
+              alt="Movie Theater Home"
               style={ { maxWidth: '900px', maxHeight: '800px', marginTop: 12, borderRadius: 8 } }
             />
 
           </div>
-          <p className="text-base font-semibold">The TV Room home page let&apos;s you find shows that have been reviewed by others in the family.</p>
+          <p className="text-base font-semibold">The Movie Theater home page let&apos;s you find shows that have been reviewed by others in the family.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>The <b>Show Finder</b> let&apos;s you type in a name, a genre, a family member.</li>
             <li>When you find what you&apos;re looking for you can select it and see <b>View the Show</b>.</li>
@@ -47,7 +47,7 @@ export const tvAndMovieReviewsFaqItems = [
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">Adding a TV show review is easy. Start by clicking on the <b>Add Show</b> button in the upper right corner.</p>
+          <p className="text-base font-semibold">Adding a Movie review is easy. Start by clicking on the <b>Add Movie</b> button in the upper right corner.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Start with a good template. My Family Social provides a <b>Global</b> template, but a family member can create their own.</li>
             <li>When you pick a template it will prefill the review edit area with helpful headings.</li>
@@ -137,17 +137,17 @@ export const tvAndMovieReviewsFaqItems = [
               alt="IMDB Link"
             />
           </div>
-          <p className="text-base font-semibold">In My Family Social TV Room <b>Add Show</b>:</p>
+          <p className="text-base font-semibold">In My Family Social Movie Theater <b>Add Movie</b>:</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Enter the <b>Show Name</b> as you want it to appear in the home page.</li>
-            <li>Paste the URL you copied from IMDB or YouTube into the <b>Show Site URL</b> field.</li>
+            <li>Enter the <b>movie name</b> as you want it to appear in the home page.</li>
+            <li>Paste the URL you copied from IMDB or YouTube into the <b>Movie Site URL</b> field.</li>
             <li>Select one of five <b>background colors</b> to be used when your show is displayed.</li>
             <li>Complete the rest of the form and add or update your show review.</li>
           </ol>
           <p className="text-base font-semibold pt-2">On the home page, this show will display the title and background in place of an image which was not provided.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Where an image would be shown, now the title and background are shown instead.</li>
-            <li>The Show Title below the image is a link that will take you to the show's page.</li>
+            <li>The Show Title below the image is a link that will take you to the show&apos;s page.</li>
           </ol>
           <div className="flex justify-center pt-4">
             <img className="aspect-auto object-cover w-100 h-75 md:w-230 md:h-160"

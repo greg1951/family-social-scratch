@@ -1,7 +1,8 @@
 import { FileText, Folder, Settings, Users, HelpCircle, Info, Heart, CircleAlert } from "lucide-react";
 
 // Import feature FAQ items from category-specific files
-import { tvAndMovieReviewsFaqItems } from "./tv-and-movie-reviews-constants";
+import { movieReviewsFaqItems } from "./movie-reviews-constants";
+import { tvReviewsFaqItems } from "./tv-reviews-constants";
 import { discussionGroupsFaqItems } from "./discussion-groups-constants";
 import { musicSalonFaqItems } from "./music-salon-constants";
 import { theKitchenFaqItems } from "./the-kitchen-constants";
@@ -241,8 +242,8 @@ export const founderFaqItems = [
             </ul>
             <p className="pt-2">The founder can remove the member using one of two methods:</p>
             <ul className="list-disc ml-6 mt-2">
-              <li>"soft" delete: effectively deactivates the member's access and sets the status to "retired". This allows the member's posts and comments to remain intact, known as "Retired Member". The retired member could be reactivated at a later time.</li>
-              <li>"hard" delete: permanently removes the member from the family by deleting the member and all of their content from the family. The member could be reinvited at a later time.</li>
+              <li>&quot;soft&quot; delete: effectively deactivates the member&apos;s access and sets the status to &quot;retired&quot;. This allows the member&apos;s posts and comments to remain intact, known as &quot;Retired Member&quot;. The retired member could be reactivated at a later time.</li>
+              <li>&quot;hard&quot; delete: permanently removes the member from the family by deleting the member and all of their content from the family. The member could be reinvited at a later time.</li>
             </ul>
             <div className="flex justify-center pt-2 pb-2">
               <img className="aspect-auto object-cover w-100 h-75 md:w-220 md:h-170"
@@ -296,7 +297,8 @@ export const founderFaqItems = [
 // Feature FAQ items are now organized in separate files by category
 // They are combined here for backward compatibility
 export const featureFaqItems = [
-  ...tvAndMovieReviewsFaqItems,
+  ...tvReviewsFaqItems,
+  ...movieReviewsFaqItems,
   ...discussionGroupsFaqItems,
   ...musicSalonFaqItems,
   ...theKitchenFaqItems,

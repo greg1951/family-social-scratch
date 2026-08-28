@@ -519,7 +519,7 @@ export function MovieHomePage({
                       <h2 className="mt-2 text-2xl font-black tracking-tight text-[#5c2e1a]">Movie Finder</h2>
                       <div id="movie-feature-help">
                         <FeatureFaqHelp
-                          href="/feature-faq?category=TV%20and%20Movie%20Reviews"
+                          href="/feature-faq?category=Movie%20Reviews"
                           buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#e8c4a0] bg-gradient-to-b from-[#fffaf4] to-[#fde7d5] text-[#b8581a] shadow-[0_8px_18px_rgba(184,88,26,0.2)] group-hover:shadow-[0_12px_26px_rgba(184,88,26,0.28)]"
                           iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#b8581a]"
                           tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]"
