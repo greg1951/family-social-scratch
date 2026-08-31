@@ -28,6 +28,12 @@ export interface ClubSession {
   contentJson?: string | null;
 }
 
+export interface ClubSessionTarget {
+  targetType: 'book' | 'poem';
+  targetId: number;
+  targetTitle: string;
+}
+
 export type ClubsHomePageDataReturn =
   | { success: false; message: string }
   | {

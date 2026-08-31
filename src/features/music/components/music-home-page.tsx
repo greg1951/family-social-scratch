@@ -795,8 +795,9 @@ export function MusicHomePage({
                                 <img src="/icons/spotify-icon.png" alt="" className="size-9 rounded-md object-cover" />
                               </button>
                             </HoverCardTrigger>
-                            <HoverCardContent side="top" align="start" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
-                              You must have a Spotify account and sign in with Spotify to play this playlist.
+                            <HoverCardContent side="top" align="start" className="w-64 space-y-2 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
+                              <p>You must have a Spotify account and sign in with Spotify to play this playlist.</p>
+                              <p> If you have a Spotify account, don&apos;t forget to update the <i>Preferred Music Player</i> in your profile settings.</p>
                             </HoverCardContent>
                           </HoverCard>
                         ) : null }

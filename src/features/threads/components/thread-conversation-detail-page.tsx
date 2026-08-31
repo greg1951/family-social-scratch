@@ -9,12 +9,13 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Archive, ArchiveRestore, Eye, EyeOff, MessageCircleReply, Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Undo2, Redo2 } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, EyeOff, Forward, MessageCircleReply, Trash2, Bold, Italic, Underline as UnderlineIcon, List, ListOrdered, Undo2, Redo2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   addThreadReplyAction,
   archiveSenderThreadAction,
+  deleteThreadConversationAction,
   updateThreadReplyAction,
   updateThreadArchiveStateAction,
   updateThreadReadStateAction,
@@ -301,8 +302,26 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
     });
   }
 
-  function handleReadToggle() {
-    if (!hasRecipientState) {
+  function handleDelete() {
+    if (!window.confirm("Delete this message? This cannot be undone.")) {
+      return;
+    }
+
+    startSaveTransition(async () => {
+      const result = await deleteThreadConversationAction({ conversationId: conversation.id });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.push("/threads");
+      router.refresh();
+    });
+  }
+
+  function handleReadToggle() {    if (!hasRecipientState) {
       toast.error("Only recipients can change read status for this thread.");
       return;
     }
@@ -458,6 +477,28 @@ export function ThreadConversationDetailPage({ conversation, currentMemberId }: 
             { isRead ? "Mark Unread" : "Mark Read" }
           </Button>
         ) }
+
+        <Button
+          type="button"
+          size="sm"
+          onClick={ () => router.push(`/threads/compose?forwardConversationId=${ conversation.id }`) }
+          disabled={ isSaving }
+          className="rounded-full bg-[#8a4fae] text-white hover:bg-[#74409a]"
+        >
+          <Forward className="mr-1 size-4" />
+          Forward
+        </Button>
+
+        <Button
+          type="button"
+          size="sm"
+          onClick={ handleDelete }
+          disabled={ isSaving }
+          className="rounded-full bg-[#a12d2d] text-white hover:bg-[#872525]"
+        >
+          <Trash2 className="mr-1 size-4" />
+          Delete
+        </Button>
       </div>
 
       <div className="space-y-4">

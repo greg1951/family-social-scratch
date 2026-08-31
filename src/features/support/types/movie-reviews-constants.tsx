@@ -40,7 +40,7 @@ export const movieReviewsFaqItems = [
     category: "Movie Reviews",
     trigger: (
       <div>
-        <p className="text-base font-semibold">How do I add a TV show review?</p>
+        <p className="text-base font-semibold">How do I add a Movie review?</p>
         <p className="text-xs text-slate-600">It works the same way in <i>Movie Theater</i>, <i>Music Salon</i>, and <i>The Kitchen</i> as well.</p>
       </div>
     ),
@@ -81,7 +81,7 @@ export const movieReviewsFaqItems = [
     category: "Movie Reviews",
     trigger: (
       <div>
-        <p className="text-base font-semibold">Why TV show and Movie image uploads require special handling?</p>
+        <p className="text-base font-semibold">Why do Movie and TV show image uploads require special handling?</p>
         <p className="text-xs text-slate-600">Images must be properly credited to comply with Fair Use guidelines in copyright laws.</p>
       </div>
     ),

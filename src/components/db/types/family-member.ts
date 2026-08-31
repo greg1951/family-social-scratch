@@ -47,6 +47,7 @@ export type GetFounderDetailsReturn =
       nickName?: string;
       birthday?: string;
       cellPhone?: string;
+      memberImageUrl?: string | null;
       memberId: number;
       familyName?: string;
     };

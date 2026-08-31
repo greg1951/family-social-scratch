@@ -319,6 +319,7 @@ export function FoodiesHomePage({
       date: formatStripDate(recipe.updatedAt),
       status: recipe.status,
       submitterName: recipe.submitterName,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -347,6 +348,7 @@ export function FoodiesHomePage({
       date: formatStripDate(recipe.updatedAt),
       status: recipe.status,
       submitterName: recipe.submitterName,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       noRating: recipe.noRatingCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -365,6 +367,7 @@ export function FoodiesHomePage({
       date: formatStripDate(recipe.updatedAt),
       status: recipe.status,
       submitterName: recipe.submitterName,
+      submitterLikenessDegree: recipe.memberId === member.memberId ? null : recipe.submitterLikenessDegree,
       commentsCount: recipe.commentCount,
       thumbsUp: recipe.thumbsUpCount,
       love: recipe.loveCount,
@@ -918,7 +921,7 @@ export function FoodiesHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#5a7d42] sm:text-[0.72rem] sm:tracking-[0.34em]">
+              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#e9ffd0] sm:text-[0.72rem] sm:tracking-[0.34em]">
                 The Family Kitchen
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -962,7 +965,7 @@ export function FoodiesHomePage({
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#647a50]">
                     <h2 className="text-2xl font-black tracking-tight text-[#2f4820]">Recipe Finder</h2>
                     <FeatureFaqHelp
-                      href="/feature-faq?category=The%20Kitchen"
+                      href="/feature-faq?category=The+Kitchen"
                       buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#cfe8b2] bg-gradient-to-b from-[#f7ffed] to-[#e5f7cb] text-[#4f7a2a] shadow-[0_8px_18px_rgba(79,122,42,0.2)] group-hover:shadow-[0_12px_26px_rgba(79,122,42,0.3)]"
                       iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"

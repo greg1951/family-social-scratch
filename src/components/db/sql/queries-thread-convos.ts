@@ -1321,6 +1321,55 @@ export async function updateRecipientThreadArchiveState(
   };
 }
 
+/*------------------ deleteThreadConversationForMember ------------------ */
+export async function deleteThreadConversationForMember(
+  conversationId: number,
+  familyId: number,
+  memberId: number,
+): Promise<updateThreadRecipientStateReturn> {
+  try {
+    const [convoRow] = await db
+      .select({ id: threadConversation.id, senderMemberId: threadConversation.senderMemberId })
+      .from(threadConversation)
+      .where(and(
+        eq(threadConversation.id, conversationId),
+        eq(threadConversation.familyId, familyId),
+      ));
+
+    if (!convoRow) {
+      return { success: false, message: 'Message not found.' };
+    }
+
+    const [recipientRow] = await db
+      .select({ id: threadRecipientState.id })
+      .from(threadRecipientState)
+      .where(and(
+        eq(threadRecipientState.conversationId, conversationId),
+        eq(threadRecipientState.recipientMemberId, memberId),
+      ));
+
+    const isSender = convoRow.senderMemberId === memberId;
+
+    if (!isSender && !recipientRow) {
+      return { success: false, message: 'Only the sender or a recipient can delete this message.' };
+    }
+
+    if (recipientRow) {
+      await db.delete(threadRecipientState).where(eq(threadRecipientState.id, recipientRow.id));
+    }
+
+    // The sender owns the message, so removing it clears the copies delivered to everyone.
+    if (isSender) {
+      await db.delete(threadConversation).where(eq(threadConversation.id, convoRow.id));
+    }
+
+    return { success: true, message: 'Message deleted.' };
+  } catch (error) {
+    logDbQueryError('threads.deleteThreadConversationForMember', error, { conversationId, familyId, memberId });
+    return { success: false, message: 'Unable to delete this message right now.' };
+  }
+}
+
 /*------------------ updateRecipientThreadReadState ------------------ */
 export async function updateRecipientThreadReadState(
   conversationId: number,

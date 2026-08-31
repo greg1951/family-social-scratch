@@ -1,10 +1,60 @@
 'use server';
 
+import type { JSONContent } from '@tiptap/core';
 import { revalidatePath } from 'next/cache';
 
-import { createClubSession, deleteClub, deleteClubSession, saveClub, updateClubSession } from '@/components/db/sql/queries-clubs';
+import { createClubSession, deleteClub, deleteClubSession, getClubSessionById, saveClub, updateClubSession } from '@/components/db/sql/queries-clubs';
+import { createThreadConversationWithInitialPost } from '@/components/db/sql/queries-thread-convos';
 import type { CreateClubSessionInput, DeleteClubInput, DeleteClubSessionInput, SaveClubInput, UpdateClubSessionInput } from '@/components/db/types/clubs';
+import { parseSerializedTipTapDocument } from '@/components/db/types/poem-term-validation';
 import { getMemberPageDetails } from '@/features/family/services/family-services';
+
+function extractTipTapText(node: JSONContent): string {
+  if (node.type === 'text') {
+    return node.text ?? '';
+  }
+
+  const childText = (node.content ?? []).map(extractTipTapText).join('');
+
+  return node.type === 'paragraph' || node.type === 'heading' || node.type === 'listItem'
+    ? `${ childText }\n`
+    : childText;
+}
+
+async function sendClubSessionInviteMessage(
+  clubSessionId: number,
+  memberDetails: { familyId: number; memberId: number; isFounder: boolean },
+) {
+  const session = await getClubSessionById(memberDetails.familyId, clubSessionId);
+
+  if (!session) {
+    return;
+  }
+
+  const clubName = session.clubName ?? 'the club';
+  const sessionTitle = session.targetTitle ?? session.discussTopic ?? 'Club Session';
+  const parsedTopic = parseSerializedTipTapDocument(session.contentJson ?? session.topicJson ?? undefined);
+
+  if (!parsedTopic.success) {
+    return;
+  }
+
+  await createThreadConversationWithInitialPost(
+    {
+      title: `${ clubName } Club Session Invitation`,
+      subject: sessionTitle,
+      visibility: 'private',
+      recipientMemberIds: [memberDetails.memberId],
+      content: extractTipTapText(parsedTopic.content).trim() || sessionTitle,
+      contentJson: JSON.stringify(parsedTopic.content),
+    },
+    {
+      familyId: memberDetails.familyId,
+      senderMemberId: memberDetails.memberId,
+      isFounder: memberDetails.isFounder,
+    },
+  );
+}
 
 export async function saveClubAction(input: SaveClubInput) {
   const memberDetails = await getMemberPageDetails();
@@ -59,6 +109,14 @@ export async function createClubSessionAction(input: CreateClubSessionInput) {
   const result = await createClubSession(input, memberDetails);
 
   if (result.success) {
+    // The invite message is a convenience for the moderator; a failure must not undo the session.
+    try {
+      await sendClubSessionInviteMessage(result.clubSessionId, memberDetails);
+      revalidatePath('/threads');
+    } catch (error) {
+      console.error('[CLUB_SESSION_INVITE_MESSAGE_FAILED]', error);
+    }
+
     revalidatePath('/add-club');
 
     if (input.targetType === 'book') {

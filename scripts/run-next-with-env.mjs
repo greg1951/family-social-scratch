@@ -1,14 +1,33 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { spawn } from "node:child_process";
+import { createServer } from "node:https";
+import next from "next";
 import { SignJWT, importPKCS8 } from "jose";
 
 const [, , ...cliArgs] = process.argv;
 const firstArg = cliArgs[0];
 const hasExplicitEnvFile = Boolean(firstArg) && !String(firstArg).startsWith("-");
 const envFileArg = hasExplicitEnvFile ? firstArg : undefined;
-const nextArgs = hasExplicitEnvFile ? cliArgs.slice(1) : cliArgs;
+const unfilteredNextArgs = hasExplicitEnvFile ? cliArgs.slice(1) : cliArgs;
+const shouldStart = unfilteredNextArgs.includes("--start");
+const shouldUseHttps = unfilteredNextArgs.includes("--experimental-https");
+const httpsOptionNames = new Set([
+  "--experimental-https",
+  "--experimental-https-key",
+  "--experimental-https-cert",
+]);
+// Only the custom `--start` HTTPS server consumes these flags; `next dev` needs them passed through.
+const nextArgs = unfilteredNextArgs.filter((arg, index, args) =>
+  arg !== "--start" &&
+  (!shouldStart || (!httpsOptionNames.has(arg) && !httpsOptionNames.has(args[index - 1]))),
+);
 const childEnv = { ...process.env };
+
+function getOptionValue(optionName) {
+  const optionIndex = unfilteredNextArgs.indexOf(optionName);
+  return optionIndex === -1 ? undefined : unfilteredNextArgs[optionIndex + 1];
+}
 
 function resolvePreferredEnvFile(explicitEnvFile) {
   if (explicitEnvFile) {
@@ -113,22 +132,50 @@ console.log("DB env diagnostics", {
 
 await ensureAppleClientSecret(childEnv);
 
-const nextBinPath = resolve(process.cwd(), "node_modules", "next", "dist", "bin", "next");
-const child = spawn(process.execPath, [nextBinPath, "dev", ...nextArgs], {
-  stdio: "inherit",
-  env: childEnv,
-});
+if (shouldStart && shouldUseHttps) {
+  const hostname = getOptionValue("--hostname") ?? "0.0.0.0";
+  const port = Number(getOptionValue("--port") ?? "3000");
+  const keyPath = getOptionValue("--experimental-https-key");
+  const certPath = getOptionValue("--experimental-https-cert");
 
-child.on("exit", (code, signal) => {
-  if (signal) {
-    process.kill(process.pid, signal);
-    return;
+  if (!keyPath || !certPath) {
+    console.error("HTTPS start mode requires --experimental-https-key and --experimental-https-cert.");
+    process.exit(1);
   }
 
-  process.exit(code ?? 0);
-});
+  const app = next({ dev: false, hostname, port });
+  const handleRequest = app.getRequestHandler();
+  await app.prepare();
 
-child.on("error", (error) => {
-  console.error(error);
-  process.exit(1);
-});
+  const server = createServer(
+    {
+      key: readFileSync(resolve(process.cwd(), keyPath)),
+      cert: readFileSync(resolve(process.cwd(), certPath)),
+    },
+    (request, response) => handleRequest(request, response),
+  );
+
+  server.listen(port, hostname, () => {
+    console.log(`Ready on https://local.my-family-social.com:${ port }`);
+  });
+} else {
+  const nextBinPath = resolve(process.cwd(), "node_modules", "next", "dist", "bin", "next");
+  const child = spawn(process.execPath, [nextBinPath, shouldStart ? "start" : "dev", ...nextArgs], {
+    stdio: "inherit",
+    env: childEnv,
+  });
+
+  child.on("exit", (code, signal) => {
+    if (signal) {
+      process.kill(process.pid, signal);
+      return;
+    }
+
+    process.exit(code ?? 0);
+  });
+
+  child.on("error", (error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

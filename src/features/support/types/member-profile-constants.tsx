@@ -65,23 +65,23 @@ export const memberProfileFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">What is MFA and why would I use it?</p>
-        <p className="text-xs text-slate-600"> Multi-factor authentication further protects your account, even if your password is compromised.</p>
+        <p className="text-xs text-slate-600"> Multi-Factor Authentication further protects your account, even if your password is compromised.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">🔒 If MFA is enabled, then a secret key is created that will be used in the following way.</p>
+          <p className="text-base font-semibold">🔒 If you enable MFA then a secret key is used to:</p>
           <ul className="list-disc ml-6 mt-2 text-sm pt-2 pb-2">
-            <li>The secret key is used to generate a time-based six-digit one-time passcode (OTP).</li>
+            <li>Generate a time-based six-digit one-time passcode (OTP).</li>
             <li>The OTP will be emailed to you.</li>
-            <li>The OTP is valid for a short period (2 minutes) of time.</li>
+            <li>The OTP is valid for a short period of time.</li>
           </ul>
           <p className="text-base font-semibold">🔒 Enter the OTP into the login form.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm p-1">
-            <li>In your email, you will find a six-digit code.</li>
-            <li>Enter the six-digit code into the login form and continue your login.</li>
-            <li>If the OTP has expired, then simply request another OTP.</li>
+            <li>Copy the OTP in your email to your clipboard.</li>
+            <li>Enter (paste) the six-digit code into the login form and continue your login.</li>
+            <li>If the OTP has expired, then request another.</li>
           </ol>
         </span>
       </div>
@@ -94,13 +94,13 @@ export const memberProfileFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">Does My Family Social provide a set of avatars that I can use?</p>
-        <p className="text-xs text-slate-600">No. You can upload a good mug shot of yourself or your own favorite avatar instead.</p>
+        <p className="text-xs text-slate-600">No. You can upload a good mug shot of yourself or use your own favorite avatar instead.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">🎨 Your mug shot or an avatar is just an image that you can upload.</p>
+          <p className="text-base font-semibold">🤴🏼 Your mug shot or an avatar is just an image that you can upload.</p>
           <ul className="list-disc ml-6 mt-2 text-sm">
             <li>A good size for the headshot or avatar is a 160 by 160 pixels.</li>
             <li>Try to keep the image size to less than 2 MB if possible.</li>
@@ -115,18 +115,18 @@ export const memberProfileFaqItems = [
     category: "Member Profile",
     trigger: (
       <div>
-        <p className="text-base font-semibold">In the <b>My Profile</b> tab, what fields are the most important?</p>
+        <p className="text-base font-semibold">What fields are the most important in the <b>My Profile</b> tab?</p>
         <p className="text-xs text-slate-600"> The most important fields are your first and last name.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">🚶🏼 Most profile fields are optional.</p>
+          <p className="text-base font-semibold">🚶🏼 Most of the profile fields are optional.</p>
           <ul className="list-disc ml-6 mt-2 text-sm p-2">
             <li>Your <b>first and last name</b> are required.</li>
             <li>If you have a <b>nickname</b> that you would prefer to be used in My Family Social, then enter it.</li>
-            <li>The <b>cell phone</b> and <b>birthday</b> are optional.</li>
+            <li>The <b>cell phone</b> and <b>birthday</b> are optional. (We do special things on birthdays 😊)</li>
           </ul>
         </span>
       </div>
@@ -138,20 +138,19 @@ export const memberProfileFaqItems = [
     category: "Member Profile",
     trigger: (
       <div>
-        <p className="text-base font-semibold">In the <b>My Settings</b> tab, what fields are the most important?</p>
+        <p className="text-base font-semibold">What fields are the most important in the <b>My Settings</b> tab?</p>
         <p className="text-xs text-slate-600"> There are a number of settings that are most important. Expand this section for a description.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">💾 Most settings are optional, but listed below are the more important ones.</p>
+          <p className="text-base font-semibold">💾 Listed below are the more important settings.</p>
           <ul className="list-disc ml-6 mt-2 text-sm p-2">
-            <li>The <b>preferred music player</b> should be defined, particularly if you have a Spotify account.</li>
-            <li>By default, after you register to My Family Social, the <b>tour guide</b> option will be checked, as it is an invaluable tool to learn My Family Social.</li>
-            <li>The <b>other notifications</b> option is important too, as there are weekly activity summaries sent to your my family social mailbox. If you want to be notified when one of your posts has been reacted to or commented on, make sure this option is checked.</li>
-            <li>There are weekly <b>activity summaries</b> sent to your my family social mailbox. If you want to be notified when one of your posts has been reacted to or commented on, make sure this option is checked.</li>
-            <li>If you want to be notified when one of your posts has been reacted to or commented on, then check the <b>Post Reactions</b> option.</li>
+            <li>The <b>Preferred Music Player</b> should be defined, particularly if you have a Spotify account.</li>
+            <li>By default, after you register to My Family Social, the <b>Tour Guide</b> option will be checked, as it is an invaluable way to learn My Family Social.</li>
+            <li>The <b>Other Notifications</b> option ensures that <b>Weekly Activity Summaries</b> are sent to your mail box.</li>
+            <li>If you want to be notified when one of your posts has been reacted to or commented on, make sure the <b>Post Reactions</b> option is checked.</li>
           </ul>
         </span>
       </div>
@@ -177,10 +176,10 @@ export const memberProfileFaqItems = [
           </ul>
         </span>
         <span>
-          <p className="text-base font-semibold">❤️ At the bottom this is a form to suggest new family member or friend to be invited to the family.</p>
+          <p className="text-base font-semibold">❤️ At the bottom there is a form to suggest new family member or friend to be invited to the family.</p>
           <ul className="list-disc ml-6 mt-2 text-sm">
             <li>The family member who wants to invite someone would put in the first and last name of that family member or friend, as well as the email address.</li>
-            <li>The suggestion will go to the family founder&apos;s mailbox in My Family Social. The family founder will review it and, in all likelihood, invite that person to join the family.</li>
+            <li>The suggestion will go to the family founder&apos;s mail box. The family founder will review it and can invite that person to join the family.</li>
           </ul>
         </span>
       </div>
@@ -192,21 +191,21 @@ export const memberProfileFaqItems = [
     category: "Member Profile",
     trigger: (
       <div>
-        <p className="text-base font-semibold">What are the <i>You</i> and <i>Family</i> charts that I see in the <b>My Activity</b> tab?</p>
+        <p className="text-base font-semibold">In the <b>My Activity</b> tab what do the <i>Your Activity</i> and <i>Other Member</i> charts tell me?</p>
         <p className="text-xs text-slate-600"> These charts provide a visual representation of your activity and your familys activity within the platform.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base ">
         <span className="pb-2">
-          <p className="text-base font-semibold">👏 The <b>You Chart</b> shows your activity on other family members&apos; posts.</p>
+          <p className="text-base font-semibold">📊 The <b>My Activity</b> shows your activity in the family.</p>
           <ul className="list-disc ml-6 mt-2 text-sm">
             <li>When you react to another family member&apos;s post using 👍 or ❤️</li>
             <li>When you add a comment to another family member&apos;s post.</li>
           </ul>
         </span>
         <span>
-          <p className="text-base font-semibold">👏 The <b>Family Chart</b> shows other members&apos; activity on your posts.</p>
+          <p className="text-base font-semibold">📊 The <b>Other Member</b> chart shows other members&apos; activity on your posts.</p>
           <ul className="list-disc ml-6 mt-2 text-sm">
             <li>When they react to your posts using 👍 or ❤️</li>
             <li>When they add a comment to your posts.</li>

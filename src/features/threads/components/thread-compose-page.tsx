@@ -81,6 +81,8 @@ type ThreadComposePageProps = {
   recipients: ThreadRecipientOption[];
   templates: ThreadTemplate[];
   founderData: { firstName: string; lastName: string };
+  initialTitle?: string;
+  initialContentJson?: string;
 };
 
 export function ThreadComposePage({
@@ -90,10 +92,12 @@ export function ThreadComposePage({
   recipients,
   templates,
   founderData,
+  initialTitle,
+  initialContentJson,
 }: ThreadComposePageProps) {
   const router = useRouter();
   const [isSubmitting, startSubmitTransition] = useTransition();
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(initialTitle ?? "");
   const [audience, setAudience] = useState<"private" | "public" | "family_broadcast">("private");
   const [selectedRecipientIds, setSelectedRecipientIds] = useState<number[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -121,7 +125,7 @@ export function ThreadComposePage({
 
   const editor = useEditor({
     extensions: editorExtensions,
-    content: getEditorDocument(),
+    content: getEditorDocument(initialContentJson),
     immediatelyRender: false,
     editorProps: {
       attributes: {

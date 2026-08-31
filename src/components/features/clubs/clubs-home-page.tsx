@@ -186,41 +186,58 @@ export default function ClubsHomePage({ clubs, member, initialReturnTo = null }:
                       <div>
                         <p className="text-[0.68rem] font-bold uppercase tracking-[0.3em] text-[#5f7d9a]">Club</p>
                         <h3 className="mt-1 text-xl font-black tracking-tight text-[#20364f]">{ club.clubName }</h3>
+                        <p className="mt-1 text-sm text-[#587089]">
+                          <span className="font-semibold text-[#20364f]">Founder:</span> { club.founderName ?? `Member #${ club.clubFounderId ?? member.memberId }` }
+                        </p>
                       </div>
 
                       <div className="flex shrink-0 flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={ () => openEditClubDialog(club) }
-                          className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]"
-                        >
-                          <PenSquare className="size-3.5" />
-                        </Button>
+                        { club.clubFounderId === member.memberId ? (
+                          <>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={ () => openEditClubDialog(club) }
+                              className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]"
+                            >
+                              <PenSquare className="size-3.5" />
+                            </Button>
 
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={ () => handleDeleteClub(club.id) }
-                          disabled={ isSaving || isDeleting }
-                          className="rounded-full border-[#e7c7c7] bg-white px-3 text-xs font-semibold text-[#8f4f4f] hover:bg-[#fff6f6]"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={ () => handleDeleteClub(club.id) }
+                              disabled={ isSaving || isDeleting }
+                              className="rounded-full border-[#e7c7c7] bg-white px-3 text-xs font-semibold text-[#8f4f4f] hover:bg-[#fff6f6]"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </>
+                        ) : null }
                       </div>
                     </div>
 
-                    <div className="mt-2 text-sm text-[#587089]">
-                      <p>Founder: { club.founderName ?? `Member #${ club.clubFounderId ?? member.memberId }` }</p>
-                    </div>
-
-                    { club.sessions && club.sessions.length > 0 ? (
-                      <div className="mt-2 space-y-3 border-t border-[#edf2f7] pt-4">
+                    <div className="mt-2 space-y-3 border-t border-[#edf2f7] pt-4">
+                      <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-[#5f7d9a]">
                           <CalendarDays className="size-4" />
                           Club Sessions
                         </div>
 
+                        <Button
+                          asChild
+                          type="button"
+                          variant="outline"
+                          title="Add club session"
+                          className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]"
+                        >
+                          <Link href={ `/add-club-session?clubId=${ club.id }${ sourceQuery }` } aria-label="Add club session">
+                            <Plus className="size-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
+
+                      { club.sessions && club.sessions.length > 0 ? (
                         <div className="space-y-3">
                           { club.sessions.map((session) => (
                             <div key={ session.id } className="rounded-4xl border border-[#dbe5ef] bg-[#fbfdff] p-4">
@@ -235,21 +252,25 @@ export default function ClubsHomePage({ clubs, member, initialReturnTo = null }:
                                 </div>
 
                                 <div className="flex shrink-0 flex-wrap gap-2">
-                                  <Button asChild type="button" variant="outline" className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]">
-                                    <Link href={ `/add-club-session?sessionId=${ session.id }${ sourceQuery }` }>
-                                      <PenSquare className="size-3.5" />
-                                    </Link>
-                                  </Button>
+                                  { session.moderatorId === member.memberId ? (
+                                    <>
+                                      <Button asChild type="button" variant="outline" className="rounded-full border-[#bfd0e0] bg-white px-3 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]">
+                                        <Link href={ `/add-club-session?sessionId=${ session.id }${ sourceQuery }` } aria-label="Edit club session">
+                                          <PenSquare className="size-3.5" />
+                                        </Link>
+                                      </Button>
 
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={ () => handleDeleteSession(session.id) }
-                                    disabled={ isSaving || isDeleting }
-                                    className="rounded-full border-[#e7c7c7] bg-white px-3 text-xs font-semibold text-[#8f4f4f] hover:bg-[#fff6f6]"
-                                  >
-                                    <Trash2 className="size-3.5" />
-                                  </Button>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={ () => handleDeleteSession(session.id) }
+                                        disabled={ isSaving || isDeleting }
+                                        className="rounded-full border-[#e7c7c7] bg-white px-3 text-xs font-semibold text-[#8f4f4f] hover:bg-[#fff6f6]"
+                                      >
+                                        <Trash2 className="size-3.5" />
+                                      </Button>
+                                    </>
+                                  ) : null }
                                 </div>
                               </div>
 
@@ -261,12 +282,12 @@ export default function ClubsHomePage({ clubs, member, initialReturnTo = null }:
                             </div>
                           )) }
                         </div>
-                      </div>
-                    ) : (
-                      <p className="mt-4 rounded-4xl border border-dashed border-[#dbe5ef] bg-[#fbfdff] px-4 py-3 text-sm text-[#7a8f9c]">
-                        No club sessions have been added yet.
-                      </p>
-                    ) }
+                      ) : (
+                        <p className="rounded-4xl border border-dashed border-[#dbe5ef] bg-[#fbfdff] px-4 py-3 text-sm text-[#7a8f9c]">
+                          No club sessions have been added yet.
+                        </p>
+                      ) }
+                    </div>
                   </article>
                 )) }
               </div>

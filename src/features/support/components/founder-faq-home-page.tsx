@@ -8,13 +8,13 @@ import {
 } from "@/components/ui/accordion"
 
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
-import { founderFaqItems } from "../types/constants";
+import { founderFaqItems } from "../types/founder-constants";
 import { useState, useMemo } from "react";
 import { HelpCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export function FounderFaqHomePage({ faqVideos = [] }: { faqVideos?: FaqVideoItem[] }) {
-  const faqItems = founderFaqItems;
+  const faqItems = useMemo(() => founderFaqItems(""), []);
   const [selectedCategory, setSelectedCategory] = useState("");
 
   const categories = useMemo(() => {

@@ -7,24 +7,28 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import { ArrowLeft, Bold, Heading3, Italic, List, ListOrdered, Plus, Save, Underline as UnderlineIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { toast } from 'sonner';
 
 import { createClubSessionAction, updateClubSessionAction } from '@/app/(features)/(clubs)/add-club/actions';
-import type { Club, ClubSession } from '@/components/db/types/clubs';
+import type { Club, ClubSession, ClubSessionTarget } from '@/components/db/types/clubs';
 import { createEmptyTipTapDocument, isSerializedTipTapDocumentEmpty, parseSerializedTipTapDocument, serializeTipTapDocument } from '@/components/db/types/poem-term-validation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MemberKeyDetails } from '@/features/family/types/family-steps';
+import { replaceTemplateVariablesWithValues } from '@/features/threads/utils/template-variables';
 
 type AddClubSessionPageProps = {
   mode: 'create' | 'edit';
   sessionId?: number;
-  targetType: 'book' | 'poem';
-  targetId: number;
-  targetTitle: string;
+  targetType: 'book' | 'poem' | null;
+  targetId: number | null;
+  targetTitle: string | null;
+  availableTargets?: ClubSessionTarget[];
+  sessionTemplates?: { book: string | null; poem: string | null };
   clubs: Club[];
+  preselectedClubId?: number;
   existingSession: ClubSession | null;
   member: MemberKeyDetails;
   returnTo?: 'books' | 'poetry' | null;
@@ -78,7 +82,10 @@ export default function AddClubSessionPage({
   targetType,
   targetId,
   targetTitle,
+  availableTargets = [],
+  sessionTemplates,
   clubs,
+  preselectedClubId,
   existingSession,
   member,
   returnTo = null,
@@ -87,7 +94,15 @@ export default function AddClubSessionPage({
   const router = useRouter();
   const [isSubmitting, startSubmittingTransition] = useTransition();
   const isEditMode = mode === 'edit';
-  const [selectedClubId, setSelectedClubId] = useState<number>(existingSession?.clubId ?? clubs[0]?.id ?? 0);
+  const mustPickTarget = !isEditMode && !targetType;
+  const [selectedTargetType, setSelectedTargetType] = useState<'book' | 'poem' | ''>('');
+  const [selectedTargetId, setSelectedTargetId] = useState('');
+  const [selectedClubId, setSelectedClubId] = useState<number>(
+    existingSession?.clubId
+    ?? (preselectedClubId && clubs.some((club) => club.id === preselectedClubId) ? preselectedClubId : undefined)
+    ?? clubs[0]?.id
+    ?? 0,
+  );
   const [startedAt, setStartedAt] = useState(
     existingSession?.startedAt ? formatDateValue(existingSession.startedAt) : formatDateValue(),
   );
@@ -107,21 +122,38 @@ export default function AddClubSessionPage({
     },
   });
 
+  const targetsForSelectedType = useMemo(
+    () => availableTargets.filter((target) => target.targetType === selectedTargetType),
+    [availableTargets, selectedTargetType],
+  );
+  const pickedTarget = useMemo(
+    () => targetsForSelectedType.find((target) => String(target.targetId) === selectedTargetId) ?? null,
+    [targetsForSelectedType, selectedTargetId],
+  );
+  const effectiveTargetType = targetType ?? pickedTarget?.targetType ?? null;
+  const effectiveTargetId = targetId ?? pickedTarget?.targetId ?? null;
+  const effectiveTargetTitle = targetTitle ?? pickedTarget?.targetTitle ?? 'New Club Session';
+
   function submitClubSession() {
     if (!editor) {
-      toast.error('Session topic editor is still loading.');
+      toast.error('Session topic editor is still loading.', { duration: 3000 });
       return;
     }
 
     const topicJson = serializeTipTapDocument(editor.getJSON());
 
     if (isSerializedTipTapDocumentEmpty(topicJson)) {
-      toast.error('Enter a club session topic before saving.');
+      toast.error('Enter a club session topic before saving.', { duration: 3000 });
       return;
     }
 
     if (!selectedClubId) {
-      toast.error('Select a club before saving.');
+      toast.error('Select a club before saving.', { duration: 3000 });
+      return;
+    }
+
+    if (!isEditMode && (!effectiveTargetType || !effectiveTargetId)) {
+      toast.error('Select a book or poem before saving.', { duration: 3000 });
       return;
     }
 
@@ -136,41 +168,87 @@ export default function AddClubSessionPage({
           })
         : await createClubSessionAction({
             clubId: selectedClubId,
-            targetType,
-            targetId,
+            targetType: effectiveTargetType as 'book' | 'poem',
+            targetId: effectiveTargetId as number,
             startedAt,
             finishesAt: finishesAt || undefined,
             topicJson,
           });
 
       if (!result.success) {
-        toast.error(result.message);
+        toast.error(result.message, { duration: 3000 });
         return;
       }
 
-      toast.success(result.message);
+      toast.success(result.message, { duration: 3000 });
       if (isEditMode) {
         router.push(clubsBackHref);
         router.refresh();
         return;
       }
 
-      router.push(targetType === 'book'
+      router.push(effectiveTargetType === 'book'
         ? `/books/discussions/${ result.threadId }`
         : `/poetry/discussions/${ result.threadId }`);
       router.refresh();
     });
   }
 
-  const targetLabel = targetType === 'book' ? 'Book' : 'Poem';
-  const canSubmitSession = isEditMode ? clubs.length > 0 : clubs.length > 0 && !existingSession;
+  const targetLabel = effectiveTargetType === 'poem' ? 'Poem' : 'Book';
+  const canSubmitSession = isEditMode
+    ? clubs.length > 0
+    : clubs.length > 0 && !existingSession && (!mustPickTarget || availableTargets.length > 0);
   const submitLabel = isEditMode ? 'Save Session Changes' : 'Create Club Session';
-  const pageTitle = isEditMode ? 'Edit Club Session' : `${ targetLabel } Club Session`;
+  const pageTitle = isEditMode ? 'Edit Club Session' : mustPickTarget ? 'Add Club Session' : `${ targetLabel } Club Session`;
 
   const selectedClub = useMemo(
     () => clubs.find((club) => club.id === selectedClubId) ?? null,
     [clubs, selectedClubId],
   );
+
+  const autoFilledTopicRef = useRef<string | null>(null);
+  const templateJson = effectiveTargetType === 'poem' ? sessionTemplates?.poem : sessionTemplates?.book;
+
+  useEffect(() => {
+    if (isEditMode || !editor || !templateJson || !effectiveTargetType || !effectiveTargetId || !startedAt || !finishesAt || !selectedClub) {
+      return;
+    }
+
+    const currentTopicJson = serializeTipTapDocument(editor.getJSON());
+    const wasEditedByModerator = !isSerializedTipTapDocumentEmpty(currentTopicJson)
+      && currentTopicJson !== autoFilledTopicRef.current;
+
+    if (wasEditedByModerator) {
+      return;
+    }
+
+    const [startYear, startMonth, startDay] = startedAt.split('-');
+    const [endYear, endMonth, endDay] = finishesAt.split('-');
+    const filledTemplateJson = replaceTemplateVariablesWithValues(templateJson, {
+      club_name: selectedClub.clubName,
+      club_session: selectedClub.clubName,
+      session_start: `${ startMonth }-${ startDay }-${ startYear }`,
+      session_end: `${ endMonth }-${ endDay }-${ endYear }`,
+      session_moderator: `${ member.firstName } ${ member.lastName }`,
+      book_name: effectiveTargetType === 'book' ? effectiveTargetTitle : '',
+      poem_name: effectiveTargetType === 'poem' ? effectiveTargetTitle : '',
+    });
+
+    editor.commands.setContent(getEditorDocument(filledTemplateJson));
+    autoFilledTopicRef.current = serializeTipTapDocument(editor.getJSON());
+  }, [
+    editor,
+    effectiveTargetId,
+    effectiveTargetTitle,
+    effectiveTargetType,
+    finishesAt,
+    isEditMode,
+    member.firstName,
+    member.lastName,
+    selectedClub,
+    startedAt,
+    templateJson,
+  ]);
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -205,8 +283,13 @@ export default function AddClubSessionPage({
                 Club Session Details
               </p>
               <h2 className="text-2xl font-black tracking-tight text-[#20364f]">
-                { targetTitle }
+                { effectiveTargetTitle }
               </h2>
+              { mustPickTarget && selectedClub ? (
+                <p className="text-sm text-[#587089]">
+                  <span className="font-semibold text-[#20364f]">Club:</span> { selectedClub.clubName } &mdash; moderator will be { member.firstName } { member.lastName }.
+                </p>
+              ) : null }
               <p className="max-w-3xl text-sm leading-6 text-[#587089]">
                 { isEditMode
                   ? 'Update the club, dates, and topic notes for this existing session.'
@@ -234,14 +317,14 @@ export default function AddClubSessionPage({
             { existingSession ? (
               <div className="rounded-[1.5rem] border border-[#c7d4e0] bg-[#f4f8fc] px-5 py-4 text-sm text-[#355472]">
                 <p className="font-semibold text-[#20364f]">
-                  { isEditMode ? 'Editing an existing club session.' : `A club session already exists for this ${ targetType }.` }
+                  { isEditMode ? 'Editing an existing club session.' : `A club session already exists for this ${ effectiveTargetType }.` }
                 </p>
                 <p className="mt-1">Club: { existingSession.clubName ?? 'Selected club' }</p>
                 <p>Moderator: { existingSession.moderatorName ?? `Member #${ member.memberId }` }</p>
                 { existingSession.discussThreadId ? (
                   <div className="mt-3">
                     <Button asChild type="button" className="rounded-full bg-[#204a69] text-white hover:bg-[#17384f]">
-                      <Link href={ targetType === 'book'
+                      <Link href={ effectiveTargetType === 'book'
                         ? `/books/discussions/${ existingSession.discussThreadId }`
                         : `/poetry/discussions/${ existingSession.discussThreadId }` }>
                         Open Existing Session
@@ -252,25 +335,86 @@ export default function AddClubSessionPage({
               </div>
             ) : null }
 
-            <div className="grid gap-4 md:grid-cols-3">
+            { mustPickTarget ? (
               <div className="space-y-2">
-                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7d9a]">Club</label>
-                <Select value={ String(selectedClubId) } onValueChange={ (value) => setSelectedClubId(Number(value)) } disabled={ !canSubmitSession }>
-                  <SelectTrigger className="border-[#bfd0e0] bg-white text-[#20364f]">
-                    <SelectValue placeholder="Select a club" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    { clubs.map((club) => (
-                      <SelectItem key={ club.id } value={ String(club.id) }>
-                        { club.clubName }
-                      </SelectItem>
-                    )) }
-                  </SelectContent>
-                </Select>
-                { selectedClub ? (
-                  <p className="text-sm text-[#587089]">Moderator will be { member.firstName } { member.lastName }.</p>
-                ) : null }
+                { availableTargets.length === 0 ? (
+                  <p className="rounded-[1.4rem] border border-dashed border-[#c7d4e0] bg-[#f7fbfe] px-4 py-4 text-sm text-[#587089]">
+                    Every book and poem already has an active club session. Add a book or poem first, then start a new session.
+                  </p>
+                ) : (
+                  <div className="flex flex-row items-start gap-3">
+                    <div className="w-32 shrink-0 space-y-2 sm:w-40">
+                      <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7d9a]">Session Type</label>
+                      <Select
+                        value={ selectedTargetType }
+                        onValueChange={ (value) => {
+                          setSelectedTargetType(value as 'book' | 'poem');
+                          setSelectedTargetId('');
+                        } }
+                        disabled={ !canSubmitSession || isSubmitting }
+                      >
+                        <SelectTrigger className="border-[#bfd0e0] bg-white text-[#20364f]">
+                          <SelectValue placeholder="Select book or poem" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="book">Book</SelectItem>
+                          <SelectItem value="poem">Poem</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="min-w-0 flex-1 space-y-2 md:max-w-md">
+                      <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7d9a]">
+                        { selectedTargetType === 'poem' ? 'Poem' : 'Book' }
+                      </label>
+                      <Select
+                        value={ selectedTargetId }
+                        onValueChange={ setSelectedTargetId }
+                        disabled={ !canSubmitSession || isSubmitting || !selectedTargetType || targetsForSelectedType.length === 0 }
+                      >
+                        <SelectTrigger className="border-[#bfd0e0] bg-white text-[#20364f]">
+                          <SelectValue placeholder={ !selectedTargetType ? 'Select a session type first' : 'Select a title' } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          { targetsForSelectedType.map((target) => (
+                            <SelectItem key={ target.targetId } value={ String(target.targetId) }>
+                              { target.targetTitle }
+                            </SelectItem>
+                          )) }
+                        </SelectContent>
+                      </Select>
+                      { selectedTargetType && targetsForSelectedType.length === 0 ? (
+                        <p className="text-sm text-[#587089]">
+                          Every { selectedTargetType } already has an active club session.
+                        </p>
+                      ) : null }
+                    </div>
+                  </div>
+                ) }
               </div>
+            ) : null }
+
+            <div className={ mustPickTarget ? 'grid gap-4 md:grid-cols-2' : 'grid gap-4 md:grid-cols-3' }>
+              { mustPickTarget ? null : (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7d9a]">Club</label>
+                  <Select value={ String(selectedClubId) } onValueChange={ (value) => setSelectedClubId(Number(value)) } disabled={ !canSubmitSession }>
+                    <SelectTrigger className="border-[#bfd0e0] bg-white text-[#20364f]">
+                      <SelectValue placeholder="Select a club" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      { clubs.map((club) => (
+                        <SelectItem key={ club.id } value={ String(club.id) }>
+                          { club.clubName }
+                        </SelectItem>
+                      )) }
+                    </SelectContent>
+                  </Select>
+                  { selectedClub ? (
+                    <p className="text-sm text-[#587089]">Moderator will be { member.firstName } { member.lastName }.</p>
+                  ) : null }
+                </div>
+              ) }
 
               <div className="space-y-2">
                 <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f7d9a]" htmlFor="club-session-start-date">
@@ -331,9 +475,18 @@ export default function AddClubSessionPage({
 
             <div className="flex items-center justify-end gap-3">
               <Button
+                asChild
+                type="button"
+                variant="outline"
+                className="rounded-full border-[#bfd0e0] bg-white px-4 text-xs font-semibold text-[#365472] hover:bg-[#f4f8fc]"
+              >
+                <Link href={ clubsBackHref }>Cancel</Link>
+              </Button>
+
+              <Button
                 type="button"
                 onClick={ submitClubSession }
-                disabled={ !canSubmitSession || isSubmitting }
+                disabled={ !canSubmitSession || isSubmitting || (mustPickTarget && !pickedTarget) }
                 className="rounded-full bg-[#204a69] px-4 text-xs font-semibold text-white hover:bg-[#17384f]"
               >
                 <Save className="size-4" />

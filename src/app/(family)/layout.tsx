@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, ImagePlus, KeyRound, Mail, ShieldCheck, Users } from "lucide-react";
+import { ImagePlus, KeyRound, Mail, ShieldCheck, Users } from "lucide-react";
 
+import BackButton from "@/components/common/back-button";
 import MemberAvatar from "@/components/common/member-avatar";
 import MemberFaqHelp from "@/components/common/member-faq-help";
 import SyncStatusConsole from "@/components/pwa/sync-status-console";
@@ -68,14 +69,10 @@ export default async function TrialLayout({
             <div className="flex flex-wrap items-start justify-between gap-3">
             </div>
             <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-5">
-              <Link id="back-button"
-                href="/"
-                prefetch={ false }
-                className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
-              >
-                <ArrowLeft className="h-4 w-4 text-[#005472]" />
-                Go Home
-              </Link>
+              <BackButton
+                stretch={ false }
+                tw="border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+              />
               <Link
                 href="/change-password"
                 prefetch={ false }

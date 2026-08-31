@@ -21,6 +21,7 @@ export {
   supportTeam,
   supportPerson,
   supportPersonIssue,
+  threadTemplate,
   video,
   videoS3Credentials,
   videoTagReference,

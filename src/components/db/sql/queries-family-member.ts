@@ -422,6 +422,7 @@ export async function getFamilyFounderDetails(familyId:number)
       isFounder: member.isFounder,
       status: member.status,
       memberId: member.id,
+      memberImageUrl: member.memberImageUrl,
       email: member.email,
       familyId: family.id,
       familyName: family.name,
@@ -445,6 +446,7 @@ export async function getFamilyFounderDetails(familyId:number)
         isFounder: member.isFounder,
         status: member.status,
         memberId: member.id,
+        memberImageUrl: member.memberImageUrl,
         email: member.email,
         familyId: family.id,
         familyName: family.name,
@@ -471,6 +473,7 @@ export async function getFamilyFounderDetails(familyId:number)
         isFounder: member.isFounder,
         status: member.status,
         memberId: member.id,
+        memberImageUrl: member.memberImageUrl,
         email: member.email,
         familyId: family.id,
         familyName: family.name,
@@ -501,6 +504,7 @@ export async function getFamilyFounderDetails(familyId:number)
       nickName: selectResult.nickName ?? "",
       birthday: selectResult.birthday!,
       cellPhone: selectResult.cellPhone ?? "",
+      memberImageUrl: selectResult.memberImageUrl,
       familyName: selectResult.familyName!,
     }  
     return founderDetails;

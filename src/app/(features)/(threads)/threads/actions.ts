@@ -7,6 +7,7 @@ import {
   archiveAllReadConversationsForRecipient,
   archiveSenderConversation,
   createThreadConversationWithInitialPost,
+  deleteThreadConversationForMember,
   updateThreadReply,
   updateRecipientThreadArchiveState,
   updateRecipientThreadReadState,
@@ -169,6 +170,30 @@ export async function archiveSenderThreadAction(input: { conversationId: number;
     input.conversationId,
     memberDetails.memberId,
     input.shouldArchive,
+  );
+
+  if (result.success) {
+    revalidatePath('/threads');
+    revalidatePath(`/threads/${ input.conversationId }`);
+  }
+
+  return result;
+}
+
+export async function deleteThreadConversationAction(input: { conversationId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to delete a message.',
+    };
+  }
+
+  const result = await deleteThreadConversationForMember(
+    input.conversationId,
+    memberDetails.familyId,
+    memberDetails.memberId,
   );
 
   if (result.success) {

@@ -289,6 +289,17 @@ export const supportPersonIssue = globalSchema.table("support_person_issue", {
     index('support_person_issue_person_id_idx').on(table.supportPersonId),
   ]
 );
+
+export const threadTemplate = globalSchema.table("thread_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  templateCategory: text("template_category").notNull().default("thread"),
+  templateJson: text("template_json").notNull().default("{}"),
+  seqNo: integer("seq_no").notNull().default(1),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const videoS3Credentials = globalSchema.table("video_s3_credentials", {
   id: serial("id").primaryKey(),
   encryptedAccessKey: text("encrypted_access_key").notNull(),

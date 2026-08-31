@@ -83,6 +83,7 @@ export type FounderDetails = {
   nickName?: string;
   birthday?: string;
   cellPhone?: string;
+  memberImageUrl?: string | null;
   familyName: string;
   familyId: number;
   isFounder?: boolean;

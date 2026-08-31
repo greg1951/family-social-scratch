@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft, Inbox } from "lucide-react";
+import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft, Inbox, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -18,7 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConvoSummary } from "@/components/db/types/thread-convos";
-import { archiveReadThreadsAction, archiveSenderThreadAction, updateThreadArchiveStateAction, updateThreadReadStateAction } from "@/app/(features)/(threads)/threads/actions";
+import { archiveReadThreadsAction, archiveSenderThreadAction, deleteThreadConversationAction, updateThreadArchiveStateAction, updateThreadReadStateAction } from "@/app/(features)/(threads)/threads/actions";
 
 type ThreadsHomePageProps = {
   summaries: ConvoSummary[];
@@ -156,8 +156,25 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
     });
   }
 
-  function handleToggleRowRead(conversationId: number, shouldMarkUnread: boolean) {
+  function handleDeleteRow(conversationId: number) {
+    if (!window.confirm("Delete this message? This cannot be undone.")) {
+      return;
+    }
+
     startRowUpdateTransition(async () => {
+      const result = await deleteThreadConversationAction({ conversationId });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      router.refresh();
+    });
+  }
+
+  function handleToggleRowRead(conversationId: number, shouldMarkUnread: boolean) {    startRowUpdateTransition(async () => {
       const result = await updateThreadReadStateAction({ conversationId, shouldMarkUnread });
 
       if (!result.success) {
@@ -310,7 +327,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                       <th className="px-4 py-3 font-bold">Sender</th>
                       <th className="px-4 py-3 font-bold">Recipients</th>
                       <th className="px-4 py-3 font-bold">Visibility</th>
-                      <th className="px-4 py-3 font-bold">Activity</th>
+                      <th className="px-4 py-3 font-bold">Replies</th>
                       <th className="px-4 py-3 font-bold">Message</th>
                       <th className="px-4 py-3 font-bold">Status</th>
                     </tr>
@@ -484,6 +501,13 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                                         : <><Archive className="size-4" /> Archive</> }
                                     </DropdownMenuItem>
                                   ) }
+                                  <DropdownMenuItem
+                                    disabled={ isUpdatingRowState }
+                                    onClick={ () => handleDeleteRow(s.id) }
+                                    className="gap-2 text-sm text-[#a12d2d] focus:text-[#a12d2d]"
+                                  >
+                                    <Trash2 className="size-4" /> Delete
+                                  </DropdownMenuItem>
                                 </DropdownMenuContent>
                               ) }
                             </DropdownMenu>

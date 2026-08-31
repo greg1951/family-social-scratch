@@ -124,6 +124,7 @@ export default async function FamilyMemberAccount({
         nickName: founderDetailsResult.nickName!,
         birthday: founderDetailsResult.birthday!,
         cellPhone: founderDetailsResult.cellPhone!,
+        memberImageUrl: founderDetailsResult.memberImageUrl ?? null,
         familyName: founderDetailsResult.familyName!,
         familyId: memberKeyDetails.familyId,
         isFounder: true,

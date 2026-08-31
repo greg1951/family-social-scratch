@@ -1,5 +1,5 @@
 import db from "@/components/db/drizzle";
-import { threadTemplate } from "@/components/db/schema/family-social-schema-tables";
+import { threadTemplate } from "@/components/db/schema/global-schema-tables";
 import { eq, asc } from "drizzle-orm";
 import {
   ThreadTemplate,

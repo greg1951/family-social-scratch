@@ -12,8 +12,9 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 
+import { generalFaqItems } from "../types/general-constants";
+
 import { createEmptyTipTapDocument, parseSerializedTipTapDocument } from "@/components/db/types/poem-term-validation";
-import { getGeneralFaqItems } from "../types/constants";
 import { useEffect, useState, useMemo, useSyncExternalStore } from "react";
 import { HelpCircle, ArrowLeft } from "lucide-react";
 import type { FaqVideoItem } from "@/components/db/sql/queries-videos";
@@ -80,7 +81,7 @@ function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
 
 // --- State for category selection ---
 export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: FaqVideoItem[]; setupStartUrl: string }) {
-  const faqItems = useMemo(() => getGeneralFaqItems(setupStartUrl), [setupStartUrl]);
+  const faqItems = useMemo(() => generalFaqItems(setupStartUrl), [setupStartUrl]);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const isHydrated = useIsHydrated();

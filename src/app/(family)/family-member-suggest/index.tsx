@@ -69,7 +69,6 @@ export default function FamilyMemberSuggestForm({
     },
   });
   const { isDirty } = form.formState;
-  const founderFullName = `${ memberKeyDetails.firstName } ${ memberKeyDetails.lastName }`.trim();
 
   const getStatusClasses = (status: string) => {
     const normalized = status.toLowerCase();
@@ -179,32 +178,18 @@ export default function FamilyMemberSuggestForm({
   return (
     <div className="rounded-md border p-1">
       <div className="mb-3 rounded-lg border border-sky-200 bg-sky-50 p-3 shadow-sm">
-        <p className="text-xs text-center font-semibold uppercase tracking-wide text-sky-800">Family Founder</p>
         { founderDetails ? (
-          <div className="mt-1 grid gap-1 text-xs text-slate-700 md:grid-cols-2">
-            <p>
-              <span className="font-semibold text-slate-800">Name:</span>{ " " }
-              { founderDetails.firstName } { founderDetails.lastName }
-            </p>
-            <p>
-              <span className="font-semibold text-slate-800">Email:</span>{ " " }
-              { founderDetails.email }
-            </p>
-            { founderDetails.nickName?.trim() && (
-              <p>
-                <span className="font-semibold text-slate-800">Nickname:</span>{ " " }
-                { founderDetails.nickName }
-              </p>
-            ) }
-            { founderDetails.cellPhone?.trim() && (
-              <p>
-                <span className="font-semibold text-slate-800">Cell Phone:</span>{ " " }
-                { founderDetails.cellPhone }
-              </p>
-            ) }
+          <div className="flex items-center justify-between gap-3">
+            <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-sky-800">Family Founder</p>
+            <MemberListIdentity
+              firstName={ founderDetails.firstName }
+              lastName={ founderDetails.lastName }
+              email={ founderDetails.email }
+              memberImageUrl={ founderDetails.memberImageUrl }
+            />
           </div>
         ) : (
-          <p className="mt-1 text-xs text-slate-600">Founder details are not available.</p>
+          <p className="text-xs text-slate-600">Founder details are not available.</p>
         ) }
       </div>
       <p className="mb-3 text-sm font-semibold text-neutral-800">Current Members ({ members.length })</p>

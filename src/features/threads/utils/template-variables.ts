@@ -89,8 +89,17 @@ export function replaceTemplateVariables(
   templateJson: string,
   founderData: FamilyFounderData,
 ): string {
+  return replaceTemplateVariablesWithValues(templateJson, createVariableRegistry(founderData));
+}
+
+/**
+ * Replaces caller supplied !!variable!! values in a template JSON string.
+ */
+export function replaceTemplateVariablesWithValues(
+  templateJson: string,
+  registry: Record<string, string>,
+): string {
   try {
-    const registry = createVariableRegistry(founderData);
     const template = JSON.parse(templateJson);
     const replaced = replaceVariablesInNode(template, registry);
     return JSON.stringify(replaced);

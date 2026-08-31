@@ -1,5 +1,5 @@
 import db from '@/components/db/drizzle';
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, ne } from 'drizzle-orm';
 
 import {
   book,
@@ -13,6 +13,7 @@ import {
 import type {
   Club,
   ClubSession,
+  ClubSessionTarget,
   CreateClubSessionInput,
   CreateClubSessionReturn,
   DeleteClubInput,
@@ -295,6 +296,40 @@ export async function getActiveClubSessionTargetIds(
   return rows.map((row) => row.targetId);
 }
 
+export async function getEligibleClubSessionTargets(familyId: number): Promise<ClubSessionTarget[]> {
+  try {
+    const [bookRows, poemRows, activeBookIds, activePoemIds] = await Promise.all([
+      db
+        .select({ id: book.id, title: book.bookTitle })
+        .from(book)
+        .where(and(eq(book.familyId, familyId), ne(book.status, 'draft')))
+        .orderBy(asc(book.bookTitle)),
+      db
+        .select({ id: poem.id, title: poem.poemTitle })
+        .from(poem)
+        .where(and(eq(poem.familyId, familyId), ne(poem.status, 'draft')))
+        .orderBy(asc(poem.poemTitle)),
+      getActiveClubSessionTargetIds(familyId, 'book'),
+      getActiveClubSessionTargetIds(familyId, 'poem'),
+    ]);
+
+    const takenBookIds = new Set(activeBookIds);
+    const takenPoemIds = new Set(activePoemIds);
+
+    return [
+      ...bookRows
+        .filter((row) => !takenBookIds.has(row.id))
+        .map((row) => ({ targetType: 'book' as const, targetId: row.id, targetTitle: row.title })),
+      ...poemRows
+        .filter((row) => !takenPoemIds.has(row.id))
+        .map((row) => ({ targetType: 'poem' as const, targetId: row.id, targetTitle: row.title })),
+    ];
+  } catch (error) {
+    logDbQueryError('clubs.getEligibleClubSessionTargets', error, { familyId });
+    return [];
+  }
+}
+
 export async function getActiveClubSessionForTarget(
   familyId: number,
   targetType: 'book' | 'poem',
@@ -373,7 +408,7 @@ export async function saveClub(
 
   if (input.id) {
     const existingRows = await db
-      .select({ id: club.id })
+      .select({ id: club.id, clubFounderId: club.clubFounderId })
       .from(club)
       .where(and(eq(club.id, input.id), eq(club.familyId, actor.familyId)))
       .limit(1);
@@ -382,6 +417,10 @@ export async function saveClub(
 
     if (!existingClub) {
       return { success: false, message: 'Club not found.' };
+    }
+
+    if (existingClub.clubFounderId !== actor.memberId) {
+      return { success: false, message: 'Only the club founder can edit this club.' };
     }
 
     await db
@@ -476,7 +515,7 @@ export async function deleteClub(
   }
 
   const clubRows = await db
-    .select({ id: club.id })
+    .select({ id: club.id, clubFounderId: club.clubFounderId })
     .from(club)
     .where(and(eq(club.id, input.clubId), eq(club.familyId, actor.familyId)))
     .limit(1);
@@ -485,6 +524,10 @@ export async function deleteClub(
 
   if (!selectedClub) {
     return { success: false, message: 'Club not found.' };
+  }
+
+  if (selectedClub.clubFounderId !== actor.memberId) {
+    return { success: false, message: 'Only the club founder can delete this club.' };
   }
 
   const sessionRows = await db
@@ -681,6 +724,7 @@ export async function updateClubSession(
       targetType: club_session.targetType,
       targetId: club_session.targetId,
       clubId: club_session.clubId,
+      moderatorId: club_session.moderatorId,
       discussThreadId: discussThread.id,
     })
     .from(club_session)
@@ -700,6 +744,10 @@ export async function updateClubSession(
 
   if (!sessionRow) {
     return { success: false, message: 'Club session not found.' };
+  }
+
+  if (sessionRow.moderatorId !== actor.memberId) {
+    return { success: false, message: 'Only the session moderator can edit this club session.' };
   }
 
   const selectedClubRows = await db
@@ -777,6 +825,7 @@ export async function deleteClubSession(
       id: club_session.id,
       targetType: club_session.targetType,
       targetId: club_session.targetId,
+      moderatorId: club_session.moderatorId,
       discussThreadId: discussThread.id,
     })
     .from(club_session)
@@ -796,6 +845,10 @@ export async function deleteClubSession(
 
   if (!sessionRow) {
     return { success: false, message: 'Club session not found.' };
+  }
+
+  if (sessionRow.moderatorId !== actor.memberId) {
+    return { success: false, message: 'Only the session moderator can delete this club session.' };
   }
 
   if (sessionRow.discussThreadId) {

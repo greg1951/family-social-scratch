@@ -145,7 +145,8 @@ export function FeaturesFaqHomePage({
                   <AccordionItem key={ videoItem.id } value={ `video-${ videoItem.id }` }>
                     <AccordionTrigger>
                       <div className="text-left">
-                        <p className="text-base font-semibold text-[#164657]">{ videoItem.caption }</p>
+                        <p className="text-base font-semibold text-[#164657]">{ videoItem.videoName }</p>
+                        <p className="text-xs text-slate-600">{ videoItem.caption } | video #{ videoItem.seqNo } | { videoItem.durationMinutes } min</p>
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
