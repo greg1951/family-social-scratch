@@ -81,12 +81,6 @@ function formatShortDate(value: Date) {
   return `${ mm }-${ dd }-${ yy }`;
 }
 
-function getOneMonthAgo(referenceDate = new Date()) {
-  const oneMonthAgo = new Date(referenceDate);
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  return oneMonthAgo;
-}
-
 function getShowDocument(showJson?: string): JSONContent {
   if (!showJson) {
     return createEmptyTipTapDocument();
@@ -248,6 +242,7 @@ export function TvHomePage({
   const [commentText, setCommentText] = useState("");
   const [isViewShowOpen, setIsViewShowOpen] = useState(false);
   const [showType, setShowType] = useState<"all" | "latest" | "top-rated">("all");
+  const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
   const [includeArchived, setIncludeArchived] = useState(false);
 
   const canAccessDraftShow = (showMemberId: number) => showMemberId === member.memberId || member.isFounder;
@@ -257,10 +252,7 @@ export function TvHomePage({
     || (show.status === "draft" && canAccessDraftShow(show.memberId))
     || (includeArchived && show.status === "archived")
   ));
-  const latestCutoffDate = getOneMonthAgo();
-
   const latestShowRecords = [...visibleShows]
-    .filter((show) => new Date(show.updatedAt) >= latestCutoffDate)
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8);
 
@@ -335,10 +327,16 @@ export function TvHomePage({
 
   const stripTitle = showType === "all" ? "All TV Shows" : showType === "latest" ? "Latest TV Shows" : "Top Rated TV Shows";
   const stripDescription = showType === "all"
-    ? "All shows first, ordered by the most recently updated."
+    ? dateScope === "date-range"
+      ? "All shows in the selected date range, ordered by the most recently updated."
+      : "All shows first, ordered by the most recently updated."
     : showType === "latest"
-      ? "Shows updated within the last month, newest first."
-      : "Top rated shows based on total likes and loves.";
+      ? dateScope === "date-range"
+        ? "Newest shows in the selected date range."
+        : "Newest shows overall."
+      : dateScope === "date-range"
+        ? "Top rated shows in the selected date range."
+        : "Top rated shows based on total likes and loves.";
   const stripAccentClassName = showType === "all"
     ? "bg-[linear-gradient(135deg,#c6edf7,#fff6db)]"
     : showType === "latest"
@@ -369,6 +367,8 @@ export function TvHomePage({
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+  const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(endDate);
   const [selectedShow, setSelectedShow] = useState(showFinderRows[0]?.id ?? 0);
   const [showSelectionRevision, setShowSelectionRevision] = useState(0);
   const deferredSearchValue = useDeferredValue(searchValue);
@@ -413,8 +413,10 @@ export function TvHomePage({
     };
   }, [selectedShow]);
 
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+  const isDateRangeScope = dateScope === "date-range";
+  const hasPendingDateChanges = startDate !== appliedStartDate || endDate !== appliedEndDate;
+  const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
+  const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
 
   const filteredShows = showFinderRows.filter((show) => {
     const updatedAt = new Date(show.updatedAt);
@@ -446,7 +448,7 @@ export function TvHomePage({
   const filteredShowIds = new Set(filteredShows.map((show) => show.id));
 
   const filteredLatestShows = [...visibleShows]
-    .filter((show) => filteredShowIds.has(show.id) && new Date(show.updatedAt) >= latestCutoffDate)
+    .filter((show) => filteredShowIds.has(show.id))
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8)
     .map((show) => ({
@@ -592,6 +594,12 @@ export function TvHomePage({
   function handleOpenShowFromCard(showId: number) {
     handleSelectShow(showId);
     setIsViewShowOpen(true);
+  }
+
+  function handleApplyDateRange() {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateScope("date-range");
   }
 
   function handleToggleLike(likenessDegree: number) {
@@ -740,7 +748,7 @@ export function TvHomePage({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
-                  <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72">
+                  <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108">
                     <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#5f7987]" />
                     <Input
                       type="search"
@@ -751,52 +759,34 @@ export function TvHomePage({
                       aria-label="Search TV shows"
                     />
                   </div>
-                  <div className="flex flex-row flex-nowrap items-center gap-2">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ includeArchived }
-                        onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
-                      />
-                      Archived
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ filterWithDiscussionThreads }
-                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                        className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
-                      />
-                      Discussions
-                    </label>
-                  </div>
                 </div>
 
-                <div className="-mt-1 flex flex-row gap-2 sm:mt-0 sm:flex-nowrap sm:items-end">
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
-                      Start Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={ startDate }
-                      max={ endDate || undefined }
-                      onChange={ (event) => setStartDate(event.target.value) }
-                      className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] sm:h-9 sm:text-xs"
-                    />
-                  </div>
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">
-                      End Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={ endDate }
-                      min={ startDate || undefined }
-                      onChange={ (event) => setEndDate(event.target.value) }
-                      className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] sm:h-9 sm:text-xs"
-                    />
+                <div className="mt-3 rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#45829a] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
+                  <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex flex-nowrap gap-2 overflow-x-auto">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="tv-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4" />
+                        Everything
+                      </label>
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="tv-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4" />
+                        Date Range
+                      </label>
+                    </div>
+                    <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end lg:min-w-104">
+                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">Start Date</label>
+                        <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                      </div>
+                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">End Date</label>
+                        <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                      </div>
+                      <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#2d87a8] px-3 text-xs font-semibold text-white hover:bg-[#256e89] disabled:opacity-50 sm:h-9">
+                        Apply
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -839,6 +829,24 @@ export function TvHomePage({
                     className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
                   />
                   Top Rated
+                </label>
+                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={ includeArchived }
+                    onChange={ (event) => setIncludeArchived(event.target.checked) }
+                    className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
+                  />
+                  Archived
+                </label>
+                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
+                  <input
+                    type="checkbox"
+                    checked={ filterWithDiscussionThreads }
+                    onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                    className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
+                  />
+                  Discussions
                 </label>
               </div>
             </div>

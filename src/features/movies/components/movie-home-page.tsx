@@ -553,7 +553,7 @@ export function MovieHomePage({
                 </div>
 
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
-                  <div className="relative min-w-0 w-full sm:w-52 md:w-56 lg:w-64 xl:w-72">
+                  <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108">
                     <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" />
                     <Input
                       type="search"
@@ -564,91 +564,35 @@ export function MovieHomePage({
                       aria-label="Search movies"
                     />
                   </div>
-                  <div className="flex flex-row flex-nowrap items-center gap-2">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ includeArchived }
-                        onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Archived
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ filterWithDiscussionThreads }
-                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Discussions
-                    </label>
-                  </div>
                 </div>
 
                 <div className="mt-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-2 text-sm text-[#8b5a3c] sm:py-3">
                   <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#a85a3a] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="movie-date-scope"
-                        value="everything"
-                        checked={ dateScope === "everything" }
-                        onChange={ () => setDateScope("everything") }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Everything
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="movie-date-scope"
-                        value="date-range"
-                        checked={ dateScope === "date-range" }
-                        onChange={ () => setDateScope("date-range") }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Date Range
-                    </label>
+                  <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="flex flex-nowrap gap-2 overflow-x-auto">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="movie-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4" />
+                        Everything
+                      </label>
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="movie-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4" />
+                        Date Range
+                      </label>
+                    </div>
+                    <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end lg:min-w-104">
+                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">Start Date</label>
+                        <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                      </div>
+                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
+                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">End Date</label>
+                        <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                      </div>
+                      <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#b8581a] px-3 text-xs font-semibold text-white hover:bg-[#9d4615] disabled:opacity-50 sm:h-9">
+                        Apply
+                      </Button>
+                    </div>
                   </div>
-                </div>
-
-                <div className="-mt-1 flex flex-row gap-2 sm:mt-0 sm:flex-nowrap sm:items-end">
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
-                      Start Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={ startDate }
-                      max={ endDate || undefined }
-                      onChange={ (event) => setStartDate(event.target.value) }
-                      disabled={ !isDateRangeScope }
-                      className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs"
-                    />
-                  </div>
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                    <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">
-                      End Date
-                    </label>
-                    <Input
-                      type="date"
-                      value={ endDate }
-                      min={ startDate || undefined }
-                      onChange={ (event) => setEndDate(event.target.value) }
-                      disabled={ !isDateRangeScope }
-                      className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={ handleApplyDateRange }
-                    disabled={ !isDateRangeScope || !hasPendingDateChanges }
-                    className="h-8 shrink-0 rounded-xl bg-[#b8581a] px-3 text-xs font-semibold text-white hover:bg-[#9d4615] disabled:opacity-50 sm:h-9"
-                  >
-                    Apply
-                  </Button>
                 </div>
 
                 <div className="mt-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-2 text-sm text-[#8b5a3c] sm:py-3">
@@ -688,6 +632,24 @@ export function MovieHomePage({
                         className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
                       />
                       Top Rated
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
+                      <input
+                        type="checkbox"
+                        checked={ includeArchived }
+                        onChange={ (event) => setIncludeArchived(event.target.checked) }
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
+                      />
+                      Archived
+                    </label>
+                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
+                      <input
+                        type="checkbox"
+                        checked={ filterWithDiscussionThreads }
+                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
+                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
+                      />
+                      Discussions
                     </label>
                   </div>
                 </div>
