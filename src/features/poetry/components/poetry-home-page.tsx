@@ -692,30 +692,31 @@ export default function PoetryHomePage({
 
                   <div className="mt-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#faf8ff] px-4 py-2 text-sm text-[#77578f] sm:py-3">
                     <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#8154a3] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                    <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="poetry-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                        Everything
-                      </label>
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="poetry-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                        Date Range
-                      </label>
+                    <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
+                      <div className="flex flex-nowrap gap-2 overflow-x-auto">
+                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                          <input type="radio" name="poetry-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
+                          Everything
+                        </label>
+                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                          <input type="radio" name="poetry-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
+                          Date Range
+                        </label>
+                      </div>
+                      <div className="flex flex-row flex-nowrap items-end gap-2 lg:min-w-104">
+                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">Start Date</label>
+                          <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                        </div>
+                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">End Date</label>
+                          <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                        </div>
+                        <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#5a2f85] px-3 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50 sm:h-9">
+                          Apply
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-row flex-nowrap items-end gap-2">
-                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">Start Date</label>
-                      <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                    </div>
-                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">End Date</label>
-                      <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                    </div>
-                    <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#5a2f85] px-3 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50 sm:h-9">
-                      Apply
-                    </Button>
                   </div>
                 </div>
               </div>
