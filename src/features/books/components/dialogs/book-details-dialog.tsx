@@ -1,6 +1,7 @@
 import type { Editor } from "@tiptap/react";
 import { EditorContent } from "@tiptap/react";
 import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
@@ -211,6 +212,72 @@ export function BookDetailsDialog({
 
     return tagDescriptionText || "No tag description available.";
   }
+
+  const discussionThreadsSection = (
+    <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
+      <div>
+        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#3d819b]">Discussion Threads</p>
+        <p className="text-xs text-[#51707e]">Follow the conversation that belongs to this book.</p>
+      </div>
+
+      { draft.discussionThreads.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-[#c8d7df] bg-[#f8fcff] px-3 py-3 text-sm text-[#51707e]">
+          <p>There are no discussion threads for this book yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          { draft.discussionThreads.map((discussionThread) => (
+            <article key={ discussionThread.id } className="rounded-2xl border border-[#d9e5ea] bg-[#fbfdff] px-4 py-4 text-sm text-[#355161] shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-1">
+                  <p className="text-base font-bold leading-snug text-[#183746]">{ discussionThread.discussTopic }</p>
+                  <p className="text-xs uppercase tracking-[0.16em] text-[#648596]">
+                    { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                  </p>
+                </div>
+
+                <div className="flex shrink-0 flex-wrap items-center gap-3">
+                  { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                    <div className="flex flex-wrap items-center gap-2">
+                      { discussionThread.dislikeCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5f8] px-2 py-1 text-[0.65rem] font-semibold text-[#355161]">
+                          <ThumbsDown className="size-3" />
+                          { discussionThread.dislikeCount }
+                        </span>
+                      ) : null }
+                      { discussionThread.likeCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f3fa] px-2 py-1 text-[0.65rem] font-semibold text-[#1d6d8f]">
+                          <ThumbsUp className="size-3" />
+                          { discussionThread.likeCount }
+                        </span>
+                      ) : null }
+                      { discussionThread.loveCount > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#fde9e0] px-2 py-1 text-[0.65rem] font-semibold text-[#b45b32]">
+                          <Heart className="size-3 fill-current" />
+                          { discussionThread.loveCount }
+                        </span>
+                      ) : null }
+                    </div>
+                  ) : null }
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    asChild
+                    className="shrink-0 rounded-full border-[#9dd8f0] bg-white px-4 text-xs font-semibold text-[#0f5c78] hover:bg-[#e9f5fa] hover:text-[#0f5c78]"
+                  >
+                    <Link href={ `/books/discussions/${ discussionThread.id }` }>
+                      View
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            </article>
+          )) }
+        </div>
+      ) }
+    </div>
+  );
 
   return (
     <>
@@ -534,6 +601,7 @@ export function BookDetailsDialog({
           </div>
 
           { bookDialog.bookDialogMode === "view" ? (
+            <>
             <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -657,7 +725,10 @@ export function BookDetailsDialog({
                   </div>
                 </div>
               ) : null }
+
+              { discussionThreadsSection }
             </div>
+            </>
           ) : null }
         </div>
       </DialogContent>

@@ -49,11 +49,13 @@ function buildFeaturePostsData(rows: FeaturePostsRawRow[]): FeaturePostsChartDat
   });
 }
 
+const MAX_MEMBER_POST_BARS = 4;
+
 function buildMemberPostsData(rows: MemberPostsRawRow[]): MemberPostsChartData {
   const memberNames = [...new Set(rows.map((r) => `${ r.firstName } ${ r.lastName }`))];
-  return memberNames.map((memberName) => {
+  const memberTotals = memberNames.map((memberName) => {
     const memberRows = rows.filter((r) => `${ r.firstName } ${ r.lastName }` === memberName);
-    return {
+    const entry = {
       member: memberName,
       POST_CREATED: memberRows.find((r) => r.actionType === "POST_CREATED")?.count ?? 0,
       COMMENT_CREATED: memberRows.find((r) => r.actionType === "COMMENT_CREATED")?.count ?? 0,
@@ -61,7 +63,28 @@ function buildMemberPostsData(rows: MemberPostsRawRow[]): MemberPostsChartData {
         (memberRows.find((r) => r.actionType === "LIKE_ADDED")?.count ?? 0)
         + (memberRows.find((r) => r.actionType === "LOVE_ADDED")?.count ?? 0),
     };
+    return { entry, total: entry.POST_CREATED + entry.COMMENT_CREATED + entry.REACTION_ADDED };
   });
+
+  const sortedByActivity = memberTotals.sort((a, b) => b.total - a.total);
+  const topMembers = sortedByActivity.slice(0, MAX_MEMBER_POST_BARS).map((m) => m.entry);
+  const remainingMembers = sortedByActivity.slice(MAX_MEMBER_POST_BARS);
+
+  if (remainingMembers.length === 0) {
+    return topMembers;
+  }
+
+  const othersEntry = remainingMembers.reduce(
+    (acc, { entry }) => ({
+      member: "Others",
+      POST_CREATED: acc.POST_CREATED + entry.POST_CREATED,
+      COMMENT_CREATED: acc.COMMENT_CREATED + entry.COMMENT_CREATED,
+      REACTION_ADDED: acc.REACTION_ADDED + entry.REACTION_ADDED,
+    }),
+    { member: "Others", POST_CREATED: 0, COMMENT_CREATED: 0, REACTION_ADDED: 0 },
+  );
+
+  return [...topMembers, othersEntry];
 }
 
 function buildFeatureDiscussData(rows: FeaturePostsRawRow[]): FeatureDiscussChartData {
@@ -165,7 +188,7 @@ export default async function FamilyMemberDashboard({
             <Button type="submit" className="md:w-auto">Apply Range</Button>
           </form>
         </Card>
-        <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-2">
           <Card className="p-3">
             <div className="pt-5">
               <FeaturePostsChart data={ featurePostsData } />

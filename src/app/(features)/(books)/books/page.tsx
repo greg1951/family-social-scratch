@@ -21,7 +21,6 @@ export default async function BooksPage() {
     <BooksHomePage
       books={ books }
       bookTags={ bookTags }
-      clubs={ booksHomeData.success ? booksHomeData.clubs : [] }
       loadError={ booksHomeData.success ? null : booksHomeData.message }
       member={ memberKeyDetails }
     />

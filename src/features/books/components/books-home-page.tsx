@@ -49,7 +49,6 @@ import {
 import { useLinkDialog } from "@/features/books/hooks/use-link-dialog";
 import { BookDetailsDialog } from "@/features/books/components/dialogs/book-details-dialog";
 import { BookLinkDialog } from "@/features/books/components/dialogs/book-link-dialog";
-import type { Club } from "@/components/db/types/clubs";
 type DirectoryMode = "all" | "latest" | "top-rated";
 
 function getEditorDocument(value?: string): JSONContent {
@@ -70,17 +69,22 @@ function formatCreatedAt(createdAt: Date) {
   }).format(new Date(createdAt));
 }
 
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
+}
+
 export default function BooksHomePage({
   books,
   member,
   bookTags = [],
-  clubs = [],
   loadError = null,
 }: {
   books: BooksHomeBook[];
   member: MemberKeyDetails;
   bookTags?: BookTagOption[];
-  clubs?: Club[];
   loadError?: string | null;
 }) {
   const router = useRouter();
@@ -96,7 +100,21 @@ export default function BooksHomePage({
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandBookCards, setExpandBookCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<DirectoryMode>("all");
+  const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+  const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(endDate);
   const deferredSearchValue = useDeferredValue(searchValue);
+  const isDateRangeScope = dateScope === "date-range";
+  const hasPendingDateChanges = startDate !== appliedStartDate || endDate !== appliedEndDate;
+  const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
+  const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
   const initialDraft = useMemo(() => {
     if (books[0]) {
       return createDraftFromBook(books[0], member);
@@ -215,24 +233,35 @@ export default function BooksHomePage({
   ), [bookItems, includeArchived, member.isFounder, member.memberId]);
 
   const directoryBooks = useMemo(() => {
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const scopedBookItems = visibleBookItems.filter((bookItem) => {
+      const createdAt = new Date(bookItem.createdAt);
+
+      if (startDateValue && createdAt < startDateValue) {
+        return false;
+      }
+
+      if (endDateValue && createdAt > endDateValue) {
+        return false;
+      }
+
+      return true;
+    });
 
     if (directoryMode === "all") {
-      return [...visibleBookItems].sort((leftBook, rightBook) => (
+      return [...scopedBookItems].sort((leftBook, rightBook) => (
         new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
       ));
     }
 
     if (directoryMode === "latest") {
-      return visibleBookItems
-        .filter((bookItem) => new Date(bookItem.createdAt).getTime() >= monthAgo.getTime())
+      return scopedBookItems
         .sort((leftBook, rightBook) => (
           new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
-        ));
+        ))
+        .slice(0, 8);
     }
 
-    return visibleBookItems
+    return scopedBookItems
       .filter((bookItem) => (bookItem.likeCount + bookItem.loveCount) > 0)
       .sort((leftBook, rightBook) => {
         const rightScore = rightBook.likeCount + rightBook.loveCount;
@@ -243,8 +272,9 @@ export default function BooksHomePage({
         }
 
         return new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime();
-      });
-  }, [directoryMode, visibleBookItems]);
+      })
+      .slice(0, 8);
+  }, [directoryMode, endDateValue, startDateValue, visibleBookItems]);
 
   const filteredBooks = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
@@ -301,6 +331,12 @@ export default function BooksHomePage({
     setTimeout(() => {
       bookDialog.openBookDialog("view");
     }, 0);
+  }
+
+  function handleApplyDateRange() {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateScope("date-range");
   }
 
   function applyBookRefresh(updatedBook: BooksHomeBook) {
@@ -554,43 +590,92 @@ export default function BooksHomePage({
                 </p> */}
 
                 <div className="mt-4 min-w-0">
-                  <div className="mb-2 flex flex-wrap items-center gap-2 text-sm text-[#355161]">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="book-directory-mode"
-                        value="all"
-                        checked={ directoryMode === "all" }
-                        onChange={ () => setDirectoryMode("all") }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-[16rem] flex-1">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
+                      <Input
+                        type="search"
+                        value={ searchValue }
+                        onChange={ (event) => setSearchValue(event.target.value) }
+                        placeholder="Search by title, author, year, language, series, or family member"
+                        className="h-9 rounded-full border-[#c8d7df] bg-white pl-10 pr-3 text-xs text-[#183746] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
+                        aria-label="Search books"
                       />
-                      All Books
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="book-directory-mode"
-                        value="latest"
-                        checked={ directoryMode === "latest" }
-                        onChange={ () => setDirectoryMode("latest") }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
-                      />
-                      Latest Month
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="book-directory-mode"
-                        value="top-rated"
-                        checked={ directoryMode === "top-rated" }
-                        onChange={ () => setDirectoryMode("top-rated") }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4"
-                      />
-                      Top Rated Books
-                    </label>
+                    </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-[#355161]">
+                  <div className="mt-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#f8fcff] px-4 py-2 text-sm text-[#51707e] sm:py-3">
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#3d819b] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
+                    <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="book-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
+                        Everything
+                      </label>
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="book-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
+                        Date Range
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-row flex-nowrap items-end gap-2">
+                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#51707e]">Start Date</label>
+                      <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d7df] bg-white px-2 text-[11px] text-[#183746] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                    </div>
+                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#51707e]">End Date</label>
+                      <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d7df] bg-white px-2 text-[11px] text-[#183746] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                    </div>
+                    <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#0f5c78] px-3 text-xs font-semibold text-white hover:bg-[#0a4860] disabled:opacity-50 sm:h-9">
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
+                { filteredBooks.length } visible book{ filteredBooks.length !== 1 ? "s" : "" }
+              </div> */}
+            </div>
+
+          </div>
+
+          <div className="px-5 py-5 sm:px-6">
+            { bookItems.length === 0 ? (
+              <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
+                <LibraryBig className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
+                { loadError ? (
+                  <>
+                    <p className="text-lg font-semibold text-[#183746]">Books could not be loaded.</p>
+                    <p className="mt-2 text-sm">{ loadError }</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
+                    <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
+                  </>
+                ) }
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 rounded-[1.4rem] border border-[#d9e5ea] bg-[#f8fcff] px-4 py-2 text-sm text-[#51707e] sm:py-3">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#3d819b] sm:text-[0.68rem] sm:tracking-[0.32em]">Book Type</p>
+                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="book-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
+                      All
+                    </label>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="book-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
+                      Latest
+                    </label>
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="book-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
+                      Top Rated
+                    </label>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#355161]">
                     <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
@@ -619,137 +704,8 @@ export default function BooksHomePage({
                       Expand Book Cards
                     </label>
                   </div>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <div className="relative min-w-[16rem] flex-1">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
-                      <Input
-                        type="search"
-                        value={ searchValue }
-                        onChange={ (event) => setSearchValue(event.target.value) }
-                        placeholder="Search by title, author, year, language, series, or family member"
-                        className="h-9 rounded-full border-[#c8d7df] bg-white pl-10 pr-3 text-xs text-[#183746] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                        aria-label="Search books"
-                      />
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              { selectedBook ? (
-                <div className="w-full rounded-[1.4rem] border border-[#d9e5ea] bg-white p-4 xl:w-104">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-[#51707e]">
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#3d819b]">Start Book Club Session</p>
-                        <FeatureFaqHelp
-                          href="/feature-faq?category=Discussion%20Groups"
-                          buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#c9e2ec] bg-gradient-to-b from-[#f7fcff] to-[#dff2f9] text-[#2a819d] shadow-[0_8px_18px_rgba(42,129,157,0.2)] group-hover:shadow-[0_12px_26px_rgba(42,129,157,0.3)]"
-                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
-                          tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
-                        />
-                      </div>
-                      <p className="mt-1 text-sm text-[#51707e]">Start or review book club sessions for this book.</p>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={ () => router.push(`/add-club-session?targetType=book&targetId=${ selectedBook.id }`) }
-                      disabled={ isEngaging || clubs.length === 0 || selectedBook.hasClubSession }
-                      className="rounded-full bg-[#0f5c78] px-4 text-xs font-semibold text-white hover:bg-[#0a4860] disabled:opacity-50"
-                    >
-                      Add Book Club Session
-                    </Button>
-                  </div>
-                  { clubs.length === 0 ? (
-                    <p className="mt-2 text-xs text-[#7a8f9c]">Create a club first using Book & Poetry Clubs.</p>
-                  ) : selectedBook.hasClubSession ? (
-                    <p className="mt-2 text-xs text-[#7a8f9c]">This book already has an active club session.</p>
-                  ) : null }
-
-                  <div className="mt-3 space-y-3">
-                    { selectedBook.discussionThreads.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-[#c8d7df] bg-[#f8fcff] px-3 py-3 text-sm text-[#51707e]">
-                        <p>There are no discussion threads for this book yet.</p>
-                      </div>
-                    ) : (
-                      selectedBook.discussionThreads.map((discussionThread) => (
-                        <article key={ discussionThread.id } className="rounded-2xl border border-[#d9e5ea] bg-[#fbfdff] px-4 py-4 text-sm text-[#355161] shadow-sm">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="text-base font-bold leading-snug text-[#183746]">{ discussionThread.discussTopic }</p>
-                              <p className="text-xs uppercase tracking-[0.16em] text-[#648596]">
-                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
-                              </p>
-                            </div>
-
-                            <div className="flex shrink-0 flex-wrap items-center gap-3">
-                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
-                                <div className="flex flex-wrap items-center gap-2">
-                                  { discussionThread.dislikeCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#edf5f8] px-2 py-1 text-[0.65rem] font-semibold text-[#355161]">
-                                      <ThumbsDown className="size-3" />
-                                      { discussionThread.dislikeCount }
-                                    </span>
-                                  ) : null }
-                                  { discussionThread.likeCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e4f3fa] px-2 py-1 text-[0.65rem] font-semibold text-[#1d6d8f]">
-                                      <ThumbsUp className="size-3" />
-                                      { discussionThread.likeCount }
-                                    </span>
-                                  ) : null }
-                                  { discussionThread.loveCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fde9e0] px-2 py-1 text-[0.65rem] font-semibold text-[#b45b32]">
-                                      <Heart className="size-3 fill-current" />
-                                      { discussionThread.loveCount }
-                                    </span>
-                                  ) : null }
-                                </div>
-                              ) : null }
-
-                              <Button
-                                type="button"
-                                variant="outline"
-                                asChild
-                                className="shrink-0 rounded-full border-[#9dd8f0] bg-white px-4 text-xs font-semibold text-[#0f5c78] hover:bg-[#e9f5fa] hover:text-[#0f5c78]"
-                              >
-                                <Link href={ `/books/discussions/${ discussionThread.id }` }>
-                                  View
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
-                      ))
-                    ) }
-                  </div>
-                </div>
-              ) : null }
-
-              {/* <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
-                { filteredBooks.length } visible book{ filteredBooks.length !== 1 ? "s" : "" }
-              </div> */}
-            </div>
-
-          </div>
-
-          <div className="px-5 py-5 sm:px-6">
-            { bookItems.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
-                <LibraryBig className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
-                { loadError ? (
-                  <>
-                    <p className="text-lg font-semibold text-[#183746]">Books could not be loaded.</p>
-                    <p className="mt-2 text-sm">{ loadError }</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-lg font-semibold text-[#183746]">No books have been added yet.</p>
-                    <p className="mt-2 text-sm">Use Add Book to create the first submission for this family.</p>
-                  </>
-                ) }
-              </div>
-            ) : (
-              <>
                 <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;

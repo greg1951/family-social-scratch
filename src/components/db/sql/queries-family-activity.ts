@@ -1,4 +1,4 @@
-import { count, eq, and, inArray, gte, lte, sql } from "drizzle-orm";
+import { count, eq, and, inArray, gte, lte, sql, ne } from "drizzle-orm";
 import db from "@/components/db/drizzle";
 import { familyActivity, member } from "@/components/db/schema/family-social-schema-tables";
 
@@ -133,6 +133,7 @@ export async function getMemberPostsActivity(
         inArray(familyActivity.actionType, [...POST_ACTION_TYPES]),
         gte(familyActivity.createdAt, dateRange.startDate),
         lte(familyActivity.createdAt, dateRange.endDate),
+        ne(member.status, 'retired'),
       ),
     )
     .groupBy(member.id, member.firstName, member.lastName, familyActivity.actionType);

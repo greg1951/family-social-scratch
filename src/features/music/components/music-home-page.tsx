@@ -93,12 +93,6 @@ function toDateInputValue(date: Date) {
   return `${ year }-${ month }-${ day }`;
 }
 
-function getOneMonthAgo(referenceDate = new Date()) {
-  const oneMonthAgo = new Date(referenceDate);
-  oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  return oneMonthAgo;
-}
-
 function getMusicDocument(musicJson?: string): JSONContent {
   if (!musicJson) {
     return createEmptyTipTapDocument();
@@ -199,6 +193,7 @@ export function MusicHomePage({
   const [spotifyPlaybackState, setSpotifyPlaybackState] = useState<"idle" | "playing" | "paused">("idle");
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"all" | "latest" | "top-rated">("all");
+  const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
   const [searchValue, setSearchValue] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
   const canAccessDraftMusic = (musicMemberId: number) => musicMemberId === member.memberId || member.isFounder;
@@ -209,16 +204,19 @@ export function MusicHomePage({
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+  const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(endDate);
   const visibleMusics = musics.filter((music) => (
     music.status === "published"
     || (music.status === "draft" && canAccessDraftMusic(music.memberId))
     || (includeArchived && music.status === "archived")
   ));
-  const latestCutoffDate = getOneMonthAgo();
   const [selectedMusic, setSelectedMusic] = useState(visibleMusics[0]?.id ?? 0);
   const [filterWithDiscussionThreads, setFilterWithDiscussionThreads] = useState(false);
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+  const isDateRangeScope = dateScope === "date-range";
+  const hasPendingDateChanges = startDate !== appliedStartDate || endDate !== appliedEndDate;
+  const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
+  const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
 
   const filteredFinderMusics = visibleMusics.filter((music) => {
     const updatedAt = new Date(music.updatedAt);
@@ -448,7 +446,6 @@ export function MusicHomePage({
     }));
 
   const latestMusics = [...filteredFinderMusics]
-    .filter((music) => new Date(music.updatedAt) >= latestCutoffDate)
     .sort((leftMusic, rightMusic) => +new Date(rightMusic.updatedAt) - +new Date(leftMusic.updatedAt))
     .slice(0, 8)
     .map((music) => ({
@@ -500,10 +497,16 @@ export function MusicHomePage({
   const stripItems = musicStripMode === "all" ? allMusics : musicStripMode === "latest" ? latestMusics : topRatedMusics;
   const stripTitle = musicStripMode === "all" ? "All Music" : musicStripMode === "latest" ? "Latest Music" : "Top Rated Music";
   const stripDescription = musicStripMode === "all"
-    ? "All music posts (song, album, playlist), ordered by the most recently updated."
+    ? isDateRangeScope
+      ? "All music posts in the selected date range, ordered by the most recently updated."
+      : "All music posts (song, album, playlist), ordered by the most recently updated."
     : musicStripMode === "latest"
-      ? "Latest music first, based on added date."
-      : "Top rated music based on total likes and loves.";
+      ? isDateRangeScope
+        ? "Newest music posts in the selected date range."
+        : "Newest music posts overall."
+      : isDateRangeScope
+        ? "Top rated music in the selected date range."
+        : "Top rated music based on total likes and loves.";
   const stripAccentClassName = musicStripMode === "all"
     ? "bg-[linear-gradient(135deg,#cdddf9,#dbe8ff)]"
     : musicStripMode === "latest"
@@ -544,6 +547,9 @@ export function MusicHomePage({
   const selectedMusicType = selectedMusicBasic?.musicType ?? "album";
   const isSelectedPlaylist = selectedMusicType === "playlist";
   const isSelectedSong = selectedMusicType === "song";
+  const selectedDiscussionThreads = selectedMusicDetail?.id === selectedMusic
+    ? selectedMusicDetail.discussionThreads
+    : (selectedMusicBasic?.discussionThreads ?? []);
 
   function handleSelectMusic(musicId: number) {
     setSelectedMusic(musicId);
@@ -553,6 +559,12 @@ export function MusicHomePage({
   function handleOpenMusicFromCard(musicId: number) {
     handleSelectMusic(musicId);
     setIsViewMusicOpen(true);
+  }
+
+  function handleApplyDateRange() {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateScope("date-range");
   }
 
   function handleToggleLike(likenessDegree: number) {
@@ -668,9 +680,18 @@ export function MusicHomePage({
               <div className="flex flex-row flex-nowrap items-center gap-2"><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Archived</label><label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Discussions</label></div>
             </div>
 
+            <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#2C5EAD] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
+              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Everything</label>
+                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Date Range</label>
+              </div>
+            </div>
+
             <div className="-mt-1 flex flex-row flex-nowrap items-end gap-2 sm:mt-0">
-              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">Start Date</label><Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] sm:h-9 sm:text-xs" /></div>
-              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">End Date</label><Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] sm:h-9 sm:text-xs" /></div>
+              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">Start Date</label><Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] disabled:opacity-60 sm:h-9 sm:text-xs" /></div>
+              <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">End Date</label><Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] disabled:opacity-60 sm:h-9 sm:text-xs" /></div>
+              <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#2C5EAD] px-3 text-xs font-semibold text-white hover:bg-[#234c8e] disabled:opacity-50 sm:h-9">Apply</Button>
             </div>
 
             <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
@@ -1002,26 +1023,71 @@ export function MusicHomePage({
                 <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-white p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Discussion Threads</p>
-                    <StartDiscussionDialog
-                      targetType="music"
-                      targetId={ selectedMusicBasic.id }
-                      topicLabel={ `${ selectedMusicBasic.musicTitle } Discussion ${ (selectedMusicDetail?.id === selectedMusic ? selectedMusicDetail.discussionThreads.length : 0) + 1 }` }
-                      revalidatePaths={ ["/music"] }
-                      onSuccessRoute="/music/discussions/:threadId"
-                      disabled={ isEngaging || selectedMusicDetail?.id !== selectedMusic }
-                      triggerLabel="Add Discussion"
-                      triggerClassName="rounded-full bg-[#2C5EAD] px-4 text-xs font-semibold text-white hover:bg-[#234c8e]"
-                    />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StartDiscussionDialog
+                        targetType="music"
+                        targetId={ selectedMusicBasic.id }
+                        topicLabel={ `${ selectedMusicBasic.musicTitle } Discussion ${ selectedDiscussionThreads.length + 1 }` }
+                        revalidatePaths={ ["/music"] }
+                        onSuccessRoute="/music/discussions/:threadId"
+                        disabled={ isEngaging || selectedMusicDetail?.id !== selectedMusic }
+                        triggerLabel="Add Discussion Group"
+                        triggerClassName="rounded-full bg-[#2C5EAD] px-4 text-xs font-semibold text-white hover:bg-[#234c8e]"
+                      />
+                    </div>
                   </div>
                   { selectedMusicDetail?.id !== selectedMusic ? (
                     <p className="text-sm text-[#4a6fae]">Loading discussion threads...</p>
                   ) : selectedMusicDetail.discussionThreads.length === 0 ? (
                     <p className="text-sm text-[#4a6fae]">No discussion threads have been added for this music yet.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       { selectedMusicDetail.discussionThreads.map((discussionThread) => (
-                        <article key={ discussionThread.id } className="rounded-xl border border-[#c8d9f3] bg-[#f7fbff] p-3 text-sm text-[#35557f]">
-                          <p className="font-semibold text-[#203b66]">{ discussionThread.discussTopic }</p>
+                        <article key={ discussionThread.id } className="rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] px-4 py-4 text-sm text-[#35557f] shadow-sm">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <p className="text-base font-bold leading-snug text-[#203b66]">{ discussionThread.discussTopic }</p>
+                              <p className="text-xs uppercase tracking-[0.16em] text-[#4a6fae]">
+                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                              </p>
+                            </div>
+
+                            <div className="flex shrink-0 flex-wrap items-center gap-3">
+                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  { discussionThread.dislikeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#eef2f8] px-2 py-1 text-[0.65rem] font-semibold text-[#4a5f7a]">
+                                      <ThumbsDown className="size-3" />
+                                      { discussionThread.dislikeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.likeCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#e7f0ff] px-2 py-1 text-[0.65rem] font-semibold text-[#2C5EAD]">
+                                      <ThumbsUp className="size-3" />
+                                      { discussionThread.likeCount }
+                                    </span>
+                                  ) : null }
+                                  { discussionThread.loveCount > 0 ? (
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fde4ee] px-2 py-1 text-[0.65rem] font-semibold text-[#aa3368]">
+                                      <Heart className="size-3 fill-current" />
+                                      { discussionThread.loveCount }
+                                    </span>
+                                  ) : null }
+                                </div>
+                              ) : null }
+
+                              <Button
+                                type="button"
+                                variant="outline"
+                                asChild
+                                className="shrink-0 rounded-full border-[#9eb9e8] bg-white px-4 text-xs font-semibold text-[#203b66] hover:bg-[#edf4ff]"
+                              >
+                                <Link href={ `/music/discussions/${ discussionThread.id }` }>
+                                  View
+                                </Link>
+                              </Button>
+                            </div>
+                          </div>
                         </article>
                       )) }
                     </div>

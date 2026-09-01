@@ -108,6 +108,8 @@ function RichTextToolbar({ editor }: { editor: Editor | null }) {
 
     if (richEditor.isActive("taskList")) {
       chain.toggleTaskList();
+    } else if (richEditor.isActive("orderedList")) {
+      chain.toggleOrderedList();
     }
 
     chain.toggleBulletList().run();
@@ -118,6 +120,8 @@ function RichTextToolbar({ editor }: { editor: Editor | null }) {
 
     if (richEditor.isActive("taskList")) {
       chain.toggleTaskList();
+    } else if (richEditor.isActive("bulletList")) {
+      chain.toggleBulletList();
     }
 
     chain.toggleOrderedList().run();
@@ -391,7 +395,7 @@ export function ThreadTemplateEditPage({ initialTemplate }: ThreadTemplateEditPa
               <RichTextToolbar editor={ editor } />
               <EditorContent
                 editor={ editor }
-                className="[&_.tiptap]:min-h-80 [&_.tiptap]:rounded-b-[1.4rem] [&_.tiptap]:border [&_.tiptap]:border-[#d7c9e8] [&_.tiptap]:bg-white [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-[#43245d] [&_.tiptap]:outline-none [&_.tiptap_ul:not([data-type='taskList'])]:list-disc [&_.tiptap_ul:not([data-type='taskList'])]:pl-5 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#b89dd9] [&_.tiptap_blockquote]:pl-4"
+                className="[&_.tiptap]:min-h-80 [&_.tiptap]:rounded-b-[1.4rem] [&_.tiptap]:border [&_.tiptap]:border-[#d7c9e8] [&_.tiptap]:bg-white [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-[#43245d] [&_.tiptap]:outline-none [&_.tiptap_ul:not([data-type='taskList'])]:list-disc [&_.tiptap_ul:not([data-type='taskList'])]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#b89dd9] [&_.tiptap_blockquote]:pl-4"
               />
             </div>
           </div>

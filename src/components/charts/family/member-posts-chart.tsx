@@ -41,6 +41,7 @@ export default function MemberPostsChart({ data }: { data: MemberPostsChartData 
               tickLine={ false }
               tickMargin={ 10 }
               axisLine={ false }
+              interval={ 0 }
               tick={ { fontSize: 12 } }
               tickFormatter={ (value: string) => value.split(" ")[0] }
             />

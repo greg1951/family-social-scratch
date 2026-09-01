@@ -50,7 +50,6 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/h
 import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
-import type { Club } from "@/components/db/types/clubs";
 
 type PoemDraft = {
   id: number;
@@ -102,6 +101,13 @@ function formatCreatedAt(createdAt: Date) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(createdAt));
+}
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${ year }-${ month }-${ day }`;
 }
 
 function createSubmitterLabel(poemRecord: PoetryHomePoem, member: MemberKeyDetails) {
@@ -202,12 +208,10 @@ export default function PoetryHomePage({
   poems,
   member,
   poemTags = [],
-  clubs = [],
 }: {
   poems: PoetryHomePoem[];
   member: MemberKeyDetails;
   poemTags?: PoemTagOption[];
-  clubs?: Club[];
 }) {
   const router = useRouter();
   const [isEngaging, startEngageTransition] = useTransition();
@@ -219,10 +223,24 @@ export default function PoetryHomePage({
   const [filterWithClubSessions, setFilterWithClubSessions] = useState(false);
   const [expandPoemCards, setExpandPoemCards] = useState(true);
   const [directoryMode, setDirectoryMode] = useState<PoetryDirectoryMode>("all");
+  const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+  const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(endDate);
   const [isPoemDialogOpen, setIsPoemDialogOpen] = useState(false);
   const [verseLineCount, setVerseLineCount] = useState(1);
   const [verseLines, setVerseLines] = useState<string[]>([""]);
   const deferredSearchValue = useDeferredValue(searchValue);
+  const isDateRangeScope = dateScope === "date-range";
+  const hasPendingDateChanges = startDate !== appliedStartDate || endDate !== appliedEndDate;
+  const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
+  const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
 
   useEffect(() => {
     const nextPoemItems = poems.map((poemRecord) => createDraftFromPoem(poemRecord, member));
@@ -313,24 +331,35 @@ export default function PoetryHomePage({
   ), [poemItems, includeArchived, member.isFounder, member.memberId]);
 
   const directoryPoems = useMemo(() => {
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const scopedPoemItems = visiblePoemItems.filter((poemItem) => {
+      const createdAt = new Date(poemItem.createdAt);
+
+      if (startDateValue && createdAt < startDateValue) {
+        return false;
+      }
+
+      if (endDateValue && createdAt > endDateValue) {
+        return false;
+      }
+
+      return true;
+    });
 
     if (directoryMode === "all") {
-      return [...visiblePoemItems].sort((leftPoem, rightPoem) => (
+      return [...scopedPoemItems].sort((leftPoem, rightPoem) => (
         new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
       ));
     }
 
     if (directoryMode === "latest") {
-      return visiblePoemItems
-        .filter((poemItem) => new Date(poemItem.createdAt).getTime() >= monthAgo.getTime())
+      return scopedPoemItems
         .sort((leftPoem, rightPoem) => (
           new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
-        ));
+        ))
+        .slice(0, 8);
     }
 
-    return visiblePoemItems
+    return scopedPoemItems
       .filter((poemItem) => (poemItem.likeCount + poemItem.loveCount) > 0)
       .sort((leftPoem, rightPoem) => {
         const rightScore = rightPoem.likeCount + rightPoem.loveCount;
@@ -341,8 +370,9 @@ export default function PoetryHomePage({
         }
 
         return new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime();
-      });
-  }, [directoryMode, visiblePoemItems]);
+      })
+      .slice(0, 8);
+  }, [directoryMode, endDateValue, startDateValue, visiblePoemItems]);
 
   const filteredPoems = useMemo(() => {
     const normalizedQuery = deferredSearchValue.trim().toLowerCase();
@@ -396,6 +426,12 @@ export default function PoetryHomePage({
   function handleOpenPoemFromCard(poemId: number) {
     handleSelectPoem(poemId);
     setIsPoemDialogOpen(true);
+  }
+
+  function handleApplyDateRange() {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateScope("date-range");
   }
 
   function handleAddPoem() {
@@ -640,44 +676,83 @@ export default function PoetryHomePage({
                 </p> */}
 
                 <div className="mt-4 min-w-0">
-                  <div className="mb-2 flex flex-wrap gap-2">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="poetry-directory-mode"
-                        value="all"
-                        checked={ directoryMode === "all" }
-                        onChange={ () => setDirectoryMode("all") }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative min-w-[16rem] flex-1">
+                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
+                      <Input
+                        type="search"
+                        value={ searchValue }
+                        onChange={ (event) => setSearchValue(event.target.value) }
+                        placeholder="Search by poem, poet, year, or family member"
+                        className="h-9 rounded-full border-[#d7d0ea] bg-white pl-10 pr-3 text-xs text-[#43245d] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
+                        aria-label="Search poems"
                       />
+                    </div>
+                  </div>
+
+                  <div className="mt-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#faf8ff] px-4 py-2 text-sm text-[#77578f] sm:py-3">
+                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#8154a3] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
+                    <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="poetry-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
+                        Everything
+                      </label>
+                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                        <input type="radio" name="poetry-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
+                        Date Range
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="mt-2 flex flex-row flex-nowrap items-end gap-2">
+                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">Start Date</label>
+                      <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                    </div>
+                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
+                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">End Date</label>
+                      <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
+                    </div>
+                    <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#5a2f85] px-3 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50 sm:h-9">
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* <div className="rounded-full border border-[#e4d9ee] bg-[#faf6ff] px-4 py-2 text-sm font-semibold text-[#77578f]">
+                { poemItems.length } poem{ poemItems.length !== 1 ? "s" : "" }
+              </div> */}
+            </div>
+
+          </div>
+
+          <div className="px-5 py-5 sm:px-6">
+            { poemItems.length === 0 ? (
+              <div className="rounded-[1.5rem] border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-6 py-10 text-center text-[#77578f]">
+                <LibraryBig className="mx-auto mb-3 size-10 text-[#9a79b8]" />
+                <p className="text-lg font-semibold text-[#43245d]">No poem facts are available yet.</p>
+                <p className="mt-2 text-sm">Use Add Poem to create the first submission for this family.</p>
+              </div>
+            ) : (
+              <>
+                <div className="mb-4 rounded-[1.4rem] border border-[#e4d9ee] bg-[#faf8ff] px-4 py-2 text-sm text-[#77578f] sm:py-3">
+                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#8154a3] sm:text-[0.68rem] sm:tracking-[0.32em]">Poem Type</p>
+                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="poetry-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
                       All
                     </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="poetry-directory-mode"
-                        value="latest"
-                        checked={ directoryMode === "latest" }
-                        onChange={ () => setDirectoryMode("latest") }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
-                      />
-                      Latest Month
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="poetry-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
+                      Latest
                     </label>
-
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5d426f] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="poetry-directory-mode"
-                        value="top-rated"
-                        checked={ directoryMode === "top-rated" }
-                        onChange={ () => setDirectoryMode("top-rated") }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
-                      />
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                      <input type="radio" name="poetry-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
                       Top Rated
                     </label>
                   </div>
-
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f466f]">
                     <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
                       <input
                         type="checkbox"
@@ -706,128 +781,8 @@ export default function PoetryHomePage({
                       Expand Poem Cards
                     </label>
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative min-w-[16rem] flex-1">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
-                      <Input
-                        type="search"
-                        value={ searchValue }
-                        onChange={ (event) => setSearchValue(event.target.value) }
-                        placeholder="Search by poem, poet, year, or family member"
-                        className="h-9 rounded-full border-[#d7d0ea] bg-white pl-10 pr-3 text-xs text-[#43245d] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                        aria-label="Search poems"
-                      />
-                    </div>
-                  </div>
                 </div>
-              </div>
 
-              { selectedPoem ? (
-                <div className="w-full rounded-[1.4rem] border border-[#e4d9ee] bg-white p-4 xl:w-104">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 text-sm text-[#77578f]">
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Start Poetry Club Session</p>
-                        <FeatureFaqHelp
-                          href="/feature-faq?category=Discussion%20Groups"
-                          buttonClassName="h-4 w-4 md:h-7 md:w-7 rounded-xl border-[#e4d9ee] bg-gradient-to-b from-[#fcf7ff] to-[#f0e3ff] text-[#6e3f98] shadow-[0_8px_18px_rgba(110,63,152,0.22)] group-hover:shadow-[0_12px_26px_rgba(110,63,152,0.3)]"
-                          iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
-                          tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
-                        />
-                      </div>
-                      <p className="mt-1 text-sm text-[#77578f]">Start or review poetry club sessions for this poem.</p>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={ () => router.push(`/add-club-session?targetType=poem&targetId=${ selectedPoem.id }`) }
-                      disabled={ isEngaging || clubs.length === 0 || selectedPoem.hasClubSession }
-                      className="rounded-full bg-[#5a2f85] px-4 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50"
-                    >
-                      Add Poetry Club Session
-                    </Button>
-                  </div>
-                  { clubs.length === 0 ? (
-                    <p className="mt-2 text-xs text-[#917ba5]">Create a club first using Book & Poetry Clubs.</p>
-                  ) : selectedPoem.hasClubSession ? (
-                    <p className="mt-2 text-xs text-[#917ba5]">This poem already has an active club session.</p>
-                  ) : null }
-
-                  <div className="mt-3 space-y-3">
-                    { selectedPoem.discussionThreads.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-3 py-3 text-sm text-[#77578f]">
-                        <p>No discussion threads have been added for this poem yet.</p>
-                      </div>
-                    ) : (
-                      selectedPoem.discussionThreads.map((discussionThread) => (
-                        <article key={ discussionThread.id } className="rounded-2xl border border-[#e5daf0] bg-[#fcfaff] px-4 py-4 text-sm text-[#5f466f] shadow-sm">
-                          <div className="flex flex-wrap items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1 space-y-1">
-                              <p className="text-base font-bold leading-snug text-[#43245d]">{ discussionThread.discussTopic }</p>
-                              <p className="text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
-                                { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
-                              </p>
-                            </div>
-
-                            <div className="flex shrink-0 flex-wrap items-center gap-3">
-                              { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
-                                <div className="flex flex-wrap items-center gap-2">
-                                  { discussionThread.dislikeCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#f3edf8] px-2 py-1 text-[0.65rem] font-semibold text-[#5f466f]">
-                                      <ThumbsDown className="size-3" />
-                                      { discussionThread.dislikeCount }
-                                    </span>
-                                  ) : null }
-                                  { discussionThread.likeCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#efe6fb] px-2 py-1 text-[0.65rem] font-semibold text-[#6e3f98]">
-                                      <ThumbsUp className="size-3" />
-                                      { discussionThread.likeCount }
-                                    </span>
-                                  ) : null }
-                                  { discussionThread.loveCount > 0 ? (
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#fbe7f2] px-2 py-1 text-[0.65rem] font-semibold text-[#a14f7a]">
-                                      <Heart className="size-3 fill-current" />
-                                      { discussionThread.loveCount }
-                                    </span>
-                                  ) : null }
-                                </div>
-                              ) : null }
-
-                              <Button
-                                type="button"
-                                variant="outline"
-                                asChild
-                                className="shrink-0 rounded-full border-[#d8b5ff] bg-white px-4 text-xs font-semibold text-[#43245d] hover:bg-[#f5e9ff] hover:text-[#43245d]"
-                              >
-                                <Link href={ `/poetry/discussions/${ discussionThread.id }` }>
-                                  View
-                                </Link>
-                              </Button>
-                            </div>
-                          </div>
-                        </article>
-                      ))
-                    ) }
-                  </div>
-                </div>
-              ) : null }
-
-              {/* <div className="rounded-full border border-[#e4d9ee] bg-[#faf6ff] px-4 py-2 text-sm font-semibold text-[#77578f]">
-                { poemItems.length } poem{ poemItems.length !== 1 ? "s" : "" }
-              </div> */}
-            </div>
-
-          </div>
-
-          <div className="px-5 py-5 sm:px-6">
-            { poemItems.length === 0 ? (
-              <div className="rounded-[1.5rem] border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-6 py-10 text-center text-[#77578f]">
-                <LibraryBig className="mx-auto mb-3 size-10 text-[#9a79b8]" />
-                <p className="text-lg font-semibold text-[#43245d]">No poem facts are available yet.</p>
-                <p className="mt-2 text-sm">Use Add Poem to create the first submission for this family.</p>
-              </div>
-            ) : (
-              <>
                 <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredPoems.map((poemItem) => {
                     const isSelected = poemItem.id === selectedPoemId;
@@ -1165,6 +1120,70 @@ export default function PoetryHomePage({
                     </div>
                   </div>
                 ) : null }
+              </div>
+
+              <div className="space-y-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#fcfaff] p-4">
+                <div>
+                  <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#8154a3]">Discussion Threads</p>
+                  <p className="text-xs text-[#77578f]">Follow the conversation that belongs to this poem.</p>
+                </div>
+
+                { selectedPoem.discussionThreads.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[#d7d0ea] bg-[#faf8ff] px-3 py-3 text-sm text-[#77578f]">
+                    <p>No discussion threads have been added for this poem yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    { selectedPoem.discussionThreads.map((discussionThread) => (
+                      <article key={ discussionThread.id } className="rounded-2xl border border-[#e5daf0] bg-[#fcfaff] px-4 py-4 text-sm text-[#5f466f] shadow-sm">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="text-base font-bold leading-snug text-[#43245d]">{ discussionThread.discussTopic }</p>
+                            <p className="text-xs uppercase tracking-[0.16em] text-[#8a6da3]">
+                              { discussionThread.memberFirstName } · { formatCreatedAt(discussionThread.createdAt) }
+                            </p>
+                          </div>
+
+                          <div className="flex shrink-0 flex-wrap items-center gap-3">
+                            { discussionThread.dislikeCount > 0 || discussionThread.likeCount > 0 || discussionThread.loveCount > 0 ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                { discussionThread.dislikeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#f3edf8] px-2 py-1 text-[0.65rem] font-semibold text-[#5f466f]">
+                                    <ThumbsDown className="size-3" />
+                                    { discussionThread.dislikeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.likeCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#efe6fb] px-2 py-1 text-[0.65rem] font-semibold text-[#6e3f98]">
+                                    <ThumbsUp className="size-3" />
+                                    { discussionThread.likeCount }
+                                  </span>
+                                ) : null }
+                                { discussionThread.loveCount > 0 ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-[#fbe7f2] px-2 py-1 text-[0.65rem] font-semibold text-[#a14f7a]">
+                                    <Heart className="size-3 fill-current" />
+                                    { discussionThread.loveCount }
+                                  </span>
+                                ) : null }
+                              </div>
+                            ) : null }
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              asChild
+                              className="shrink-0 rounded-full border-[#d8b5ff] bg-white px-4 text-xs font-semibold text-[#43245d] hover:bg-[#f5e9ff] hover:text-[#43245d]"
+                            >
+                              <Link href={ `/poetry/discussions/${ discussionThread.id }` }>
+                                View
+                              </Link>
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    )) }
+                  </div>
+                ) }
               </div>
             </div>
           ) : null }

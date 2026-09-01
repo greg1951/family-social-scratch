@@ -252,6 +252,7 @@ export function FoodiesHomePage({
   const [commentText, setCommentText] = useState("");
   const [isViewRecipeOpen, setIsViewRecipeOpen] = useState(false);
   const [recipeStripMode, setRecipeStripMode] = useState<"all" | "latest" | "top-rated">("all");
+  const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
   const recipePrintContentRef = useRef<HTMLDivElement | null>(null);
   const [includeArchived, setIncludeArchived] = useState(false);
   const canAccessDraftRecipe = (recipeMemberId: number) => recipeMemberId === member.memberId || member.isFounder;
@@ -271,9 +272,13 @@ export function FoodiesHomePage({
     return toDateInputValue(threeMonthsAgo);
   });
   const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+  const [appliedStartDate, setAppliedStartDate] = useState(startDate);
+  const [appliedEndDate, setAppliedEndDate] = useState(endDate);
 
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+  const isDateRangeScope = dateScope === "date-range";
+  const hasPendingDateChanges = startDate !== appliedStartDate || endDate !== appliedEndDate;
+  const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
+  const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
 
   const filteredFinderRecipes = visibleRecipes.filter((recipe) => {
     const updatedAt = new Date(recipe.updatedAt);
@@ -304,12 +309,9 @@ export function FoodiesHomePage({
     ].join(" ").toLowerCase().includes(query);
   });
 
-  const latestCutoffDate = new Date();
-  latestCutoffDate.setMonth(latestCutoffDate.getMonth() - 1);
-
   const latestRecipeRecords = [...filteredFinderRecipes]
-    .filter((recipe) => +new Date(recipe.updatedAt) >= latestCutoffDate.getTime())
-    .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt));
+    .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
+    .slice(0, 8);
 
   const latestRecipes = latestRecipeRecords
     .map((recipe) => ({
@@ -379,10 +381,16 @@ export function FoodiesHomePage({
   const stripItems = recipeStripMode === "all" ? allRecipes : recipeStripMode === "latest" ? latestRecipes : topRatedRecipes;
   const stripTitle = recipeStripMode === "all" ? "All Recipes" : recipeStripMode === "latest" ? "Latest Recipes" : "Top Rated Recipes";
   const stripDescription = recipeStripMode === "all"
-    ? "All recipes first, ordered by the most recently updated."
+    ? isDateRangeScope
+      ? "All recipes in the selected date range, ordered by the most recently updated."
+      : "All recipes first, ordered by the most recently updated."
     : recipeStripMode === "latest"
-      ? "Recipes updated in the last month."
-      : "Top rated recipes based on total likes and loves.";
+      ? isDateRangeScope
+        ? "Newest recipes in the selected date range."
+        : "Newest recipes overall."
+      : isDateRangeScope
+        ? "Top rated recipes in the selected date range."
+        : "Top rated recipes based on total likes and loves.";
   const stripAccentClassName = recipeStripMode === "all"
     ? "bg-[linear-gradient(135deg,#d9f0c8,#fff6c9)]"
     : recipeStripMode === "latest"
@@ -517,6 +525,12 @@ export function FoodiesHomePage({
   function handleOpenRecipeFromCard(recipeId: number) {
     handleSelectRecipe(recipeId);
     setIsViewRecipeOpen(true);
+  }
+
+  function handleApplyDateRange() {
+    setAppliedStartDate(startDate);
+    setAppliedEndDate(endDate);
+    setDateScope("date-range");
   }
 
   function handleToggleLike(likenessDegree: number) {
@@ -1026,6 +1040,20 @@ export function FoodiesHomePage({
                 </div>
               </div>
 
+              <div className="mt-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm text-[#647a50] sm:py-3">
+                <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#5f7a40] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
+                <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
+                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                    <input type="radio" name="recipe-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />
+                    Everything
+                  </label>
+                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
+                    <input type="radio" name="recipe-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />
+                    Date Range
+                  </label>
+                </div>
+              </div>
+
               <div className="-mt-1 flex flex-row flex-nowrap items-end gap-2 sm:mt-0">
                 <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
                   <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">
@@ -1036,7 +1064,8 @@ export function FoodiesHomePage({
                     value={ startDate }
                     max={ endDate || undefined }
                     onChange={ (event) => setStartDate(event.target.value) }
-                    className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] sm:h-9 sm:text-xs"
+                    disabled={ !isDateRangeScope }
+                    className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] disabled:opacity-60 sm:h-9 sm:text-xs"
                   />
                 </div>
                 <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
@@ -1048,9 +1077,13 @@ export function FoodiesHomePage({
                     value={ endDate }
                     min={ startDate || undefined }
                     onChange={ (event) => setEndDate(event.target.value) }
-                    className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] sm:h-9 sm:text-xs"
+                    disabled={ !isDateRangeScope }
+                    className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] disabled:opacity-60 sm:h-9 sm:text-xs"
                   />
                 </div>
+                <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#578c24] px-3 text-xs font-semibold text-white hover:bg-[#4a7320] disabled:opacity-50 sm:h-9">
+                  Apply
+                </Button>
               </div>
             </div>
 

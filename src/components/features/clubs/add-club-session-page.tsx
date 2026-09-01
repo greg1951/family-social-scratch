@@ -187,9 +187,7 @@ export default function AddClubSessionPage({
         return;
       }
 
-      router.push(effectiveTargetType === 'book'
-        ? `/books/discussions/${ result.threadId }`
-        : `/poetry/discussions/${ result.threadId }`);
+      router.push('/threads');
       router.refresh();
     });
   }
@@ -226,7 +224,7 @@ export default function AddClubSessionPage({
     const [endYear, endMonth, endDay] = finishesAt.split('-');
     const filledTemplateJson = replaceTemplateVariablesWithValues(templateJson, {
       club_name: selectedClub.clubName,
-      club_session: selectedClub.clubName,
+      club_session: effectiveTargetTitle,
       session_start: `${ startMonth }-${ startDay }-${ startYear }`,
       session_end: `${ endMonth }-${ endDay }-${ endYear }`,
       session_moderator: `${ member.firstName } ${ member.lastName }`,

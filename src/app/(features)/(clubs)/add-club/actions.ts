@@ -41,8 +41,8 @@ async function sendClubSessionInviteMessage(
 
   await createThreadConversationWithInitialPost(
     {
-      title: `${ clubName } Club Session Invitation`,
-      subject: sessionTitle,
+      title: `${ sessionTitle } Club Session Invitation`,
+      subject: clubName,
       visibility: 'private',
       recipientMemberIds: [memberDetails.memberId],
       content: extractTipTapText(parsedTopic.content).trim() || sessionTitle,
