@@ -132,6 +132,7 @@ function buildMusicRecord(overrides: Partial<MusicRecord>): MusicRecord {
     id: 500,
     musicTitle: "Record",
     artistName: "Some Artist",
+    albumName: null,
     musicJson: '{"type":"doc","content":[]}',
     status: "published",
     musicType: "album",

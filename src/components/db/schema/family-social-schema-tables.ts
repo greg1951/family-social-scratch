@@ -1067,6 +1067,7 @@ export const music = familySchema.table("music", {
   id: serial("id").primaryKey(),
   musicTitle: text("music_title").notNull().unique(),
   artistName: text("artist_name").notNull().default(""),
+  albumName: text("album_name"),
   musicJson: text("music_json").notNull().default("{}"),
   status: text("status").notNull().default("published"),
   musicType: text("music_type").notNull().default("album"),

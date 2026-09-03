@@ -42,6 +42,7 @@ export interface MusicRecord {
   id: number;
   musicTitle: string;
   artistName: string;
+  albumName: string | null;
   musicJson: string;
   status: string;
   musicType: MusicType;
@@ -136,6 +137,7 @@ export interface SaveMusicInput {
   id?: number;
   musicTitle: string;
   artistName: string;
+  albumName?: string | null;
   submitterLikenessDegree?: number;
   musicJson: string;
   status: string;
@@ -145,6 +147,7 @@ export interface SaveMusicInput {
   templateId?: number;
   selectedTagIds: number[];
   playlistMedia?: SaveMusicPlaylistMediaInput[];
+  searchAlbumImage?: boolean;
 }
 
 export interface SaveMusicTemplateInput {

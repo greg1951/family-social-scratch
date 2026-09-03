@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getMusicById, getMusicHomePageData } from "@/components/db/sql/queries-music";
+import { getMusicById, getMusicHomePageData, getMusicLyricsByMusicId } from "@/components/db/sql/queries-music";
 import { MusicAddPage } from "@/features/music/components/music-add-page";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
 
@@ -36,12 +36,17 @@ export default async function AddMusicPage({ searchParams }: { searchParams: Pro
 
   const mode = initialMusic ? "edit" : "add";
 
+  const initialLyrics = initialMusic?.musicType === "song"
+    ? await getMusicLyricsByMusicId(memberKeyDetails.familyId, initialMusic.id).then((result) => (result.success ? result.lyrics : null))
+    : null;
+
   return (
     <MusicAddPage
       musicTags={ musicTags }
       musicTemplates={ musicTemplates }
       member={ memberKeyDetails }
       initialMusic={ initialMusic }
+      initialLyrics={ initialLyrics }
       mode={ mode }
     />
   );

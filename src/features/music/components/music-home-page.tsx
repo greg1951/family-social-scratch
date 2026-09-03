@@ -135,7 +135,7 @@ function getSpotifyTrackUrisFromPlaylistMedia(playlistMedia: MusicDetail["playli
   return Array.from(trackUris);
 }
 
-function MusicViewer({ musicJson, compact = false }: { musicJson?: string; compact?: boolean }) {
+function MusicViewer({ musicJson, compact = false, minHeightClass }: { musicJson?: string; compact?: boolean; minHeightClass?: string }) {
   const viewer = useEditor({
     editable: false,
     extensions: [
@@ -151,7 +151,7 @@ function MusicViewer({ musicJson, compact = false }: { musicJson?: string; compa
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: `tiptap ${ compact ? "min-h-56" : "min-h-112" } text-[#203b66] focus:outline-none`,
+        class: `tiptap ${ minHeightClass ?? (compact ? "min-h-56" : "min-h-112") } text-[#203b66] focus:outline-none`,
       },
     },
   });
@@ -240,8 +240,9 @@ export function MusicHomePage({
 
     return [
       music.musicTitle,
-      music.tagNamesByType.genre?.[0] ?? "",
-      music.tagNamesByType.subGenre?.[0] ?? "",
+      music.artistName,
+      ...(music.tagNamesByType.genre ?? []),
+      ...(music.tagNamesByType.subGenre ?? []),
       music.musicType,
       music.submitterName,
     ].join(" ").toLowerCase().includes(query);
@@ -671,12 +672,12 @@ export function MusicHomePage({
               <EditPostIcon tooltip="Add Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] sm:px-3"><Link href="/music/add-music" aria-label="Add music"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
               <EditPostIcon tooltip="Edit Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected music"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit Music</span></Button></EditPostIcon>
               <div id="music-add-lyrics">
-                <EditPostIcon tooltip="Edit Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/lyrics?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected lyrics"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Add-Edit Lyrics</span></Button></EditPostIcon>
+                <EditPostIcon tooltip="Edit Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditLyricsSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected lyrics"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Add-Edit Lyrics</span></Button></EditPostIcon>
               </div>
             </div>
 
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2">
-              <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-9 w-full rounded-full border-[#c8d9f3] bg-white pl-10 pr-3 text-xs text-[#203b66] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm" aria-label="Search music" /></div>
+              <div className="relative min-w-0 w-full sm:w-96 md:w-md lg:w-lg xl:w-xl"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-9 w-full rounded-full border-[#c8d9f3] bg-white pl-10 pr-3 text-xs text-[#203b66] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm" aria-label="Search music" /></div>
             </div>
 
             <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
@@ -725,7 +726,9 @@ export function MusicHomePage({
             { selectedMusicBasic ? (
               <div className="max-h-[75vh] space-y-4 overflow-auto pr-1">
                 <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)]">
-                  <MusicViewer musicJson={ selectedMusicBasic.musicJson } compact={ isSelectedPlaylist } />
+                  <div className="space-y-4">
+                    <MusicViewer musicJson={ selectedMusicBasic.musicJson } compact={ isSelectedPlaylist } minHeightClass={ isSelectedPlaylist ? "min-h-24" : "min-h-44" } />
+                  </div>
                   <div className="space-y-4">
                     <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white">
                       <div className="aspect-16/10 overflow-hidden">
@@ -748,60 +751,6 @@ export function MusicHomePage({
                     { !isSelectedPlaylist ? (
                       <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#2C5EAD]">Artist</p><p className="mt-2 text-sm leading-6 text-[#35557f]">{ selectedMusicBasic.artistName || "No artist provided." }</p></div>
                     ) : null }
-
-                    <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
-                      <div>
-                        <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Reactions</p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <Button
-                          type="button"
-                          onClick={ () => handleToggleLike(-1) }
-                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
-                          className="rounded-full bg-[#5c6c76] text-white hover:bg-[#4c5961]"
-                          aria-label={ selectedMusicLikenessDegree === -1 ? "Remove thumbs down" : "Add thumbs down" }
-                        >
-                          <ThumbsDown className={ `size-4 ${ selectedMusicLikenessDegree === -1 ? "fill-white" : "" }` } />
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={ () => handleToggleLike(1) }
-                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
-                          className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
-                          aria-label={ selectedMusicLikenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
-                        >
-                          <ThumbsUp className={ `size-4 ${ selectedMusicLikenessDegree === 1 ? "fill-white" : "" }` } />
-                        </Button>
-                        <Button
-                          type="button"
-                          onClick={ () => handleToggleLike(2) }
-                          disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
-                          className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]"
-                          aria-label={ selectedMusicLikenessDegree === 2 ? "Remove love" : "Add love" }
-                        >
-                          <Heart className={ `size-4 ${ selectedMusicLikenessDegree === 2 ? "fill-white" : "" }` } />
-                        </Button>
-                      </div>
-                      { !canReactToSelectedMusic ? (
-                        <p className="text-xs text-[#4a6fae]">
-                          You cannot react to your own music posting. Ask another family member to react to it.
-                        </p>
-                      ) : null }
-                      <div className="flex flex-wrap items-center gap-4">
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#5c6c76]">
-                          <ThumbsDown className="size-4 text-[#5c6c76]" />
-                          { selectedMusicNoRatingCount.toLocaleString() }
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#245475]">
-                          <ThumbsUp className="size-4 text-[#2d87a8]" />
-                          { selectedMusicThumbsUpCount.toLocaleString() }
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
-                          <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
-                          { selectedMusicLoveCount.toLocaleString() }
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -970,6 +919,96 @@ export function MusicHomePage({
                     <MusicViewer musicJson={ selectedMusicDetail.lyrics.lyricsJson } />
                   </div>
                 ) : null }
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#2C5EAD]">Tags</p>
+                    <div className="mt-3 grid gap-3 text-sm text-[#35557f] sm:grid-cols-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">Genre</p>
+                        { selectedMusicBasic.tagNamesByType.genre?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            { selectedMusicBasic.tagNamesByType.genre.map((tagName) => (
+                              <span key={ tagName } className="rounded-full border border-[#c8d9f3] bg-[#f7fbff] px-3 py-1 text-xs font-semibold text-[#203b66]">
+                                { tagName }
+                              </span>
+                            )) }
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-xs text-[#4a6fae]">No genre tags selected.</p>
+                        ) }
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#4a6fae]">Sub-Genre</p>
+                        { selectedMusicBasic.tagNamesByType.subGenre?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            { selectedMusicBasic.tagNamesByType.subGenre.map((tagName) => (
+                              <span key={ tagName } className="rounded-full border border-[#c8d9f3] bg-[#f7fbff] px-3 py-1 text-xs font-semibold text-[#203b66]">
+                                { tagName }
+                              </span>
+                            )) }
+                          </div>
+                        ) : (
+                          <p className="mt-1 text-xs text-[#4a6fae]">No sub-genre tags selected.</p>
+                        ) }
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                    <div>
+                      <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Family Reactions</p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(-1) }
+                        disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                        className="rounded-full bg-[#5c6c76] text-white hover:bg-[#4c5961]"
+                        aria-label={ selectedMusicLikenessDegree === -1 ? "Remove thumbs down" : "Add thumbs down" }
+                      >
+                        <ThumbsDown className={ `size-4 ${ selectedMusicLikenessDegree === -1 ? "fill-white" : "" }` } />
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(1) }
+                        disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                        className="rounded-full bg-[#2d87a8] text-white hover:bg-[#256e89]"
+                        aria-label={ selectedMusicLikenessDegree === 1 ? "Remove thumbs up" : "Add thumbs up" }
+                      >
+                        <ThumbsUp className={ `size-4 ${ selectedMusicLikenessDegree === 1 ? "fill-white" : "" }` } />
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={ () => handleToggleLike(2) }
+                        disabled={ !selectedMusicBasic || isEngaging || !canReactToSelectedMusic }
+                        className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]"
+                        aria-label={ selectedMusicLikenessDegree === 2 ? "Remove love" : "Add love" }
+                      >
+                        <Heart className={ `size-4 ${ selectedMusicLikenessDegree === 2 ? "fill-white" : "" }` } />
+                      </Button>
+                    </div>
+                    { !canReactToSelectedMusic ? (
+                      <p className="text-xs text-[#4a6fae]">
+                        You cannot react to your own music posting. Ask another family member to react to it.
+                      </p>
+                    ) : null }
+                    <div className="flex flex-wrap items-center gap-4">
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-[#5c6c76]">
+                        <ThumbsDown className="size-4 text-[#5c6c76]" />
+                        { selectedMusicNoRatingCount.toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-[#245475]">
+                        <ThumbsUp className="size-4 text-[#2d87a8]" />
+                        { selectedMusicThumbsUpCount.toLocaleString() }
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 font-semibold text-[#8f2f58]">
+                        <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" />
+                        { selectedMusicLoveCount.toLocaleString() }
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="space-y-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] p-4">
                   <div>

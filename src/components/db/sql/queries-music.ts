@@ -105,11 +105,7 @@ function sanitizePlaylistMediaEntries(entries: SaveMusicInput["playlistMedia"]):
     .filter((entry) => entry.mediaUrl.length > 0);
 }
 
-async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMediaSource): Promise<string | null> {
-  if (source !== "spotify" || !artistName.trim()) {
-    return null;
-  }
-
+async function getSpotifyAccessToken(): Promise<string | null> {
   const clientId = process.env.SPOTIFY_CLIENT_ID?.trim();
   const clientSecret = process.env.SPOTIFY_CLIENT_SECRET?.trim();
   if (!clientId || !clientSecret) {
@@ -131,7 +127,35 @@ async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMed
     }
 
     const tokenBody = await tokenResponse.json() as { access_token?: string };
-    const accessToken = tokenBody.access_token;
+    return tokenBody.access_token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const SPOTIFY_TARGET_IMAGE_SIZE_PX = 300;
+
+type SpotifyImage = { url?: string; width?: number | null; height?: number | null };
+
+// Prefers the smallest image that still meets the target size, so cover art isn't upscaled/blurry.
+function selectSpotifyImageUrl(images: SpotifyImage[] | undefined): string | null {
+  if (!images?.length) {
+    return null;
+  }
+
+  const sortedBySize = [...images].sort((left, right) => (left.width ?? 0) - (right.width ?? 0));
+  const smallestMeetingTarget = sortedBySize.find((image) => (image.width ?? 0) >= SPOTIFY_TARGET_IMAGE_SIZE_PX);
+
+  return smallestMeetingTarget?.url ?? sortedBySize.at(-1)?.url ?? null;
+}
+
+async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMediaSource): Promise<string | null> {
+  if (source !== "spotify" || !artistName.trim()) {
+    return null;
+  }
+
+  try {
+    const accessToken = await getSpotifyAccessToken();
     if (!accessToken) {
       return null;
     }
@@ -149,14 +173,100 @@ async function resolveSpotifyArtistImage(artistName: string, source: PlaylistMed
     const searchBody = await searchResponse.json() as {
       artists?: {
         items?: Array<{
-          images?: Array<{ url?: string }>;
+          images?: SpotifyImage[];
         }>;
       };
     };
 
-    const images = searchBody.artists?.items?.[0]?.images ?? [];
-    return images.length > 0 ? (images.at(-1)?.url ?? images[0]?.url ?? null) : null;
+    return selectSpotifyImageUrl(searchBody.artists?.items?.[0]?.images);
   } catch {
+    return null;
+  }
+}
+
+function normalizeAlbumNameForComparison(value: string | undefined | null): string {
+  return (value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+async function resolveSpotifyAlbumImage(artistName: string, albumTitle: string): Promise<string | null> {
+  if (!artistName.trim() || !albumTitle.trim()) {
+    return null;
+  }
+
+  console.debug("[spotify-album-search] starting search", { artistName, albumTitle });
+
+  try {
+    const accessToken = await getSpotifyAccessToken();
+    if (!accessToken) {
+      console.debug("[spotify-album-search] no access token available");
+      return null;
+    }
+
+    const artistSearchResponse = await fetch(`https://api.spotify.com/v1/search?q=${ encodeURIComponent(artistName) }&type=artist&limit=1`, {
+      headers: {
+        Authorization: `Bearer ${ accessToken }`,
+      },
+    });
+
+    if (!artistSearchResponse.ok) {
+      console.debug("[spotify-album-search] artist search request failed", { status: artistSearchResponse.status, artistName });
+      return null;
+    }
+
+    const artistSearchBody = await artistSearchResponse.json() as {
+      artists?: {
+        items?: Array<{ id?: string; name?: string }>;
+      };
+    };
+
+    const matchedArtist = artistSearchBody.artists?.items?.[0];
+    const artistId = matchedArtist?.id;
+    console.debug("[spotify-album-search] artist search result", { artistName, matchedArtistName: matchedArtist?.name, artistId });
+    if (!artistId) {
+      return null;
+    }
+
+    const albumsResponse = await fetch(
+      `https://api.spotify.com/v1/artists/${ artistId }/albums?market=US&include_groups=album&limit=10`,
+      {
+        headers: {
+          Authorization: `Bearer ${ accessToken }`,
+        },
+      }
+    );
+
+    if (!albumsResponse.ok) {
+      const errorBody = await albumsResponse.text().catch(() => null);
+      console.debug("[spotify-album-search] albums request failed", { status: albumsResponse.status, artistId, errorBody });
+      return null;
+    }
+
+    const albumsBody = await albumsResponse.json() as {
+      items?: Array<{
+        name?: string;
+        images?: SpotifyImage[];
+      }>;
+    };
+
+    const normalizedAlbumTitle = normalizeAlbumNameForComparison(albumTitle);
+    const albums = albumsBody.items ?? [];
+    console.debug("[spotify-album-search] albums fetched", { artistId, albumCount: albums.length, albumNames: albums.map((album) => album.name) });
+    const matchedAlbum = albums.find((album) => normalizeAlbumNameForComparison(album.name) === normalizedAlbumTitle)
+      ?? albums.find((album) => {
+        const normalizedName = normalizeAlbumNameForComparison(album.name);
+        return normalizedName.length > 0 && (normalizedName.includes(normalizedAlbumTitle) || normalizedAlbumTitle.includes(normalizedName));
+      });
+
+    const resolvedImageUrl = selectSpotifyImageUrl(matchedAlbum?.images);
+    console.debug("[spotify-album-search] match result", { albumTitle, matchedAlbumName: matchedAlbum?.name, resolvedImageUrl });
+    return resolvedImageUrl;
+  } catch (error) {
+    console.debug("[spotify-album-search] search threw an error", { artistName, albumTitle, error });
     return null;
   }
 }
@@ -746,6 +856,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     id: row.id,
     musicTitle: row.musicTitle,
     artistName: row.artistName,
+    albumName: row.albumName ?? null,
     musicJson: row.musicJson,
     status: row.status,
     musicType: normalizeMusicType(row.musicType),
@@ -877,6 +988,7 @@ async function loadMusicDetail(
     id: musicRow.id,
     musicTitle: musicRow.musicTitle,
     artistName: musicRow.artistName,
+    albumName: musicRow.albumName ?? null,
     musicJson: musicRow.musicJson,
     status: musicRow.status,
     musicType: normalizeMusicType(musicRow.musicType),
@@ -1163,6 +1275,22 @@ export async function saveMusic(
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
 
+  const normalizedAlbumName = validMusicType === "song" ? (input.albumName?.trim() || null) : null;
+  const albumSearchTitle = validMusicType === "song" ? (normalizedAlbumName ?? "") : normalizedTitle;
+
+  const resolvedMusicImageUrl = (validMusicType === "album" || validMusicType === "song") && input.searchAlbumImage
+    ? await resolveSpotifyAlbumImage(input.artistName, albumSearchTitle)
+    : (input.musicImageUrl ?? null);
+
+  console.debug("[spotify-album-search] saveMusic invocation", {
+    musicType: validMusicType,
+    searchAlbumImage: Boolean(input.searchAlbumImage),
+    artistName: input.artistName,
+    musicTitle: normalizedTitle,
+    albumSearchTitle,
+    resolvedMusicImageUrl,
+  });
+
   const normalizedMusicJson = input.musicJson?.trim();
   const parsedMusicJson = normalizedMusicJson ? parseSerializedTipTapDocument(normalizedMusicJson) : null;
   const musicJsonToStore = parsedMusicJson?.success
@@ -1176,10 +1304,11 @@ export async function saveMusic(
         .set({
           musicTitle: normalizedTitle,
           artistName: input.artistName,
+          albumName: normalizedAlbumName,
           musicJson: musicJsonToStore,
           status: input.status,
           musicType: validMusicType,
-          musicImageUrl: input.musicImageUrl ?? null,
+          musicImageUrl: resolvedMusicImageUrl,
           musicDebutYear: input.musicDebutYear,
           updatedAt: new Date(),
         })
@@ -1190,10 +1319,11 @@ export async function saveMusic(
         .values({
           musicTitle: normalizedTitle,
           artistName: input.artistName,
+          albumName: normalizedAlbumName,
           musicJson: musicJsonToStore,
           status: input.status,
           musicType: validMusicType,
-          musicImageUrl: input.musicImageUrl ?? null,
+          musicImageUrl: resolvedMusicImageUrl,
           musicDebutYear: input.musicDebutYear,
           memberId: actor.memberId,
           familyId: actor.familyId,

@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
+  CircleQuestionMark,
   Columns2,
   Heading2,
   Heading3,
@@ -30,9 +31,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { deleteMusicAction, saveMusicAction } from "@/app/(features)/(music)/music/actions";
+import { deleteMusicAction, saveMusicAction, saveMusicLyricsAction } from "@/app/(features)/(music)/music/actions";
 import {
   createEmptyTipTapDocument,
+  isTipTapDocumentEmpty,
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
@@ -42,6 +44,7 @@ import {
   MusicTagType,
   MusicTemplateOption,
   MusicType,
+  MusicLyricsRecord,
   PlaylistMediaSource,
   SaveMusicPlaylistMediaInput,
 } from "@/components/db/types/music";
@@ -54,6 +57,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -213,17 +217,28 @@ function getTemplateDocument(template?: MusicTemplateOption): JSONContent {
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
+function getLyricsDocument(value?: string): JSONContent {
+  if (!value) {
+    return createEmptyTipTapDocument();
+  }
+
+  const parsed = parseSerializedTipTapDocument(value);
+  return parsed.success ? parsed.content : createEmptyTipTapDocument();
+}
+
 export function MusicAddPage({
   musicTags,
   musicTemplates,
   member,
   initialMusic,
+  initialLyrics = null,
   mode = "add",
 }: {
   musicTags: MusicTagOption[];
   musicTemplates: MusicTemplateOption[];
   member: MemberKeyDetails;
   initialMusic?: MusicRecord | null;
+  initialLyrics?: MusicLyricsRecord | null;
   mode?: "add" | "edit";
 }) {
   const router = useRouter();
@@ -235,6 +250,7 @@ export function MusicAddPage({
   }, [musicTemplates]);
   const [musicTitle, setMusicTitle] = useState(initialMusic?.musicTitle ?? "");
   const [artistName, setArtistName] = useState(initialMusic?.artistName ?? "");
+  const [albumName, setAlbumName] = useState(initialMusic?.albumName ?? "");
   const [musicDebutYear, setMusicDebutYear] = useState(String(initialMusic?.musicDebutYear ?? new Date().getFullYear()));
   const [musicType, setMusicType] = useState<MusicType>(initialMusic?.musicType ?? "album");
   const [status, setStatus] = useState(initialMusic?.status ?? "published");
@@ -273,6 +289,7 @@ export function MusicAddPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [musicImageUrl, setMusicImageUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
+  const [searchAlbumImage, setSearchAlbumImage] = useState(true);
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
@@ -286,6 +303,9 @@ export function MusicAddPage({
   );
   const usesTemplate = musicType === "album" || musicType === "song";
   const isPlaylistType = musicType === "playlist";
+  const isSongType = musicType === "song";
+  const musicTitleLabel = musicType === "album" ? "Album Name" : musicType === "song" ? "Song Title" : "Music Title";
+  const albumSearchTitle = isSongType ? albumName : musicTitle;
 
   const editor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
@@ -320,6 +340,34 @@ export function MusicAddPage({
       editor.commands.setContent(parsedMusicJson.content);
     }
   }, [editor, initialMusic, isEditing]);
+
+  const [lyricsStatus, setLyricsStatus] = useState(initialLyrics?.status ?? "draft");
+
+  const lyricsEditor = useEditor({
+    extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
+    content: getLyricsDocument(initialLyrics?.lyricsJson),
+    immediatelyRender: false,
+    shouldRerenderOnTransaction: true,
+    editorProps: {
+      attributes: {
+        class: "tiptap min-h-56 rounded-2xl border border-[#f0d9c4] bg-white px-4 py-4 text-[#4b2a18] shadow-xs outline-none focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!lyricsEditor || !initialLyrics || !isEditing) {
+      return;
+    }
+    const parsedLyricsJson = parseSerializedTipTapDocument(initialLyrics.lyricsJson);
+    if (parsedLyricsJson.success) {
+      lyricsEditor.commands.setContent(parsedLyricsJson.content);
+    }
+  }, [lyricsEditor, initialLyrics, isEditing]);
+
+  useEffect(() => {
+    lyricsEditor?.setEditable(!isFounderModerating);
+  }, [lyricsEditor, isFounderModerating]);
 
   useEffect(() => {
     if (!musicImageUrl || selectedFile) {
@@ -543,6 +591,7 @@ export function MusicAddPage({
         id: initialMusic?.id,
         musicTitle: musicTitle.trim(),
         artistName: artistName.trim(),
+        albumName: isSongType ? albumName.trim() : null,
         submitterLikenessDegree: undefined,
         musicJson: serializeTipTapDocument(editor.getJSON()),
         status: nextStatus,
@@ -552,11 +601,25 @@ export function MusicAddPage({
         templateId: usesTemplate ? templateId : undefined,
         selectedTagIds,
         playlistMedia: isPlaylistType ? sanitizedPlaylistMedia : [],
+        searchAlbumImage: !isPlaylistType && searchAlbumImage,
       });
       if (!result.success) {
         toast.error(result.message);
         return;
       }
+
+      if (isSongType && lyricsEditor && (initialLyrics || !isTipTapDocumentEmpty(lyricsEditor.getJSON()))) {
+        const lyricsResult = await saveMusicLyricsAction({
+          musicId: result.music.id,
+          lyricsJson: serializeTipTapDocument(lyricsEditor.getJSON()),
+          status: lyricsStatus,
+        });
+        if (!lyricsResult.success) {
+          toast.error(lyricsResult.message);
+          return;
+        }
+      }
+
       toast.success(isEditing ? "Music updated." : "Music saved.");
       router.push("/music");
     });
@@ -645,7 +708,7 @@ export function MusicAddPage({
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#203b66]">Music Type</label>
                     <Select value={ musicType } onValueChange={ (value) => setMusicType(value as MusicType) } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select music type" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select music type" /></SelectTrigger>
                       <SelectContent>
                         { MUSIC_TYPE_OPTIONS.map((option) => (
                           <SelectItem key={ option.value } value={ option.value }>{ option.label }</SelectItem>
@@ -670,11 +733,11 @@ export function MusicAddPage({
                   </div>
                 </div>
               ) : (
-                <>
-                  <div className="space-y-2 py-2">
+                <div className="grid gap-x-2 gap-y-3 py-2 md:grid-cols-3">
+                  <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#203b66]">Music Type</label>
                     <Select value={ musicType } onValueChange={ (value) => setMusicType(value as MusicType) } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select music type" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select music type" /></SelectTrigger>
                       <SelectContent>
                         { MUSIC_TYPE_OPTIONS.map((option) => (
                           <SelectItem key={ option.value } value={ option.value }>{ option.label }</SelectItem>
@@ -682,38 +745,47 @@ export function MusicAddPage({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="">
-                    <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-title">Music Title</label>
-                    <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder="Enter music title" />
-                  </div>
-                </>
+                  { isSongType ? (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#203b66]" htmlFor="artist-name">Artist Name</label>
+                        <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder="Enter artist name" maxLength={ 100 } />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#203b66]" htmlFor="album-name">Album Name</label>
+                        <Input id="album-name" disabled={ isFounderModerating } value={ albumName } onChange={ (event) => setAlbumName(event.target.value) } placeholder="Enter album name" maxLength={ 100 } />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-title">{ musicTitleLabel }</label>
+                        <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder={ `Enter ${ musicTitleLabel.toLowerCase() }` } />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-[#203b66]" htmlFor="artist-name">Artist Name</label>
+                        <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder="Enter artist name" maxLength={ 100 } />
+                      </div>
+                    </>
+                  ) }
+                </div>
               ) }
               { !isPlaylistType ? (
-                <div className="width-full">
-                <label className="text-sm font-semibold text-[#203b66]" htmlFor="artist-name">Artist Name</label>
-                <Input id="artist-name" disabled={ isFounderModerating } value={ artistName } onChange={ (event) => setArtistName(event.target.value) } placeholder={ isPlaylistType ? "Optional: curator or main artist" : "Enter artist name" } maxLength={ 100 } />
-                </div>
-              ) : null }
-              { !isPlaylistType ? (
-                <div className="grid gap-1 md:grid-cols-2 py-4">
-                  { usesTemplate ? (
-                  <div className="space-y-2">
-                    <label className="text-sm font-semibold text-[#203b66]">Template</label>
-                    <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
-                        { musicTemplates.map((template) => (
-                          <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
-                        )) }
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className={ `grid gap-x-4 gap-y-3 py-4 ${ isSongType ? "md:grid-cols-3" : "md:grid-cols-2" }` }>
+                  { isSongType ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-title">{ musicTitleLabel }</label>
+                      <Input id="music-title" disabled={ isFounderModerating } value={ musicTitle } onChange={ (event) => setMusicTitle(event.target.value) } placeholder={ `Enter ${ musicTitleLabel.toLowerCase() }` } />
+                    </div>
                   ) : null }
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-year">Debut Year</label>
+                    <Input id="music-year" type="number" disabled={ isFounderModerating } value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } />
+                  </div>
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#203b66]">Status</label>
                     <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="published">Published</SelectItem>
@@ -723,17 +795,44 @@ export function MusicAddPage({
                   </div>
                 </div>
               ) : null }
-              { !isPlaylistType ? (
-              <div className="grid gap-1 sm:grid-cols-2 py-2">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold text-[#203b66]" htmlFor="music-year">Debut Year</label>
-                  <Input id="music-year" type="number" disabled={ isFounderModerating } value={ musicDebutYear } onChange={ (event) => setMusicDebutYear(event.target.value) } className="w-30" />
-                </div>
-              </div>
-              ) : null }
               <div className="space-y-2 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
-                <label className="text-sm font-semibold text-[#203b66]">{ isPlaylistType ? "Playlist Image" : "Music Image" }</label>
-                <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#c8d9f3] bg-white p-2 text-sm text-[#203b66]" disabled={ uploadingImage || isFounderModerating } />
+                <div className="flex items-center justify-between gap-2">
+                  <label className="text-sm font-semibold text-[#203b66]">{ isPlaylistType ? "Playlist Image" : "Music Image" }</label>
+                  { !isPlaylistType ? (
+                    <div className="flex items-center gap-1.5">
+                      <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                        <HoverCardTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#4a6fae] transition hover:bg-[#e8f0fe]"
+                            aria-label="About finding a Spotify album image"
+                          >
+                            <CircleQuestionMark className="h-4 w-4" />
+                          </button>
+                        </HoverCardTrigger>
+                        <HoverCardContent side="top" align="start" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
+                          Let Spotify find your album image, or, if you prefer, uncheck that option and upload your own image.
+                        </HoverCardContent>
+                      </HoverCard>
+                      <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#203b66]">
+                        <input
+                          type="checkbox"
+                          checked={ searchAlbumImage }
+                          onChange={ (event) => setSearchAlbumImage(event.target.checked) }
+                          disabled={ isFounderModerating || !artistName.trim() || !albumSearchTitle.trim() }
+                        />
+                        Find Spotify album image
+                      </label>
+                    </div>
+                  ) : null }
+                </div>
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg"
+                  onChange={ handleFileSelection }
+                  className="block w-full rounded-md border border-[#c8d9f3] bg-white p-2 text-sm text-[#203b66] disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={ uploadingImage || isFounderModerating || (!isPlaylistType && searchAlbumImage) }
+                />
                 { imagePreviewUrl ? (
                   <div className="relative mt-3 overflow-hidden rounded-xl border border-[#c8d9f3] bg-white">
                     {/* eslint-disable-next-line @next/next/no-img-element */ }
@@ -799,6 +898,20 @@ export function MusicAddPage({
             </div>
 
             <div className="space-y-3">
+              { usesTemplate ? (
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#203b66]">Template</label>
+                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select template" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
+                      { musicTemplates.map((template) => (
+                        <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
+                      )) }
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null }
               <div className="flex items-center gap-2 rounded-xl border border-[#c8d9f3] bg-[#f7fbff] px-3 py-2 text-sm text-[#35557f]">
                 { isPlaylistType
                     ? "Describe why this playlist matters and what listeners should notice."
@@ -897,6 +1010,37 @@ export function MusicAddPage({
                       </div>
                     </div>
                   )) }
+                </div>
+              </div>
+            </div>
+          ) : null }
+          { isSongType ? (
+            <div className="px-3 pb-4 sm:px-6 sm:pb-6">
+              <div className="space-y-3 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[#7b3306]">Song Lyrics</p>
+                  <Select value={ lyricsStatus } onValueChange={ setLyricsStatus } disabled={ isFounderModerating }>
+                    <SelectTrigger className="h-9 w-40" disabled={ isFounderModerating }><SelectValue placeholder="Lyrics status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="published">Published</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                  { !isFounderModerating ? (
+                    <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
+                      <ToolbarButton label="Heading 2" onClick={ () => lyricsEditor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ lyricsEditor?.isActive("heading", { level: 2 }) } disabled={ !lyricsEditor }><Heading2 /></ToolbarButton>
+                      <ToolbarButton label="Heading 3" onClick={ () => lyricsEditor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ lyricsEditor?.isActive("heading", { level: 3 }) } disabled={ !lyricsEditor }><Heading3 /></ToolbarButton>
+                      <ToolbarButton label="Bold" onClick={ () => lyricsEditor?.chain().focus().toggleBold().run() } active={ lyricsEditor?.isActive("bold") } disabled={ !lyricsEditor }><Bold /></ToolbarButton>
+                      <ToolbarButton label="Italic" onClick={ () => lyricsEditor?.chain().focus().toggleItalic().run() } active={ lyricsEditor?.isActive("italic") } disabled={ !lyricsEditor }><Italic /></ToolbarButton>
+                      <ToolbarButton label="Underline" onClick={ () => lyricsEditor?.chain().focus().toggleUnderline().run() } active={ lyricsEditor?.isActive("underline") } disabled={ !lyricsEditor }><UnderlineIcon /></ToolbarButton>
+                      <ToolbarButton label="Bullet list" onClick={ () => lyricsEditor?.chain().focus().toggleBulletList().run() } active={ lyricsEditor?.isActive("bulletList") } disabled={ !lyricsEditor }><List /></ToolbarButton>
+                      <ToolbarButton label="Ordered list" onClick={ () => lyricsEditor?.chain().focus().toggleOrderedList().run() } active={ lyricsEditor?.isActive("orderedList") } disabled={ !lyricsEditor }><ListOrdered /></ToolbarButton>
+                      <ToolbarButton label="Horizontal rule" onClick={ () => lyricsEditor?.chain().focus().setHorizontalRule().run() } disabled={ !lyricsEditor }><Minus /></ToolbarButton>
+                    </div>
+                  ) : null }
+                  <EditorContent editor={ lyricsEditor } />
                 </div>
               </div>
             </div>
