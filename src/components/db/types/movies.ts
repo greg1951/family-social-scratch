@@ -106,6 +106,7 @@ export interface SaveMovieInput {
   movieDebutYear: number;
   templateId: number;
   selectedTagIds: number[];
+  searchTmdbImage?: boolean;
 }
 
 export interface SaveMovieTemplateInput {

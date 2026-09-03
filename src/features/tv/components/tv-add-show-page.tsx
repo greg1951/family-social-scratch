@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
+  CircleQuestionMark,
   Columns2,
   Combine,
   HelpCircle,
@@ -41,6 +42,7 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { ShowTagOption, ShowTagType, ShowTemplateOption, TvShow } from "@/components/db/types/shows";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import {
   Dialog,
   DialogContent,
@@ -178,7 +180,6 @@ export function TvAddShowPage({
   }, [showTemplates]);
   const [showTitle, setShowTitle] = useState(initialShow?.showTitle ?? "");
   const [showImageCredit, setShowImageCredit] = useState(initialShow?.showImageCredit ?? "");
-  const [showImageCreditError, setShowImageCreditError] = useState<string | null>(null);
   const [showSiteUrl, setShowSiteUrl] = useState(initialShow?.showSiteUrl ?? "");
   const [showSiteBackground, setShowSiteBackground] = useState<ShowSiteBackground>(
     normalizeShowSiteBackgroundHex(initialShow?.showSiteBackground)
@@ -186,7 +187,7 @@ export function TvAddShowPage({
   const [showFirstYear, setShowFirstYear] = useState(String(initialShow?.showFirstYear ?? new Date().getFullYear()));
   const [showLastYear, setShowLastYear] = useState(String(initialShow?.showLastYear ?? new Date().getFullYear()));
   const [seasonCount, setSeasonCount] = useState(String(initialShow?.seasonCount ?? 1));
-  const [status, setStatus] = useState(initialShow?.status ?? "draft");
+  const [status, setStatus] = useState(initialShow?.status ?? "published");
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<ShowTagType, string>>>(() => {
     if (!initialShow) {
       return {};
@@ -207,12 +208,21 @@ export function TvAddShowPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showImageUrl, setShowImageUrl] = useState<string | null>(initialShow?.showImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialShow?.showImageUrl ?? null);
+  const [searchTmdbImage, setSearchTmdbImage] = useState(mode === "add");
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
   const isOwner = member.memberId === initialShow?.memberId;
   const canModerate = isOwner || member.isFounder;
   const isFounderModerating = isEditing && member.isFounder && !isOwner;
+
+  const showImageCreditError = useMemo(() => {
+    if (!selectedFile && !showImageUrl) {
+      return null;
+    }
+    const validation = validateImageCredit(showImageCredit);
+    return validation.isValid ? null : validation.errorMessage ?? null;
+  }, [selectedFile, showImageCredit, showImageUrl]);
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE
@@ -324,16 +334,6 @@ export function TvAddShowPage({
   useEffect(() => () => {
     revokeBlobUrl(imagePreviewUrl);
   }, [imagePreviewUrl]);
-
-  useEffect(() => {
-    if (!selectedFile && !showImageUrl) {
-      setShowImageCreditError(null);
-      return;
-    }
-
-    const validation = validateImageCredit(showImageCredit);
-    setShowImageCreditError(validation.isValid ? null : validation.errorMessage ?? null);
-  }, [selectedFile, showImageCredit, showImageUrl]);
 
   function setSelectedTagForType(tagType: ShowTagType, tagId: string) {
     setSelectedTagsByType((currentState) => ({
@@ -507,11 +507,11 @@ export function TvAddShowPage({
         return;
       }
 
-      const hasShowImage = Boolean(selectedFile || showImageUrl);
-      if (hasShowImage) {
+      const hasShowImage = Boolean(selectedFile || showImageUrl || searchTmdbImage);
+      if (hasShowImage && !searchTmdbImage) {
         const imageCreditValidation = validateImageCredit(showImageCredit);
         if (!imageCreditValidation.isValid) {
-          setShowImageCreditError(imageCreditValidation.errorMessage ?? null);
+          toast.error(imageCreditValidation.errorMessage ?? "Invalid image credit");
           return;
         }
       }
@@ -528,6 +528,7 @@ export function TvAddShowPage({
         showSiteUrl: validUrl,
         showSiteBackground: validUrl ? showSiteBackground : "#000000",
         showImageUrl: uploadedImageUrl ?? showImageUrl ?? null,
+        searchTmdbImage,
       });
 
       if (!result.success) {
@@ -655,13 +656,47 @@ export function TvAddShowPage({
               </div>
 
               <div className="space-y-3 rounded-2xl border border-[#d7ebf3] bg-[#f5fbff] p-4">
-                <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#15384a]">
-                  Show Media
-                  <span title="Help coming soon" aria-label="Show image option help" className="inline-flex text-[#5b7f91]">
-                    <HelpCircle className="size-4" />
-                  </span>
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#15384a]">
+                    Show Media
+                    <span title="Help coming soon" aria-label="Show image option help" className="inline-flex text-[#5b7f91]">
+                      <HelpCircle className="size-4" />
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#2d87a8] transition hover:bg-[#eaf5fb]"
+                          aria-label="About finding a TMDB TV show poster"
+                        >
+                          <CircleQuestionMark className="h-4 w-4" />
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="top" align="start" className="w-64 border-[#d7ebf3] bg-[#f5fbff] p-3 text-xs leading-5 text-[#3f6576]">
+                        Let us find your TV show image auto-magically, or, if you prefer, uncheck that option and upload your own image.
+                      </HoverCardContent>
+                    </HoverCard>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#15384a]">
+                      <input
+                        type="checkbox"
+                        checked={ searchTmdbImage }
+                        onChange={ (event) => setSearchTmdbImage(event.target.checked) }
+                        disabled={ isFounderModerating || !showTitle.trim() }
+                      />
+                      Auto Find TV Show Image
+                    </label>
+                  </div>
+                </div>
                 <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    onChange={ handleFileSelection }
+                    className="block w-full rounded-md border border-[#d8eef7] bg-white p-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={ uploadingImage || isFounderModerating || searchTmdbImage }
+                  />
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-image-credit">Image Credit</label>
                     <textarea
@@ -677,13 +712,6 @@ export function TvAddShowPage({
                       <p className="text-xs text-red-600">{ showImageCreditError }</p>
                     ) : null }
                   </div>
-                  <input
-                    type="file"
-                    accept="image/png, image/jpeg"
-                    onChange={ handleFileSelection }
-                    className="block w-full rounded-md border border-[#d8eef7] bg-white p-2 text-sm"
-                    disabled={ uploadingImage || isFounderModerating }
-                  />
                   { imagePreviewUrl ? (
                     <div className="relative mt-3 overflow-hidden rounded-xl border border-[#d7ebf3] bg-white">
                       {/* eslint-disable-next-line @next/next/no-img-element */ }
@@ -750,8 +778,8 @@ export function TvAddShowPage({
                 </div>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
+              <div className="flex flex-wrap items-start gap-3">
+                <div className="w-24 space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-first-year">First Year</label>
                   <Input
                     id="show-first-year"
@@ -761,7 +789,7 @@ export function TvAddShowPage({
                     onChange={ (event) => setShowFirstYear(event.target.value) }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="w-24 space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-last-year">Last Year</label>
                   <Input
                     id="show-last-year"
@@ -771,7 +799,7 @@ export function TvAddShowPage({
                     onChange={ (event) => setShowLastYear(event.target.value) }
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="w-20 space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]" htmlFor="show-season-count">Seasons</label>
                   <Input
                     id="show-season-count"
@@ -781,27 +809,10 @@ export function TvAddShowPage({
                     onChange={ (event) => setSeasonCount(event.target.value) }
                   />
                 </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#15384a]">Template</label>
-                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
-                      { showTemplates.map((template) => (
-                        <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
-                      )) }
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
+                <div className="w-36 space-y-2">
                   <label className="text-sm font-semibold text-[#15384a]">Status</label>
                   <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -840,6 +851,21 @@ export function TvAddShowPage({
             </div>
 
             <div className="space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#15384a]">Template</label>
+                <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
+                    { showTemplates.map((template) => (
+                      <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
+                    )) }
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="flex items-center gap-2 rounded-xl border border-[#d7ebf3] bg-[#f5fbff] px-3 py-2 text-sm text-[#3f6576]">
                 <Tv className="size-4 text-[#2d87a8]" />
                 Use the Rich Text constrols below to create a lovely TV Show write-up.

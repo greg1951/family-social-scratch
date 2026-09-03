@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
+  CircleQuestionMark,
   Columns2,
   HelpCircle,
   Heading2,
@@ -28,7 +29,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
 
 import { deleteMovieAction, saveMovieAction } from "@/app/(features)/(movies)/movies/actions";
@@ -39,6 +40,7 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { MovieRecord, MovieTagOption, MovieTagType, MovieTemplateOption } from "@/components/db/types/movies";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -167,20 +169,23 @@ export function MovieAddPage({
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
-  const [isMounted, setIsMounted] = useState(false);
+  const isMounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const initialTemplateId = useMemo(() => {
     const globalTemplate = movieTemplates.find((template) => template.isGlobalTemplate);
     return globalTemplate ? String(globalTemplate.id) : TEMPLATE_NONE_VALUE;
   }, [movieTemplates]);
   const [movieTitle, setMovieTitle] = useState(initialMovie?.movieTitle ?? "");
   const [movieImageCredit, setMovieImageCredit] = useState(initialMovie?.movieImageCredit ?? "");
-  const [movieImageCreditError, setMovieImageCreditError] = useState<string | null>(null);
   const [movieSiteUrl, setMovieSiteUrl] = useState(initialMovie?.movieSiteUrl ?? "");
   const [movieSiteBackground, setMovieSiteBackground] = useState<MovieSiteBackground>(
     normalizeShowSiteBackgroundHex(initialMovie?.movieSiteBackground)
   );
   const [movieDebutYear, setMovieDebutYear] = useState(String(initialMovie?.movieDebutYear ?? new Date().getFullYear()));
-  const [status, setStatus] = useState(initialMovie?.status ?? "draft");
+  const [status, setStatus] = useState(initialMovie?.status ?? "published");
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MovieTagType, string>>>(() => {
     if (!initialMovie) {
       return {};
@@ -199,6 +204,7 @@ export function MovieAddPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [movieImageUrl, setMovieImageUrl] = useState<string | null>(initialMovie?.movieImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialMovie?.movieImageUrl ?? null);
+  const [searchTmdbImage, setSearchTmdbImage] = useState(mode === "add");
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
@@ -206,14 +212,22 @@ export function MovieAddPage({
   const canModerate = isOwner || member.isFounder;
   const isFounderModerating = isEditing && member.isFounder && !isOwner;
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const movieImageCreditError = useMemo(() => {
+    if (!selectedFile && !movieImageUrl) {
+      return null;
+    }
+    const validation = validateImageCredit(movieImageCredit);
+    return validation.isValid ? null : validation.errorMessage ?? null;
+  }, [movieImageCredit, movieImageUrl, selectedFile]);
 
   const selectedTemplate = useMemo(
     () => selectedTemplateId === TEMPLATE_NONE_VALUE ? undefined : movieTemplates.find((template) => String(template.id) === selectedTemplateId),
     [selectedTemplateId, movieTemplates]
   );
+
+  useEffect(() => () => {
+    revokeBlobUrl(imagePreviewUrl);
+  }, [imagePreviewUrl]);
 
   const editor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
@@ -278,16 +292,6 @@ export function MovieAddPage({
   useEffect(() => () => {
     revokeBlobUrl(imagePreviewUrl);
   }, [imagePreviewUrl]);
-
-  useEffect(() => {
-    if (!selectedFile && !movieImageUrl) {
-      setMovieImageCreditError(null);
-      return;
-    }
-
-    const validation = validateImageCredit(movieImageCredit);
-    setMovieImageCreditError(validation.isValid ? null : validation.errorMessage ?? null);
-  }, [movieImageCredit, movieImageUrl, selectedFile]);
 
   function setSelectedTagForType(tagType: MovieTagType, tagId: string) {
     setSelectedTagsByType((currentState) => ({ ...currentState, [tagType]: tagId }));
@@ -407,11 +411,11 @@ export function MovieAddPage({
         return;
       }
 
-      const hasMovieImage = Boolean(selectedFile || movieImageUrl);
-      if (hasMovieImage) {
+      const hasMovieImage = Boolean(selectedFile || movieImageUrl || searchTmdbImage);
+      if (hasMovieImage && !searchTmdbImage) {
         const imageCreditValidation = validateImageCredit(movieImageCredit);
         if (!imageCreditValidation.isValid) {
-          setMovieImageCreditError(imageCreditValidation.errorMessage ?? null);
+          toast.error(imageCreditValidation.errorMessage ?? "Invalid image credit");
           return;
         }
       }
@@ -427,6 +431,7 @@ export function MovieAddPage({
         movieSiteUrl: validUrl,
         movieSiteBackground: validUrl ? movieSiteBackground : "#000000",
         movieImageUrl: uploadedImageUrl ?? movieImageUrl ?? null,
+        searchTmdbImage,
       });
       if (!result.success) {
         toast.error(result.message);
@@ -520,13 +525,47 @@ export function MovieAddPage({
                 <Input id="movie-title" disabled={ isFounderModerating } value={ movieTitle } onChange={ (event) => setMovieTitle(event.target.value) } placeholder="Enter movie title" />
               </div>
               <div className="space-y-3 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
-                <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c2e1a]">
-                  Movie Media
-                  <span title="Help coming soon" aria-label="Movie image option help" className="inline-flex text-[#9b7359]">
-                    <HelpCircle className="size-4" />
-                  </span>
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c2e1a]">
+                    Movie Media
+                    <span title="Help coming soon" aria-label="Movie image option help" className="inline-flex text-[#9b7359]">
+                      <HelpCircle className="size-4" />
+                    </span>
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                      <HoverCardTrigger asChild>
+                        <button
+                          type="button"
+                          className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#a85a3a] transition hover:bg-[#fff1e8]"
+                          aria-label="About finding a TMDB movie poster"
+                        >
+                          <CircleQuestionMark className="h-4 w-4" />
+                        </button>
+                      </HoverCardTrigger>
+                      <HoverCardContent side="top" align="start" className="w-64 border-[#f0d9c4] bg-[#fff8f2] p-3 text-xs leading-5 text-[#734f3a]">
+                        Let us find your movie image auto-magically, or, if you prefer, uncheck that option and upload your own image and also provide image accreditation. 
+                      </HoverCardContent>
+                    </HoverCard>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#5c2e1a]">
+                      <input
+                        type="checkbox"
+                        checked={ searchTmdbImage }
+                        onChange={ (event) => setSearchTmdbImage(event.target.checked) }
+                        disabled={ isFounderModerating || !movieTitle.trim() }
+                      />
+                      Auto Find Movie Image
+                    </label>
+                  </div>
+                </div>
                 <div className="space-y-3">
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg"
+                    onChange={ handleFileSelection }
+                    className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={ uploadingImage || isFounderModerating || searchTmdbImage }
+                  />
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-image-credit">Image Credit</label>
                     <textarea
@@ -542,7 +581,6 @@ export function MovieAddPage({
                       <p className="text-xs text-red-600">{ movieImageCreditError }</p>
                     ) : null }
                   </div>
-                  <input type="file" accept="image/png, image/jpeg" onChange={ handleFileSelection } className="block w-full rounded-md border border-[#f0d9c4] bg-white p-2 text-sm" disabled={ uploadingImage || isFounderModerating } />
                   { imagePreviewUrl ? (
                     <div className="relative mt-3 overflow-hidden rounded-xl border border-[#f0d9c4] bg-white">
                       {/* eslint-disable-next-line @next/next/no-img-element */ }
@@ -605,30 +643,16 @@ export function MovieAddPage({
                   </div>
                 </div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
-                  { isMounted ? (
-                    <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select template" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
-                        { movieTemplates.map((template) => (
-                          <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
-                        )) }
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="flex h-10 items-center rounded-xl border border-[#e8c4a0] bg-white px-3 text-sm text-[#8b5a3c]">
-                      Select template
-                    </div>
-                  ) }
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="w-28 space-y-2">
+                  <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
+                  <Input id="movie-year" type="number" disabled={ isFounderModerating } value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } className="w-full" />
                 </div>
-                <div className="space-y-2">
+                <div className="w-36 space-y-2">
                   <label className="text-sm font-semibold text-[#5c2e1a]">Status</label>
                   { isMounted ? (
                     <Select value={ status } onValueChange={ setStatus } disabled={ isFounderModerating }>
-                      <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                      <SelectTrigger className="w-full"><SelectValue placeholder="Select status" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="draft">Draft</SelectItem>
                         <SelectItem value="published">Published</SelectItem>
@@ -640,12 +664,6 @@ export function MovieAddPage({
                       Select status
                     </div>
                   ) }
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="max-w-36 space-y-2">
-                  <label className="text-sm font-semibold text-[#5c2e1a]" htmlFor="movie-year">Debut Year</label>
-                  <Input id="movie-year" type="number" value={ movieDebutYear } onChange={ (event) => setMovieDebutYear(event.target.value) } className="max-w-36" />
                 </div>
               </div>
               <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
@@ -676,6 +694,24 @@ export function MovieAddPage({
             </div>
 
             <div className="space-y-3">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[#5c2e1a]">Template</label>
+                { isMounted ? (
+                  <Select value={ selectedTemplateId } onValueChange={ setSelectedTemplateId } disabled={ isFounderModerating }>
+                    <SelectTrigger className="w-full"><SelectValue placeholder="Select template" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ TEMPLATE_NONE_VALUE }>No template selected</SelectItem>
+                      { movieTemplates.map((template) => (
+                        <SelectItem key={ template.id } value={ String(template.id) }>{ template.label }</SelectItem>
+                      )) }
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="flex h-10 items-center rounded-xl border border-[#e8c4a0] bg-white px-3 text-sm text-[#8b5a3c]">
+                    Select template
+                  </div>
+                ) }
+              </div>
               <div className="flex items-center gap-2 rounded-xl border border-[#f0d9c4] bg-[#fff8f2] px-3 py-2 text-sm text-[#734f3a]">Use the rich text controls below to create a detailed movie review.</div>
               <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
                 <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">

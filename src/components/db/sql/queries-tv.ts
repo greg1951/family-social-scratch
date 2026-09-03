@@ -766,6 +766,90 @@ export async function getTvTemplateManagementData(
   }
 }
 
+async function resolveTmdbTvImage(showTitle: string, showFirstYear?: number): Promise<{ imageUrl: string; imageCredit: string } | null> {
+  const normalizedTitle = showTitle.trim();
+  if (!normalizedTitle) {
+    return null;
+  }
+
+  const token =
+    process.env.TMDB_READ_ACCESS_TOKEN?.trim() ||
+    process.env.TMDB_CLIENT_SECRET?.trim() ||
+    process.env.TMDB_CLIENT_ID?.trim() ||
+    process.env.TMDB_API_KEY?.trim();
+
+  if (!token) {
+    console.debug("[tmdb-tv-search] no TMDB API token configured");
+    return null;
+  }
+
+  console.debug("[tmdb-tv-search] starting search", { showTitle: normalizedTitle, showFirstYear });
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  try {
+    let searchUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(normalizedTitle)}`;
+    if (showFirstYear && Number.isInteger(showFirstYear) && showFirstYear > 1900) {
+      searchUrl += `&first_air_date_year=${showFirstYear}`;
+    }
+
+    let response = await fetch(searchUrl, { headers });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => null);
+      console.debug("[tmdb-tv-search] TMDB search request failed", { status: response.status, errorText });
+      return null;
+    }
+
+    let body = (await response.json()) as {
+      results?: Array<{
+        name?: string;
+        backdrop_path?: string | null;
+        poster_path?: string | null;
+        first_air_date?: string;
+      }>;
+    };
+
+    if ((!body.results || body.results.length === 0) && showFirstYear) {
+      const fallbackUrl = `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(normalizedTitle)}`;
+      console.debug("[tmdb-tv-search] no results with year, retrying without first_air_date_year");
+      const fallbackResponse = await fetch(fallbackUrl, { headers });
+      if (fallbackResponse.ok) {
+        body = (await fallbackResponse.json()) as typeof body;
+      }
+    }
+
+    const results = body.results ?? [];
+    console.debug("[tmdb-tv-search] results count:", results.length);
+
+    const matchedShow = results.find((item) => Boolean(item.backdrop_path || item.poster_path));
+    if (!matchedShow) {
+      console.debug("[tmdb-tv-search] no TV show image (backdrop or poster) found in results");
+      return null;
+    }
+
+    const imagePath = matchedShow.backdrop_path || matchedShow.poster_path!;
+    const imageSize = matchedShow.backdrop_path ? "w780" : "w342";
+    const resolvedImageUrl = `https://image.tmdb.org/t/p/${imageSize}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
+    const matchedName = matchedShow.name?.trim() || normalizedTitle;
+    const imageCredit = `Title: TMDB (${matchedName}) | Source: ${resolvedImageUrl}`;
+
+    console.debug("[tmdb-tv-search] matched TV poster", {
+      name: matchedShow.name,
+      first_air_date: matchedShow.first_air_date,
+      resolvedImageUrl,
+      imageCredit,
+    });
+
+    return { imageUrl: resolvedImageUrl, imageCredit };
+  } catch (error) {
+    console.debug("[tmdb-tv-search] search threw an error", { showTitle: normalizedTitle, error });
+    return null;
+  }
+}
+
 export async function saveShow(
   input: SaveShowInput,
   actor: {
@@ -877,6 +961,21 @@ export async function saveShow(
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
 
+  const tmdbResult = input.searchTmdbImage
+    ? await resolveTmdbTvImage(normalizedTitle, input.showFirstYear)
+    : null;
+
+  const resolvedShowImageUrl = tmdbResult?.imageUrl ?? (input.showImageUrl ?? null);
+  const resolvedShowImageCredit = tmdbResult?.imageCredit ?? input.showImageCredit;
+
+  console.debug("[tmdb-tv-search] saveShow invocation", {
+    searchTmdbImage: Boolean(input.searchTmdbImage),
+    showTitle: normalizedTitle,
+    showFirstYear: input.showFirstYear,
+    resolvedShowImageUrl,
+    resolvedShowImageCredit,
+  });
+
   const showJsonToStore = input.showJson?.trim() || selectedTemplate.templateJson || serializeTipTapDocument(createEmptyTipTapDocument());
 
   try {
@@ -885,12 +984,12 @@ export async function saveShow(
         .update(show)
         .set({
           showTitle: normalizedTitle,
-          showImageCredit: input.showImageCredit,
+          showImageCredit: resolvedShowImageCredit,
           showSiteUrl: input.showSiteUrl ?? null,
           showSiteBackground: input.showSiteBackground ?? "#000000",
           showJson: showJsonToStore,
           status: input.status,
-          showImageUrl: input.showImageUrl ?? null,
+          showImageUrl: resolvedShowImageUrl,
           showFirstYear: input.showFirstYear,
           showLastYear: input.showLastYear,
           seasonCount: input.seasonCount,
@@ -902,12 +1001,12 @@ export async function saveShow(
         .insert(show)
         .values({
           showTitle: normalizedTitle,
-          showImageCredit: input.showImageCredit,
+          showImageCredit: resolvedShowImageCredit,
           showSiteUrl: input.showSiteUrl ?? null,
           showSiteBackground: input.showSiteBackground ?? "#000000",
           showJson: showJsonToStore,
           status: input.status,
-          showImageUrl: input.showImageUrl ?? null,
+          showImageUrl: resolvedShowImageUrl,
           showFirstYear: input.showFirstYear,
           showLastYear: input.showLastYear,
           seasonCount: input.seasonCount,

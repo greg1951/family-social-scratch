@@ -109,6 +109,7 @@ export interface SaveShowInput {
   seasonCount: number;
   templateId: number;
   selectedTagIds: number[];
+  searchTmdbImage?: boolean;
 }
 
 export interface SaveShowTemplateInput {

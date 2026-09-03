@@ -749,6 +749,90 @@ export async function getMovieTemplateManagementData(
   }
 }
 
+async function resolveTmdbMovieImage(movieTitle: string, movieDebutYear?: number): Promise<{ imageUrl: string; imageCredit: string } | null> {
+  const normalizedTitle = movieTitle.trim();
+  if (!normalizedTitle) {
+    return null;
+  }
+
+  const token =
+    process.env.TMDB_READ_ACCESS_TOKEN?.trim() ||
+    process.env.TMDB_CLIENT_SECRET?.trim() ||
+    process.env.TMDB_CLIENT_ID?.trim() ||
+    process.env.TMDB_API_KEY?.trim();
+
+  if (!token) {
+    console.debug("[tmdb-movie-search] no TMDB API token configured");
+    return null;
+  }
+
+  console.debug("[tmdb-movie-search] starting search", { movieTitle: normalizedTitle, movieDebutYear });
+
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+
+  try {
+    let searchUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(normalizedTitle)}`;
+    if (movieDebutYear && Number.isInteger(movieDebutYear) && movieDebutYear > 1900) {
+      searchUrl += `&primary_release_year=${movieDebutYear}`;
+    }
+
+    let response = await fetch(searchUrl, { headers });
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => null);
+      console.debug("[tmdb-movie-search] TMDB search request failed", { status: response.status, errorText });
+      return null;
+    }
+
+    let body = (await response.json()) as {
+      results?: Array<{
+        title?: string;
+        backdrop_path?: string | null;
+        poster_path?: string | null;
+        release_date?: string;
+      }>;
+    };
+
+    if ((!body.results || body.results.length === 0) && movieDebutYear) {
+      const fallbackUrl = `https://api.themoviedb.org/3/search/movie?query=${encodeURIComponent(normalizedTitle)}`;
+      console.debug("[tmdb-movie-search] no results with year, retrying without primary_release_year");
+      const fallbackResponse = await fetch(fallbackUrl, { headers });
+      if (fallbackResponse.ok) {
+        body = (await fallbackResponse.json()) as typeof body;
+      }
+    }
+
+    const results = body.results ?? [];
+    console.debug("[tmdb-movie-search] results count:", results.length);
+
+    const matchedMovie = results.find((item) => Boolean(item.backdrop_path || item.poster_path));
+    if (!matchedMovie) {
+      console.debug("[tmdb-movie-search] no movie image (backdrop or poster) found in results");
+      return null;
+    }
+
+    const imagePath = matchedMovie.backdrop_path || matchedMovie.poster_path!;
+    const imageSize = matchedMovie.backdrop_path ? "w780" : "w342";
+    const resolvedImageUrl = `https://image.tmdb.org/t/p/${imageSize}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
+    const matchedTitle = matchedMovie.title?.trim() || normalizedTitle;
+    const imageCredit = `Title: TMDB (${matchedTitle}) | Source: ${resolvedImageUrl}`;
+
+    console.debug("[tmdb-movie-search] matched movie poster", {
+      title: matchedMovie.title,
+      release_date: matchedMovie.release_date,
+      resolvedImageUrl,
+      imageCredit,
+    });
+
+    return { imageUrl: resolvedImageUrl, imageCredit };
+  } catch (error) {
+    console.debug("[tmdb-movie-search] search threw an error", { movieTitle: normalizedTitle, error });
+    return null;
+  }
+}
+
 export async function saveMovie(
   input: SaveMovieInput,
   actor: {
@@ -860,6 +944,21 @@ export async function saveMovie(
   const submitterLikenessDegree = Number(input.submitterLikenessDegree);
   const hasSubmitterLikenessDegree = [1, 2].includes(submitterLikenessDegree);
 
+  const tmdbResult = input.searchTmdbImage
+    ? await resolveTmdbMovieImage(normalizedTitle, input.movieDebutYear)
+    : null;
+
+  const resolvedMovieImageUrl = tmdbResult?.imageUrl ?? (input.movieImageUrl ?? null);
+  const resolvedMovieImageCredit = tmdbResult?.imageCredit ?? input.movieImageCredit;
+
+  console.debug("[tmdb-movie-search] saveMovie invocation", {
+    searchTmdbImage: Boolean(input.searchTmdbImage),
+    movieTitle: normalizedTitle,
+    movieDebutYear: input.movieDebutYear,
+    resolvedMovieImageUrl,
+    resolvedMovieImageCredit,
+  });
+
   const normalizedMovieJson = input.movieJson?.trim();
   const parsedMovieJson = normalizedMovieJson ? parseSerializedTipTapDocument(normalizedMovieJson) : null;
   const movieJsonToStore = parsedMovieJson?.success
@@ -869,12 +968,12 @@ export async function saveMovie(
   try {
     const movieInsertValues = {
       movieTitle: normalizedTitle,
-      movieImageCredit: input.movieImageCredit,
+      movieImageCredit: resolvedMovieImageCredit,
       movieSiteUrl: input.movieSiteUrl ?? null,
       movieSiteBackground: input.movieSiteBackground ?? "#000000",
       movieJson: movieJsonToStore,
       status: input.status,
-      movieImageUrl: input.movieImageUrl ?? null,
+      movieImageUrl: resolvedMovieImageUrl,
       movieDebutYear: input.movieDebutYear,
       memberId: actor.memberId,
       familyId: actor.familyId,
@@ -885,12 +984,12 @@ export async function saveMovie(
         .update(movie)
         .set({
           movieTitle: normalizedTitle,
-          movieImageCredit: input.movieImageCredit,
+          movieImageCredit: resolvedMovieImageCredit,
           movieSiteUrl: input.movieSiteUrl ?? null,
           movieSiteBackground: input.movieSiteBackground ?? "#000000",
           movieJson: movieJsonToStore,
           status: input.status,
-          movieImageUrl: input.movieImageUrl ?? null,
+          movieImageUrl: resolvedMovieImageUrl,
           movieDebutYear: input.movieDebutYear,
           updatedAt: new Date(),
         })

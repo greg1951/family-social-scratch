@@ -289,7 +289,7 @@ export function MusicAddPage({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [musicImageUrl, setMusicImageUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialMusic?.musicImageUrl ?? null);
-  const [searchAlbumImage, setSearchAlbumImage] = useState(true);
+  const [searchAlbumImage, setSearchAlbumImage] = useState(mode === "add");
   const [isArchiveConfirmOpen, setIsArchiveConfirmOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const isEditing = mode === "edit";
@@ -821,7 +821,7 @@ export function MusicAddPage({
                           onChange={ (event) => setSearchAlbumImage(event.target.checked) }
                           disabled={ isFounderModerating || !artistName.trim() || !albumSearchTitle.trim() }
                         />
-                        Find Spotify album image
+                        Auto Find Album Image
                       </label>
                     </div>
                   ) : null }
