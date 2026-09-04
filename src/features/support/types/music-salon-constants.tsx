@@ -1,4 +1,4 @@
-import { FileText, Heart } from "lucide-react";
+import { FileText } from "lucide-react";
 
 export const musicSalonFaqItems = [
   {
@@ -33,31 +33,49 @@ export const musicSalonFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">How do I add Music Lyrics for an Album I created in the Music Salon feature?</p>
-        <p className="text-xs text-slate-600">Lyrics have a different twist that you won&apos;t find in the other features.</p>
+        <p className="text-xs text-slate-600">Lyrics are associated with the <u>song</u> music type and not the <u>album</u> music type</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">The short answer is that Lyrics are associated with a <b>Song</b> and not an <b>Album</b>.</p>
+          <p className="text-base font-semibold">Create a <b>Song</b> review.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>Select <b>Add Music</b> at the top right of the Music Salon heading.</li>
+            <li>Select <b>Add Music</b> in the Music Room heading area.</li>
             <li>If you look right above the Music Image section, you&apos;ll see the <b>Type</b> option defaults to <i>Song</i>.</li>
-            <li>Add information relevant to your song and <b>Save the Song</b>.</li>
-            <li>Once the song is safely saved, you can add lyrics to it by choosing the <b>Add Lyrics</b> button. </li>
+            <li>Add information relevant to the song, as well as the album and the artist name.</li>
+            <li>Be sure to use the <b>Auto-Find Image</b> feature to <i>auto-magically</i> find an image for your song review, as this makes for a more attractive music post.</li>
+          </ol>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-3",
+    category: "Music Room",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">When I&apos;m adding a music review, I see this checkbox called &quot;Auto-Find Album Image&quot;. What is that used for?</p>
+        <p className="text-xs text-slate-600">The Auto-Find Album Image feature helps you quickly find an album image for your music review.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Create a <b>Song</b> review.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Select <b>Add Music</b> in the Music Room heading area.</li>
+            <li>If you look right above the Music Image section, you&apos;ll see the <b>Type</b> option defaults to <i>Song</i>.</li>
+            <li>Add information relevant to the song, as well as the album and the artist name.</li>
+            <li>By entering the album name where the song is contained, you can use the <b>Auto-Find Image</b> feature to <i>auto-magically</i> find an image for your song review, so you don&apos;t have to upload one manually.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
-            <img className="aspect-auto object-cover w-190 h-65 md:w-200 md:h-80"
-              src="/images/support/faq-edit-song-lyrics.jpg"
-              alt="Music Lyrics"
+            <img className="aspect-auto object-cover w-130 h-65 md:w-200 md:h-80"
+              src="/images/support/faq-music-auto-find.jpg"
+              alt="Music image find"
             />
           </div>
-          <p className="text-base font-semibold">As shown above, when adding the Lyrics:</p>
-          <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>If you paste in lyrics (which most likely you will do), be sure to add blank lines between the song verses.</li>
-            <li>When you are about to save the song lyrics, change the status to <b>Published</b> if you are ready for others to see the Lyrics.</li>
-            <li>Be sure to <b>Save the Lyrics</b>.</li>
-          </ol>
         </span>
       </div>
     ),

@@ -22,6 +22,7 @@ import {
   Minus,
   Rows2,
   Save,
+  Sparkles,
   Table2,
   Tv,
   Underline as UnderlineIcon,
@@ -565,10 +566,10 @@ export function TvAddShowPage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <section className="font-app h-full w-full px-4 pb-10 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 sm:py-8 sm:pr-24 lg:px-10 lg:pr-28">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
                 Family TV Room
@@ -580,23 +581,15 @@ export function TvAddShowPage({
                 <ArrowLeft className="mr-1 size-4" />
                 Back to TV Home Page
               </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 { isEditing ? "Edit Show Details" : "Post a TV Show Review for the family" }
               </h1>
               <p className="mt-2 text-sm text-[#d9f5ff]">
                 { isEditing
                   ? "Update your show details, image, and write-up."
                   : "Start from a template, upload an image or website link, and save your write-up as TipTap JSON." }
-              </p>
+              </p> */}
             </div>
-
-            {/* <div className="flex flex-wrap items-center gap-2 rounded-[1.6rem] border border-white/20 bg-white/10 p-4 shadow-inner backdrop-blur">
-              <Sparkles className="size-4 text-[#d9f5ff]" />
-              <span className="text-sm text-[#d9f5ff]">Signed in as</span>
-              <span className="rounded-full bg-white/20 px-3 py-1 text-sm font-semibold">
-                { member.firstName } { member.lastName }
-              </span>
-            </div> */}
           </div>
         </div>
 

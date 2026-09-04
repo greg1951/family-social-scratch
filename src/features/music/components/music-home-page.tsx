@@ -165,7 +165,7 @@ function MusicViewer({ musicJson, compact = false, minHeightClass }: { musicJson
   }, [viewer, musicJson]);
 
   return (
-    <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+    <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
       <EditorContent editor={ viewer } />
     </div>
   );

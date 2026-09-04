@@ -341,8 +341,6 @@ export function MusicAddPage({
     }
   }, [editor, initialMusic, isEditing]);
 
-  const [lyricsStatus, setLyricsStatus] = useState(initialLyrics?.status ?? "draft");
-
   const lyricsEditor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
     content: getLyricsDocument(initialLyrics?.lyricsJson),
@@ -350,7 +348,7 @@ export function MusicAddPage({
     shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-56 rounded-2xl border border-[#f0d9c4] bg-white px-4 py-4 text-[#4b2a18] shadow-xs outline-none focus:outline-none",
+        class: "tiptap min-h-56 rounded-2xl border border-[#c8d9f3] bg-white px-4 py-4 text-[#203b66] shadow-xs outline-none focus:outline-none",
       },
     },
   });
@@ -612,7 +610,7 @@ export function MusicAddPage({
         const lyricsResult = await saveMusicLyricsAction({
           musicId: result.music.id,
           lyricsJson: serializeTipTapDocument(lyricsEditor.getJSON()),
-          status: lyricsStatus,
+          status: nextStatus === "draft" ? "draft" : "published",
         });
         if (!lyricsResult.success) {
           toast.error(lyricsResult.message);
@@ -649,9 +647,9 @@ export function MusicAddPage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
+    <section className="font-app h-full w-full px-4 pb-10 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 sm:py-8 sm:pr-24 lg:px-10 lg:pr-28">
           <div className="max-w-3xl">
             <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
             <Link href="/music" className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
@@ -811,7 +809,7 @@ export function MusicAddPage({
                           </button>
                         </HoverCardTrigger>
                         <HoverCardContent side="top" align="start" className="w-64 border-[#c8d9f3] bg-[#f7fbff] p-3 text-xs leading-5 text-[#35557f]">
-                          Let Spotify find your album image, or, if you prefer, uncheck that option and upload your own image.
+                          Let us find your album image auto-magically. Or if you prefer, uncheck the Auto Find option and upload your own image.
                         </HoverCardContent>
                       </HoverCard>
                       <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#203b66]">
@@ -917,7 +915,7 @@ export function MusicAddPage({
                     ? "Describe why this playlist matters and what listeners should notice."
                     : "Use the editor below to create a good looking review!" }
               </div>
-              <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+              <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
                 <div className="flex flex-wrap gap-2 border-b border-[#c8d9f3] px-3 py-3">
                   { !isPlaylistType ? (
                     <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor?.can().chain().focus().toggleHeading({ level: 2 }).run() }><Heading2 /></ToolbarButton>
@@ -1016,20 +1014,13 @@ export function MusicAddPage({
           ) : null }
           { isSongType ? (
             <div className="px-3 pb-4 sm:px-6 sm:pb-6">
-              <div className="space-y-3 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#7b3306]">Song Lyrics</p>
-                  <Select value={ lyricsStatus } onValueChange={ setLyricsStatus } disabled={ isFounderModerating }>
-                    <SelectTrigger className="h-9 w-40" disabled={ isFounderModerating }><SelectValue placeholder="Lyrics status" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-3 rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-[#203b66]">Song Lyrics</p>
                 </div>
-                <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1">
+                <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
                   { !isFounderModerating ? (
-                    <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
+                    <div className="flex flex-wrap gap-2 border-b border-[#c8d9f3] px-3 py-3">
                       <ToolbarButton label="Heading 2" onClick={ () => lyricsEditor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ lyricsEditor?.isActive("heading", { level: 2 }) } disabled={ !lyricsEditor }><Heading2 /></ToolbarButton>
                       <ToolbarButton label="Heading 3" onClick={ () => lyricsEditor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ lyricsEditor?.isActive("heading", { level: 3 }) } disabled={ !lyricsEditor }><Heading3 /></ToolbarButton>
                       <ToolbarButton label="Bold" onClick={ () => lyricsEditor?.chain().focus().toggleBold().run() } active={ lyricsEditor?.isActive("bold") } disabled={ !lyricsEditor }><Bold /></ToolbarButton>

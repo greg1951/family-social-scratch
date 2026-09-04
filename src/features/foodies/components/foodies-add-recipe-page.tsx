@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
+  CircleQuestionMark,
   Clock3,
   Heading2,
   Heading3,
@@ -38,6 +39,7 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { Button } from "@/components/ui/button";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -181,7 +183,7 @@ export function FoodiesAddRecipePage({
   const [recipeShortSummary, setRecipeShortSummary] = useState(initialRecipe?.recipeShortSummary ?? "");
   const [prepTimeMins, setPrepTimeMins] = useState(String(initialRecipe?.prepTimeMins ?? 15));
   const [cookTimeMins, setCookTimeMins] = useState(String(initialRecipe?.cookTimeMins ?? 20));
-  const [status, setStatus] = useState(initialRecipe?.status ?? "draft");
+  const [status, setStatus] = useState(initialRecipe?.status ?? "published");
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<RecipeTagType, string>>>(() => {
     if (!initialRecipe) {
       return {};
@@ -750,10 +752,10 @@ export function FoodiesAddRecipePage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <section className="font-app h-full w-full px-4 pb-10 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 sm:py-8 sm:pr-24 lg:px-10 lg:pr-28">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 The Kitchen
@@ -765,9 +767,9 @@ export function FoodiesAddRecipePage({
                 <ArrowLeft className="mr-2 size-4" />
                 Back to Foodies Home
               </Link>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
+              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 { isEditing ? "Edit Recipe" : "Add Recipe" }
-              </h1>
+              </h1> */}
               {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#f1ffe4]">
                 { isEditing
                   ? "Update your recipe, change the image if needed, and save the revised TipTap content."
@@ -872,38 +874,7 @@ export function FoodiesAddRecipePage({
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="template">Template</label>
-                <Select
-                  value={ selectedTemplateId }
-                  onValueChange={ (value) => {
-                    if (isTemplateDebug) {
-                      console.log("[FoodiesAddRecipe] onValueChange template", value);
-                    }
-                    setSelectedTemplateId(value);
-                  } }
-                  disabled={ !canSelectTemplate }
-                >
-                  <SelectTrigger id="template" className="border-[#cadfbb]" disabled={ !canSelectTemplate }>
-                    <SelectValue placeholder="Select recipe template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={ TEMPLATE_NONE_VALUE }>Select Template</SelectItem>
-                    { recipeTemplates.map((template) => (
-                      <SelectItem key={ template.id } value={ String(template.id) }>
-                        { template.label }
-                      </SelectItem>
-                    )) }
-                  </SelectContent>
-                </Select>
-                { !canSelectTemplate ? (
-                  <p className="text-xs text-[#647a50]">
-                    Template selection is locked after a recipe is saved to protect existing instructions.
-                  </p>
-                ) : null }
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeSummary">Short summary</label>
+                <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeSummary">Recipe Caption</label>
                 <Input
                   id="recipeSummary"
                   value={ recipeShortSummary }
@@ -915,90 +886,130 @@ export function FoodiesAddRecipePage({
                 <p className="text-xs text-[#607a4e]">{ recipeShortSummary.length } / 120 characters</p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="prepMins">Prep minutes</label>
-                <Input
-                  id="prepMins"
-                  type="number"
-                  min={ 0 }
-                  value={ prepTimeMins }
-                  onChange={ (event) => setPrepTimeMins(event.target.value) }
-                  className="border-[#cadfbb]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="cookMins">Cook minutes</label>
-                <Input
-                  id="cookMins"
-                  type="number"
-                  min={ 0 }
-                  value={ cookTimeMins }
-                  onChange={ (event) => setCookTimeMins(event.target.value) }
-                  className="border-[#cadfbb]"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="status">Status</label>
-                <Select value={ status } onValueChange={ setStatus }>
-                  <SelectTrigger id="status" className="border-[#cadfbb]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeImage">Recipe image</label>
-                <input
-                  id="recipeImage"
-                  type="file"
-                  accept="image/png, image/jpeg"
-                  className="block w-full rounded-md border border-[#cadfbb] bg-white p-2 text-sm"
-                  onChange={ handleFileSelection }
-                  disabled={ uploadingImage }
-                />
-                { imagePreviewUrl ? (
-                  <div className="overflow-hidden rounded-2xl border border-[#dbeacc] bg-[#f7fce8] p-2">
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#607a4e]">
-                      Image Preview
-                    </p>
-                    {/* eslint-disable-next-line @next/next/no-img-element */ }
-                    <img
-                      src={ imagePreviewUrl }
-                      alt={ recipeTitle.trim() ? `${ recipeTitle } preview` : "Recipe preview" }
-                      className="h-44 w-full rounded-xl object-cover"
+              <div className="col-span-2 md:col-span-3">
+                <div className="flex flex-wrap items-start gap-4">
+                  <div className="w-20 space-y-2">
+                    <label className="text-sm font-bold text-[#2f4820]" htmlFor="prepMins">Prep mins</label>
+                    <Input
+                      id="prepMins"
+                      type="number"
+                      min={ 0 }
+                      maxLength={ 3 }
+                      value={ prepTimeMins }
+                      onChange={ (event) => setPrepTimeMins(event.target.value) }
+                      className="border-[#cadfbb]"
                     />
                   </div>
-                ) : null }
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="border-[#b6d39d]"
-                    onClick={ uploadRecipeImage }
-                    disabled={ !selectedFile || uploadingImage || isSaving }
-                  >
-                    <Upload className="mr-2 size-4" />
-                    { uploadingImage ? "Uploading..." : isEditing ? "Upload Replacement Image" : "Upload Image" }
-                  </Button>
-                  { recipeImageUrl ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-[#eff8e6] px-3 py-1 text-xs font-semibold text-[#386124]">
-                      <Sparkles className="size-3.5" /> Uploaded
-                    </span>
-                  ) : null }
+
+                  <div className="w-20 space-y-2">
+                    <label className="text-sm font-bold text-[#2f4820]" htmlFor="cookMins">Cook mins</label>
+                    <Input
+                      id="cookMins"
+                      type="number"
+                      min={ 0 }
+                      maxLength={ 3 }
+                      value={ cookTimeMins }
+                      onChange={ (event) => setCookTimeMins(event.target.value) }
+                      className="border-[#cadfbb]"
+                    />
+                  </div>
+
+                  <div className="w-32 space-y-2">
+                    <label className="text-sm font-bold text-[#2f4820]" htmlFor="status">Status</label>
+                    <Select value={ status } onValueChange={ setStatus }>
+                      <SelectTrigger id="status" className="w-full border-[#cadfbb]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="draft">Draft</SelectItem>
+                        <SelectItem value="published">Published</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="min-w-[16rem] flex-1 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-sm font-bold text-[#2f4820]" htmlFor="recipeImage">Recipe image</label>
+                      <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                        <HoverCardTrigger asChild>
+                          <button
+                            type="button"
+                            className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#578c24] transition hover:bg-[#eff8e6]"
+                            aria-label="About choosing a recipe image"
+                          >
+                            <CircleQuestionMark className="h-4 w-4" />
+                          </button>
+                        </HoverCardTrigger>
+                        <HoverCardContent side="top" align="start" className="w-64 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
+                          Take the time to find a good image for your recipe, as this will entice other members to look at your recipe. <br/><br/> Download the image to your device and then select it in the <b>Choose File</b> dialog below.
+                        </HoverCardContent>
+                      </HoverCard>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="recipeImage"
+                        type="file"
+                        accept="image/png, image/jpeg"
+                        className="block min-w-0 flex-1 rounded-md border border-[#cadfbb] bg-white p-2 text-sm"
+                        onChange={ handleFileSelection }
+                        disabled={ uploadingImage }
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        aria-label={ uploadingImage ? "Uploading image" : isEditing ? "Upload replacement image" : "Upload image" }
+                        title={ uploadingImage ? "Uploading..." : isEditing ? "Upload Replacement Image" : "Upload Image" }
+                        className="shrink-0 border-[#b6d39d]"
+                        onClick={ uploadRecipeImage }
+                        disabled={ !selectedFile || uploadingImage || isSaving }
+                      >
+                        <Upload className="size-4" />
+                      </Button>
+                      { recipeImageUrl ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#eff8e6] px-2 py-1 text-xs font-semibold text-[#386124]">
+                          <Sparkles className="size-3.5" />
+                        </span>
+                      ) : null }
+                    </div>
+                    { imagePreviewUrl ? (
+                      <div className="overflow-hidden rounded-2xl border border-[#dbeacc] bg-[#f7fce8] p-2">
+                        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#607a4e]">
+                          Image Preview
+                        </p>
+                        {/* eslint-disable-next-line @next/next/no-img-element */ }
+                        <img
+                          src={ imagePreviewUrl }
+                          alt={ recipeTitle.trim() ? `${ recipeTitle } preview` : "Recipe preview" }
+                          className="h-44 w-full rounded-xl object-cover"
+                        />
+                      </div>
+                    ) : null }
+                  </div>
                 </div>
               </div>
             </fieldset>
 
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-bold text-[#2f4820]">Recipe categories</p>
-                <p className="mt-1 text-xs text-[#607a4e]">Tags are listed in tag type and sequence order.</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-sm font-bold text-[#2f4820]">Recipe categories</p>
+                  <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#578c24] transition hover:bg-[#eff8e6]"
+                        aria-label="About recipe categories"
+                      >
+                        <CircleQuestionMark className="h-4 w-4" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="top" align="start" className="w-64 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
+                      Select at least one recipe category below. Remember, Recipe Categories are searchable values on The Kitchen homepage.
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
+                {/* <p className="mt-1 text-xs text-[#607a4e]">At least one Recipe Category must be selected.</p> */}
               </div>
               <div className="grid grid-cols-3 gap-4 md:grid-cols-5">
                 { TAG_TYPE_LABELS.map((entry) => {
@@ -1045,11 +1056,61 @@ export function FoodiesAddRecipePage({
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-base font-bold text-[#2f4820]">Recipe instructions </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-base font-bold text-[#2f4820]">Recipe Instructions </p>
+                  <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#578c24] transition hover:bg-[#eff8e6]"
+                        aria-label="About recipe instructions"
+                      >
+                        <CircleQuestionMark className="h-4 w-4" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="top" align="start" className="w-64 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
+                      <ol className="ml-4 list-decimal space-y-1">
+                        <li>Select one of the recipe templates in the list below.</li>
+                        <li>Then write your recipe using the pre-formatted template text.</li>
+                      </ol>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#dbeacc] bg-[#f7fce8] px-3 py-1 text-xs text-[#486532]">
                   <Clock3 className="size-3.5" />
                   Prep { Number(prepTimeMins || 0) } min / Cook { Number(cookTimeMins || 0) } min
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-[#2f4820]" htmlFor="template">Template</label>
+                <Select
+                  value={ selectedTemplateId }
+                  onValueChange={ (value) => {
+                    if (isTemplateDebug) {
+                      console.log("[FoodiesAddRecipe] onValueChange template", value);
+                    }
+                    setSelectedTemplateId(value);
+                  } }
+                  disabled={ !canSelectTemplate || isSaving || isFounderModerating }
+                >
+                  <SelectTrigger id="template" className="w-full border-[#cadfbb]" disabled={ !canSelectTemplate || isSaving || isFounderModerating }>
+                    <SelectValue placeholder="Select recipe template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={ TEMPLATE_NONE_VALUE }>Select Template</SelectItem>
+                    { recipeTemplates.map((template) => (
+                      <SelectItem key={ template.id } value={ String(template.id) }>
+                        { template.label }
+                      </SelectItem>
+                    )) }
+                  </SelectContent>
+                </Select>
+                { !canSelectTemplate ? (
+                  <p className="text-xs text-[#647a50]">
+                    Template selection is locked after a recipe is saved to protect existing instructions.
+                  </p>
+                ) : null }
               </div>
 
               { isMounted ? (
@@ -1158,7 +1219,27 @@ export function FoodiesAddRecipePage({
 
             <div className="space-y-3 rounded-2xl border border-[#dbeacc] bg-[#fbfff3] p-4">
               <div>
-                <p className="text-base font-bold text-[#2f4820]">Recipe Pro Tips</p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-base font-bold text-[#2f4820]">Recipe Pro Tips</p>
+                  <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#578c24] transition hover:bg-[#eff8e6]"
+                        aria-label="About recipe pro tips"
+                      >
+                        <CircleQuestionMark className="h-4 w-4" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="right" align="start" className="w-120 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
+                      <ul className="ml-4 list-disc space-y-2">
+                        <li>it&apos;s important that if you are <i>borrowing</i> a recipe from someone else, you credit that person. This is a good place to do that.</li>
+                        <li>In every recipe, there are things that can be done or should be done to make sure that the recipe is a complete success.</li>
+                        <li>If there are time-saving or money-saving tips, then include those here. Someone looking at your recipe would greatly appreciate your tips.</li>
+                      </ul>
+                    </HoverCardContent>
+                  </HoverCard>
+                </div>
                 <p className="mt-1 text-xs text-[#607a4e]">
                   Add optional notes your family should know before they make this recipe.
                 </p>

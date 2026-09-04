@@ -64,7 +64,7 @@ function ToolbarButton({ label, active = false, onClick, disabled = false, child
       aria-label={ label }
       className={ [
         "h-8 w-8 p-0",
-        active ? "border-[#b8581a] bg-[#fff1e8] text-[#7b3306]" : "border-[#e8c4a0]",
+        active ? "border-[#2C5EAD] bg-[#edf4ff] text-[#203b66]" : "border-[#c8d9f3] text-[#2C5EAD]",
       ].join(" ") }
     >
       <span className="inline-flex items-center justify-center gap-0.5">{ children }</span>
@@ -112,7 +112,7 @@ export function MusicLyricsPage({
     editorProps: {
       attributes: {
         class:
-          "tiptap min-h-112 rounded-2xl border border-[#f0d9c4] bg-white px-4 py-4 text-[#4b2a18] shadow-xs outline-none focus:outline-none",
+          "tiptap min-h-112 rounded-2xl border border-[#c8d9f3] bg-white px-4 py-4 text-[#203b66] shadow-xs outline-none focus:outline-none",
       },
     },
   });
@@ -191,13 +191,13 @@ export function MusicLyricsPage({
               </div>
             </div>
             { !canSaveLyrics ? (
-              <p className="mt-3 text-xs text-[#8b5a3c]">Only the family member who created these lyrics can save changes.</p>
+              <p className="mt-3 text-xs text-[#203b66]">Only the family member who created these lyrics can save changes.</p>
             ) : null }
           </div>
 
           <div className="p-5 sm:p-6">
-            <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
-              { canSaveLyrics ? <div className="flex flex-wrap gap-2 border-b border-[#f0d9c4] px-3 py-3">
+            <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-[#f7fbff] [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
+              { canSaveLyrics ? <div className="flex flex-wrap gap-2 border-b border-[#c8d9f3] px-3 py-3">
                 <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor }><Heading2 /></ToolbarButton>
                 <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor }><Heading3 /></ToolbarButton>
                 <ToolbarButton label="Bold" onClick={ () => editor?.chain().focus().toggleBold().run() } active={ editor?.isActive("bold") } disabled={ !editor }><Bold /></ToolbarButton>
