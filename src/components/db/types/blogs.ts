@@ -51,6 +51,7 @@ export interface BlogHomePost {
   authorMemberId: number;
   familyId: number;
   authorName: string;
+  authorImageUrl?: string | null;
   dislikeCount: number;
   likeCount: number;
   loveCount: number;

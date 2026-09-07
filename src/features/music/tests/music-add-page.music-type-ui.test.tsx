@@ -143,6 +143,7 @@ function buildMusicRecord(overrides: Partial<MusicRecord>): MusicRecord {
     memberId: 99,
     familyId: 10,
     submitterName: "Taylor West",
+    submitterImageUrl: null,
     submitterLikenessDegree: null,
     commentCount: 0,
     noRatingCount: 0,

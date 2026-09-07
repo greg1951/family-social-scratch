@@ -9,7 +9,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
-  Columns2,
   Edit3,
   Heading2,
   Heading3,
@@ -19,11 +18,8 @@ import {
   ListOrdered,
   Minus,
   Plus,
-  Rows2,
-  Table2,
   Underline as UnderlineIcon,
   Unlink,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -139,7 +135,7 @@ export function MusicTemplatePage({
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
-  const [templateStatus, setTemplateStatus] = useState("draft");
+  const [templateStatus, setTemplateStatus] = useState("published");
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === selectedTemplateId) ?? null,
@@ -192,7 +188,7 @@ export function MusicTemplatePage({
     setDialogMode("create");
     setEditingTemplateId(null);
     setTemplateName("");
-    setTemplateStatus("draft");
+    setTemplateStatus("published");
     setIsDialogOpen(true);
   }
 
@@ -313,7 +309,7 @@ export function MusicTemplatePage({
       </div>
 
         <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-          <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#c8d9f3] bg-[#f7fbff]">
+          <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,104rem)] max-w-none max-h-[90vh] overflow-hidden border-[#c8d9f3] bg-[#f7fbff]">
           <DialogHeader>
             <DialogTitle className="text-[#203b66]">{ dialogMode === "create" ? "Create Music Template" : "Update Music Template" }</DialogTitle>
             <DialogDescription className="text-[#4a6fae]">Use the rich editor to create an engaging music template.</DialogDescription>
@@ -336,9 +332,9 @@ export function MusicTemplatePage({
 
             <div className="space-y-3">
               <p className="text-sm font-bold text-[#203b66]">Template Content</p>
-              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-[#c8d9f3] bg-[#edf4ff] px-1.5 py-2">
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+              <div className="space-y-2">
+                <div className="rounded-2xl border border-[#c8d9f3] bg-[#edf4ff] px-2 py-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor }><Heading2 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor }><Heading3 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Bold" onClick={ () => editor?.chain().focus().toggleBold().run() } active={ editor?.isActive("bold") } disabled={ !editor }><Bold className="size-4" /></ToolbarButton>
@@ -349,10 +345,6 @@ export function MusicTemplatePage({
                     <ToolbarButton label="Add link" onClick={ () => { if (!editor) { return; } const value = window.prompt("Enter URL", "https://"); if (!value) { return; } editor.chain().focus().setLink({ href: value }).run(); } } disabled={ !editor }><Link2 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Remove link" onClick={ () => editor?.chain().focus().unsetLink().run() } disabled={ !editor }><Unlink className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Insert horizontal line" onClick={ () => editor?.chain().focus().setHorizontalRule().run() } disabled={ !editor }><Minus className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Insert table" onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() } active={ editor?.isActive("table") } disabled={ !editor }><Table2 className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Delete table" onClick={ () => editor?.chain().focus().deleteTable().run() } disabled={ !editor || !editor.isActive("table") }><Table2 className="size-4" /><X className="size-3" /></ToolbarButton>
-                    <ToolbarButton label="Add column after" onClick={ () => editor?.chain().focus().addColumnAfter().run() } disabled={ !editor || !editor.isActive("table") }><Columns2 className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Add row after" onClick={ () => editor?.chain().focus().addRowAfter().run() } disabled={ !editor || !editor.isActive("table") }><Rows2 className="size-4" /></ToolbarButton>
                   </div>
                 </div>
                 <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><EditorContent editor={ editor } /></div>

@@ -16,6 +16,7 @@ export type BookDraft = {
   bookSeriesName: string;
   bookYear: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   dislikeCount: number;
   likeCount: number;
   loveCount: number;
@@ -68,6 +69,7 @@ export function createDraftFromBook(bookRecord: BooksHomeBook, member: MemberKey
     bookSeriesName: bookRecord.bookSeriesName ?? "",
     bookYear: bookRecord.bookYear ? String(bookRecord.bookYear) : "",
     submitterName: createSubmitterLabel(bookRecord, member),
+    submitterImageUrl: bookRecord.submitterImageUrl ?? null,
     dislikeCount: bookRecord.dislikeCount ?? 0,
     likeCount: bookRecord.likeCount ?? 0,
     loveCount: bookRecord.loveCount ?? 0,
@@ -99,6 +101,7 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
     bookSeriesName: "",
     bookYear: "",
     submitterName: `${ member.firstName } ${ member.lastName }`,
+    submitterImageUrl: null,
     dislikeCount: 0,
     likeCount: 0,
     loveCount: 0,

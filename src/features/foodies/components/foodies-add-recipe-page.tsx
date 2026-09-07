@@ -24,6 +24,9 @@ import {
   Underline as UnderlineIcon,
   Unlink,
   Upload,
+  Heart,
+  Info,
+  Sparkle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -940,8 +943,9 @@ export function FoodiesAddRecipePage({
                             <CircleQuestionMark className="h-4 w-4" />
                           </button>
                         </HoverCardTrigger>
-                        <HoverCardContent side="top" align="start" className="w-64 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
-                          Take the time to find a good image for your recipe, as this will entice other members to look at your recipe. <br/><br/> Download the image to your device and then select it in the <b>Choose File</b> dialog below.
+                        <HoverCardContent side="top" align="start" className="w-120 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
+                          <p><Heart className="inline h-4 w-4 mr-1 text-[#486532]" />Take the time to find a good image for your recipe, as this will entice other members to look at your recipe.</p>
+                          <p><Info className="inline h-4 w-4 mr-1 text-[#486532]" />Download the image to your device and then select it in the <b>Choose File</b> dialog below.</p>
                         </HoverCardContent>
                       </HoverCard>
                     </div>
@@ -1005,7 +1009,8 @@ export function FoodiesAddRecipePage({
                       </button>
                     </HoverCardTrigger>
                     <HoverCardContent side="top" align="start" className="w-64 border-[#dbeacc] bg-[#f7fce8] p-3 text-xs leading-5 text-[#486532]">
-                      Select at least one recipe category below. Remember, Recipe Categories are searchable values on The Kitchen homepage.
+                      <p><Info className="inline h-4 w-4 mr-1 text-[#486532]" />Select <u>at least one</u> recipe category below. </p>
+                      <p><Heart className="inline h-4 w-4 mr-1 text-[#486532]" />Remember, Recipe Categories are searchable values on The Kitchen homepage.</p>
                     </HoverCardContent>
                   </HoverCard>
                 </div>

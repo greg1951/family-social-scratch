@@ -435,6 +435,7 @@ export function MusicHomePage({
       status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
+      submitterImageUrl: music.submitterImageUrl,
       reviewType: getMusicTypeLabel(music.musicType),
       hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
@@ -456,6 +457,7 @@ export function MusicHomePage({
       status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
+      submitterImageUrl: music.submitterImageUrl,
       reviewType: getMusicTypeLabel(music.musicType),
       hasLyrics: Boolean(music.hasLyrics),
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
@@ -485,6 +487,7 @@ export function MusicHomePage({
       status: music.status,
       date: formatShortDate(music.updatedAt),
       submitterName: music.submitterName,
+      submitterImageUrl: music.submitterImageUrl,
       submitterLikenessDegree: music.memberId === member.memberId ? null : music.submitterLikenessDegree,
       noRating: music.noRatingCount,
       thumbsUp: music.thumbsUpCount,
@@ -888,7 +891,7 @@ export function MusicHomePage({
                                 <a href={ media.mediaUrl } target="_blank" rel="noreferrer" className="inline-block break-all text-[#2C5EAD] underline decoration-[#7aa6ef] underline-offset-2">
                                   { media.mediaCaption || "Open media" }
                                 </a>
-                                { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">Artist: { media.mediaArtist }</p> : null }
+                                { media.mediaArtist ? <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[#4a6fae]">{ media.mediaArtist }</p> : null }
                               </div>
 
                               <div className="shrink-0">

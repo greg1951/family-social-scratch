@@ -8,8 +8,6 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import {
   Bold,
-  Combine,
-  Columns2,
   Edit3,
   Heading2,
   Heading3,
@@ -19,13 +17,9 @@ import {
   ListOrdered,
   Minus,
   Plus,
-  Rows2,
   Save,
-  Table2,
-  Tv,
   Underline as UnderlineIcon,
   Unlink,
-  X,
   ArrowLeft,
 } from "lucide-react";
 import Link from "next/link";
@@ -134,7 +128,7 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
-  const [templateStatus, setTemplateStatus] = useState("draft");
+  const [templateStatus, setTemplateStatus] = useState("published");
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === selectedTemplateId) ?? null,
@@ -192,7 +186,7 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
     setDialogMode("create");
     setEditingTemplateId(null);
     setTemplateName("");
-    setTemplateStatus("draft");
+    setTemplateStatus("published");
     setIsDialogOpen(true);
   }
 
@@ -239,49 +233,27 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">
-                Family TV Room
-              </p>
-              {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
-                Show Templates
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d9f5ff]">
-                Create your own show templates in draft or published status. Draft templates stay private to management and do not appear in Add Show template selection.
-              </p> */}
-            </div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+              <div className="max-w-3xl">
+                <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">Family TV Room</p>
+                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Show Templates</h1>
+                {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d9f5ff]">Create your own show templates in draft or published status. Draft templates stay private to management and do not appear in Add Show template selection.</p> */}
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/tv"
-                className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                Home
-              </Link>
-              <Button
-                type="button"
-                className="rounded-full bg-white/20 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
-                onClick={ openCreateDialog }
-              >
-                <Plus className="size-4" />
-                Create
-              </Button>
-              <Button
-                type="button"
-                className="rounded-full bg-white/10 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                onClick={ openEditDialog }
-                disabled={ !selectedTemplate?.canEdit }
-              >
-                <Edit3 className="size-4" />
-                Update
-              </Button>
+              <div className="flex flex-wrap gap-3 lg:pb-1">
+                <Link href="/tv" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ArrowLeft className="mr-1.5 size-3.5" />
+                  TV Home
+                </Link>
+                <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
+                <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-[1.6rem] border border-[#d7ebf3] bg-white/92">
+          <aside className="overflow-hidden rounded-[1.6rem] border border-[#d7ebf3] bg-white/92 shadow-[0_24px_70px_-40px_rgba(9,44,62,0.7)]">
             <div className="border-b border-[#d7ebf3] px-5 py-4">
               <h2 className="text-lg font-black tracking-tight text-[#15384a]">Available Templates</h2>
               <p className="mt-1 text-xs text-[#5f7987]">Select a template to preview.</p>
@@ -352,13 +324,13 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
       </div>
 
       <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#c6dcec] bg-[#f5fbff]">
+        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,104rem)] max-w-none max-h-[90vh] overflow-hidden border-[#c6dcec] bg-[#f5fbff]">
           <DialogHeader>
             <DialogTitle className="text-[#15384a]">
               { dialogMode === "create" ? "Create Show Template" : "Update Show Template" }
             </DialogTitle>
             <DialogDescription className="text-[#5f7987]">
-              Use TipTap content and choose draft or published status.
+              Build reusable show details and choose whether this template is published or saved as a draft.
             </DialogDescription>
           </DialogHeader>
 
@@ -390,10 +362,10 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
             </div>
 
             <div className="space-y-3">
-              <p className="text-sm font-bold text-[#15384a]">Template content (TipTap)</p>
-              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-[#c6dcec] bg-[#eaf5fb] px-1.5 py-2">
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+              <p className="text-sm font-bold text-[#15384a]">Template content</p>
+              <div className="space-y-2">
+                <div className="rounded-2xl border border-[#c6dcec] bg-[#eaf5fb] px-2 py-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <ToolbarButton
                       label="Heading 2"
                       onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() }
@@ -481,59 +453,6 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
                       disabled={ !editor }
                     >
                       <Minus className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Insert table"
-                      onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() }
-                      active={ editor?.isActive("table") }
-                      disabled={ !editor }
-                    >
-                      <Table2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete table"
-                      onClick={ () => editor?.chain().focus().deleteTable().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Table2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Add column after"
-                      onClick={ () => editor?.chain().focus().addColumnAfter().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Columns2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete column"
-                      onClick={ () => editor?.chain().focus().deleteColumn().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Columns2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Add row after"
-                      onClick={ () => editor?.chain().focus().addRowAfter().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Rows2 className="size-4" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Delete row"
-                      onClick={ () => editor?.chain().focus().deleteRow().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Rows2 className="size-4" />
-                      <X className="size-3" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      label="Toggle header row"
-                      onClick={ () => editor?.chain().focus().toggleHeaderRow().run() }
-                      disabled={ !editor || !editor.isActive("table") }
-                    >
-                      <Combine className="size-4" />
                     </ToolbarButton>
                   </div>
                 </div>

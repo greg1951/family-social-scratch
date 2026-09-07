@@ -146,6 +146,7 @@ async function loadBooksHomeBooks(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -162,6 +163,7 @@ async function loadBooksHomeBooks(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
   const commentsByBookId = new Map<number, typeof commentRows>();
 
   for (const commentRow of commentRows) {
@@ -251,6 +253,7 @@ async function loadBooksHomeBooks(
       memberId: row.memberId,
       familyId: row.familyId,
       submitterName: memberNameById.get(row.memberId) ?? `Member #${ row.memberId }`,
+      submitterImageUrl: memberImageUrlById.get(row.memberId) ?? null,
       dislikeCount: reactionsByBookId.get(row.id)?.dislikeCount ?? 0,
       likeCount: reactionsByBookId.get(row.id)?.likeCount ?? 0,
       loveCount: reactionsByBookId.get(row.id)?.loveCount ?? 0,

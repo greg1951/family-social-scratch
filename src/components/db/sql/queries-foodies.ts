@@ -456,6 +456,7 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -464,6 +465,7 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   const commentCountByRecipeId = new Map<number, number>();
   const noRatingByRecipeId = new Map<number, number>();
@@ -539,6 +541,7 @@ async function loadFoodiesRecipes(familyId: number, viewerMemberId?: number): Pr
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(row.memberId) ?? null,
     submitterLikenessDegree: submitterLikeByRecipeId.get(row.id) ?? null,
     commentCount: commentCountByRecipeId.get(row.id) ?? 0,
     noRatingCount: noRatingByRecipeId.get(row.id) ?? 0,

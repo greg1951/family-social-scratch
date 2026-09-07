@@ -671,6 +671,7 @@ async function loadMusicTemplateManagementRecords(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -786,6 +787,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -794,6 +796,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
   const submitterMemberIdByMusicId = new Map(visibleMusicRows.map((row) => [row.id, row.memberId]));
 
   const commentCountByMusicId = new Map<number, number>();
@@ -867,6 +870,7 @@ async function loadMusics(familyId: number, viewerMemberId?: number): Promise<Mu
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(row.memberId) ?? null,
     submitterLikenessDegree: submitterLikeByMusicId.get(row.id) ?? null,
     commentCount: commentCountByMusicId.get(row.id) ?? 0,
     noRatingCount: noRatingByMusicId.get(row.id) ?? 0,
@@ -938,6 +942,7 @@ async function loadMusicDetail(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -946,6 +951,7 @@ async function loadMusicDetail(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   const submitterLike = likeRows.find((row) => row.memberId === musicRow.memberId) ?? null;
   const audienceLikeRows = likeRows.filter((row) => row.memberId !== musicRow.memberId);
@@ -999,6 +1005,7 @@ async function loadMusicDetail(
     memberId: musicRow.memberId,
     familyId: musicRow.familyId,
     submitterName: memberNameById.get(musicRow.memberId) ?? `Member #${musicRow.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(musicRow.memberId) ?? null,
     submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
     commentCount: regularCommentRows.length,
     noRatingCount,

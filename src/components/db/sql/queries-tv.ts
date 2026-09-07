@@ -434,6 +434,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -442,6 +443,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   const commentCountByShowId = new Map<number, number>();
   const noRatingByShowId = new Map<number, number>();
@@ -529,6 +531,7 @@ async function loadShows(familyId: number, viewerMemberId?: number): Promise<TvS
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(row.memberId) ?? null,
     submitterLikenessDegree: submitterLikeByShowId.get(row.id) ?? null,
     commentCount: commentCountByShowId.get(row.id) ?? 0,
     noRatingCount: noRatingByShowId.get(row.id) ?? 0,

@@ -435,6 +435,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -443,6 +444,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
   const submitterMemberIdByMovieId = new Map(visibleMovieRows.map((row) => [row.id, row.memberId]));
 
   const commentCountByMovieId = new Map<number, number>();
@@ -515,6 +517,7 @@ async function loadMovies(familyId: number, viewerMemberId?: number): Promise<Mo
     memberId: row.memberId,
     familyId: row.familyId,
     submitterName: memberNameById.get(row.memberId) ?? `Member #${row.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(row.memberId) ?? null,
     submitterLikenessDegree: submitterLikeByMovieId.get(row.id) ?? null,
     commentCount: commentCountByMovieId.get(row.id) ?? 0,
     noRatingCount: noRatingByMovieId.get(row.id) ?? 0,

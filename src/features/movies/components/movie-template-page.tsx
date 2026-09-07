@@ -9,7 +9,6 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
-  Columns2,
   Edit3,
   Heading2,
   Heading3,
@@ -19,11 +18,8 @@ import {
   ListOrdered,
   Minus,
   Plus,
-  Rows2,
-  Table2,
   Underline as UnderlineIcon,
   Unlink,
-  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -131,7 +127,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
-  const [templateStatus, setTemplateStatus] = useState("draft");
+  const [templateStatus, setTemplateStatus] = useState("published");
 
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === selectedTemplateId) ?? null,
@@ -184,7 +180,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
     setDialogMode("create");
     setEditingTemplateId(null);
     setTemplateName("");
-    setTemplateStatus("draft");
+    setTemplateStatus("published");
     setIsDialogOpen(true);
   }
 
@@ -231,23 +227,27 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
-            </div>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+              <div className="max-w-3xl">
+                <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
+                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Movie Templates</h1>
+                {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#ffe8d1]">Create your own movie templates in draft or published status. Draft templates stay out of the Add Movie template selection list.</p> */}
+              </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link href="/movies" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-1 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                Home
-              </Link>
-              <Button type="button" className="rounded-full bg-white/20 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="mr-2 size-3" />Create</Button>
-              <Button type="button" className="rounded-full bg-white/10 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="mr-2 size-3" />Edit</Button>
+              <div className="flex flex-wrap gap-3 lg:pb-1">
+                <Link href="/movies" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ArrowLeft className="mr-1.5 size-3.5" />
+                  Movie Home
+                </Link>
+                <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
+                <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+              </div>
             </div>
           </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-          <aside className="overflow-hidden rounded-[1.6rem] border border-[#f0d9c4] bg-white/92">
+          <aside className="overflow-hidden rounded-[1.6rem] border border-[#f0d9c4] bg-white/92 shadow-[0_24px_70px_-40px_rgba(96,32,0,0.7)]">
             <div className="border-b border-[#f0d9c4] px-5 py-4">
               <h2 className="text-lg font-black tracking-tight text-[#5c2e1a]">Available Templates</h2>
               <p className="mt-1 text-xs text-[#8b5a3c]">Select a template to preview.</p>
@@ -293,7 +293,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
       </div>
 
       <Dialog open={ isDialogOpen } onOpenChange={ setIsDialogOpen }>
-        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,96rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
+        <DialogContent className="grid-rows-[auto_minmax(0,1fr)_auto] w-[min(98vw,104rem)] max-w-none max-h-[90vh] overflow-hidden border-[#e8c4a0] bg-[#fff8f2]">
           <DialogHeader>
             <DialogTitle className="text-[#5c2e1a]">{ dialogMode === "create" ? "Create Movie Template" : "Update Movie Template" }</DialogTitle>
             <DialogDescription className="text-[#8b5a3c]">Use the rich editor to create an engaging movie template.</DialogDescription>
@@ -316,9 +316,9 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
 
             <div className="space-y-3">
               <p className="text-sm font-bold text-[#5c2e1a]">Template Content</p>
-              <div className="grid gap-3 md:grid-cols-[4rem_minmax(0,1fr)] md:items-start">
-                <div className="rounded-2xl border border-[#e8c4a0] bg-[#fff1e8] px-1.5 py-2">
-                  <div className="flex flex-wrap gap-2 md:flex-col md:items-center md:gap-1.5">
+              <div className="space-y-2">
+                <div className="rounded-2xl border border-[#e8c4a0] bg-[#fff1e8] px-2 py-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <ToolbarButton label="Heading 2" onClick={ () => editor?.chain().focus().toggleHeading({ level: 2 }).run() } active={ editor?.isActive("heading", { level: 2 }) } disabled={ !editor }><Heading2 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Heading 3" onClick={ () => editor?.chain().focus().toggleHeading({ level: 3 }).run() } active={ editor?.isActive("heading", { level: 3 }) } disabled={ !editor }><Heading3 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Bold" onClick={ () => editor?.chain().focus().toggleBold().run() } active={ editor?.isActive("bold") } disabled={ !editor }><Bold className="size-4" /></ToolbarButton>
@@ -329,10 +329,6 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
                     <ToolbarButton label="Add link" onClick={ () => { if (!editor) { return; } const value = window.prompt("Enter URL", "https://"); if (!value) { return; } editor.chain().focus().setLink({ href: value }).run(); } } disabled={ !editor }><Link2 className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Remove link" onClick={ () => editor?.chain().focus().unsetLink().run() } disabled={ !editor }><Unlink className="size-4" /></ToolbarButton>
                     <ToolbarButton label="Insert horizontal line" onClick={ () => editor?.chain().focus().setHorizontalRule().run() } disabled={ !editor }><Minus className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Insert table" onClick={ () => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() } active={ editor?.isActive("table") } disabled={ !editor }><Table2 className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Delete table" onClick={ () => editor?.chain().focus().deleteTable().run() } disabled={ !editor || !editor.isActive("table") }><Table2 className="size-4" /><X className="size-3" /></ToolbarButton>
-                    <ToolbarButton label="Add column after" onClick={ () => editor?.chain().focus().addColumnAfter().run() } disabled={ !editor || !editor.isActive("table") }><Columns2 className="size-4" /></ToolbarButton>
-                    <ToolbarButton label="Add row after" onClick={ () => editor?.chain().focus().addRowAfter().run() } disabled={ !editor || !editor.isActive("table") }><Rows2 className="size-4" /></ToolbarButton>
                   </div>
                 </div>
                 <div className="overflow-hidden rounded-2xl border border-[#e8c4a0] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#f0d9c4] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#f0d9c4] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#f0d9c4] [&_.tiptap_th]:bg-[#fff1e8] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_td]:border [&_.tiptap_td]:border-[#f0d9c4] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1"><EditorContent editor={ editor } /></div>

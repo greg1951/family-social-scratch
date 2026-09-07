@@ -41,6 +41,13 @@ export async function saveMemberImageUrl(memberImageUrl: string) {
     revalidatePath("/family-member-account");
     revalidatePath("/family-founder-account");
     revalidatePath("/family-image-upload");
+    revalidatePath("/music");
+    revalidatePath("/tv");
+    revalidatePath("/movies");
+    revalidatePath("/books");
+    revalidatePath("/poetry");
+    revalidatePath("/foodies");
+    revalidatePath("/blogs");
   }
 
   return updateResult;

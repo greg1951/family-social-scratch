@@ -28,6 +28,7 @@ import {
   toggleBookReactionAction,
   deleteBooksHomeBookAction,
 } from "@/app/(features)/(books)/books/actions";
+import MemberAvatar from "@/components/common/member-avatar";
 import {
   createEmptyTipTapDocument,
   isSerializedTipTapDocumentEmpty,
@@ -509,7 +510,7 @@ export default function BooksHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
+                  Go Home
                 </Link>
                 <Link
                   href="/book-terms"
@@ -741,7 +742,15 @@ export default function BooksHomePage({
                           ) : (
                             <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#183746] sm:text-sm">{ bookItem.bookTitle }</p>
                           ) }
-                          <p className="mt-1 text-[0.7rem] text-[#6b8a98] sm:text-xs">Created { formatCreatedAt(bookItem.createdAt) }</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-[#6b8a98] sm:flex-nowrap sm:text-xs">
+                            { bookItem.submitterImageUrl ? (
+                              <span className="inline-flex" title={ bookItem.submitterName }>
+                                <MemberAvatar imageUrl={ bookItem.submitterImageUrl } firstName={ bookItem.submitterName } sizeClassName="h-[26px] w-[26px]" />
+                              </span>
+                            ) : <span className="wrap-break-word font-semibold text-[#355161]">{ bookItem.submitterName }</span> }
+                            <span className="text-[#9ab2bd]">.</span>
+                            <span className="whitespace-nowrap">{ formatCreatedAt(bookItem.createdAt) }</span>
+                          </div>
                           { bookItem.status === "draft" ? (
                             <p className="mt-1 inline-flex w-fit rounded-full border border-[#d4a64f] bg-[#fff5dc] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9a5a06] sm:text-[0.65rem]">
                               Draft
@@ -761,10 +770,6 @@ export default function BooksHomePage({
                               </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
-                              <div className="min-w-24 max-w-full">
-                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#5d8aa0]">Reviewer</p>
-                                <p className="wrap-break-word text-[0.7rem] font-semibold text-[#355161] sm:text-xs">{ bookItem.submitterName }</p>
-                              </div>
                               <div className="inline-flex items-center gap-0.5 text-[0.65rem] font-semibold text-[#355161] sm:text-[0.7rem]">
                                 <ThumbsDown className="size-2.5 text-[#5d7c8a] sm:size-3" />
                                 { bookItem.dislikeCount }

@@ -26,6 +26,8 @@ import {
   Unlink,
   Upload,
   X,
+  Heart,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -528,9 +530,6 @@ export function MovieAddPage({
                 <div className="flex items-center justify-between gap-2">
                   <p className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#5c2e1a]">
                     Movie Media
-                    <span title="Help coming soon" aria-label="Movie image option help" className="inline-flex text-[#9b7359]">
-                      <HelpCircle className="size-4" />
-                    </span>
                   </p>
                   <div className="flex items-center gap-1.5">
                     <HoverCard openDelay={ 120 } closeDelay={ 100 }>
@@ -544,7 +543,8 @@ export function MovieAddPage({
                         </button>
                       </HoverCardTrigger>
                       <HoverCardContent side="top" align="start" className="w-64 border-[#f0d9c4] bg-[#fff8f2] p-3 text-xs leading-5 text-[#734f3a]">
-                        Let us find your movie image auto-magically, or, if you prefer, uncheck that option and upload your own image and also provide image accreditation. 
+                        <p><Heart className="inline h-4 w-4 mr-1 text-[#5c2e1a]" />Select this option to let us find your movie image <i>auto-magically</i>.</p>
+                        <p><Info className="inline h-4 w-4 mr-1 text-[#5c2e1a]" />Or if you prefer, uncheck this option, upload your own image in the file input below. Then you must also provide image accreditation.</p>
                       </HoverCardContent>
                     </HoverCard>
                     <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[#5c2e1a]">
@@ -666,8 +666,24 @@ export function MovieAddPage({
                   ) }
                 </div>
               </div>
-              <div className="space-y-2 rounded-2xl border border-[#f0d9c4] bg-[#fff8f2] p-4">
+              <div className="flex items-center gap-1.5">
                 <p className="text-sm font-semibold text-[#5c2e1a]">Movie Tags</p>
+                  <HoverCard openDelay={ 120 } closeDelay={ 100 }>
+                    <HoverCardTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[#5c2e1a] transition hover:bg-[#eff8e6]"
+                        aria-label="About movie categories"
+                      >
+                        <CircleQuestionMark className="h-4 w-4" />
+                      </button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="top" align="start" className="w-64 border-[#f0d9c4] bg-[#fff8f2] p-3 text-xs leading-5 text-[#734f3a]">
+                      <p><Info className="inline h-4 w-4 mr-1 text-[#5c2e1a]" />Select <u>at least one</u> Movie category. </p>
+                      <p><Heart className="inline h-4 w-4 mr-1 text-[#5c2e1a]" />Remember, These categories are searchable values on The Movie theater home page.</p>
+                    </HoverCardContent>
+                  </HoverCard>
+
                 <div className="grid gap-3 sm:grid-cols-3">
                   { TAG_TYPE_LABELS.map(({ type, label }) => (
                     <div key={ type } className="space-y-2">

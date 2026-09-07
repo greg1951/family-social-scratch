@@ -289,6 +289,7 @@ export function MovieHomePage({
       name: movie.movieTitle,
       date: formatStripDate(movie.updatedAt),
       submitterName: movie.submitterName,
+      submitterImageUrl: movie.submitterImageUrl ?? null,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       commentsCount: movie.commentCount,
@@ -320,6 +321,7 @@ export function MovieHomePage({
       name: movie.movieTitle,
       date: formatStripDate(movie.updatedAt),
       submitterName: movie.submitterName,
+      submitterImageUrl: movie.submitterImageUrl ?? null,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       thumbsUp: movie.thumbsUpCount,
@@ -340,6 +342,7 @@ export function MovieHomePage({
       name: movie.movieTitle,
       date: formatStripDate(movie.updatedAt),
       submitterName: movie.submitterName,
+      submitterImageUrl: movie.submitterImageUrl ?? null,
       submitterLikenessDegree: movie.memberId === member.memberId ? null : movie.submitterLikenessDegree,
       noRating: movie.noRatingCount,
       commentsCount: movie.commentCount,
@@ -499,7 +502,7 @@ export function MovieHomePage({
                 <div id="movie-return-home">
                   <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
                     <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                    Home
+                    Go Home
                   </Link>
                 </div>
                 <Link href="/movies/templates" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"><Edit3 className="mr-1 size-3 sm:size-3.5" />Templates</Link>

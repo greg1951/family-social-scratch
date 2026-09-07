@@ -3,6 +3,7 @@
 import { Heart, MessageSquare, MessageSquareText, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import MemberAvatar from "@/components/common/member-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ type LatestRecipe = {
   date: string;
   status: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -29,6 +31,7 @@ type TopRatedRecipe = {
   date: string;
   status: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   noRating: number;
   thumbsUp: number;
   love: number;
@@ -45,6 +48,7 @@ type AllRecipe = {
   date: string;
   status: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   commentsCount: number;
   thumbsUp: number;
   love: number;
@@ -64,6 +68,14 @@ type FoodiesScrollStripProps = {
   onSelectItem?: (id: number) => void;
   onOpenItem?: (id: number) => void;
 };
+
+function RecipeSubmitter({ imageUrl, name }: { imageUrl: string | null; name: string }) {
+  if (imageUrl) {
+    return <span className="inline-flex shrink-0" title={ name }><MemberAvatar imageUrl={ imageUrl } firstName={ name } sizeClassName="h-[26px] w-[26px]" /></span>;
+  }
+
+  return <span className="whitespace-nowrap font-semibold text-[#476232]">{ name }</span>;
+}
 
 function RecipeImage({ src, alt }: { src: string; alt: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
@@ -187,7 +199,7 @@ export function FoodiesScrollStrip({
                           <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#2f4820]">{ item.name }</h3>
                         </div>
                         <div className="mt-1 flex select-none flex-wrap items-center gap-1 text-[11px] text-[#647a50] sm:flex-nowrap">
-                          <span className="whitespace-nowrap font-semibold text-[#476232]">{ item.submitterName }</span>
+                          <RecipeSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
                           <span className="text-[#8ca479]">.</span>
                           <span className="whitespace-nowrap">{ item.date }</span>
                         </div>

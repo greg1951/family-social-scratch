@@ -3,6 +3,7 @@
 import { Disc, DiscAlbum, Heart, ListMusic, MessageSquare, MessageSquareText, MicVocal, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
+import MemberAvatar from "@/components/common/member-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ type LatestMusicItem = {
   status: string;
   date: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   reviewType: "Song" | "Album" | "Playlist";
   hasLyrics: boolean;
   hasDiscussionThread: boolean;
@@ -32,6 +34,7 @@ type TopRatedMusicItem = {
   status: string;
   date: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   submitterLikenessDegree: number | null;
   noRating: number;
   thumbsUp: number;
@@ -49,6 +52,7 @@ type AllMusicItem = {
   status: string;
   date: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   reviewType: "Song" | "Album" | "Playlist";
   hasLyrics: boolean;
   hasDiscussionThread: boolean;
@@ -71,6 +75,22 @@ type MusicScrollStripProps = {
   onSelectItem?: (id: number) => void;
   onOpenItem?: (id: number) => void;
 };
+
+function MusicSubmitter({ imageUrl, name }: { imageUrl: string | null; name: string }) {
+  if (imageUrl) {
+    return (
+      <span className="inline-flex shrink-0" title={ name }>
+        <MemberAvatar
+          imageUrl={ imageUrl }
+          firstName={ name }
+          sizeClassName="h-[26px] w-[26px]"
+        />
+      </span>
+    );
+  }
+
+  return <span className="whitespace-nowrap font-semibold text-[#21536a]">{ name }</span>;
+}
 
 function MusicTypeIconBadge({ item }: { item: LatestMusicItem | AllMusicItem }) {
   if (item.reviewType === "Song" && item.hasLyrics) {
@@ -237,7 +257,7 @@ export function MusicScrollStrip({
                             <>
                               <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
                               <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
-                                <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
+                                <MusicSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
                                 <span className="text-[#9bb0bb]">.</span>
                                 <span className="whitespace-nowrap">{ item.date }</span>
                               </div>
@@ -245,7 +265,7 @@ export function MusicScrollStrip({
                           ) : (
                             <div className="space-y-1 text-[11px] text-[#607887]">
                               <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap">
-                                <span className="whitespace-nowrap font-semibold text-[#21536a]">{ item.submitterName }</span>
+                                <MusicSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
                                 <span className="text-[#9bb0bb]">.</span>
                                 <span className="whitespace-nowrap">{ item.date }</span>
                               </div>

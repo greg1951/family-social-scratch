@@ -34,6 +34,7 @@ export interface BooksHomeBook {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterImageUrl?: string | null;
   dislikeCount: number;
   likeCount: number;
   loveCount: number;

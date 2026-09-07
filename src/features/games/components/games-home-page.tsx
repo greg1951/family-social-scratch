@@ -433,7 +433,7 @@ export function GamesHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#fff0df] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
+                  Go Home
                 </Link>
               </div>
               <div className="flex flex-col gap-1">

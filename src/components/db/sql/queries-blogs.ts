@@ -222,6 +222,7 @@ async function loadBlogHomePosts(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -230,6 +231,7 @@ async function loadBlogHomePosts(
   const memberNameById = new Map(
     memberRows.map((memberRow) => [memberRow.id, createMemberDisplayName(memberRow.firstName, memberRow.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((memberRow) => [memberRow.id, memberRow.memberImageUrl]));
 
   const commentsByPostId = new Map<number, BlogCommentRecord[]>();
   const selectedTagIdsByPostId = new Map<number, number[]>();
@@ -334,6 +336,7 @@ async function loadBlogHomePosts(
       authorMemberId: postRow.authorMemberId,
       familyId: postRow.familyId,
       authorName: memberNameById.get(postRow.authorMemberId) ?? `Member #${ postRow.authorMemberId }`,
+      authorImageUrl: memberImageUrlById.get(postRow.authorMemberId) ?? null,
       dislikeCount: reactionCounts.dislikeCount,
       likeCount: reactionCounts.likeCount,
       loveCount: reactionCounts.loveCount,

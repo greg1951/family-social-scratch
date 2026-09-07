@@ -7,6 +7,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Film, Heart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import MainDropMenu from "@/components/common/main-dropmenu";
+import MemberAvatar from "@/components/common/member-avatar";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import { BlogHomePost } from "@/components/db/types/blogs";
 import { Button } from "@/components/ui/button";
@@ -200,7 +201,7 @@ export function BlogsHomePage({
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#fff7f2] transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
                   <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
+                  Go Home
                 </Link>
               </div>
             </div>
@@ -365,7 +366,15 @@ export function BlogsHomePage({
                           </a>
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-[#9a5a4f]">By {post.authorName} • {formatDate(post.publishedAt ?? post.createdAt)}</p>
+                      <div className="mt-1 flex items-center gap-1 text-sm text-[#9a5a4f]">
+                        { post.authorImageUrl ? (
+                          <span className="inline-flex shrink-0" title={ post.authorName }>
+                            <MemberAvatar imageUrl={ post.authorImageUrl } firstName={ post.authorName } sizeClassName="h-[26px] w-[26px]" />
+                          </span>
+                        ) : <span>By { post.authorName }</span> }
+                        <span>•</span>
+                        <span>{ formatDate(post.publishedAt ?? post.createdAt) }</span>
+                      </div>
 
                       <BlogCardCoverImage src={ post.coverImageS3Key } alt={ post.coverImageAlt } />
 

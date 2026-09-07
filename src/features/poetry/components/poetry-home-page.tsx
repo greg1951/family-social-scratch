@@ -27,6 +27,7 @@ import {
   addPoemCommentAction,
   togglePoemReactionAction,
 } from "@/app/(features)/(poetry)/poetry/actions";
+import MemberAvatar from "@/components/common/member-avatar";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
@@ -57,6 +58,7 @@ type PoemDraft = {
   poetName: string;
   poemYear: string;
   submitterName: string;
+  submitterImageUrl: string | null;
   dislikeCount: number;
   likeCount: number;
   loveCount: number;
@@ -129,6 +131,7 @@ function createDraftFromPoem(poemRecord: PoetryHomePoem, member: MemberKeyDetail
     poetName: poemRecord.poetName,
     poemYear: poemRecord.poemYear ? String(poemRecord.poemYear) : "",
     submitterName: createSubmitterLabel(poemRecord, member),
+    submitterImageUrl: poemRecord.submitterImageUrl ?? null,
     dislikeCount: poemRecord.dislikeCount ?? 0,
     likeCount: poemRecord.likeCount ?? 0,
     loveCount: poemRecord.loveCount ?? 0,
@@ -595,7 +598,7 @@ export default function PoetryHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Home
+                  Go Home
                 </Link>
                 <Link
                   href="/poem-terms"
@@ -812,7 +815,15 @@ export default function PoetryHomePage({
                           ) : (
                             <p className="min-w-0 wrap-break-word line-clamp-2 text-xs font-bold leading-snug text-[#43245d] sm:text-sm">{ poemItem.poemTitle }</p>
                           ) }
-                          <p className="mt-1 text-[0.7rem] text-[#8d739f] sm:text-xs">Created { formatCreatedAt(poemItem.createdAt) }</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1 text-[0.7rem] text-[#8d739f] sm:flex-nowrap sm:text-xs">
+                            { poemItem.submitterImageUrl ? (
+                              <span className="inline-flex" title={ poemItem.submitterName }>
+                                <MemberAvatar imageUrl={ poemItem.submitterImageUrl } firstName={ poemItem.submitterName } sizeClassName="h-[26px] w-[26px]" />
+                              </span>
+                            ) : <span className="wrap-break-word font-semibold text-[#5c446f]">{ poemItem.submitterName }</span> }
+                            <span className="text-[#b29ac6]">.</span>
+                            <span className="whitespace-nowrap">{ formatCreatedAt(poemItem.createdAt) }</span>
+                          </div>
                           { poemItem.status === "draft" ? (
                             <p className="mt-1 inline-flex w-fit rounded-full border border-[#d4a64f] bg-[#fff5dc] px-2 py-0.5 text-[0.62rem] font-bold uppercase tracking-[0.12em] text-[#9a5a06] sm:text-[0.65rem]">
                               Draft
@@ -832,10 +843,6 @@ export default function PoetryHomePage({
                               </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-x-1 gap-y-1 sm:gap-x-1.5 md:gap-x-2">
-                              <div className="min-w-32 max-w-full">
-                                <p className="text-[0.64rem] font-bold uppercase tracking-[0.16em] text-[#8b69ab]">Reviewer</p>
-                                <p className="wrap-break-word text-xs font-semibold text-[#5c446f] sm:text-sm">{ poemItem.submitterName }</p>
-                              </div>
                               <div className="inline-flex items-center gap-1 text-[0.7rem] font-semibold text-[#5c446f] sm:text-xs">
                                 <ThumbsDown className="size-3 text-[#7b6394] sm:size-3.5" />
                                 { poemItem.dislikeCount }
