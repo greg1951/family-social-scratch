@@ -12,8 +12,9 @@ type MemberAvatarProps = {
 };
 
 function getInitials(firstName?: string, lastName?: string) {
-  const first = firstName?.trim()?.[0] ?? "";
-  const last = lastName?.trim()?.[0] ?? "";
+  const nameParts = firstName?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const first = nameParts[0]?.[0] ?? "";
+  const last = lastName?.trim()?.[0] ?? (nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : "");
   const initials = `${ first }${ last }`.toUpperCase();
   return initials || "?";
 }

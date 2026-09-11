@@ -368,6 +368,7 @@ async function loadFoodiesTemplateManagementRecords(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -376,6 +377,7 @@ async function loadFoodiesTemplateManagementRecords(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   return templateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
@@ -1218,6 +1220,7 @@ async function loadFoodiesRecipeDetail(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -1226,6 +1229,7 @@ async function loadFoodiesRecipeDetail(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   const submitterLike = likeRows.find((row) => row.memberId === recipeRow.memberId) ?? null;
   const nonSubmitterLikeRows = likeRows.filter((row) => row.memberId !== recipeRow.memberId);
@@ -1285,6 +1289,7 @@ async function loadFoodiesRecipeDetail(
     memberId: recipeRow.memberId,
     familyId: recipeRow.familyId,
     submitterName: memberNameById.get(recipeRow.memberId) ?? `Member #${recipeRow.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(recipeRow.memberId) ?? null,
     submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
     commentCount: familyCommentRows.length,
     noRatingCount,

@@ -28,6 +28,7 @@ export interface FoodiesRecipeDetail {
   memberId: number;
   familyId: number;
   submitterName: string;
+  submitterImageUrl: string | null;
   submitterLikenessDegree: number | null;
   commentCount: number;
   noRatingCount: number;

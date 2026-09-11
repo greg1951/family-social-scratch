@@ -69,14 +69,6 @@ type FoodiesScrollStripProps = {
   onOpenItem?: (id: number) => void;
 };
 
-function RecipeSubmitter({ imageUrl, name }: { imageUrl: string | null; name: string }) {
-  if (imageUrl) {
-    return <span className="inline-flex shrink-0" title={ name }><MemberAvatar imageUrl={ imageUrl } firstName={ name } sizeClassName="h-[26px] w-[26px]" /></span>;
-  }
-
-  return <span className="whitespace-nowrap font-semibold text-[#476232]">{ name }</span>;
-}
-
 function RecipeImage({ src, alt }: { src: string; alt: string }) {
   const [resolvedSrc, setResolvedSrc] = useState(src);
 
@@ -186,6 +178,14 @@ export function FoodiesScrollStrip({
                     <div className="relative aspect-[16/6.7] overflow-hidden sm:aspect-16/10">
                       <RecipeImage src={ item.imageSrc } alt={ item.imageAlt } />
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
+                      <span className="absolute left-3 top-3 inline-flex" title={ item.submitterName }>
+                        <MemberAvatar
+                          imageUrl={ item.submitterImageUrl }
+                          firstName={ item.submitterName }
+                          sizeClassName="h-10 w-10"
+                          chromeClassName="border-2 border-white shadow-md"
+                        />
+                      </span>
                       { item.hasDiscussionThread ? (
                         <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#578c24] shadow-sm">
                           <MessageSquare className="size-4" aria-label="Discussion thread available" />
@@ -198,11 +198,7 @@ export function FoodiesScrollStrip({
                         <div className="flex items-center justify-between gap-3">
                           <h3 className="min-w-0 select-none text-sm font-black leading-snug tracking-tight text-[#2f4820]">{ item.name }</h3>
                         </div>
-                        <div className="mt-1 flex select-none flex-wrap items-center gap-1 text-[11px] text-[#647a50] sm:flex-nowrap">
-                          <RecipeSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
-                          <span className="text-[#8ca479]">.</span>
-                          <span className="whitespace-nowrap">{ item.date }</span>
-                        </div>
+                        <p className="mt-1 select-none whitespace-nowrap text-[11px] text-[#647a50]">{ item.date }</p>
                         { item.status === "draft" ? (
                           <div className="mt-2 inline-flex select-none rounded-full border border-[#f0c36c] bg-[#fff6df] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#9a6b15]">
                             Draft

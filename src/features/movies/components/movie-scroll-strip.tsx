@@ -78,14 +78,6 @@ type MovieScrollStripProps = {
   onOpenItem?: (id: number) => void;
 };
 
-function MovieSubmitter({ imageUrl, name }: { imageUrl: string | null; name: string }) {
-  if (imageUrl) {
-    return <span className="inline-flex shrink-0" title={ name }><MemberAvatar imageUrl={ imageUrl } firstName={ name } sizeClassName="h-[26px] w-[26px]" /></span>;
-  }
-
-  return <span className="whitespace-nowrap font-semibold text-[#8a5a22]">{ name }</span>;
-}
-
 function SubmitterRatingIcon({ likenessDegree }: { likenessDegree: number | null }) {
   if (likenessDegree === 1) {
     return <ThumbsUp className="size-4 text-[#b8581a]" aria-label="Submitter rated thumbs up" />;
@@ -231,6 +223,14 @@ export function MovieScrollStrip({
                         </div>
                       ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
+                      <span className="absolute left-3 top-3 inline-flex" title={ item.submitterName }>
+                        <MemberAvatar
+                          imageUrl={ item.submitterImageUrl }
+                          firstName={ item.submitterName }
+                          sizeClassName="h-10 w-10"
+                          chromeClassName="border-2 border-white shadow-md"
+                        />
+                      </span>
                       <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2">
                         { item.hasDiscussionThread ? (
                           <div className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#b8581a] shadow-sm">
@@ -263,11 +263,7 @@ export function MovieScrollStrip({
                           </h3>
                           <SubmitterRatingBadge likenessDegree={ item.submitterLikenessDegree } />
                         </div>
-                        <div className="mt-0.5 flex select-none flex-wrap items-center gap-x-1 gap-y-0 text-[10px] leading-tight text-[#607887] sm:flex-nowrap">
-                          <MovieSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
-                          <span className="text-[#bfa08a]">.</span>
-                          <span className="whitespace-nowrap">{ item.date }</span>
-                        </div>
+                        <p className="mt-0.5 select-none whitespace-nowrap text-[10px] leading-tight text-[#607887]">{ item.date }</p>
                         { item.kind !== "top-rated" ? (
                           <div className="pointer-events-none mt-1 flex select-none flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] leading-tight text-[#607887]">
                             <span className="inline-flex items-center gap-1 font-semibold text-[#6d5c52]">

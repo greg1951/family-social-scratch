@@ -18,6 +18,7 @@ function createRecipeDetail(id: number): FoodiesRecipeDetail {
     memberId: 22,
     familyId: 7,
     submitterName: "Member Name",
+    submitterImageUrl: null,
     submitterLikenessDegree: null,
     commentCount: 0,
     noRatingCount: 0,

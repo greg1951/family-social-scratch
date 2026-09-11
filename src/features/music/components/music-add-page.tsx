@@ -5,7 +5,9 @@ import LinkExtension from "@tiptap/extension-link";
 import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import type { EditorView } from "@tiptap/pm/view";
+import { EditorContent, type Editor, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
   Bold,
@@ -226,6 +228,41 @@ function getLyricsDocument(value?: string): JSONContent {
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
+function getLyricsLineCount(editor: Editor | null) {
+  if (!editor) {
+    return 1;
+  }
+
+  const editorText = editor.getText({ blockSeparator: "\n" });
+
+  if (!editorText.trim()) {
+    return 1;
+  }
+
+  return editorText.split("\n").length;
+}
+
+// Pastes each source line as its own paragraph so deliberate blank lines aren't collapsed.
+function handleLinePreservingPaste(view: EditorView, event: ClipboardEvent) {
+  const text = event.clipboardData?.getData("text/plain");
+
+  if (!text) {
+    return false;
+  }
+
+  event.preventDefault();
+
+  const { state, dispatch } = view;
+  const paragraphType = state.schema.nodes.paragraph;
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const nodes = lines.map((line) => (
+    line.length > 0 ? paragraphType.create(null, state.schema.text(line)) : paragraphType.create()
+  ));
+
+  dispatch(state.tr.replaceSelection(new Slice(Fragment.from(nodes), 0, 0)).scrollIntoView());
+  return true;
+}
+
 export function MusicAddPage({
   musicTags,
   musicTemplates,
@@ -341,6 +378,8 @@ export function MusicAddPage({
     }
   }, [editor, initialMusic, isEditing]);
 
+  const [lyricsLineCount, setLyricsLineCount] = useState(1);
+
   const lyricsEditor = useEditor({
     extensions: [StarterKit, Underline, LinkExtension.configure({ autolink: true, defaultProtocol: "https", openOnClick: false }), Table.configure({ resizable: true }), TableRow, TableHeader, TableCell],
     content: getLyricsDocument(initialLyrics?.lyricsJson),
@@ -348,10 +387,18 @@ export function MusicAddPage({
     shouldRerenderOnTransaction: true,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-56 rounded-2xl border border-[#c8d9f3] bg-white px-4 py-4 text-[#203b66] shadow-xs outline-none focus:outline-none",
+        class: "tiptap min-h-56 bg-white px-4 py-4 text-[#203b66] outline-none focus:outline-none",
       },
+      handlePaste: handleLinePreservingPaste,
+    },
+    onUpdate({ editor }) {
+      setLyricsLineCount(getLyricsLineCount(editor));
     },
   });
+
+  useEffect(() => {
+    setLyricsLineCount(getLyricsLineCount(lyricsEditor));
+  }, [lyricsEditor]);
 
   useEffect(() => {
     if (!lyricsEditor || !initialLyrics || !isEditing) {
@@ -360,6 +407,7 @@ export function MusicAddPage({
     const parsedLyricsJson = parseSerializedTipTapDocument(initialLyrics.lyricsJson);
     if (parsedLyricsJson.success) {
       lyricsEditor.commands.setContent(parsedLyricsJson.content);
+      setLyricsLineCount(getLyricsLineCount(lyricsEditor));
     }
   }, [lyricsEditor, initialLyrics, isEditing]);
 
@@ -1031,7 +1079,16 @@ export function MusicAddPage({
                       <ToolbarButton label="Horizontal rule" onClick={ () => lyricsEditor?.chain().focus().setHorizontalRule().run() } disabled={ !lyricsEditor }><Minus /></ToolbarButton>
                     </div>
                   ) : null }
-                  <EditorContent editor={ lyricsEditor } />
+                  <div className="flex max-h-120 overflow-auto">
+                    <div className="w-11 shrink-0 border-r border-[#c8d9f3] bg-[#eef4ff] py-4 text-base text-[#4b6ea8]">
+                      { Array.from({ length: Math.max(lyricsLineCount, 1) }, (_, index) => (
+                        <div key={ index + 1 } className="h-5 text-center leading-5 tabular-nums">
+                          { index + 1 }
+                        </div>
+                      )) }
+                    </div>
+                    <EditorContent editor={ lyricsEditor } className="min-w-0 flex-1" />
+                  </div>
                 </div>
               </div>
             </div>

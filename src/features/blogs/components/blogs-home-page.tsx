@@ -366,17 +366,17 @@ export function BlogsHomePage({
                           </a>
                         ) : null}
                       </div>
-                      <div className="mt-1 flex items-center gap-1 text-sm text-[#9a5a4f]">
-                        { post.authorImageUrl ? (
-                          <span className="inline-flex shrink-0" title={ post.authorName }>
-                            <MemberAvatar imageUrl={ post.authorImageUrl } firstName={ post.authorName } sizeClassName="h-[26px] w-[26px]" />
-                          </span>
-                        ) : <span>By { post.authorName }</span> }
-                        <span>•</span>
-                        <span>{ formatDate(post.publishedAt ?? post.createdAt) }</span>
+                      <div className="relative">
+                        <BlogCardCoverImage src={ post.coverImageS3Key } alt={ post.coverImageAlt } />
+                        <span className="absolute left-3 top-3 inline-flex" title={ post.authorName }>
+                          <MemberAvatar
+                            imageUrl={ post.authorImageUrl }
+                            firstName={ post.authorName }
+                            sizeClassName="h-10 w-10"
+                            chromeClassName="border-2 border-white shadow-md"
+                          />
+                        </span>
                       </div>
-
-                      <BlogCardCoverImage src={ post.coverImageS3Key } alt={ post.coverImageAlt } />
 
                       {post.status === "draft" ? (
                         <div className="mt-1">
@@ -403,6 +403,10 @@ export function BlogsHomePage({
                           ) : null}
                         </div>
                       ) : null}
+
+                      <p className="mt-2 text-sm text-[#9a5a4f]">
+                        { formatDate(post.publishedAt ?? post.createdAt) }
+                      </p>
 
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-xs font-semibold text-[#8a4d45]">
                         <span className="inline-flex items-center gap-1">

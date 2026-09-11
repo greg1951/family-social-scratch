@@ -18,6 +18,7 @@ import {
   toggleMovieLikeAction,
 } from "@/app/(features)/(movies)/movies/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import MemberAvatar from "@/components/common/member-avatar";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
@@ -772,7 +773,7 @@ export function MovieHomePage({
                 <MovieViewer movieJson={ selectedMovieBasic.movieJson } />
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-2xl border border-[#f0d9c4] bg-white">
-                    <div className="aspect-16/10 overflow-hidden">
+                    <div className="relative aspect-16/10 overflow-hidden">
                       { selectedMovieBasic.movieImageUrl ? (
                         <ModalMovieImage
                           src={ selectedMovieBasic.movieImageUrl }
@@ -783,6 +784,14 @@ export function MovieHomePage({
                           <span className="text-center text-sm font-semibold text-white/80">No movie image available.</span>
                         </div>
                       ) }
+                      <span className="absolute left-3 top-3 inline-flex" title={ selectedMovieBasic.submitterName }>
+                        <MemberAvatar
+                          imageUrl={ selectedMovieBasic.submitterImageUrl }
+                          firstName={ selectedMovieBasic.submitterName }
+                          sizeClassName="h-10 w-10"
+                          chromeClassName="border-2 border-white shadow-md"
+                        />
+                      </span>
                     </div>
                   </div>
 

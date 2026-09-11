@@ -125,8 +125,10 @@ function formatBirthday(date?: Date) {
 
 export default function FamilyMembersPanel({
   familyMembers,
+  familyName,
 }: {
   familyMembers: CurrentFamilyMember[];
+  familyName: string;
 }) {
   const router = useRouter();
   const sortedMembers = useMemo(
@@ -353,14 +355,14 @@ export default function FamilyMembersPanel({
   return (
     <CardContent className="space-y-4 pt-5">
       <div className="rounded-2xl border border-slate-200 bg-[linear-gradient(135deg,#f9fdff_0%,#eefaff_50%,#fff8ef_100%)] px-4 py-4 shadow-[0_18px_38px_-32px_rgba(16,54,74,0.55)]">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             {/* <p className="text-sm font-semibold uppercase tracking-[0.22em] text-[#2f7a95]">Family Members</p> */}
-            <h3 className="mt-1 text-base font-bold text-[#10364a]">Manage your family membership entirely from here.</h3>
+            <h3 className="mt-1 text-base font-bold text-[#10364a]">{ familyName }</h3>
           </div>
           <div className="rounded-xl border border-white/70 bg-white/85 px-4 py-3 text-sm text-[#456271] shadow-sm">
             {/* <p className="font-semibold text-[#10364a]">{ founderDetails.familyName }</p> */}
-            <p>{ sortedMembers.length } active records in this family list</p>
+            <p>{ sortedMembers.length } active family members</p>
           </div>
         </div>
       </div>

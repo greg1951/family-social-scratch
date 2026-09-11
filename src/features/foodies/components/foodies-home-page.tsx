@@ -17,6 +17,7 @@ import {
   getFoodiesRecipeDetailAction,
 } from "@/app/(features)/(foodies)/foodies/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import MemberAvatar from "@/components/common/member-avatar";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import { FoodiesRecipe, FoodiesRecipeDetail } from "@/components/db/types/recipes";
 import {
@@ -1127,11 +1128,19 @@ export function FoodiesHomePage({
 
                 <div className="space-y-4">
                   <div className="overflow-hidden rounded-2xl border border-[#cadfbb] bg-white">
-                    <div className="aspect-16/10 overflow-hidden">
+                    <div className="relative aspect-16/10 overflow-hidden">
                       <ModalRecipeImage
                         src={ selectedRecipeBasic.recipeImageUrl ?? "/images/foodies/banana-bread-tablet.png" }
                         alt={ `${ selectedRecipeBasic.recipeTitle } recipe photo` }
                       />
+                      <span className="absolute left-3 top-3 inline-flex" title={ selectedRecipeBasic.submitterName }>
+                        <MemberAvatar
+                          imageUrl={ selectedRecipeBasic.submitterImageUrl }
+                          firstName={ selectedRecipeBasic.submitterName }
+                          sizeClassName="h-10 w-10"
+                          chromeClassName="border-2 border-white shadow-md"
+                        />
+                      </span>
                     </div>
                   </div>
 

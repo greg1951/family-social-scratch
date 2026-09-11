@@ -41,9 +41,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
       "When someone in the family has a birthday, send me a reminder the week before.",
     ],
     user: [
-      "Tour Guide: provides useful tips as you navigate through My Family Social, good for new members!",
-      "Post Reactions: Send me a thread in the family mailbox when another family member reacts to one of my posts or comments.",
-      "Use Nickname: If you go by a nickname and want that used instead of your name, check this.",
+      "The tours provide a means for new members to get acquainted with My Family Social features. The tours are short and sweet and highly recommended.",
     ],
   };
 
@@ -115,26 +113,30 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
         <div className="grid sm:grid-cols-1">
           <fieldset disabled={ form.formState.isSubmitting } className="space-y-3 rounded-2xl border-[1] p-3">
             { sectionCategories.map((category) => {
-              const sectionKey = category.toLowerCase();
-              const sectionHelpLines = sectionHelpTextMap[sectionKey] ?? [];
-              const hoverCardWidthClass = sectionKey === "user" ? "w-[283px]" : "w-[226px]";
+              const sectionKey = category.trim().toLowerCase();
               const sectionNotifications = notificationOptions
                 .map((notification, index) => ({ notification, index }))
                 .filter((entry) => entry.notification.optionCategory === category)
                 .sort((a, b) => a.notification.optionSeqNo - b.notification.optionSeqNo);
+              const hasTourGuideOption = sectionNotifications.some(
+                ({ notification }) => notification.optionName.trim().toLowerCase() === "tour guide"
+              );
+              const sectionConfigKey = hasTourGuideOption || sectionKey === "user settings" ? "user" : sectionKey;
+              const sectionHelpLines = sectionHelpTextMap[sectionConfigKey] ?? [];
+              const hoverCardWidthClass = sectionConfigKey === "user" ? "w-[283px]" : "w-[226px]";
 
               return (
                 <div key={ category } className="rounded-xl border p-3">
                   <div className="mb-3 flex items-center gap-1.5">
                     <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#2f7a95]">
-                      { sectionHeadingMap[sectionKey] ?? category }
+                      { sectionHeadingMap[sectionConfigKey] ?? category }
                     </h3>
                     <HoverCard>
                       <HoverCardTrigger asChild>
                         <button
                           type="button"
                           className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[#2f7a95] transition hover:bg-[#e8f6fb]"
-                          aria-label={ `About ${sectionHeadingMap[sectionKey] ?? category}` }
+                          aria-label={ `About ${sectionHeadingMap[sectionConfigKey] ?? category}` }
                         >
                           <CircleQuestionMark className="h-4 w-4" />
                         </button>

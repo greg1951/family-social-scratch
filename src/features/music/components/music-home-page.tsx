@@ -10,7 +10,7 @@ import { ArrowLeft, CircleQuestionMark, Edit3, Eye, Heart, MessageSquare, Messag
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import {
@@ -26,6 +26,7 @@ import {
   toggleMusicLikeAction,
 } from "@/app/(features)/(music)/music/actions";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
+import MemberAvatar from "@/components/common/member-avatar";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import {
@@ -135,7 +136,7 @@ function getSpotifyTrackUrisFromPlaylistMedia(playlistMedia: MusicDetail["playli
   return Array.from(trackUris);
 }
 
-function MusicViewer({ musicJson, compact = false, minHeightClass }: { musicJson?: string; compact?: boolean; minHeightClass?: string }) {
+function MusicViewer({ musicJson, compact = false, minHeightClass, showLineNumbers = false }: { musicJson?: string; compact?: boolean; minHeightClass?: string; showLineNumbers?: boolean }) {
   const viewer = useEditor({
     editable: false,
     extensions: [
@@ -164,12 +165,87 @@ function MusicViewer({ musicJson, compact = false, minHeightClass }: { musicJson
     viewer.commands.setContent(getMusicDocument(musicJson));
   }, [viewer, musicJson]);
 
+  const lyricsLines = useMemo(() => {
+    if (!showLineNumbers) {
+      return [""];
+    }
+
+    const viewerText = viewer?.getText({ blockSeparator: "\n" }) ?? "";
+
+    return viewerText.trim().length === 0 ? [""] : viewerText.split("\n");
+  }, [showLineNumbers, viewer, musicJson]);
+
+  const lineCount = lyricsLines.length;
+  const useTwoColumnLyricsLayout = showLineNumbers && lineCount > 40;
+  const lyricsSplitIndex = Math.ceil(lineCount / 2);
+  const lyricsColumnOneLines = lyricsLines.slice(0, lyricsSplitIndex);
+  const lyricsColumnTwoLines = lyricsLines.slice(lyricsSplitIndex);
+
+  if (useTwoColumnLyricsLayout) {
+    return (
+      <div className="max-h-120 overflow-auto rounded-2xl border border-[#c8d9f3] bg-[#eef4ff] p-2">
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white">
+            <div className="flex">
+              <div className="w-12 shrink-0 border-r border-[#c8d9f3] bg-[#eef4ff] py-4 text-sm text-[#4b6ea8]">
+                { lyricsColumnOneLines.map((_, index) => (
+                  <div key={ index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                    { index + 1 }
+                  </div>
+                )) }
+              </div>
+              <div className="min-w-0 flex-1 px-4 py-4">
+                { lyricsColumnOneLines.map((line, index) => (
+                  <div key={ `left-${ index + 1 }` } className="min-h-6 text-sm leading-6 text-[#203b66] whitespace-pre-wrap wrap-break-word">
+                    { line || "\u00A0" }
+                  </div>
+                )) }
+              </div>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white">
+            <div className="flex">
+              <div className="w-12 shrink-0 border-r border-[#c8d9f3] bg-[#eef4ff] py-4 text-sm text-[#4b6ea8]">
+                { lyricsColumnTwoLines.map((_, index) => (
+                  <div key={ lyricsSplitIndex + index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                    { lyricsSplitIndex + index + 1 }
+                  </div>
+                )) }
+              </div>
+              <div className="min-w-0 flex-1 px-4 py-4">
+                { lyricsColumnTwoLines.map((line, index) => (
+                  <div key={ `right-${ lyricsSplitIndex + index + 1 }` } className="min-h-6 text-sm leading-6 text-[#203b66] whitespace-pre-wrap wrap-break-word">
+                    { line || "\u00A0" }
+                  </div>
+                )) }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="rounded-2xl border border-[#c8d9f3] bg-white p-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
-      <EditorContent editor={ viewer } />
+    <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1 [&_.tiptap_hr]:my-4 [&_.tiptap_hr]:border-[#c8d9f3] [&_.tiptap_table]:w-full [&_.tiptap_table]:border-collapse [&_.tiptap_table]:border [&_.tiptap_table]:border-[#c8d9f3] [&_.tiptap_th]:border [&_.tiptap_th]:border-[#c8d9f3] [&_.tiptap_th]:bg-[#edf4ff] [&_.tiptap_th]:px-2 [&_.tiptap_th]:py-1 [&_.tiptap_th]:align-top [&_.tiptap_td]:border [&_.tiptap_td]:border-[#c8d9f3] [&_.tiptap_td]:px-2 [&_.tiptap_td]:py-1 [&_.tiptap_td]:align-top">
+      <div className={ showLineNumbers ? "flex max-h-120 overflow-auto p-4" : "p-4" }>
+        { showLineNumbers ? (
+          <div className="w-11 shrink-0 border-r border-[#c8d9f3] bg-[#eef4ff] py-4 pr-2 text-base text-[#4b6ea8]">
+            { Array.from({ length: Math.max(lineCount, 1) }, (_, index) => (
+              <div key={ index + 1 } className="h-5 text-center leading-5 tabular-nums">
+                { index + 1 }
+              </div>
+            )) }
+          </div>
+        ) : null }
+        <EditorContent editor={ viewer } className={ showLineNumbers ? "min-w-0 flex-1 pl-4" : "" } />
+      </div>
     </div>
   );
 }
+
+
 
 export function MusicHomePage({
   musics,
@@ -192,6 +268,7 @@ export function MusicHomePage({
   const [spotifyConnectionNeedsReconnect, setSpotifyConnectionNeedsReconnect] = useState(!hasSpotifyAccessToken);
   const [spotifyPlaybackState, setSpotifyPlaybackState] = useState<"idle" | "playing" | "paused">("idle");
   const [isViewMusicOpen, setIsViewMusicOpen] = useState(false);
+  const [isSpotifyRequirementsHoverOpen, setIsSpotifyRequirementsHoverOpen] = useState(false);
   const [musicStripMode, setMusicStripMode] = useState<"all" | "latest" | "top-rated">("all");
   const [dateScope, setDateScope] = useState<"everything" | "date-range">("everything");
   const [searchValue, setSearchValue] = useState("");
@@ -709,7 +786,13 @@ export function MusicHomePage({
           </div>
         </div>
 
-        <Dialog open={ isViewMusicOpen } onOpenChange={ setIsViewMusicOpen }>
+        <Dialog
+          open={ isViewMusicOpen }
+          onOpenChange={ (isOpen) => {
+            setIsViewMusicOpen(isOpen);
+            setIsSpotifyRequirementsHoverOpen(false);
+          } }
+        >
           <DialogContent className="border-[#c8d9f3] bg-[#f7fbff] sm:max-w-5xl">
             <DialogHeader>
               <DialogTitle className="text-[#203b66]">{ selectedMusicBasic?.musicTitle ?? "Music" }</DialogTitle>
@@ -730,7 +813,7 @@ export function MusicHomePage({
                   </div>
                   <div className="space-y-4">
                     <div className="overflow-hidden rounded-2xl border border-[#c8d9f3] bg-white">
-                      <div className="aspect-16/10 overflow-hidden">
+                      <div className="relative aspect-16/10 overflow-hidden">
                         { selectedMusicBasic.musicImageUrl ? (
                           <ModalMusicImage
                             src={ selectedMusicBasic.musicImageUrl }
@@ -745,6 +828,14 @@ export function MusicHomePage({
                             </div>
                           </div>
                         ) }
+                        <span className="absolute left-3 top-3 inline-flex" title={ selectedMusicBasic.submitterName }>
+                          <MemberAvatar
+                            imageUrl={ selectedMusicBasic.submitterImageUrl }
+                            firstName={ selectedMusicBasic.submitterName }
+                            sizeClassName="h-10 w-10"
+                            chromeClassName="border-2 border-white shadow-md"
+                          />
+                        </span>
                       </div>
                     </div>
                     { !isSelectedPlaylist ? (
@@ -759,9 +850,15 @@ export function MusicHomePage({
                       <div className="flex items-center gap-2">
                         <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Playlist Media</p>
                         { selectedMusicDetail.playlistMedia.some((media) => media.mediaSource === "spotify") ? (
-                          <HoverCard>
+                          <HoverCard open={ isSpotifyRequirementsHoverOpen }>
                             <HoverCardTrigger asChild>
-                              <button type="button" aria-label="Spotify playlist account requirements" className="size-9 rounded-md shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2C5EAD] focus-visible:ring-offset-2">
+                              <button
+                                type="button"
+                                aria-label="Spotify playlist account requirements"
+                                className="size-9 rounded-md shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2C5EAD] focus-visible:ring-offset-2"
+                                onPointerEnter={ () => setIsSpotifyRequirementsHoverOpen(true) }
+                                onPointerLeave={ () => setIsSpotifyRequirementsHoverOpen(false) }
+                              >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="/icons/spotify-icon.png" alt="" className="size-9 rounded-md object-cover" />
                               </button>
@@ -915,7 +1012,7 @@ export function MusicHomePage({
                     <div>
                       <p className="text-[0.68rem] font-bold uppercase tracking-[0.32em] text-[#2C5EAD]">Lyrics</p>
                     </div>
-                    <MusicViewer musicJson={ selectedMusicDetail.lyrics.lyricsJson } />
+                    <MusicViewer musicJson={ selectedMusicDetail.lyrics.lyricsJson } showLineNumbers />
                   </div>
                 ) : null }
 

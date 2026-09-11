@@ -4,6 +4,8 @@ import type { JSONContent } from "@tiptap/core";
 import Underline from "@tiptap/extension-underline";
 import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
+import { Fragment, Slice } from "@tiptap/pm/model";
+import type { EditorView } from "@tiptap/pm/view";
 import { EditorContent, type Editor, useEditor } from "@tiptap/react";
 import {
   ArrowLeft,
@@ -290,6 +292,27 @@ function getEditorLineCount(editor: Editor | null) {
   return editorText.split("\n").length;
 }
 
+// Pastes each source line as its own paragraph so deliberate blank lines aren't collapsed.
+function handleLinePreservingPaste(view: EditorView, event: ClipboardEvent) {
+  const text = event.clipboardData?.getData("text/plain");
+
+  if (!text) {
+    return false;
+  }
+
+  event.preventDefault();
+
+  const { state, dispatch } = view;
+  const paragraphType = state.schema.nodes.paragraph;
+  const lines = text.replace(/\r\n?/g, "\n").split("\n");
+  const nodes = lines.map((line) => (
+    line.length > 0 ? paragraphType.create(null, state.schema.text(line)) : paragraphType.create()
+  ));
+
+  dispatch(state.tr.replaceSelection(new Slice(Fragment.from(nodes), 0, 0)).scrollIntoView());
+  return true;
+}
+
 function extractTipTapText(content: unknown): string {
   const parsed = extractTipTapTextFromNode(content);
 
@@ -419,6 +442,7 @@ export function PoemAddPage({
       attributes: {
         class: "tiptap min-h-[18rem]",
       },
+      handlePaste: handleLinePreservingPaste,
     },
     onUpdate({ editor }) {
       setVerseLineCount(getEditorLineCount(editor));

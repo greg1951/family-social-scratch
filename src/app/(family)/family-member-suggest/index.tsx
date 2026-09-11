@@ -181,6 +181,9 @@ export default function FamilyMemberSuggestForm({
         { founderDetails ? (
           <div className="flex items-center justify-between gap-3">
             <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-sky-800">Family Founder</p>
+            <p className="min-w-0 flex-1 truncate text-center text-sm font-semibold text-sky-900" title={ founderDetails.familyName }>
+              { founderDetails.familyName }
+            </p>
             <MemberListIdentity
               firstName={ founderDetails.firstName }
               lastName={ founderDetails.lastName }

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ImagePlus, KeyRound, Mail, ShieldCheck, Users } from "lucide-react";
+import { ImagePlus, KeyRound, Mail, ShieldCheck } from "lucide-react";
 
 import BackButton from "@/components/common/back-button";
 import MemberAvatar from "@/components/common/member-avatar";
@@ -44,13 +44,12 @@ export default async function TrialLayout({
               { memberAvatarDetails.isLoggedIn ? (
                 <div className="flex items-center justify-end gap-3" >
                   <div className="flex max-w-full flex-col gap-1 rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-right shadow-sm backdrop-blur">
+                    <span className="truncate text-[11px] font-semibold text-[#10364a] sm:text-xs">
+                      { memberAvatarDetails.firstName } { memberAvatarDetails.lastName }
+                    </span>
                     <span className="flex items-center justify-end gap-1.5 text-[11px] font-semibold text-[#10364a] sm:text-xs">
                       <Mail className="h-3.5 w-3.5 shrink-0 text-[#005472]" />
                       <span className="truncate">{ memberAvatarDetails.email }</span>
-                    </span>
-                    <span className="flex items-center justify-end gap-1.5 text-[11px] font-semibold text-[#10364a] sm:text-xs">
-                      <Users className="h-3.5 w-3.5 shrink-0 text-[#005472]" />
-                      <span className="truncate">{ memberAvatarDetails.familyName }</span>
                     </span>
                   </div>
                   <MemberAvatar

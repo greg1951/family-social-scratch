@@ -117,6 +117,7 @@ export default function FounderAccountTabs({
       <TabsContent value="family-members" className="mt-4 rounded-lg border">
         <FamilyMembersPanel
           familyMembers={ currentFamilyMembers }
+          familyName={ founderDetails.familyName }
         />
       </TabsContent>
 

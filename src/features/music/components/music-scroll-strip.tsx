@@ -76,22 +76,6 @@ type MusicScrollStripProps = {
   onOpenItem?: (id: number) => void;
 };
 
-function MusicSubmitter({ imageUrl, name }: { imageUrl: string | null; name: string }) {
-  if (imageUrl) {
-    return (
-      <span className="inline-flex shrink-0" title={ name }>
-        <MemberAvatar
-          imageUrl={ imageUrl }
-          firstName={ name }
-          sizeClassName="h-[26px] w-[26px]"
-        />
-      </span>
-    );
-  }
-
-  return <span className="whitespace-nowrap font-semibold text-[#21536a]">{ name }</span>;
-}
-
 function MusicTypeIconBadge({ item }: { item: LatestMusicItem | AllMusicItem }) {
   if (item.reviewType === "Song" && item.hasLyrics) {
     return (
@@ -243,6 +227,14 @@ export function MusicScrollStrip({
                         </div>
                       ) }
                       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(4,24,34,0),rgba(4,24,34,0.78))]" />
+                      <span className="absolute left-3 top-3 inline-flex" title={ item.submitterName }>
+                        <MemberAvatar
+                          imageUrl={ item.submitterImageUrl }
+                          firstName={ item.submitterName }
+                          sizeClassName="h-10 w-10"
+                          chromeClassName="border-2 border-white shadow-md"
+                        />
+                      </span>
                       { item.hasDiscussionThread ? (
                         <div className="pointer-events-none absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/92 text-[#2d87a8] shadow-sm">
                           <MessageSquare className="size-4" aria-label="Discussion thread available" />
@@ -256,20 +248,10 @@ export function MusicScrollStrip({
                           { item.imageSrc ? (
                             <>
                               <h3 className="min-w-0 text-base font-black leading-snug tracking-tight text-[#13364a]">{ item.name }</h3>
-                              <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-[#607887] sm:flex-nowrap">
-                                <MusicSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
-                                <span className="text-[#9bb0bb]">.</span>
-                                <span className="whitespace-nowrap">{ item.date }</span>
-                              </div>
+                              <p className="mt-1 whitespace-nowrap text-[11px] text-[#607887]">{ item.date }</p>
                             </>
                           ) : (
-                            <div className="space-y-1 text-[11px] text-[#607887]">
-                              <div className="flex flex-wrap items-center gap-1 sm:flex-nowrap">
-                                <MusicSubmitter imageUrl={ item.submitterImageUrl } name={ item.submitterName } />
-                                <span className="text-[#9bb0bb]">.</span>
-                                <span className="whitespace-nowrap">{ item.date }</span>
-                              </div>
-                            </div>
+                            <p className="whitespace-nowrap text-[11px] text-[#607887]">{ item.date }</p>
                           ) }
                           { item.status === "draft" ? (
                             <span className="mt-2 inline-flex w-fit items-center gap-1 rounded-full border border-[#d69b2d] bg-[#fff0b8] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-[#8d5200] shadow-[0_8px_16px_-10px_rgba(141,82,0,0.75)]">
