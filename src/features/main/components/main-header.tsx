@@ -33,6 +33,7 @@ export default async function MainHeader({
   };
 
   const menuFirstName = memberAvatarDetails.firstName || firstName;
+  const menuLastName = memberAvatarDetails.lastName;
   const menuEmail = memberAvatarDetails.email;
   const menuSessionFound = memberAvatarDetails.isLoggedIn;
   const menuIsFounder = memberAvatarDetails.isLoggedIn ? memberAvatarDetails.isFounder : isFounder;
@@ -56,6 +57,7 @@ export default async function MainHeader({
                 { isFeatureEnabled("threads") ? <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Mail Box" /> : null }
                 <MainDropMenu
                   firstName={ menuFirstName }
+                  lastName={ menuLastName }
                   email={ menuEmail }
                   sessionFound={ menuSessionFound }
                   isFounder={ menuIsFounder }

@@ -315,7 +315,7 @@ export async function updateMemberProfileByFounder(input: {
 }
 
 /*----------------- updateMemberImageUrl ------------------ */
-export async function updateMemberImageUrl(memberId: number, memberImageUrl: string)
+export async function updateMemberImageUrl(memberId: number, memberImageUrl: string | null)
   : Promise<UpdateMemberReturn> {
 
   const [result] = await db

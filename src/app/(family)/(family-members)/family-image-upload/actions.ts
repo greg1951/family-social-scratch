@@ -27,7 +27,7 @@ export async function getMemberImageUploadDetails() {
   };
 }
 
-export async function saveMemberImageUrl(memberImageUrl: string) {
+export async function saveMemberImageUrl(memberImageUrl: string | null) {
   const memberKeyDetails = await getMemberPageDetails();
   if (!memberKeyDetails.isLoggedIn) {
     return {

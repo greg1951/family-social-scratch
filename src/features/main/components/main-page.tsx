@@ -1,4 +1,5 @@
 import { Card } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
 import Link from "next/link";
 import MainLinkCard from "../../../components/common/main-link-card";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
@@ -162,16 +163,24 @@ export default async function MainPage() {
                 </div>
               </div>
 
-              <div id="main-profile-icon" className="shrink-0 self-center scale-90 sm:scale-95">
-                <MainDropMenu
-                  firstName={ memberKeyDetails.firstName }
-                  email={ memberKeyDetails.email }
-                  sessionFound={ memberKeyDetails.isLoggedIn }
-                  isFounder={ memberKeyDetails.isFounder }
-                  isAdmin={ !!memberKeyDetails.isAdmin }
-                  memberImageUrl={ memberImageUrl }
-                  unreadThreadCount={ unreadThreadCount }
-                />
+              <div className="flex shrink-0 items-center gap-2 self-center">
+                { !memberKeyDetails.isLoggedIn && (
+                  <Button asChild className="h-8 rounded-xl bg-[linear-gradient(135deg,#005472_0%,#0a779f_52%,#59cdf7_100%)] px-4 text-xs font-bold text-white shadow-[0_18px_30px_-18px_rgba(0,84,114,0.8)] hover:brightness-110">
+                    <Link href="/login">Login</Link>
+                  </Button>
+                ) }
+                <div id="main-profile-icon" className="scale-90 sm:scale-95">
+                  <MainDropMenu
+                    firstName={ memberKeyDetails.firstName }
+                    lastName={ memberKeyDetails.lastName }
+                    email={ memberKeyDetails.email }
+                    sessionFound={ memberKeyDetails.isLoggedIn }
+                    isFounder={ memberKeyDetails.isFounder }
+                    isAdmin={ !!memberKeyDetails.isAdmin }
+                    memberImageUrl={ memberImageUrl }
+                    unreadThreadCount={ unreadThreadCount }
+                  />
+                </div>
               </div>
             </div>
           </Card>

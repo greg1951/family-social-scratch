@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Info, Loader2, Upload } from "lucide-react";
+import { Info, Loader2, Upload, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -14,7 +14,7 @@ type S3ManagerProps = {
   initialMemberImageUrl: string | null;
 };
 
-const MAX_FILE_SIZE_BYTES = 50 * 1024;
+const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024;
 
 function uploadWithProgress(url: string, file: File, contentType: string, onProgress: (percent: number) => void) {
   return new Promise<void>((resolve, reject) => {
@@ -48,6 +48,7 @@ function uploadWithProgress(url: string, file: File, contentType: string, onProg
 export default function S3Manager({ memberId, initialMemberImageUrl }: S3ManagerProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [memberImageUrl, setMemberImageUrl] = useState<string | null>(initialMemberImageUrl);
   const [signedPreviewUrl, setSignedPreviewUrl] = useState<string | null>(null);
@@ -137,7 +138,7 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
-      toast.error("Image size exceeds 50 KB. Please choose a smaller file.");
+      toast.error("Image size exceeds 8 MB. Please choose a smaller file.");
       e.target.value = "";
       return;
     }
@@ -208,6 +209,35 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       toast.error(error instanceof Error ? error.message : "Image upload failed.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (selectedFile) {
+      setSelectedFile(null);
+      setUploadProgress(0);
+      return;
+    }
+
+    if (!memberImageUrl) {
+      return;
+    }
+
+    try {
+      setIsRemoving(true);
+      const removeResult = await saveMemberImageUrl(null);
+      if (!removeResult.success) {
+        throw new Error(removeResult.message ?? "Failed to remove profile image.");
+      }
+
+      setMemberImageUrl(null);
+      setSignedPreviewUrl(null);
+      toast.success("Profile image removed.");
+    } catch (error) {
+      console.error("S3 remove image error", error);
+      toast.error(error instanceof Error ? error.message : "Failed to remove profile image.");
+    } finally {
+      setIsRemoving(false);
     }
   };
 
@@ -286,12 +316,23 @@ export default function S3Manager({ memberId, initialMemberImageUrl }: S3Manager
       { previewUrl && (
         <div className="space-y-2">
           <p className="text-sm font-semibold text-[#10364a]">Image preview</p>
-          {/* eslint-disable-next-line @next/next/no-img-element */ }
-          <img
-            src={ previewUrl }
-            alt="Member profile preview"
-            className="h-36 w-36 rounded-full border border-[#d8eef7] object-cover"
-          />
+          <div className="relative h-36 w-36">
+            {/* eslint-disable-next-line @next/next/no-img-element */ }
+            <img
+              src={ previewUrl }
+              alt="Member profile preview"
+              className="h-36 w-36 rounded-full border border-[#d8eef7] object-cover"
+            />
+            <button
+              type="button"
+              onClick={ handleRemoveImage }
+              disabled={ isUploading || isRemoving }
+              aria-label="Remove image"
+              className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#005472] text-white shadow-[0_4px_10px_-2px_rgba(0,0,0,0.5)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
       ) }
 

@@ -17,6 +17,7 @@ export default async function FeatureProfileMenu({ mobileVariant = "default" }: 
         <div className="pointer-events-auto flex items-center">
         <MainDropMenu
           firstName={ memberAvatarDetails.firstName }
+          lastName={ memberAvatarDetails.lastName }
           email={ memberAvatarDetails.email }
           sessionFound={ memberAvatarDetails.isLoggedIn }
           isFounder={ memberAvatarDetails.isFounder }

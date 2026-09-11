@@ -5,9 +5,10 @@ import { SettingsIcon } from 'lucide-react';
 import MemberAvatar from "@/components/common/member-avatar";
 
 
-export default function MainDropMenu({ firstName, email, sessionFound, isFounder, isAdmin, memberImageUrl, unreadThreadCount, sizeVariant = "default" }
+export default function MainDropMenu({ firstName, lastName, email, sessionFound, isFounder, isAdmin, memberImageUrl, unreadThreadCount, sizeVariant = "default" }
   : {
     firstName: string;
+    lastName?: string;
     email: string;
     sessionFound: boolean;
     isFounder: boolean;
@@ -46,7 +47,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
               <MemberAvatar
                 imageUrl={ memberImageUrl ?? null }
                 firstName={ firstName }
-                lastName=""
+                lastName={ lastName ?? "" }
                 sizeClassName={ `${ mobileAvatarSize } md:h-14 md:w-14` }
                 chromeClassName="border-white/45 bg-white/12 shadow-none backdrop-blur"
               />
@@ -168,16 +169,7 @@ export default function MainDropMenu({ firstName, email, sessionFound, isFounder
             </DropdownMenuItem>
           </DropdownMenuGroup>
         )
-          : (
-            <DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-base font-bold">
-                <Link href="/login">
-                  Login
-                </Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          ) }
+          : null }
       </DropdownMenuContent>
     </DropdownMenu>
   )
