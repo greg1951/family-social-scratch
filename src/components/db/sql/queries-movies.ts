@@ -347,6 +347,7 @@ async function loadMovieTemplateManagementRecords(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -587,6 +588,7 @@ async function loadMovieDetail(
         id: member.id,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(member)
       .where(inArray(member.id, memberIds))
@@ -595,6 +597,7 @@ async function loadMovieDetail(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   const submitterLike = likeRows.find((row) => row.memberId === movieRow.memberId) ?? null;
   const audienceLikeRows = likeRows.filter((row) => row.memberId !== movieRow.memberId);
@@ -659,6 +662,7 @@ async function loadMovieDetail(
     memberId: movieRow.memberId,
     familyId: movieRow.familyId,
     submitterName: memberNameById.get(movieRow.memberId) ?? `Member #${movieRow.memberId}`,
+    submitterImageUrl: memberImageUrlById.get(movieRow.memberId) ?? null,
     submitterLikenessDegree: submitterLike?.likenessDegree ?? null,
     commentCount: regularCommentRows.length,
     noRatingCount,
