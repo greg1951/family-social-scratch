@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ImagePlus, KeyRound, Mail, ShieldCheck } from "lucide-react";
 
 import BackButton from "@/components/common/back-button";
+import GoHomeButton from "@/components/common/go-home-button";
 import MemberAvatar from "@/components/common/member-avatar";
 import MemberFaqHelp from "@/components/common/member-faq-help";
 import SyncStatusConsole from "@/components/pwa/sync-status-console";
@@ -67,34 +68,39 @@ export default async function TrialLayout({
 
             <div className="flex flex-wrap items-start justify-between gap-3">
             </div>
-            <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-5">
+            <div className="mt-4 flex flex-wrap items-center gap-1 sm:grid sm:grid-cols-5 sm:gap-2">
+              <GoHomeButton
+                tw="border-[#d8eef7] bg-white/75 px-2.5 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff] sm:px-3"
+              />
               <BackButton
-                stretch={ false }
-                tw="border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                tw="border-[#d8eef7] bg-white/75 px-2.5 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff] sm:px-3"
               />
               <Link
                 href="/change-password"
                 prefetch={ false }
-                className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                title="Change Password"
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-2.5 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff] sm:px-3"
               >
-                <KeyRound className="h-4 w-4 text-[#005472]" />
-                Change Password
+                <KeyRound className="h-4 w-4 shrink-0 text-[#005472]" />
+                <span className="hidden md:inline">Change Password</span>
               </Link>
               <Link
                 href="/two-factor-auth-form"
                 prefetch={ false }
-                className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                title="Update MFA"
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-2.5 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff] sm:px-3"
               >
-                <ShieldCheck className="h-4 w-4 text-[#005472]" />
-                Update MFA
+                <ShieldCheck className="h-4 w-4 shrink-0 text-[#005472]" />
+                <span className="hidden md:inline">Update MFA</span>
               </Link>
               <Link id="upload-avatar-link"
                 href="/family-image-upload"
                 prefetch={ false }
-                className="flex items-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-3 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff]"
+                title="Upload Profile Mugshot"
+                className="flex items-center justify-center gap-2 rounded-xl border border-[#d8eef7] bg-white/75 px-2.5 py-2 text-sm font-semibold text-[#10364a] transition hover:-translate-y-0.5 hover:bg-[#dff6ff] sm:px-3"
               >
-                <ImagePlus className="h-4 w-4 text-[#005472]" />
-                Upload Profile Mugshot
+                <ImagePlus className="h-4 w-4 shrink-0 text-[#005472]" />
+                <span className="hidden md:inline">Upload Mugshot</span>
               </Link>
             </div>
           </div>

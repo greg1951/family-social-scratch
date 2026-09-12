@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, ExternalLink, Heart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, ArrowLeft } from "lucide-react";
+import { Edit3, Eye, ExternalLink, Heart, HouseHeart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -282,6 +282,11 @@ export function MovieHomePage({
   }, [selectedMovie]);
 
   const latestMovies = [...filteredFinderMovies]
+    .filter((movie) => {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      return new Date(movie.updatedAt).getTime() >= twoMonthsAgo.getTime();
+    })
     .sort((leftMovie, rightMovie) => +new Date(rightMovie.updatedAt) - +new Date(leftMovie.updatedAt))
     .slice(0, 8)
     .map((movie) => ({
@@ -502,7 +507,7 @@ export function MovieHomePage({
               <div className="mt-2 flex flex-wrap gap-2">
                 <div id="movie-return-home">
                   <Link href="/" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
-                    <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    <HouseHeart className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                     Go Home
                   </Link>
                 </div>

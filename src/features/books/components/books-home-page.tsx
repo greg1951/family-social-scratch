@@ -6,9 +6,9 @@ import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { useEditor } from "@tiptap/react";
 import {
-  ArrowLeft,
   Eye,
   Heart,
+  HouseHeart,
   LibraryBig,
   MessageSquare,
   PenSquare,
@@ -16,6 +16,7 @@ import {
   Search,
   ThumbsDown,
   ThumbsUp,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useRef, useState, useTransition } from "react";
@@ -63,11 +64,11 @@ function getEditorDocument(value?: string): JSONContent {
 }
 
 function formatCreatedAt(createdAt: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(createdAt));
+  const date = new Date(createdAt);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  return `${ month }-${ day }-${ year }`;
 }
 
 function toDateInputValue(date: Date) {
@@ -255,7 +256,11 @@ export default function BooksHomePage({
     }
 
     if (directoryMode === "latest") {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
       return scopedBookItems
+        .filter((bookItem) => new Date(bookItem.createdAt).getTime() >= twoMonthsAgo.getTime())
         .sort((leftBook, rightBook) => (
           new Date(rightBook.createdAt).getTime() - new Date(leftBook.createdAt).getTime()
         ))
@@ -509,7 +514,7 @@ export default function BooksHomePage({
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  <HouseHeart className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
                 <Link
@@ -523,7 +528,7 @@ export default function BooksHomePage({
                     href="/add-club?from=books"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
-                    <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    <UsersRound className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                     Clubs
                   </Link>
               </div>
@@ -748,7 +753,6 @@ export default function BooksHomePage({
                                 <MemberAvatar imageUrl={ bookItem.submitterImageUrl } firstName={ bookItem.submitterName } sizeClassName="h-[26px] w-[26px]" />
                               </span>
                             ) : <span className="wrap-break-word font-semibold text-[#355161]">{ bookItem.submitterName }</span> }
-                            <span className="text-[#9ab2bd]">.</span>
                             <span className="whitespace-nowrap">{ formatCreatedAt(bookItem.createdAt) }</span>
                           </div>
                           { bookItem.status === "draft" ? (

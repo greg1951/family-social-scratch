@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState, useTransition } from "react";
-import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, ArrowLeft, Inbox, Trash2 } from "lucide-react";
+import { Search, Lock, Globe, Eye, EyeOff, Archive, Reply, PencilLine, ArchiveRestore, CheckCircle2, CircleOff, Send, ImageIcon, HouseHeart, Inbox, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -202,7 +202,7 @@ export function ThreadsHomePage({ summaries, memberId, firstName }: ThreadsHomeP
                 href="/"
                 className="mt-2 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f0d8ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:mt-3 sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
               >
-                <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                <HouseHeart className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                 Go Home
               </Link>
               {/* <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">

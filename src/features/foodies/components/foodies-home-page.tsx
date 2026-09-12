@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, Clock3, Edit3, Eye, Heart, MessageSquare, MessageSquareText, Plus, Printer, Search, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
+import { Clock3, Edit3, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Plus, Printer, Search, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
 import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -311,6 +311,11 @@ export function FoodiesHomePage({
   });
 
   const latestRecipeRecords = [...filteredFinderRecipes]
+    .filter((recipe) => {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      return new Date(recipe.updatedAt).getTime() >= twoMonthsAgo.getTime();
+    })
     .sort((leftRecipe, rightRecipe) => +new Date(rightRecipe.updatedAt) - +new Date(leftRecipe.updatedAt))
     .slice(0, 8);
 
@@ -946,7 +951,7 @@ export function FoodiesHomePage({
                 <Link
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
-                  <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  <HouseHeart className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
                 <Link
@@ -1100,7 +1105,7 @@ export function FoodiesHomePage({
       <Dialog open={ isViewRecipeOpen } onOpenChange={ setIsViewRecipeOpen }>
         <DialogContent className="border-[#cadfbb] bg-[#f7fce8] sm:max-w-5xl">
           <DialogHeader>
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start justify-between gap-4 pr-6">
               <div>
                 <DialogTitle className="text-[#2f4820]">{ selectedRecipeBasic?.recipeTitle ?? "Recipe" }</DialogTitle>
                 <DialogDescription className="mt-2 text-[#647a50]">

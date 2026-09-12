@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Film, Heart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Film, Heart, HouseHeart, MessageSquare, Search, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import MainDropMenu from "@/components/common/main-dropmenu";
 import MemberAvatar from "@/components/common/member-avatar";
@@ -131,8 +131,8 @@ export function BlogsHomePage({
   const deferredSearchValue = useDeferredValue(searchValue);
 
   const directoryPosts = useMemo(() => {
-    const monthAgo = new Date();
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
 
     if (directoryMode === "all") {
       return [...posts].sort((leftPost, rightPost) => (
@@ -142,7 +142,7 @@ export function BlogsHomePage({
 
     if (directoryMode === "latest") {
       return posts
-        .filter((post) => new Date(post.createdAt).getTime() >= monthAgo.getTime())
+        .filter((post) => new Date(post.createdAt).getTime() >= twoMonthsAgo.getTime())
         .sort((leftPost, rightPost) => (
           new Date(rightPost.createdAt).getTime() - new Date(leftPost.createdAt).getTime()
         ));
@@ -200,7 +200,7 @@ export function BlogsHomePage({
                 <Link
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#fff7f2] transition hover:bg-white/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
-                  <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  <HouseHeart className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
               </div>

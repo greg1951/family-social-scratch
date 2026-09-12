@@ -6,7 +6,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, type Editor, useEditor } from "@tiptap/react";
 import {
-  ArrowLeft,
+  HouseHeart,
   Eye,
   Heart,
   LibraryBig,
@@ -17,6 +17,7 @@ import {
   Tags,
   ThumbsDown,
   ThumbsUp,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -98,11 +99,11 @@ function getEditorDocument(value?: string): JSONContent {
 }
 
 function formatCreatedAt(createdAt: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(createdAt));
+  const date = new Date(createdAt);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const year = String(date.getFullYear()).slice(-2);
+  return `${ month }-${ day }-${ year }`;
 }
 
 function toDateInputValue(date: Date) {
@@ -355,7 +356,11 @@ export default function PoetryHomePage({
     }
 
     if (directoryMode === "latest") {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
       return scopedPoemItems
+        .filter((poemItem) => new Date(poemItem.createdAt).getTime() >= twoMonthsAgo.getTime())
         .sort((leftPoem, rightPoem) => (
           new Date(rightPoem.createdAt).getTime() - new Date(leftPoem.createdAt).getTime()
         ))
@@ -597,7 +602,7 @@ export default function PoetryHomePage({
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
-                  <ArrowLeft className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  <HouseHeart className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
                 </Link>
                 <Link
@@ -611,7 +616,7 @@ export default function PoetryHomePage({
                     href="/add-club?from=poetry"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#f6ebff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
-                    <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    <UsersRound className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                     Clubs
                   </Link>
               </div>
@@ -821,7 +826,6 @@ export default function PoetryHomePage({
                                 <MemberAvatar imageUrl={ poemItem.submitterImageUrl } firstName={ poemItem.submitterName } sizeClassName="h-[26px] w-[26px]" />
                               </span>
                             ) : <span className="wrap-break-word font-semibold text-[#5c446f]">{ poemItem.submitterName }</span> }
-                            <span className="text-[#b29ac6]">.</span>
                             <span className="whitespace-nowrap">{ formatCreatedAt(poemItem.createdAt) }</span>
                           </div>
                           { poemItem.status === "draft" ? (

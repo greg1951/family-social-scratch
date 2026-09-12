@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { ArrowLeft, CircleHelp, Edit3, ExternalLink, Eye, Heart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
+import { CircleHelp, Edit3, ExternalLink, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
@@ -254,6 +254,11 @@ export function TvHomePage({
     || (includeArchived && show.status === "archived")
   ));
   const latestShowRecords = [...visibleShows]
+    .filter((show) => {
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      return new Date(show.updatedAt).getTime() >= twoMonthsAgo.getTime();
+    })
     .sort((leftShow, rightShow) => +new Date(rightShow.updatedAt) - +new Date(leftShow.updatedAt))
     .slice(0, 8);
 
@@ -700,7 +705,7 @@ export function TvHomePage({
                     href="/"
                     className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                   >
-                    <ArrowLeft className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                    <HouseHeart className="font-app mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                     Go Home
                   </Link>
                 </div>
