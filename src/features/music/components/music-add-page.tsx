@@ -150,7 +150,7 @@ function reorderPlaylistMediaEntries(entries: PlaylistMediaFormEntry[], entryId:
   return sortPlaylistMediaEntries(reorderedEntries);
 }
 
-function createPlaylistMediaEntry(): PlaylistMediaFormEntry {
+function createPlaylistMediaEntry(searchArtistImage = false): PlaylistMediaFormEntry {
   return {
     id: typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${ Date.now() }-${ Math.random().toString(36).slice(2) }`,
     mediaSource: "spotify",
@@ -161,7 +161,7 @@ function createPlaylistMediaEntry(): PlaylistMediaFormEntry {
     mediaCaption: "",
     mediaImageUrl: null,
     useImageUrl: false,
-    searchArtistImage: false,
+    searchArtistImage,
   };
 }
 
@@ -306,7 +306,7 @@ export function MusicAddPage({
         useImageUrl: media.useImageUrl ?? false,
         searchArtistImage: false,
       })))
-      : [createPlaylistMediaEntry()]
+      : [createPlaylistMediaEntry(mode === "add")]
   );
   const [selectedTagsByType, setSelectedTagsByType] = useState<Partial<Record<MusicTagType, string>>>(() => {
     if (!initialMusic) {
@@ -542,7 +542,7 @@ export function MusicAddPage({
       return [
         ...normalizedEntries,
         {
-          ...createPlaylistMediaEntry(),
+          ...createPlaylistMediaEntry(mode === "add"),
           mediaSource: playlistMediaSource,
           mediaSeqNo: normalizedEntries.length + 1,
         },

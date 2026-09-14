@@ -202,6 +202,7 @@ describe("MusicAddPage music type UI", () => {
     expect(html).toContain('aria-label="Playlist media source"');
     expect(html).toContain("Song Title");
     expect(html).toContain("Find artist image");
+    expect(html).not.toContain('type="checkbox" checked=""');
     expect(html).not.toContain(">Type</label>");
     expect(html).not.toContain("Use Spotify artist image");
     expect(html).toContain("Playlist Title");
