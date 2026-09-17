@@ -48,6 +48,7 @@ import {
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
 import { logDbQueryError } from "./db-error-logger";
+import { canViewTemplate } from "./template-access";
 
 const SUPPORTED_SHOW_TAG_TYPES: ShowTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -265,13 +266,18 @@ async function loadShowTemplates(
   const whereCondition = includeGlobal
     ? and(
       or(
-        eq(showTemplate.familyId, familyId),
-        and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+        and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+        and(
+          eq(showTemplate.isGlobalTemplate, false),
+          eq(showTemplate.familyId, familyId),
+          eq(showTemplate.memberId, memberId)
+        )
       ),
       includeDraft ? undefined : eq(showTemplate.status, "published")
     )
     : and(
       eq(showTemplate.familyId, familyId),
+      eq(showTemplate.memberId, memberId),
       includeDraft ? undefined : eq(showTemplate.status, "published"),
       eq(showTemplate.isGlobalTemplate, false)
     );
@@ -296,7 +302,7 @@ async function loadShowTemplates(
     mapById.set(fallbackTemplate.id, fallbackTemplate);
   }
 
-  for (const row of rows) {
+  for (const row of rows.filter((template) => canViewTemplate(template, familyId, memberId))) {
     mapById.set(row.id, toTemplateOption(row));
   }
 
@@ -321,8 +327,12 @@ async function loadShowTemplateManagementRecords(
   }
 
   const whereCondition = or(
-    eq(showTemplate.familyId, familyId),
-    and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+    and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+    and(
+      eq(showTemplate.isGlobalTemplate, false),
+      eq(showTemplate.familyId, familyId),
+      eq(showTemplate.memberId, actorMemberId)
+    )
   );
 
   const templateRows = await db
@@ -340,7 +350,8 @@ async function loadShowTemplateManagementRecords(
     .where(whereCondition)
     .orderBy(desc(showTemplate.updatedAt), asc(showTemplate.templateName));
 
-  const memberIds = [...new Set(templateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
+  const visibleTemplateRows = templateRows.filter((template) => canViewTemplate(template, familyId, actorMemberId));
+  const memberIds = [...new Set(visibleTemplateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -357,7 +368,7 @@ async function loadShowTemplateManagementRecords(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
-  return templateRows.map((row) => {
+  return visibleTemplateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
       ? canManageGlobalTemplate
       : row.memberId === actorMemberId;

@@ -142,7 +142,7 @@ export default async function MainPage() {
     <div className="min-h-screen bg-linear-to-b from-[#b6c9e4] via-[#c7d9ef] to-[#d6e3f4]">
       <section className="font-app px-2 pb-5 pt-5 sm:px-4 sm:pb-6 sm:pt-6 md:px-8">
         <div className="mx-auto w-full max-w-260">
-          <Card className="rounded-[22px] border border-slate-200/70 bg-white/95 px-3 py-2 shadow-sm sm:min-h-27 sm:px-6 sm:py-2.5">
+          <Card className="rounded-[22px] border border-slate-200/70 bg-white/95 px-3 py-2 shadow-sm sm:px-6 sm:py-2.5">
             <div className="flex items-center justify-between gap-3 sm:gap-5">
               <div id="welcome-card">
                 <div className="flex items-center gap-2 sm:gap-3">
@@ -169,18 +169,20 @@ export default async function MainPage() {
                     <Link href="/login">Login</Link>
                   </Button>
                 ) }
-                <div id="main-profile-icon" className="scale-90 sm:scale-95">
-                  <MainDropMenu
-                    firstName={ memberKeyDetails.firstName }
-                    lastName={ memberKeyDetails.lastName }
-                    email={ memberKeyDetails.email }
-                    sessionFound={ memberKeyDetails.isLoggedIn }
-                    isFounder={ memberKeyDetails.isFounder }
-                    isAdmin={ !!memberKeyDetails.isAdmin }
-                    memberImageUrl={ memberImageUrl }
-                    unreadThreadCount={ unreadThreadCount }
-                  />
-                </div>
+                { memberKeyDetails.isLoggedIn && (
+                  <div id="main-profile-icon" className="scale-90 sm:scale-95">
+                    <MainDropMenu
+                      firstName={ memberKeyDetails.firstName }
+                      lastName={ memberKeyDetails.lastName }
+                      email={ memberKeyDetails.email }
+                      sessionFound={ memberKeyDetails.isLoggedIn }
+                      isFounder={ memberKeyDetails.isFounder }
+                      isAdmin={ !!memberKeyDetails.isAdmin }
+                      memberImageUrl={ memberImageUrl }
+                      unreadThreadCount={ unreadThreadCount }
+                    />
+                  </div>
+                ) }
               </div>
             </div>
           </Card>

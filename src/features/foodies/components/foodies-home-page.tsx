@@ -133,14 +133,14 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-function createFinderCategory(recipe: FoodiesRecipe) {
-  const primaryTag = recipe.tagNamesByType.course_type?.[0]
-    ?? recipe.tagNamesByType.cuisine?.[0]
-    ?? recipe.tagNamesByType.meal_time?.[0]
-    ?? recipe.tagNamesByType.cooking_method?.[0]
-    ?? recipe.tagNamesByType.dietary?.[0];
-
-  return primaryTag ?? "General";
+function getRecipeCategoryNames(recipe: FoodiesRecipe) {
+  return [
+    ...(recipe.tagNamesByType.cuisine ?? []),
+    ...(recipe.tagNamesByType.course_type ?? []),
+    ...(recipe.tagNamesByType.cooking_method ?? []),
+    ...(recipe.tagNamesByType.dietary ?? []),
+    ...(recipe.tagNamesByType.meal_time ?? []),
+  ].filter((categoryName, index, categoryNames) => categoryNames.indexOf(categoryName) === index);
 }
 
 function getRecipeDocument(recipeJson?: string): JSONContent {
@@ -304,7 +304,7 @@ export function FoodiesHomePage({
     return [
       recipe.recipeTitle,
       recipe.submitterName,
-      createFinderCategory(recipe),
+      ...getRecipeCategoryNames(recipe),
       String(recipe.prepTimeMins),
       String(recipe.cookTimeMins),
     ].join(" ").toLowerCase().includes(query);
@@ -1164,6 +1164,21 @@ export function FoodiesHomePage({
                       <p><span className="font-semibold text-[#2f4820]">Prep:</span> { selectedRecipeBasic.prepTimeMins > 0 ? `${ selectedRecipeBasic.prepTimeMins } min` : "-" }</p>
                       <p><span className="font-semibold text-[#2f4820]">Cook:</span> { selectedRecipeBasic.cookTimeMins > 0 ? `${ selectedRecipeBasic.cookTimeMins } min` : "-" }</p>
                     </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#5f7a40]">Categories</p>
+                    { getRecipeCategoryNames(selectedRecipeBasic).length > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-sm text-[#4e6640]">
+                        { getRecipeCategoryNames(selectedRecipeBasic).map((categoryName) => (
+                          <span key={ categoryName } className="rounded-full bg-[#e5f7cb] px-2.5 py-1 text-xs font-semibold text-[#476232]">
+                            { categoryName }
+                          </span>
+                        )) }
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-[#647a50]">No categories added.</p>
+                    ) }
                   </div>
 
                   <div className="rounded-2xl border border-[#cadfbb] bg-white p-4">

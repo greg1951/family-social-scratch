@@ -241,11 +241,41 @@ export function FoodiesTemplatePage({
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
+          <div className="flex flex-col gap-5">
+            <div className="max-w-3xl text-left">
               <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 The Kitchen Templates
               </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/foodies"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ArrowLeft className="mr-1.5 size-3.5" />
+                  Back to the Kitchen
+                </Link>
+                <EditPostIcon tooltip="Add Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
+                  <Button
+                    type="button"
+                    className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
+                    onClick={ openCreateDialog }
+                    aria-label="Add template"
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </EditPostIcon>
+                <EditPostIcon tooltip="Edit Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
+                  <Button
+                    type="button"
+                    className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={ openEditDialog }
+                    disabled={ !selectedTemplate?.canEdit }
+                    aria-label="Edit selected template"
+                  >
+                    <Edit3 className="size-4" />
+                  </Button>
+                </EditPostIcon>
+              </div>
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Recipe Templates
               </h1>
@@ -254,35 +284,7 @@ export function FoodiesTemplatePage({
               </p> */}
             </div>
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/foodies"
-                className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <ArrowLeft className="mr-1.5 size-3.5" />
-                Back to the Kitchen
-              </Link>
-              <EditPostIcon tooltip="Add Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
-                <Button
-                  type="button"
-                  className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30"
-                  onClick={ openCreateDialog }
-                  aria-label="Add template"
-                >
-                  <Plus className="size-4" />
-                </Button>
-              </EditPostIcon>
-              <EditPostIcon tooltip="Edit Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
-                <Button
-                  type="button"
-                  className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={ openEditDialog }
-                  disabled={ !selectedTemplate?.canEdit }
-                  aria-label="Edit selected template"
-                >
-                  <Edit3 className="size-4" />
-                </Button>
-              </EditPostIcon>
+            <div className="flex flex-wrap justify-end gap-3">
             </div>
           </div>
         </div>

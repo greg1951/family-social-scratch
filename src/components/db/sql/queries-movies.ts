@@ -46,6 +46,7 @@ import {
   FAMILY_ACTIVITY_ACTION_TYPES,
 } from "./queries-family-activity";
 import { logDbQueryError } from "./db-error-logger";
+import { canViewTemplate } from "./template-access";
 
 const SUPPORTED_MOVIE_TAG_TYPES: MovieTagType[] = ["genre", "adjective", "channel"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -265,13 +266,18 @@ async function loadMovieTemplates(
   const whereCondition = includeGlobal
     ? and(
       or(
-        eq(movieTemplate.familyId, familyId),
-        and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+        and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+        and(
+          eq(movieTemplate.isGlobalTemplate, false),
+          eq(movieTemplate.familyId, familyId),
+          eq(movieTemplate.memberId, memberId)
+        )
       ),
       includeDraft ? undefined : eq(movieTemplate.status, "published")
     )
     : and(
       eq(movieTemplate.familyId, familyId),
+      eq(movieTemplate.memberId, memberId),
       includeDraft ? undefined : eq(movieTemplate.status, "published"),
       eq(movieTemplate.isGlobalTemplate, false)
     );
@@ -296,7 +302,7 @@ async function loadMovieTemplates(
     mapById.set(fallbackTemplate.id, fallbackTemplate);
   }
 
-  for (const row of rows) {
+  for (const row of rows.filter((template) => canViewTemplate(template, familyId, memberId))) {
     mapById.set(row.id, toTemplateOption(row));
   }
 
@@ -321,8 +327,12 @@ async function loadMovieTemplateManagementRecords(
   }
 
   const whereCondition = or(
-    eq(movieTemplate.familyId, familyId),
-    and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+    and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+    and(
+      eq(movieTemplate.isGlobalTemplate, false),
+      eq(movieTemplate.familyId, familyId),
+      eq(movieTemplate.memberId, actorMemberId)
+    )
   );
 
   const templateRows = await db
@@ -340,7 +350,8 @@ async function loadMovieTemplateManagementRecords(
     .where(whereCondition)
     .orderBy(desc(movieTemplate.updatedAt), asc(movieTemplate.templateName));
 
-  const memberIds = [...new Set(templateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
+  const visibleTemplateRows = templateRows.filter((template) => canViewTemplate(template, familyId, actorMemberId));
+  const memberIds = [...new Set(visibleTemplateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -357,7 +368,7 @@ async function loadMovieTemplateManagementRecords(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
-  return templateRows.map((row) => {
+  return visibleTemplateRows.map((row) => {
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEdit = isFamilyGlobalTemplate
       ? canManageGlobalTemplate

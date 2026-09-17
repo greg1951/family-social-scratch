@@ -54,6 +54,7 @@ import {
 } from "./queries-family-activity";
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 import { logDbQueryError } from "./db-error-logger";
+import { canViewTemplate } from "./template-access";
 
 const SUPPORTED_MUSIC_TAG_TYPES: MusicTagType[] = ["genre", "subGenre"];
 const GLOBAL_TEMPLATE_FAMILY_ID = 1;
@@ -589,13 +590,18 @@ async function loadMusicTemplates(
   const whereCondition = includeGlobal
     ? and(
       or(
-        eq(musicTemplate.familyId, familyId),
-        and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+        and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+        and(
+          eq(musicTemplate.isGlobalTemplate, false),
+          eq(musicTemplate.familyId, familyId),
+          eq(musicTemplate.memberId, memberId)
+        )
       ),
       includeDraft ? undefined : eq(musicTemplate.status, "published")
     )
     : and(
       eq(musicTemplate.familyId, familyId),
+      eq(musicTemplate.memberId, memberId),
       includeDraft ? undefined : eq(musicTemplate.status, "published"),
       eq(musicTemplate.isGlobalTemplate, false)
     );
@@ -620,7 +626,7 @@ async function loadMusicTemplates(
     mapById.set(fallbackTemplate.id, fallbackTemplate);
   }
 
-  for (const row of rows) {
+  for (const row of rows.filter((template) => canViewTemplate(template, familyId, memberId))) {
     mapById.set(row.id, toTemplateOption(row));
   }
 
@@ -645,8 +651,12 @@ async function loadMusicTemplateManagementRecords(
   }
 
   const whereCondition = or(
-    eq(musicTemplate.familyId, familyId),
-    and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+    and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+    and(
+      eq(musicTemplate.isGlobalTemplate, false),
+      eq(musicTemplate.familyId, familyId),
+      eq(musicTemplate.memberId, actorMemberId)
+    )
   );
 
   const templateRows = await db
@@ -664,7 +674,8 @@ async function loadMusicTemplateManagementRecords(
     .where(whereCondition)
     .orderBy(desc(musicTemplate.updatedAt), asc(musicTemplate.templateName));
 
-  const memberIds = [...new Set(templateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
+  const visibleTemplateRows = templateRows.filter((template) => canViewTemplate(template, familyId, actorMemberId));
+  const memberIds = [...new Set(visibleTemplateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -681,7 +692,7 @@ async function loadMusicTemplateManagementRecords(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
 
-  return templateRows.map((row) => {
+  return visibleTemplateRows.map((row) => {
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEdit = isFamilyGlobalTemplate
       ? canManageGlobalTemplate

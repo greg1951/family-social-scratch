@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createSupportIssue } from "@/components/db/sql/queries-support";
-import { supportAttachment, supportIssue, supportPersonIssue } from "@/components/db/schema/family-social-schema-tables";
+import { supportAttachment, supportIssue, supportPersonIssue } from "@/components/db/schema/global-schema-tables";
 import { createEmptyTipTapDocument, serializeTipTapDocument } from "@/components/db/types/poem-term-validation";
 
 type InsertPlan = {

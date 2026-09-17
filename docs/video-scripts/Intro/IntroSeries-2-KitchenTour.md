@@ -1,6 +1,7 @@
 - [The Kitchen Tour](#the-kitchen-tour)
-  - [Mail Box](#mail-box)
   - [The Kitchen](#the-kitchen)
+  - [View Recipe](#view-recipe)
+  - [Recipe templates](#recipe-templates)
 
 
 ```
@@ -10,67 +11,113 @@
 ```
 # The Kitchen Tour
 
-Julio will take us on a tour of the house. But first, notice there's a red notification dot on Julio's profile which tells him he has mail. Julio has only just joined the family so what can that be about?
+Julio will take us on a tour of the house but first, must log in. 
 
-## Mail Box
+```
+    turn OFF the mic
+    <CTL-Shift: Pause>
+TheTexasJonesFamily 
+juliojones@hotmail.com
+1LoveMyFamily!
+    Wait 2 seconds
+    <CTL-Shift: Resume>
+```
 
-- There's a message Julio received when he first joined that welcomes him and provides some suggetions on what to look at first, as a new member. That message is private to Julio.
+- Notice in Julio's login that he must enter a family name in addition to his email address and password. 
+- Julio doesn't have a Google or Apple account, so he must sign in with family name, email and password. If he had a Google or Apple login, only the family name would be required. 
 
-- The family founder (Greg) sent him a message about his posts and copied others othe message so they can take a look at Julio's most excellent posts. Turns out he's quite the poetry lover. 
-
-**Let's return to the tour: Home and Kitchen**
+**Julio logs in.**  
 
 ## The Kitchen
-Julio enjoys cooking for his friends and he's heard about a great family Thanksgiving dish with pineapple in it, so the first place he goes is to **The Kitchen**.  
+Julio enjoys cooking for his friends and he's heard about a great family Thanksgiving dish with pineapple in it, so often, the first place Julio goes to is **The Kitchen**.  
 
-We'll spend a little more time in The Kitchen, as many of the widgets you'll see here you will find in the other *My Family Social features*.
+Many of the UI features you see in the kitchen you will find elsewhere in My Family Social, like TV shows, the home theater, and the music room.
 
-1. It all happens in the **Recipe Finder**. To find any recipe quickly, simply enter a recipe keyword: like **chicken** or **lemon** or **pineapple**. 
+There are three main sections on the kitchen homepage:
+1. The navigation heading at the top of the homepage, provides buttons to: 
+- return to the home, 
+- View to view recipe templates
+- To see cooking terms provided to help decipher cooking terminology.
+- The member settings appear on the far right side of the heading
+
+2. The second main section is a recipe finder where you can search for or filter the recipes 
+
+3. And and finally, the last section is the recipes themselves, which appear as recipe cards 
+
+It all happens in the **Recipe Finder**. To find any recipe quickly, simply enter a recipe keyword: like **chicken** or **lemon** or **pineapple**. 
    - As you see the recipes below in the scroll strip are filterd by the entered keyword. 
 
-2. On the **Scroll Strip** you can review **Latest** or the **Top Rated** recipes. 
+On the **Scroll Strip** you can review **Latest** or the **Top Rated** recipes. 
 
     Here the recipes are listed according to **how many reactions** the recipes have received from family members.
-   
-3. Julio found what he was looking for, **Mona's Scalloped Pineapple** recipe, so he double-clicks it to see the recipe.
 
-4. Notice several things about the recipe: 
-  - An attractive image of the recipe always appeal to the senses. Images can be uploaded nearly everywhere in My Family Social.
-  - I'm going to change the size of the app from a tablet which is what you are seeing here down to a phone size.  
-    - If Julio wants to go to the kitchen and follow the recipe on his phone, he can do that, as you can see.
+## View Recipe 
 
-  - I'll expand it back to a tablet width as what Julio wants to do is to print it and take the paper copy to the kitchen where he can write on it.
-    - Notice the Print Preview button here. When you click that it will render the recipe for the printer. 
+To view the Mona's scalloped pineapple recipe, Julio will double-click on it.
 
-  - I'll scroll to the bottom to see where other family members can react to a post by clicking on the Like or Love reaction. 
-    - As I hover over the Like count you can see that George Watkins liked this recipe too!
+For purposes of this video you're viewing the recipe on a desktop computer. My Family Social is responsive to phone and tablet devices as well. 
 
-  - Below the reactions are the comments and another cool widget called Discussion Threads. 
-    - Comments aren't interactive. There good for one off's. 
-    - But what if you want to open up a discussion on the recipe because you tried and you changed up some things and wanted to get other members involved in discussing it. 
-    - Discussion Threads are available other My Family Social features.
+What I'm going to do now is size it to a tablet device so you can see what that looks like, and then I'm going to size it to a phone device. 
 
-  - The last thing I'll point out is the **rich text formatting** you see in the recipe. 
-    - You can put in bold, underline and italics text, bullet and number lists and even headings. It makes for a very elegant presentation, n'est pas?
-    - This rich text editing is also available everywhere else in My Family Social; even in the Add Comment input you see here.
-    - Wow, you may be thinking what a lot of work it takes to write a recipe. 
-    - Let me show you another cool widget in My Family Social, called templates.
+I'll use the inspect tool oh, I can easily switch to other device types.
 
-** Close the View Recipe dialog and return to The Kitchen**.
+- First, the **Surface Pro 10** device. As you can see, it's comparable to the desktop with just a little bit of scrolling required. 
 
-1. At the top of The Kitchen page are a couple of buttons of interest: Terms and Templates. 
+- Now let's change it to an **iPhone 16** device. 
+  - The width is dramatically moller on a phone versus a tablet or a desktop. 
+  - If you **scroll down the page**, you'll see that it's all very comfortably arranged and easily accessible. 
 
-2. Let's **navigate to the Templates** page.
-   - My Family Social provides all families with a Global Template. As you can see, it's not editable.
-   - However, what if you don't like the Global Templates? Here George thought it was too much and so he came up with the **Simple Recipe Format**.
-   - A rule across My Family Social is that only the contributor can edit something they create. Only George Watkins can edit his **Simple Recipe Format**.
-   - Let's **return to The Kitchen**.
+I'll now **return to the desktop** view. 
 
-3. Where are the templates used? Let's **Add a Recipe** to see. **Scroll slightly down**
-   - I'll select each of the templates and then watch the **Recipe Instructions** at the bottom change.
-   - Let's **go back to The Kitchen**.
+Let's explore the recipe view. 
+- You don't have to upload an image for the recipe, but it really does help to make the recipe more attractive to other family members, so we highly recommend it. 
+- The recipe text that you see here comes from a template that you can select when you're creating a recipe for the first time. We'll cover templates in just a few minutes. 
 
-4. One last thing to look at. I'll quickly **go to Terms page** to see a glossary of common cooking terms that may help others to better understand recipe-speak. 
+What if Julio wants to print the recipe so he can take it to the kitchen make notes on.
+- Notice the **Print Preview** button in the upper right-hand corner of the view. 
+- When Julio clicks on it, it will render a page that allows Julio to print his recipe. 
+
+Now I'll scroll to the bottom to see where other family members can react to a post by clicking on the Like or Love reaction. 
+- As I hover over the Like count you can see that George Watkins reacted to this recipe too!
+
+Below the reactions are the comments and another cool widget called Discussion Threads. 
+- Comments aren't interactive. There good for one off's.
+
+Instead, consider a scenario where Julio  tries this recipe and discovers some improvements or bring up problems making the recipe. 
+- Julio could create a discussion thread, which would notify the member who posted the recipe, and they could collaborate on how to incorporate Julio's suggestions into the recipe. 
+
+- Discussion Threads are available other My Family Social features.
+
+** To close the recipe view, you can click on the X in the top right-hand corner or anywhere in the background.**.
+
+## Recipe templates 
+
+If you had to enter recipe text from scratch, not many people would create recipes, so what we have are recipe templates. Templates are features found on all other pages where members post things.
+
+- Let's **navigate to the Templates** page.
+  - In the Kitchen templates, you see there are three templates.
+  - You can click on each one to see what the template looks like. 
+  - My Family Social provides all families with a Global Template. It's not editable by any family.
+  - However, what if you don't like the Global Templates? Here George thought it was too much and so he came up with the **Simple Recipe Format**.
+
+I'll mention a rule across My Family Social is that only the contributor can edit something they create. - Here only George Watkins can edit his **Simple Recipe Format**.
+
+Let's **return to The Kitchen**.
+
+So how are the templates used? Let's add a new recipe to see how this works. 
+- Select the **Add a Recipe**.
+- Fill in facts about the recipe
+   - Roasted Potatoes
+   - Quickly roasted in the oven
+   - 15, 20
+   - Draft
+   - C:\Users\gregh\projects\family-social-prototype-images\photos\post-images
+   - roasted-potatoes.jpg 
+   - , side dish, oven 
+   - Simple Recipe Format 
+   - 
+
+1. One last thing to look at. I'll quickly **go to Terms page** to see a glossary of common cooking terms that may help others to better understand recipe-speak. 
    - **Expand** any term.
    - Let's go **Back to the Kitchen**.
 

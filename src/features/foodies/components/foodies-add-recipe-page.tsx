@@ -768,7 +768,7 @@ export function FoodiesAddRecipePage({
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f1ffe4] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
                 <ArrowLeft className="mr-2 size-4" />
-                Back to Foodies Home
+                Back to the Kitchen
               </Link>
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 { isEditing ? "Edit Recipe" : "Add Recipe" }

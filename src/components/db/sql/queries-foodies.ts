@@ -52,6 +52,7 @@ import {
 } from "./queries-family-activity";
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 import { logDbQueryError } from "./db-error-logger";
+import { canViewTemplate } from "./template-access";
 
 const SUPPORTED_RECIPE_TAG_TYPES: RecipeTagType[] = [
   "cuisine",
@@ -239,10 +240,18 @@ async function loadRecipeTemplates(
   const whereCondition = and(
     includeGlobal
       ? or(
-        eq(recipeTemplate.familyId, familyId),
-        and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+        and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+        and(
+          eq(recipeTemplate.isGlobalTemplate, false),
+          eq(recipeTemplate.familyId, familyId),
+          eq(recipeTemplate.memberId, memberId)
+        )
       )
-      : eq(recipeTemplate.familyId, familyId),
+      : and(
+        eq(recipeTemplate.isGlobalTemplate, false),
+        eq(recipeTemplate.familyId, familyId),
+        eq(recipeTemplate.memberId, memberId)
+      ),
     includeDraft
       ? undefined
       : includeGlobal
@@ -292,7 +301,7 @@ async function loadRecipeTemplates(
     templateMap.set(defaultTemplate.id, defaultTemplate);
   }
 
-  for (const row of templateRows) {
+  for (const row of templateRows.filter((template) => canViewTemplate(template, familyId, memberId))) {
     templateMap.set(row.id, {
       id: row.id,
       templateName: row.templateName,
@@ -342,8 +351,12 @@ async function loadFoodiesTemplateManagementRecords(
   }
 
   const whereCondition = or(
-    eq(recipeTemplate.familyId, familyId),
-    and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID))
+    and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
+    and(
+      eq(recipeTemplate.isGlobalTemplate, false),
+      eq(recipeTemplate.familyId, familyId),
+      eq(recipeTemplate.memberId, actorMemberId)
+    )
   );
 
   const templateRows = await db
@@ -361,7 +374,8 @@ async function loadFoodiesTemplateManagementRecords(
     .where(whereCondition)
     .orderBy(desc(recipeTemplate.updatedAt), asc(recipeTemplate.templateName));
 
-  const memberIds = [...new Set(templateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
+  const visibleTemplateRows = templateRows.filter((template) => canViewTemplate(template, familyId, actorMemberId));
+  const memberIds = [...new Set(visibleTemplateRows.map((row) => row.memberId).filter((memberId) => Number.isInteger(memberId)))] as number[];
   const memberRows = memberIds.length > 0
     ? await db
       .select({
@@ -379,7 +393,7 @@ async function loadFoodiesTemplateManagementRecords(
   );
   const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
-  return templateRows.map((row) => {
+  return visibleTemplateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
       ? canManageGlobalTemplate
       : row.memberId === actorMemberId;

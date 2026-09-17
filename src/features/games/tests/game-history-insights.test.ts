@@ -91,7 +91,7 @@ describe("game-history-insights", () => {
       ],
     };
 
-    expect(buildGameLeaderboards([], null, "high", fallbackLeaderboards)).toBe(fallbackLeaderboards);
+    expect(buildGameLeaderboards([], null, "high", false, fallbackLeaderboards)).toBe(fallbackLeaderboards);
   });
 
   it("builds leaderboards and distinct player stats for completed games", () => {
