@@ -13,7 +13,6 @@ import {
   MessageSquare,
   PenSquare,
   Plus,
-  Search,
   ThumbsDown,
   ThumbsUp,
   UsersRound,
@@ -39,10 +38,41 @@ import {
 } from "@/components/db/types/poem-term-validation";
 import { BookTagOption, BooksHomeBook } from "@/components/db/types/books";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
+
+const booksFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#f8fcff",
+  sidebarForeground: "#183746",
+  sidebarBorder: "#d9e5ea",
+  label: "#3d819b",
+  muted: "#51707e",
+  inputBorder: "#c8d7df",
+  inputText: "#183746",
+  chipBorder: "#c8d7df",
+  chipText: "#183746",
+  chipHoverBackground: "#f3f9fc",
+  checkBorder: "#9ec3d2",
+  checkboxText: "#2a5a6f",
+  accent: "#0f5c78",
+  accentHoverBackground: "#0a4860",
+  triggerBorder: "#c9e2ec",
+  triggerBackground: "#f6fbfe",
+  triggerText: "#183746",
+  triggerHoverBackground: "#dff2f9",
+};
 import {
   createDraftFromBook,
   createEmptyDraft,
@@ -501,7 +531,37 @@ export default function BooksHomePage({
 
   /*---------------------------------------- Main Return ----------------------------------------------- */
   return (
-    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+    <FilterSidebarProvider palette={ booksFilterPalette }>
+      <FilterSidebar title="Book Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by title, author, year, language, series, or family member"
+          ariaLabel="Search books"
+        />
+        <FilterSidebarDateScope
+          radioName="book-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup label="Book Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="book-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="book-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="book-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived Too</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithClubSessions } onChange={ setFilterWithClubSessions }>Clubs Only</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ expandBookCards } onChange={ setExpandBookCards }>Expand Book Cards</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -553,6 +613,9 @@ export default function BooksHomePage({
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#1d6d8f]"
                     tooltipClassName="bg-[#0f435c] text-[#ecfaff]"
                   />
+                  <EditPostIcon tooltip="Filter Books" tooltipClassName="bg-[#0f435c] text-[#ecfaff]">
+                    <FilterSidebarTrigger ariaLabel="Toggle book filters" />
+                  </EditPostIcon>
                   <EditPostIcon tooltip="View Book" tooltipClassName="bg-[#0f435c] text-[#ecfaff]">
                     <Button
                       type="button"
@@ -594,51 +657,6 @@ export default function BooksHomePage({
                 {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#51707e]">
                   Select a book card from the directory, or use search to narrow the list, then open View Book or Edit Book details in a separate dialog.
                 </p> */}
-
-                <div className="mt-4 min-w-0">
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <div className="relative min-w-[16rem] flex-1">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#3d819b]" />
-                      <Input
-                        type="search"
-                        value={ searchValue }
-                        onChange={ (event) => setSearchValue(event.target.value) }
-                        placeholder="Search by title, author, year, language, series, or family member"
-                        className="h-9 rounded-full border-[#c8d7df] bg-white pl-10 pr-3 text-xs text-[#183746] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                        aria-label="Search books"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#f8fcff] px-4 py-2 text-sm text-[#51707e] sm:py-3">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#3d819b] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                    <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                      <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                          <input type="radio" name="book-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
-                          Everything
-                        </label>
-                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                          <input type="radio" name="book-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
-                          Date Range
-                        </label>
-                      </div>
-                      <div className="flex flex-row flex-nowrap items-end gap-2 lg:min-w-104">
-                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#51707e]">Start Date</label>
-                          <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d7df] bg-white px-2 text-[11px] text-[#183746] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                        </div>
-                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#51707e]">End Date</label>
-                          <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d7df] bg-white px-2 text-[11px] text-[#183746] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                        </div>
-                        <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#0f5c78] px-3 text-xs font-semibold text-white hover:bg-[#0a4860] disabled:opacity-50 sm:h-9">
-                          Apply
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* <div className="rounded-full border border-[#d9e5ea] bg-[#f4fbff] px-4 py-2 text-sm font-semibold text-[#51707e]">
@@ -666,53 +684,6 @@ export default function BooksHomePage({
               </div>
             ) : (
               <>
-                <div className="mb-4 rounded-[1.4rem] border border-[#d9e5ea] bg-[#f8fcff] px-4 py-2 text-sm text-[#51707e] sm:py-3">
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#3d819b] sm:text-[0.68rem] sm:tracking-[0.32em]">Book Type</p>
-                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="book-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
-                      All
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="book-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
-                      Latest
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#183746] transition hover:bg-[#f3f9fc] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="book-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") } className="size-3.5 border-[#9ec3d2] text-[#0f5c78] focus:ring-[#3d819b] sm:size-4" />
-                      Top Rated
-                    </label>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#355161]">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ includeArchived }
-                        onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
-                      />
-                      Archived Too
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ filterWithClubSessions }
-                        onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
-                      />
-                      Clubs Only
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d7df] bg-white px-3 py-1.5 text-xs font-semibold text-[#2a5a6f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ expandBookCards }
-                        onChange={ (event) => setExpandBookCards(event.target.checked) }
-                        className="size-3.5 border-[#9ec3d2] text-[#0f5c78] sm:size-4"
-                      />
-                      Expand Book Cards
-                    </label>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;
@@ -836,6 +807,7 @@ export default function BooksHomePage({
       />
 
       <BookLinkDialog linkDialog={ linkDialog } />
-    </section>
+      </section>
+    </FilterSidebarProvider>
   );
 }

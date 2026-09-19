@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { CircleQuestionMark, Edit3, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Music, Pause, Play, Plus, Search, SkipBack, SkipForward, Square, ThumbsDown, ThumbsUp } from "lucide-react";
+import { CircleQuestionMark, Edit3, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Music, Pause, Play, Plus, SkipBack, SkipForward, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -39,6 +39,38 @@ import { MusicDetail, MusicRecord } from "@/components/db/types/music";
 import StartDiscussionDialog from "@/components/discuss/start-discussion-dialog";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
+
+const musicFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#f7fbff",
+  sidebarForeground: "#203b66",
+  sidebarBorder: "#c8d9f3",
+  label: "#2C5EAD",
+  muted: "#4a6fae",
+  inputBorder: "#c8d9f3",
+  inputText: "#203b66",
+  chipBorder: "#c8d9f3",
+  chipText: "#203b66",
+  chipHoverBackground: "#edf4ff",
+  checkBorder: "#7aa0dd",
+  checkboxText: "#2C5EAD",
+  accent: "#2C5EAD",
+  accentHoverBackground: "#234c8e",
+  triggerBorder: "#c8d9f3",
+  triggerBackground: "#f7fbff",
+  triggerText: "#2C5EAD",
+  triggerHoverBackground: "#edf4ff",
+};
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,7 +80,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { MusicScrollStrip } from "@/features/music/components/music-scroll-strip";
@@ -720,8 +751,36 @@ export function MusicHomePage({
   }
 
   return (
-    <>
-      <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
+    <FilterSidebarProvider palette={ musicFilterPalette }>
+      <FilterSidebar title="Music Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by music title, genre, sub genre, type, or family member"
+          ariaLabel="Search music"
+        />
+        <FilterSidebarDateScope
+          radioName="music-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup label="Music Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="music-strip-mode" value="all" checked={ musicStripMode === "all" } onChange={ () => setMusicStripMode("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="music-strip-mode" value="latest" checked={ musicStripMode === "latest" } onChange={ () => setMusicStripMode("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="music-strip-mode" value="top-rated" checked={ musicStripMode === "top-rated" } onChange={ () => setMusicStripMode("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithDiscussionThreads } onChange={ setFilterWithDiscussionThreads }>Discussions</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
         <div id="music-home-page" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="max-w-3xl">
@@ -749,42 +808,13 @@ export function MusicHomePage({
                   iconClassName="h-3 w-3 text-[#2C5EAD]" 
                   tooltipClassName="bg-[#203b66] text-[#eff5ff]" 
               />
+              <EditPostIcon tooltip="Filter Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><FilterSidebarTrigger ariaLabel="Toggle music filters" /></EditPostIcon>
               <EditPostIcon tooltip="View Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" onClick={ () => setIsViewMusicOpen(true) } disabled={ !selectedMusicBasic } className="h-8 rounded-full border border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] sm:px-3" aria-label="View selected music"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button></EditPostIcon>
               { canViewLyricsSelectedMusic ? (
                 <EditPostIcon tooltip="View Lyrics" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-3 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD]"><Link href={ `/music/lyrics?id=${ selectedMusic }` } aria-label="View selected lyrics"><Eye className="size-3.5" /><span className="hidden sm:inline">View Lyrics</span></Link></Button></EditPostIcon>
               ) : null }
               <EditPostIcon tooltip="Add Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" asChild className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] sm:px-3"><Link href="/music/add-music" aria-label="Add music"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
               <EditPostIcon tooltip="Edit Music" tooltipClassName="bg-[#203b66] text-[#eff5ff]"><Button type="button" variant="outline" onClick={ () => router.push(`/music/add-music?id=${ selectedMusic }`) } disabled={ !canEditSelectedMusic } className="h-8 rounded-full border-[#c8d9f3] bg-[#f7fbff] px-2 text-xs font-semibold text-[#2C5EAD] hover:bg-[#edf4ff] hover:text-[#2C5EAD] disabled:opacity-50 sm:px-3" aria-label="Edit selected music"><Edit3 className="size-3.5" /><span className="hidden sm:inline">Edit Music</span></Button></EditPostIcon>
-            </div>
-
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:gap-2">
-              <div className="relative min-w-0 w-full sm:w-96 md:w-md lg:w-lg xl:w-xl"><Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#4a6fae]" /><Input type="search" value={ searchValue } onChange={ (event) => setSearchValue(event.target.value) } placeholder="Search by music title, genre, sub genre, type, or family member" className="h-9 w-full rounded-full border-[#c8d9f3] bg-white pl-10 pr-3 text-xs text-[#203b66] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm" aria-label="Search music" /></div>
-            </div>
-
-            <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#2C5EAD] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-              <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Everything</label>
-                  <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Date Range</label>
-                </div>
-                <div className="flex flex-row flex-nowrap items-end gap-2 lg:min-w-104">
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">Start Date</label><Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] disabled:opacity-60 sm:h-9 sm:text-xs" /></div>
-                  <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1"><label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4a6fae]">End Date</label><Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#c8d9f3] bg-white px-2 text-[11px] text-[#203b66] disabled:opacity-60 sm:h-9 sm:text-xs" /></div>
-                  <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#2C5EAD] px-3 text-xs font-semibold text-white hover:bg-[#234c8e] disabled:opacity-50 sm:h-9">Apply</Button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-[1.4rem] border border-[#c8d9f3] bg-[#f7fbff] px-4 py-2 text-sm text-[#4a6fae] sm:py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#2C5EAD] sm:text-[0.68rem] sm:tracking-[0.32em]">Music Type</p>
-              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="all" checked={ musicStripMode === "all" } onChange={ () => setMusicStripMode("all") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />All</label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="latest" checked={ musicStripMode === "latest" } onChange={ () => setMusicStripMode("latest") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Latest</label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#203b66] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="music-strip-mode" value="top-rated" checked={ musicStripMode === "top-rated" } onChange={ () => setMusicStripMode("top-rated") } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Top Rated</label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ includeArchived } onChange={ (event) => setIncludeArchived(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Archived</label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c8d9f3] bg-white px-3 py-1.5 text-xs font-semibold text-[#2C5EAD] sm:px-2.5 sm:py-2 sm:text-sm"><input type="checkbox" checked={ filterWithDiscussionThreads } onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) } className="size-3.5 border-[#7aa0dd] text-[#2C5EAD] sm:size-4" />Discussions</label>
-              </div>
             </div>
 
             <div className="mt-1"><MusicScrollStrip title={ stripTitle } description={ stripDescription } items={ stripItems } accentClassName={ stripAccentClassName } selectedItemId={ selectedMusic } onSelectItem={ handleSelectMusic } onOpenItem={ handleOpenMusicFromCard } /></div>
@@ -1242,7 +1272,7 @@ export function MusicHomePage({
           </div>
         </section>
       <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="music_salon" />
-    </>
+    </FilterSidebarProvider>
   );
 }
 

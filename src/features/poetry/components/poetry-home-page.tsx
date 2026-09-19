@@ -13,7 +13,6 @@ import {
   MessageSquare,
   PenSquare,
   Plus,
-  Search,
   Tags,
   ThumbsDown,
   ThumbsUp,
@@ -32,6 +31,38 @@ import MemberAvatar from "@/components/common/member-avatar";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
+
+const poetryFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#faf8ff",
+  sidebarForeground: "#43245d",
+  sidebarBorder: "#e4d9ee",
+  label: "#8154a3",
+  muted: "#77578f",
+  inputBorder: "#d7d0ea",
+  inputText: "#43245d",
+  chipBorder: "#d7d0ea",
+  chipText: "#43245d",
+  chipHoverBackground: "#faf4ff",
+  checkBorder: "#b79ad1",
+  checkboxText: "#5f466f",
+  accent: "#5a2f85",
+  accentHoverBackground: "#47216b",
+  triggerBorder: "#d8b5ff",
+  triggerBackground: "#fbf4ff",
+  triggerText: "#6e3f98",
+  triggerHoverBackground: "#f5e9ff",
+};
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import {
   createEmptyTipTapDocument,
@@ -49,7 +80,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 
@@ -589,7 +619,37 @@ export default function PoetryHomePage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 lg:px-8">
+    <FilterSidebarProvider palette={ poetryFilterPalette }>
+      <FilterSidebar title="Poem Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by poem, poet, year, or family member"
+          ariaLabel="Search poems"
+        />
+        <FilterSidebarDateScope
+          radioName="poetry-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup label="Poem Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="poetry-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="poetry-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="poetry-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived Also</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithClubSessions } onChange={ setFilterWithClubSessions }>Clubs Only</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ expandPoemCards } onChange={ setExpandPoemCards }>Expand Poem Cards</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,27,88,0.96),rgba(104,53,148,0.88)_56%,rgba(195,150,110,0.84))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(46,18,70,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -641,6 +701,9 @@ export default function PoetryHomePage({
                     iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#6e3f98]"
                     tooltipClassName="bg-[#4e2374] text-[#f6ebff]"
                   />
+                  <EditPostIcon tooltip="Filter Poems" tooltipClassName="bg-[#4e2374] text-[#f6ebff]">
+                    <FilterSidebarTrigger ariaLabel="Toggle poem filters" />
+                  </EditPostIcon>
                   <EditPostIcon tooltip="View Poem" tooltipClassName="bg-[#4e2374] text-[#f6ebff]">
                     <Button
                       type="button"
@@ -682,51 +745,6 @@ export default function PoetryHomePage({
                 {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#77578f]">
                   Select a poem card from the directory, or use search to narrow the list, then open View Poem or Edit Poem details in a separate dialog.
                 </p> */}
-
-                <div className="mt-4 min-w-0">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative min-w-[16rem] flex-1">
-                      <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#7a5a9f]" />
-                      <Input
-                        type="search"
-                        value={ searchValue }
-                        onChange={ (event) => setSearchValue(event.target.value) }
-                        placeholder="Search by poem, poet, year, or family member"
-                        className="h-9 rounded-full border-[#d7d0ea] bg-white pl-10 pr-3 text-xs text-[#43245d] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                        aria-label="Search poems"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 rounded-[1.4rem] border border-[#e4d9ee] bg-[#faf8ff] px-4 py-2 text-sm text-[#77578f] sm:py-3">
-                    <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#8154a3] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                    <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                      <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                          <input type="radio" name="poetry-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                          Everything
-                        </label>
-                        <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                          <input type="radio" name="poetry-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                          Date Range
-                        </label>
-                      </div>
-                      <div className="flex flex-row flex-nowrap items-end gap-2 lg:min-w-104">
-                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">Start Date</label>
-                          <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                        </div>
-                        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:w-auto sm:flex-1">
-                          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#77578f]">End Date</label>
-                          <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#d7d0ea] bg-white px-2 text-[11px] text-[#43245d] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                        </div>
-                        <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#5a2f85] px-3 text-xs font-semibold text-white hover:bg-[#47216b] disabled:opacity-50 sm:h-9">
-                          Apply
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* <div className="rounded-full border border-[#e4d9ee] bg-[#faf6ff] px-4 py-2 text-sm font-semibold text-[#77578f]">
@@ -745,53 +763,6 @@ export default function PoetryHomePage({
               </div>
             ) : (
               <>
-                <div className="mb-4 rounded-[1.4rem] border border-[#e4d9ee] bg-[#faf8ff] px-4 py-2 text-sm text-[#77578f] sm:py-3">
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#8154a3] sm:text-[0.68rem] sm:tracking-[0.32em]">Poem Type</p>
-                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="poetry-directory-mode" value="all" checked={ directoryMode === "all" } onChange={ () => setDirectoryMode("all") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                      All
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="poetry-directory-mode" value="latest" checked={ directoryMode === "latest" } onChange={ () => setDirectoryMode("latest") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                      Latest
-                    </label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#43245d] transition hover:bg-[#faf4ff] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input type="radio" name="poetry-directory-mode" value="top-rated" checked={ directoryMode === "top-rated" } onChange={ () => setDirectoryMode("top-rated") } className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4" />
-                      Top Rated
-                    </label>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-[#5f466f]">
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ includeArchived }
-                        onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
-                      />
-                      Archived Also
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ filterWithClubSessions }
-                        onChange={ (event) => setFilterWithClubSessions(event.target.checked) }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
-                      />
-                      Clubs Only
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#d7d0ea] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f466f] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ expandPoemCards }
-                        onChange={ (event) => setExpandPoemCards(event.target.checked) }
-                        className="size-3.5 border-[#b79ad1] text-[#6e3f98] sm:size-4"
-                      />
-                      Expand Poem Cards
-                    </label>
-                  </div>
-                </div>
-
                 <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
                   { filteredPoems.map((poemItem) => {
                     const isSelected = poemItem.id === selectedPoemId;
@@ -1201,6 +1172,7 @@ export default function PoetryHomePage({
           ) : null }
         </DialogContent>
       </Dialog>
-    </section>
+      </section>
+    </FilterSidebarProvider>
   );
 }

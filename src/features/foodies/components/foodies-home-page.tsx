@@ -6,8 +6,8 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Clock3, Edit3, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Plus, Printer, Search, ThumbsUp, ThumbsDown, Utensils } from "lucide-react";
-import { useDeferredValue, useEffect, useRef, useState, useTransition } from "react";
+import { Edit3, Eye, Heart, HouseHeart, MessageSquareText, Plus, Printer, ThumbsUp, ThumbsDown } from "lucide-react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -26,7 +26,6 @@ import {
   normalizeSerializedTipTapDocument,
   parseSerializedTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +35,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import {
   clearQueuedFoodiesRecipeComment,
@@ -61,6 +71,27 @@ function formatDate(value: Date) {
     year: "numeric",
   }).format(new Date(value));
 }
+
+const foodiesFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#f7fce8",
+  sidebarForeground: "#2f4820",
+  sidebarBorder: "#dbeacc",
+  label: "#5f7a40",
+  muted: "#647a50",
+  inputBorder: "#ccdfb9",
+  inputText: "#2f4820",
+  chipBorder: "#cadfbb",
+  chipText: "#2f4820",
+  chipHoverBackground: "#f7fce8",
+  checkBorder: "#9fc487",
+  checkboxText: "#4f6f36",
+  accent: "#578c24",
+  accentHoverBackground: "#4a7320",
+  triggerBorder: "#cfe8b2",
+  triggerBackground: "#f7fce8",
+  triggerText: "#2f4820",
+  triggerHoverBackground: "#e5f7cb",
+};
 
 function formatStripDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -939,7 +970,36 @@ export function FoodiesHomePage({
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
+    <FilterSidebarProvider palette={ foodiesFilterPalette }>
+      <FilterSidebar title="Recipe Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by recipe, chef, category, or time"
+          ariaLabel="Search recipes"
+        />
+        <FilterSidebarDateScope
+          radioName="recipe-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup label="Recipe Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="recipe-strip-mode" value="all" checked={ recipeStripMode === "all" } onChange={ () => setRecipeStripMode("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="recipe-strip-mode" value="latest" checked={ recipeStripMode === "latest" } onChange={ () => setRecipeStripMode("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="recipe-strip-mode" value="top-rated" checked={ recipeStripMode === "top-rated" } onChange={ () => setRecipeStripMode("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithDiscussionThreads } onChange={ setFilterWithDiscussionThreads }>Discussions</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-2 sm:px-6 sm:pt-4 md:px-8">
       <div className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -993,6 +1053,7 @@ export function FoodiesHomePage({
                       iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4f7a2a]"
                       tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"
                     />
+                    <EditPostIcon tooltip="Filter Recipes" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><FilterSidebarTrigger ariaLabel="Toggle recipe filters" /></EditPostIcon>
                     <EditPostIcon tooltip="View Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" onClick={ () => setIsViewRecipeOpen(true) } disabled={ !selectedRecipeBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] disabled:opacity-50 sm:px-3" aria-label="View selected recipe"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button></EditPostIcon>
                     <EditPostIcon tooltip="Add Recipe" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]"><Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#cfe8b2] bg-[#f7fce8] px-2 text-xs font-semibold text-[#2f4820] hover:bg-[#e5f7cb] hover:text-[#2f4820] sm:px-3"><Link href="/foodies/add-recipe" aria-label="Add recipe"><Plus className="size-3.5" /><span className="hidden sm:inline">Add</span></Link></Button></EditPostIcon>
                     { canEditSelectedRecipe ? (
@@ -1015,76 +1076,6 @@ export function FoodiesHomePage({
                 </div> */}
               </div>
 
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
-                <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108">
-                  <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#647a50]" />
-                  <Input
-                    type="search"
-                    value={ searchValue }
-                    onChange={ (event) => setSearchValue(event.target.value) }
-                    placeholder="Search by recipe, chef, category, or time"
-                    className="h-9 w-full rounded-full border-[#ccdfb9] bg-white pl-10 pr-3 text-xs text-[#2f4820] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                    aria-label="Search recipes"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm text-[#647a50] sm:py-3">
-                <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#5f7a40] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="recipe-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />Everything</label>
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"><input type="radio" name="recipe-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />Date Range</label>
-                  </div>
-                  <div className="flex flex-row flex-nowrap items-end gap-2 lg:min-w-104">
-                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">Start Date</label>
-                      <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                    </div>
-                    <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
-                      <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#647a50]">End Date</label>
-                      <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#ccdfb9] bg-white px-2 text-[11px] text-[#2f4820] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                    </div>
-                    <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#578c24] px-3 text-xs font-semibold text-white hover:bg-[#4a7320] disabled:opacity-50 sm:h-9">Apply</Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-3 rounded-[1.4rem] border border-[#dbeacc] bg-[#f7fce8] px-4 py-2 text-sm text-[#647a50] sm:py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#5f7a40] sm:text-[0.68rem] sm:tracking-[0.32em]">Recipe Type</p>
-              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input type="radio" name="recipe-strip-mode" value="all" checked={ recipeStripMode === "all" } onChange={ () => setRecipeStripMode("all") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />
-                  All
-                </label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input type="radio" name="recipe-strip-mode" value="latest" checked={ recipeStripMode === "latest" } onChange={ () => setRecipeStripMode("latest") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />
-                  Latest
-                </label>
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#cadfbb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#2f4820] transition hover:bg-[#f7fce8] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input type="radio" name="recipe-strip-mode" value="top-rated" checked={ recipeStripMode === "top-rated" } onChange={ () => setRecipeStripMode("top-rated") } className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4" />
-                  Top Rated
-                </label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#ccdfb9] bg-white px-3 py-1.5 text-xs font-semibold text-[#4f6f36] sm:px-2.5 sm:py-2 sm:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={ includeArchived }
-                    onChange={ (event) => setIncludeArchived(event.target.checked) }
-                    className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4"
-                  />
-                  Archived
-                </label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#ccdfb9] bg-white px-3 py-1.5 text-xs font-semibold text-[#4f6f36] sm:px-2.5 sm:py-2 sm:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={ filterWithDiscussionThreads }
-                    onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                    className="size-3.5 border-[#9fc487] text-[#578c24] sm:size-4"
-                  />
-                  Discussions
-                </label>
-              </div>
             </div>
 
             <div className="mt-1 px-4 pb-2 pt-1 sm:px-6 sm:py-5">
@@ -1404,7 +1395,8 @@ export function FoodiesHomePage({
           ) : null }
         </DialogContent>
       </Dialog>
-    </section>
+      </section>
+    </FilterSidebarProvider>
   );
 }
 

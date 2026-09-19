@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { Edit3, Eye, ExternalLink, Heart, HouseHeart, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp } from "lucide-react";
+import { Edit3, Eye, ExternalLink, Heart, HouseHeart, MessageSquareText, Plus, ThumbsDown, ThumbsUp } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -38,7 +38,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { MovieScrollStrip } from "@/features/movies/components/movie-scroll-strip";
@@ -46,6 +45,38 @@ import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventName, isBrowserOnline, queueFeatureComment, readQueuedFeatureComments } from "@/lib/pwa-background-sync";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
+
+const movieFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#fff8f2",
+  sidebarForeground: "#5c2e1a",
+  sidebarBorder: "#f0d9c4",
+  label: "#a85a3a",
+  muted: "#8b5a3c",
+  inputBorder: "#e8c4a0",
+  inputText: "#5c2e1a",
+  chipBorder: "#e8c4a0",
+  chipText: "#5c2e1a",
+  chipHoverBackground: "#fffaf5",
+  checkBorder: "#d4a574",
+  checkboxText: "#8b5a3c",
+  accent: "#b8581a",
+  accentHoverBackground: "#9d4615",
+  triggerBorder: "#e8c4a0",
+  triggerBackground: "#fff6ef",
+  triggerText: "#7b3306",
+  triggerHoverBackground: "#ffefdf",
+};
 
 function formatDate(value: Date) {
   return new Intl.DateTimeFormat("en-US", {
@@ -497,8 +528,36 @@ export function MovieHomePage({
   }
 
   return (
-    <>
-      <section className="font-app w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+    <FilterSidebarProvider palette={ movieFilterPalette }>
+      <FilterSidebar title="Movie Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by movie, genre, adjective, channel, or family member"
+          ariaLabel="Search movies"
+        />
+        <FilterSidebarDateScope
+          radioName="movie-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup label="Movie Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="movie-strip-mode" value="all" checked={ movieStripMode === "all" } onChange={ () => setMovieStripMode("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="movie-strip-mode" value="latest" checked={ movieStripMode === "latest" } onChange={ () => setMovieStripMode("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="movie-strip-mode" value="top-rated" checked={ movieStripMode === "top-rated" } onChange={ () => setMovieStripMode("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithDiscussionThreads } onChange={ setFilterWithDiscussionThreads }>Discussions</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
         <div id="movie-show-welcome" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -544,6 +603,9 @@ export function MovieHomePage({
                         />
                       </div>
                       <div id="movie-action-buttons">
+                        <EditPostIcon tooltip="Filter Movies" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
+                          <FilterSidebarTrigger ariaLabel="Toggle movie filters" />
+                        </EditPostIcon>
                         <EditPostIcon tooltip="View Movie" tooltipClassName="bg-[#5c2e1a] text-[#fff6ef]">
                           <Button type="button" onClick={ () => setIsViewMovieOpen(true) } disabled={ !selectedMovieBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-[#fff6ef] px-2 text-xs font-semibold text-[#7b3306] hover:bg-[#ffefdf] disabled:opacity-50 sm:px-3" aria-label="View selected movie"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
                         </EditPostIcon>
@@ -559,108 +621,6 @@ export function MovieHomePage({
                     {/* <p className="mt-2 max-w-2xl text-sm leading-6 text-[#8b5a3c]">Search by movie title, tags, channel, or family member and pick what to watch next.</p> */ }
                   </div>
                   {/* <div className="rounded-full border border-[#f0d9c4] bg-[#fdf6ef] px-4 py-2 text-sm font-semibold text-[#8b5a3c]">{ filteredMovies.length } movies found</div> */ }
-                </div>
-
-                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
-                  <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#8b5a3c]" />
-                    <Input
-                      type="search"
-                      value={ searchValue }
-                      onChange={ (event) => setSearchValue(event.target.value) }
-                      placeholder="Search by movie, genre, adjective, channel, or family member"
-                      className="h-9 w-full rounded-full border-[#e8c4a0] bg-white pl-10 pr-3 text-xs text-[#5c2e1a] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                      aria-label="Search movies"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-2 text-sm text-[#8b5a3c] sm:py-3">
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#a85a3a] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                  <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="movie-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4" />
-                        Everything
-                      </label>
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="movie-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4" />
-                        Date Range
-                      </label>
-                    </div>
-                    <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end lg:min-w-104">
-                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">Start Date</label>
-                        <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                      </div>
-                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#8b5a3c]">End Date</label>
-                        <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 rounded-xl border-[#e8c4a0] bg-white px-2 text-[11px] text-[#5c2e1a] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                      </div>
-                      <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#b8581a] px-3 text-xs font-semibold text-white hover:bg-[#9d4615] disabled:opacity-50 sm:h-9">
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-[1.4rem] border border-[#f0d9c4] bg-[#fff8f2] px-4 py-2 text-sm text-[#8b5a3c] sm:py-3">
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#a85a3a] sm:text-[0.68rem] sm:tracking-[0.32em]">Movie Type</p>
-                  <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="movie-strip-mode"
-                        value="all"
-                        checked={ movieStripMode === "all" }
-                        onChange={ () => setMovieStripMode("all") }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      All
-                    </label>
-
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="movie-strip-mode"
-                        value="latest"
-                        checked={ movieStripMode === "latest" }
-                        onChange={ () => setMovieStripMode("latest") }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Latest
-                    </label>
-
-                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#5c2e1a] transition hover:bg-[#fffaf5] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                      <input
-                        type="radio"
-                        name="movie-strip-mode"
-                        value="top-rated"
-                        checked={ movieStripMode === "top-rated" }
-                        onChange={ () => setMovieStripMode("top-rated") }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Top Rated
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ includeArchived }
-                        onChange={ (event) => setIncludeArchived(event.target.checked) }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Archived
-                    </label>
-                    <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#e8c4a0] bg-white px-3 py-1.5 text-xs font-semibold text-[#8b5a3c] sm:px-2.5 sm:py-2 sm:text-sm">
-                      <input
-                        type="checkbox"
-                        checked={ filterWithDiscussionThreads }
-                        onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                        className="size-3.5 border-[#d4a574] text-[#b8581a] sm:size-4"
-                      />
-                      Discussions
-                    </label>
-                  </div>
                 </div>
 
                 <div className="mt-1">
@@ -971,7 +931,7 @@ export function MovieHomePage({
       </Dialog>
       </section>
       <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="movie_tour" />
-    </>
+    </FilterSidebarProvider>
   );
 }
 

@@ -6,7 +6,7 @@ import { Table, TableCell, TableHeader, TableRow } from "@tiptap/extension-table
 import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { CircleHelp, Edit3, ExternalLink, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Plus, Search, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
+import { CircleHelp, Edit3, ExternalLink, Eye, Heart, HouseHeart, MessageSquare, MessageSquareText, Plus, ThumbsDown, ThumbsUp, Tv } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDeferredValue, useEffect, useState, useTransition } from "react";
@@ -38,7 +38,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import GuidedTourLauncher from "@/features/guided/components/guided-tour-launcher";
 import { normalizeShowSiteBackgroundHex } from "@/features/support/types/constants";
@@ -48,6 +47,38 @@ import { clearQueuedFeatureComment, createClientRequestId, getPwaSyncNowEventNam
 import { cn } from "@/lib/utils";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
+import {
+  FilterSidebar,
+  FilterSidebarCheckbox,
+  FilterSidebarDateScope,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarRadio,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
+
+const tvFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#f6fbfe",
+  sidebarForeground: "#15384a",
+  sidebarBorder: "#d7ebf3",
+  label: "#45829a",
+  muted: "#4f7384",
+  inputBorder: "#c9e2ec",
+  inputText: "#15384a",
+  chipBorder: "#c7dfeb",
+  chipText: "#15384a",
+  chipHoverBackground: "#f1f8fb",
+  checkBorder: "#86b3c5",
+  checkboxText: "#24536a",
+  accent: "#2d87a8",
+  accentHoverBackground: "#256e89",
+  triggerBorder: "#c9e2ec",
+  triggerBackground: "#f6fbfe",
+  triggerText: "#15384a",
+  triggerHoverBackground: "#dff2f9",
+};
 
 
 
@@ -690,8 +721,36 @@ export function TvHomePage({
   }
 
   return (
-    <>
-      <section className="font-app h-full w-full px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
+    <FilterSidebarProvider palette={ tvFilterPalette }>
+      <FilterSidebar title="Show Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by show, genre, adjective, channel, or family member"
+          ariaLabel="Search TV shows"
+        />
+        <FilterSidebarDateScope
+          radioName="tv-date-scope"
+          dateScope={ dateScope }
+          onDateScopeChange={ setDateScope }
+          startDate={ startDate }
+          endDate={ endDate }
+          onStartDateChange={ setStartDate }
+          onEndDateChange={ setEndDate }
+          isDateRangeScope={ isDateRangeScope }
+          hasPendingChanges={ hasPendingDateChanges }
+          onApply={ handleApplyDateRange }
+        />
+        <FilterSidebarGroup id="tv-show-type" label="Show Type" className="flex flex-wrap gap-2">
+          <FilterSidebarRadio name="tv-show-type" value="all" checked={ showType === "all" } onChange={ () => setShowType("all") }>All</FilterSidebarRadio>
+          <FilterSidebarRadio name="tv-show-type" value="latest" checked={ showType === "latest" } onChange={ () => setShowType("latest") }>Latest</FilterSidebarRadio>
+          <FilterSidebarRadio name="tv-show-type" value="top-rated" checked={ showType === "top-rated" } onChange={ () => setShowType("top-rated") }>Top Rated</FilterSidebarRadio>
+          <FilterSidebarCheckbox checked={ includeArchived } onChange={ setIncludeArchived }>Archived</FilterSidebarCheckbox>
+          <FilterSidebarCheckbox checked={ filterWithDiscussionThreads } onChange={ setFilterWithDiscussionThreads }>Discussions</FilterSidebarCheckbox>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app h-full min-w-0 flex-1 px-4 pb-8 pt-2 sm:px-6 sm:pt-4 lg:px-8">
         <div id="tv-show-welcome" className="mx-auto max-w-7xl space-y-3 sm:space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -745,6 +804,9 @@ export function TvHomePage({
                         iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#2a819d]"
                         tooltipClassName="bg-[#15384a] text-[#ecf9ff]"
                       />
+                      <EditPostIcon tooltip="Filter Shows" tooltipClassName="bg-[#15384a] text-[#ecf9ff]">
+                        <FilterSidebarTrigger ariaLabel="Toggle show filters" />
+                      </EditPostIcon>
                       <EditPostIcon tooltip="View Show" tooltipClassName="bg-[#15384a] text-[#ecf9ff]">
                         <Button type="button" onClick={ () => setIsViewShowOpen(true) } disabled={ !selectedShowBasic } className="h-8 shrink-0 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-[#f6fbfe] px-2 text-xs font-semibold text-[#15384a] hover:bg-[#dff2f9] disabled:opacity-50 sm:px-3" aria-label="View selected show"><Eye className="size-3.5" /><span className="hidden sm:inline">View</span></Button>
                       </EditPostIcon>
@@ -758,108 +820,6 @@ export function TvHomePage({
                   </div>
 
                 </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-start sm:gap-2">
-                  <div className="relative min-w-0 w-full sm:w-78 md:w-84 lg:w-96 xl:w-108">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-[#5f7987]" />
-                    <Input
-                      type="search"
-                      value={ searchValue }
-                      onChange={ (event) => setSearchValue(event.target.value) }
-                      placeholder="Search by show, genre, adjective, channel, or family member"
-                      className="h-9 w-full rounded-full border-[#c9e2ec] bg-white pl-10 pr-3 text-xs text-[#15384a] shadow-sm sm:h-12 sm:pl-11 sm:pr-4 sm:text-sm"
-                      aria-label="Search TV shows"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-3 rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
-                  <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#45829a] sm:text-[0.68rem] sm:tracking-[0.32em]">Date Scope</p>
-                  <div className="mt-1.5 flex flex-col gap-2 sm:mt-2 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="flex flex-nowrap gap-2 overflow-x-auto">
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="tv-date-scope" value="everything" checked={ dateScope === "everything" } onChange={ () => setDateScope("everything") } className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4" />
-                        Everything
-                      </label>
-                      <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                        <input type="radio" name="tv-date-scope" value="date-range" checked={ dateScope === "date-range" } onChange={ () => setDateScope("date-range") } className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4" />
-                        Date Range
-                      </label>
-                    </div>
-                    <div className="flex flex-row gap-2 sm:flex-nowrap sm:items-end lg:min-w-104">
-                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">Start Date</label>
-                        <Input type="date" value={ startDate } max={ endDate || undefined } onChange={ (event) => setStartDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                      </div>
-                      <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1 sm:flex-1 sm:w-auto">
-                        <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#4f7384]">End Date</label>
-                        <Input type="date" value={ endDate } min={ startDate || undefined } onChange={ (event) => setEndDate(event.target.value) } disabled={ !isDateRangeScope } className="h-8 w-full rounded-xl border-[#c9e2ec] bg-white px-2 text-[11px] text-[#15384a] disabled:opacity-60 sm:h-9 sm:text-xs" />
-                      </div>
-                      <Button type="button" onClick={ handleApplyDateRange } disabled={ !isDateRangeScope || !hasPendingDateChanges } className="h-8 shrink-0 rounded-xl bg-[#2d87a8] px-3 text-xs font-semibold text-white hover:bg-[#256e89] disabled:opacity-50 sm:h-9">
-                        Apply
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div id="tv-show-type" className="rounded-[1.4rem] border border-[#d7ebf3] bg-[#f6fbfe] px-4 py-2 text-sm text-[#376176] sm:py-3">
-              <p className="text-[0.62rem] font-bold uppercase tracking-[0.26em] text-[#45829a] sm:text-[0.68rem] sm:tracking-[0.32em]">Show Type</p>
-              <div className="mt-1.5 flex flex-nowrap gap-2 overflow-x-auto sm:mt-2">
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input
-                    type="radio"
-                    name="tv-show-type"
-                    value="all"
-                    checked={ showType === "all" }
-                    onChange={ () => setShowType("all") }
-                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
-                  />
-                  All
-                </label>
-
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input
-                    type="radio"
-                    name="tv-show-type"
-                    value="latest"
-                    checked={ showType === "latest" }
-                    onChange={ () => setShowType("latest") }
-                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
-                  />
-                  Latest
-                </label>
-
-                <label className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-[#c7dfeb] bg-white px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-[#15384a] transition hover:bg-[#f1f8fb] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm">
-                  <input
-                    type="radio"
-                    name="tv-show-type"
-                    value="top-rated"
-                    checked={ showType === "top-rated" }
-                    onChange={ () => setShowType("top-rated") }
-                    className="size-3.5 border-[#86b3c5] text-[#2d87a8] sm:size-4"
-                  />
-                  Top Rated
-                </label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={ includeArchived }
-                    onChange={ (event) => setIncludeArchived(event.target.checked) }
-                    className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
-                  />
-                  Archived
-                </label>
-                <label className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-[#c9e2ec] bg-white px-3 py-1.5 text-xs font-semibold text-[#24536a] sm:px-2.5 sm:py-2 sm:text-sm">
-                  <input
-                    type="checkbox"
-                    checked={ filterWithDiscussionThreads }
-                    onChange={ (event) => setFilterWithDiscussionThreads(event.target.checked) }
-                    className="size-3.5 border-[#8ec6df] text-[#2d87a8] sm:size-4"
-                  />
-                  Discussions
-                </label>
               </div>
             </div>
 
@@ -1255,6 +1215,6 @@ export function TvHomePage({
       </Dialog>
       </section>
       <GuidedTourLauncher initialPayload={ initialGuidedLaunchPayload } tourKey="tv_tour" />
-    </>
+    </FilterSidebarProvider>
   );
 }
