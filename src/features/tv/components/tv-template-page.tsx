@@ -9,6 +9,7 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import {
   Bold,
   Edit3,
+  Globe,
   Heading2,
   Heading3,
   Italic,
@@ -51,6 +52,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import MemberAvatar from "@/components/common/member-avatar";
 
 type DialogMode = "create" | "edit";
 
@@ -278,18 +280,30 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
                           : "border-[#d7ebf3] bg-white hover:border-[#bfd8e5] hover:bg-[#f8fcff]" }` }
                       >
                         <p className="font-bold text-[#15384a]">{ template.templateName }</p>
-                        <p className="mt-1 text-xs text-[#5f7987]">Owner: { template.ownerName }</p>
-                        <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.08em]">
-                          <span className="rounded-full bg-[#e8f3f9] px-2 py-1 text-[#1f6078]">{ template.status }</span>
+                        <div className="mt-1 flex items-center gap-2">
                           { template.isGlobalTemplate ? (
-                            <span className="rounded-full bg-[#f3ead9] px-2 py-1 text-[#7a5323]">Global</span>
-                          ) : null }
-                          { template.canEdit ? (
-                            <span className="rounded-full bg-[#e8f5da] px-2 py-1 text-[#3d6c21]">Editable</span>
+                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f3ead9] text-[#7a5323]">
+                              <Globe className="size-3.5" />
+                            </span>
                           ) : (
-                            <span className="rounded-full bg-[#ececec] px-2 py-1 text-[#666]">Read only</span>
+                            <MemberAvatar
+                              imageUrl={ template.memberImageUrl }
+                              firstName={ template.ownerName.split(" ")[0] }
+                              lastName={ template.ownerName.split(" ").slice(1).join(" ") }
+                              sizeClassName="h-6 w-6"
+                            />
                           ) }
+                          <p className="text-xs text-[#5f7987]">{ template.ownerName }</p>
                         </div>
+                        { !template.isGlobalTemplate && (
+                          <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold uppercase tracking-[0.08em]">
+                            { template.canEdit ? (
+                              <span className="rounded-full bg-[#e8f5da] px-2 py-1 text-[#3d6c21]">Editable</span>
+                            ) : (
+                              <span className="rounded-full bg-[#ececec] px-2 py-1 text-[#666]">Read only</span>
+                            ) }
+                          </div>
+                        ) }
                       </button>
                     );
                   }) }

@@ -243,14 +243,12 @@ async function loadRecipeTemplates(
         and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
         and(
           eq(recipeTemplate.isGlobalTemplate, false),
-          eq(recipeTemplate.familyId, familyId),
-          eq(recipeTemplate.memberId, memberId)
+          eq(recipeTemplate.familyId, familyId)
         )
       )
       : and(
         eq(recipeTemplate.isGlobalTemplate, false),
-        eq(recipeTemplate.familyId, familyId),
-        eq(recipeTemplate.memberId, memberId)
+        eq(recipeTemplate.familyId, familyId)
       ),
     includeDraft
       ? undefined
@@ -354,8 +352,7 @@ async function loadFoodiesTemplateManagementRecords(
     and(eq(recipeTemplate.isGlobalTemplate, true), eq(recipeTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
     and(
       eq(recipeTemplate.isGlobalTemplate, false),
-      eq(recipeTemplate.familyId, familyId),
-      eq(recipeTemplate.memberId, actorMemberId)
+      eq(recipeTemplate.familyId, familyId)
     )
   );
 
@@ -410,6 +407,7 @@ async function loadFoodiesTemplateManagementRecords(
       ownerName: row.isGlobalTemplate
         ? "Global Template"
         : memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
+      memberImageUrl: row.isGlobalTemplate ? null : memberImageUrlById.get(row.memberId ?? 0) ?? null,
       canEdit,
     };
   });

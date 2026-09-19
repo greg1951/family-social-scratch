@@ -4,6 +4,7 @@ export interface TemplateAccessRecord {
   isGlobalTemplate: boolean;
   familyId: number | null;
   memberId: number | null;
+  status: string;
 }
 
 export function canViewTemplate(
@@ -15,5 +16,10 @@ export function canViewTemplate(
     return template.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
   }
 
-  return template.familyId === familyId && template.memberId === memberId;
+  if (template.familyId !== familyId) {
+    return false;
+  }
+
+  // Drafts stay private to their author; published custom templates are family-wide.
+  return template.status === "published" || template.memberId === memberId;
 }

@@ -115,6 +115,7 @@ export interface MusicTemplateRecord {
   familyId: number | null;
   updatedAt: Date;
   ownerName: string;
+  memberImageUrl: string | null;
   canEdit: boolean;
 }
 

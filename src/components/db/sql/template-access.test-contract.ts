@@ -96,8 +96,8 @@ export function runTemplateAccessContract(options: TemplateAccessContractOptions
 
   async function visibleTemplateIds(row: TemplateRecord) {
     state.selectQueue.push([row]);
-    if (!row.isGlobalTemplate && row.memberId === 77 && row.familyId === 10) {
-      state.selectQueue.push([{ id: 77, firstName: "Current", lastName: "Member", memberImageUrl: null }]);
+    if (!row.isGlobalTemplate && row.familyId === 10) {
+      state.selectQueue.push([{ id: row.memberId, firstName: "Family", lastName: "Member", memberImageUrl: null }]);
     }
 
     const result = await getManagementData(10, 77, false);
@@ -126,9 +126,9 @@ export function runTemplateAccessContract(options: TemplateAccessContractOptions
         .resolves.toContain(103);
     });
 
-    it("hides another member's custom templates in the same family", async () => {
+    it("shows another member's custom templates within the same family", async () => {
       await expect(visibleTemplateIds(templateRow({ id: 104, memberId: 88, familyId: 10 })))
-        .resolves.not.toContain(104);
+        .resolves.toContain(104);
     });
 
     it("hides custom templates from another family", async () => {

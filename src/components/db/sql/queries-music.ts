@@ -593,15 +593,13 @@ async function loadMusicTemplates(
         and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
         and(
           eq(musicTemplate.isGlobalTemplate, false),
-          eq(musicTemplate.familyId, familyId),
-          eq(musicTemplate.memberId, memberId)
+          eq(musicTemplate.familyId, familyId)
         )
       ),
       includeDraft ? undefined : eq(musicTemplate.status, "published")
     )
     : and(
       eq(musicTemplate.familyId, familyId),
-      eq(musicTemplate.memberId, memberId),
       includeDraft ? undefined : eq(musicTemplate.status, "published"),
       eq(musicTemplate.isGlobalTemplate, false)
     );
@@ -654,8 +652,7 @@ async function loadMusicTemplateManagementRecords(
     and(eq(musicTemplate.isGlobalTemplate, true), eq(musicTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
     and(
       eq(musicTemplate.isGlobalTemplate, false),
-      eq(musicTemplate.familyId, familyId),
-      eq(musicTemplate.memberId, actorMemberId)
+      eq(musicTemplate.familyId, familyId)
     )
   );
 
@@ -691,6 +688,7 @@ async function loadMusicTemplateManagementRecords(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   return visibleTemplateRows.map((row) => {
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -710,6 +708,7 @@ async function loadMusicTemplateManagementRecords(
       ownerName: isFamilyGlobalTemplate
         ? "Global Template"
         : memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
+      memberImageUrl: isFamilyGlobalTemplate ? null : memberImageUrlById.get(row.memberId ?? 0) ?? null,
       canEdit,
     };
   });

@@ -12,8 +12,11 @@ There are filters for the microphone, and there are sizing settings for the brow
 
     ![](./sound-mixer-settings.jpg)
 
+    - **Note 1**: Nvidia microphone is selected for the input device. 
+    - **Note 2**: To remove the echo that you hear in your headphones, adjust the OBS volume all the way down. Picks it up in OBS just fine with this setting. 
+
 ## Browser Sizing
-1. Make sure the browser **zoom is at 80%**. 
+1. Make sure the browser **zoom is at 100%**. 
 2. Open the slide deck and launch the play with the speaker notes (then close the speaker notes) 
 3. Size the browser window so that it fits within the dimensions inside the browser source of your slide scene.
 

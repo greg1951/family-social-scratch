@@ -269,15 +269,13 @@ async function loadShowTemplates(
         and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
         and(
           eq(showTemplate.isGlobalTemplate, false),
-          eq(showTemplate.familyId, familyId),
-          eq(showTemplate.memberId, memberId)
+          eq(showTemplate.familyId, familyId)
         )
       ),
       includeDraft ? undefined : eq(showTemplate.status, "published")
     )
     : and(
       eq(showTemplate.familyId, familyId),
-      eq(showTemplate.memberId, memberId),
       includeDraft ? undefined : eq(showTemplate.status, "published"),
       eq(showTemplate.isGlobalTemplate, false)
     );
@@ -330,8 +328,7 @@ async function loadShowTemplateManagementRecords(
     and(eq(showTemplate.isGlobalTemplate, true), eq(showTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
     and(
       eq(showTemplate.isGlobalTemplate, false),
-      eq(showTemplate.familyId, familyId),
-      eq(showTemplate.memberId, actorMemberId)
+      eq(showTemplate.familyId, familyId)
     )
   );
 
@@ -367,6 +364,7 @@ async function loadShowTemplateManagementRecords(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   return visibleTemplateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
@@ -385,6 +383,7 @@ async function loadShowTemplateManagementRecords(
       ownerName: row.isGlobalTemplate
         ? "Global Template"
         : memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
+      memberImageUrl: row.isGlobalTemplate ? null : memberImageUrlById.get(row.memberId ?? 0) ?? null,
       canEdit,
     };
   });
@@ -813,7 +812,7 @@ async function resolveTmdbTvImage(showTitle: string, showFirstYear?: number): Pr
       searchUrl += `&first_air_date_year=${showFirstYear}`;
     }
 
-    let response = await fetch(searchUrl, { headers });
+    const response = await fetch(searchUrl, { headers });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => null);

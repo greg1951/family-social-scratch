@@ -105,6 +105,7 @@ export interface FoodiesTemplateRecord {
   familyId: number | null;
   updatedAt: Date;
   ownerName: string;
+  memberImageUrl: string | null;
   canEdit: boolean;
 }
 

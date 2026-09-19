@@ -269,15 +269,13 @@ async function loadMovieTemplates(
         and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
         and(
           eq(movieTemplate.isGlobalTemplate, false),
-          eq(movieTemplate.familyId, familyId),
-          eq(movieTemplate.memberId, memberId)
+          eq(movieTemplate.familyId, familyId)
         )
       ),
       includeDraft ? undefined : eq(movieTemplate.status, "published")
     )
     : and(
       eq(movieTemplate.familyId, familyId),
-      eq(movieTemplate.memberId, memberId),
       includeDraft ? undefined : eq(movieTemplate.status, "published"),
       eq(movieTemplate.isGlobalTemplate, false)
     );
@@ -330,8 +328,7 @@ async function loadMovieTemplateManagementRecords(
     and(eq(movieTemplate.isGlobalTemplate, true), eq(movieTemplate.familyId, GLOBAL_TEMPLATE_FAMILY_ID)),
     and(
       eq(movieTemplate.isGlobalTemplate, false),
-      eq(movieTemplate.familyId, familyId),
-      eq(movieTemplate.memberId, actorMemberId)
+      eq(movieTemplate.familyId, familyId)
     )
   );
 
@@ -367,6 +364,7 @@ async function loadMovieTemplateManagementRecords(
   const memberNameById = new Map(
     memberRows.map((row) => [row.id, createSubmitterName(row.firstName, row.lastName)])
   );
+  const memberImageUrlById = new Map(memberRows.map((row) => [row.id, row.memberImageUrl]));
 
   return visibleTemplateRows.map((row) => {
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -386,6 +384,7 @@ async function loadMovieTemplateManagementRecords(
       ownerName: isFamilyGlobalTemplate
         ? "Global Template"
         : memberNameById.get(row.memberId ?? 0) ?? `Member #${row.memberId ?? 0}`,
+      memberImageUrl: isFamilyGlobalTemplate ? null : memberImageUrlById.get(row.memberId ?? 0) ?? null,
       canEdit,
     };
   });
@@ -796,7 +795,7 @@ async function resolveTmdbMovieImage(movieTitle: string, movieDebutYear?: number
       searchUrl += `&primary_release_year=${movieDebutYear}`;
     }
 
-    let response = await fetch(searchUrl, { headers });
+    const response = await fetch(searchUrl, { headers });
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => null);
