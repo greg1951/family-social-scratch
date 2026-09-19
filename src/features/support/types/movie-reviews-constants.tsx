@@ -2,6 +2,41 @@ import { FileText, Info, Heart } from "lucide-react";
 
 export const movieReviewsFaqItems = [
   {
+    value: "item-01",
+    category: "Movie Reviews",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Is there a way to search or filter the movie reviews?</p>
+        <p className="text-xs text-slate-600">Yes, use the sidebar to search or filter.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">When you first enter the Movie Theater, the movie reviews are unfiltered. You can open the sidebar to search or filter them.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>As shown below, click on the <b>Filter Movies</b> icon in the Finder to open the filtering sidebar.</li>
+            <li>In the filtering sidebar, you can use the search input to find movies by title or by any of five different criteria in the movie review.</li>
+            <li>The date scope can be used to further refine a date range for the filtering.</li>
+            <li>Further filtering can be done by using the &quot;Latest&quot; or &quot;Top Rated&quot; radio buttons.</li>
+            <li>If you&apos;re looking for movies with a discussion group, you can select the <b>Discussions</b> checkbox to see those.</li>
+          </ol>
+          <span className="flex justify-left pt-2 pb-2">
+            <Info size={ 20 } className="inline-block mr-1" />
+            <p className="text-base font-semibold pt-2 pb-2">By selecting the filtering sidebar icon again, you can close the filtering dialog.</p>
+          </span>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-180 h-95 md:w-220 md:h-110"
+              src="/images/support/faq-movie-filter-sidebar.jpg"
+              alt="Filtering Sidebar"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
     value: "item-10",
     category: "Movie Reviews",
     trigger: (

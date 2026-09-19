@@ -391,3 +391,12 @@ If systemd starts with pm2-runtime start ecosystem.config.cjs, restarting the se
 2. Add CI/CD gate ensuring migrations complete before app rollout.
 3. Use migration files for shared environments.
 4. Reserve push for local development only.
+
+## npm ci Sequence
+
+```bash
+git pull --ff-only origin main   # get latest code + lockfile
+npm ci --include=dev             # exact install from the fresh lockfile
+npm run build                    # build with new deps in place
+pm2 restart <app>                # or per your PM2 runbook
+```
