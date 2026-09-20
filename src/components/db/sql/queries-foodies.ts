@@ -340,7 +340,8 @@ async function loadRecipeTemplates(
 async function loadFoodiesTemplateManagementRecords(
   familyId: number,
   actorMemberId: number,
-  actorIsAdmin: boolean
+  actorIsAdmin: boolean,
+  actorIsFounder = false
 ): Promise<FoodiesTemplateRecord[]> {
   const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
 
@@ -393,7 +394,7 @@ async function loadFoodiesTemplateManagementRecords(
   return visibleTemplateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
       ? canManageGlobalTemplate
-      : row.memberId === actorMemberId;
+      : row.memberId === actorMemberId || actorIsFounder;
 
     return {
       id: row.id,
@@ -642,11 +643,12 @@ export async function getFoodiesHomePageData(
 export async function getFoodiesTemplateManagementData(
   familyId: number,
   memberId: number,
-  isAdmin: boolean
+  isAdmin: boolean,
+  isFounder = false
 ): Promise<FoodiesTemplateManagementDataReturn> {
   try {
     const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
-    const templates = await loadFoodiesTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
+    const templates = await loadFoodiesTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate, isFounder);
 
     return {
       success: true,
@@ -1041,6 +1043,7 @@ export async function saveFoodiesTemplate(
     familyId: number;
     memberId: number;
     isAdmin: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveFoodiesTemplateReturn> {
   const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -1093,10 +1096,12 @@ export async function saveFoodiesTemplate(
       };
     }
 
-    if (!existingTemplate.isGlobalTemplate && (existingTemplate.memberId !== actor.memberId || existingTemplate.familyId !== actor.familyId)) {
+    const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+    if (!existingTemplate.isGlobalTemplate && (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder)) {
       return {
         success: false,
-        message: "You can only edit templates you created.",
+        message: "Only the template owner or the family founder can edit this template.",
       };
     }
   }
@@ -1145,7 +1150,7 @@ export async function saveFoodiesTemplate(
         })
         .returning();
 
-    const templates = await loadFoodiesTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
+    const templates = await loadFoodiesTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate, Boolean(actor.isFounder));
     const savedTemplateRecord = templates.find((template) => template.id === savedTemplate.id);
 
     if (!savedTemplateRecord) {
@@ -1172,6 +1177,69 @@ export async function saveFoodiesTemplate(
       message: error instanceof Error
         ? `Failed to save template changes: ${error.message}`
         : "Failed to save template changes.",
+    };
+  }
+}
+
+export async function deleteFoodiesTemplate(
+  templateId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const existingTemplate = await db
+    .select()
+    .from(recipeTemplate)
+    .where(eq(recipeTemplate.id, templateId))
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingTemplate) {
+    return {
+      success: false,
+      message: `No template was found for id: ${templateId}`,
+    };
+  }
+
+  if (existingTemplate.isGlobalTemplate) {
+    return {
+      success: false,
+      message: "Global templates cannot be deleted.",
+    };
+  }
+
+  const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+  if (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder) {
+    return {
+      success: false,
+      message: "Only the template owner or the family founder can delete this template.",
+    };
+  }
+
+  try {
+    // Unlink recipes first: recipe.templateId cascades on delete and would remove recipes.
+    await db
+      .update(recipe)
+      .set({ templateId: null })
+      .where(eq(recipe.templateId, templateId));
+
+    await db.delete(recipeTemplate).where(eq(recipeTemplate.id, templateId));
+
+    return {
+      success: true,
+      message: `Template "${existingTemplate.templateName}" deleted.`,
+    };
+  } catch (error) {
+    logDbQueryError("foodies.deleteFoodiesTemplate", error, {
+      templateId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting recipe template",
     };
   }
 }

@@ -640,7 +640,8 @@ async function loadMusicTemplates(
 async function loadMusicTemplateManagementRecords(
   familyId: number,
   actorMemberId: number,
-  actorIsAdmin: boolean
+  actorIsAdmin: boolean,
+  actorIsFounder = false
 ): Promise<MusicTemplateRecord[]> {
   const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
 
@@ -694,7 +695,7 @@ async function loadMusicTemplateManagementRecords(
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEdit = isFamilyGlobalTemplate
       ? canManageGlobalTemplate
-      : row.memberId === actorMemberId;
+      : row.memberId === actorMemberId || actorIsFounder;
 
     return {
       id: row.id,
@@ -1114,11 +1115,12 @@ export async function getMusicHomePageData(
 export async function getMusicTemplateManagementData(
   familyId: number,
   memberId: number,
-  isAdmin: boolean
+  isAdmin: boolean,
+  isFounder = false
 ): Promise<MusicTemplateManagementDataReturn> {
   try {
     const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
-    const templates = await loadMusicTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
+    const templates = await loadMusicTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate, isFounder);
 
     return {
       success: true,
@@ -1464,6 +1466,7 @@ export async function saveMusicTemplate(
     familyId: number;
     memberId: number;
     isAdmin: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveMusicTemplateReturn> {
   const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -1513,12 +1516,12 @@ export async function saveMusicTemplate(
     const isFamilyGlobalTemplate = existingTemplate.isGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEditExisting = isFamilyGlobalTemplate
       ? canManageGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID
-      : existingTemplate.memberId === actor.memberId && existingTemplate.familyId === actor.familyId;
+      : (existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder)) && existingTemplate.familyId === actor.familyId;
 
     if (!canEditExisting) {
       return {
         success: false,
-        message: "You cannot edit this music template.",
+        message: "Only the template owner or the family founder can edit this music template.",
       };
     }
   }
@@ -1554,7 +1557,7 @@ export async function saveMusicTemplate(
       };
     }
 
-    const templates = await loadMusicTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
+    const templates = await loadMusicTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate, Boolean(actor.isFounder));
     const savedTemplate = templates.find((template) => template.id === persistedTemplate.id);
 
     if (!savedTemplate) {
@@ -1573,6 +1576,58 @@ export async function saveMusicTemplate(
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving music template",
+    };
+  }
+}
+
+export async function deleteMusicTemplate(
+  templateId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const existingTemplate = await db
+    .select()
+    .from(musicTemplate)
+    .where(eq(musicTemplate.id, templateId))
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingTemplate) {
+    return {
+      success: false,
+      message: `No music template was found for id: ${templateId}`,
+    };
+  }
+
+  if (existingTemplate.isGlobalTemplate) {
+    return {
+      success: false,
+      message: "Global templates cannot be deleted.",
+    };
+  }
+
+  const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+  if (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder) {
+    return {
+      success: false,
+      message: "Only the template owner or the family founder can delete this template.",
+    };
+  }
+
+  try {
+    await db.delete(musicTemplate).where(eq(musicTemplate.id, templateId));
+
+    return {
+      success: true,
+      message: `Template "${existingTemplate.templateName}" deleted.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting music template",
     };
   }
 }

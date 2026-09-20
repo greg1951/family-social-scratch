@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { addMovieComment, deleteMovie, getMovieDetail, saveMovie, saveMovieTemplate, toggleMovieLike } from '@/components/db/sql/queries-movies';
+import { addMovieComment, deleteMovie, deleteMovieTemplate, getMovieDetail, saveMovie, saveMovieTemplate, toggleMovieLike } from '@/components/db/sql/queries-movies';
 import { AddMovieCommentInput, DeleteMovieReturn, SaveMovieInput, SaveMovieTemplateInput, ToggleMovieLikeInput } from '@/components/db/types/movies';
 
 export async function saveMovieAction(input: SaveMovieInput) {
@@ -44,6 +44,32 @@ export async function saveMovieTemplateAction(input: SaveMovieTemplateInput) {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
     isAdmin: memberDetails.isAdmin ?? false,
+    isFounder: memberDetails.isFounder ?? false,
+  });
+
+  if (result.success) {
+    revalidatePath('/movies');
+    revalidatePath('/movies/add-movie');
+    revalidatePath('/movies/templates');
+  }
+
+  return result;
+}
+
+export async function deleteMovieTemplateAction(input: { templateId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to manage movie templates.',
+    };
+  }
+
+  const result = await deleteMovieTemplate(input.templateId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {

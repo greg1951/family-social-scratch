@@ -14,7 +14,8 @@ export default async function FoodiesTemplatesPage() {
   const templateData = await getFoodiesTemplateManagementData(
     memberKeyDetails.familyId,
     memberKeyDetails.memberId,
-    memberKeyDetails.isAdmin ?? false
+    memberKeyDetails.isAdmin ?? false,
+    memberKeyDetails.isFounder ?? false
   );
 
   const templates = templateData.success ? templateData.templates : [];

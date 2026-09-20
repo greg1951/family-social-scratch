@@ -19,6 +19,7 @@ import {
   ListOrdered,
   Minus,
   Plus,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
 } from "lucide-react";
@@ -27,7 +28,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveMusicTemplateAction } from "@/app/(features)/(music)/music/actions";
+import { deleteMusicTemplateAction, saveMusicTemplateAction } from "@/app/(features)/(music)/music/actions";
 import type { GuidedTourLaunchPayload } from "@/components/db/sql/queries-guided-runtime";
 import { MusicTemplateRecord } from "@/components/db/types/music";
 import {
@@ -132,8 +133,10 @@ export function MusicTemplatePage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>(templates[0]?.id ?? 0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
@@ -232,6 +235,30 @@ export function MusicTemplatePage({
     });
   }
 
+  const canDeleteSelectedTemplate = Boolean(selectedTemplate?.canEdit && !selectedTemplate.isGlobalTemplate);
+
+  function handleDeleteTemplate() {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const templateId = selectedTemplate.id;
+
+    startDeleteTransition(async () => {
+      const result = await deleteMusicTemplateAction({ templateId });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setIsDeleteDialogOpen(false);
+      setSelectedTemplateId(templates.find((template) => template.id !== templateId)?.id ?? 0);
+      router.refresh();
+    });
+  }
+
   return (
     <>
       <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -257,6 +284,9 @@ export function MusicTemplatePage({
                 </div>
                 <div id="music-template-edit">
                   <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+                </div>
+                <div id="music-template-delete">
+                  <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-red-800/60 disabled:cursor-not-allowed disabled:opacity-50" onClick={ () => setIsDeleteDialogOpen(true) } disabled={ !canDeleteSelectedTemplate }><Trash2 className="size-4" />Delete</Button>
                 </div>
               </div>
             </div>
@@ -372,6 +402,28 @@ export function MusicTemplatePage({
             <Button type="button" variant="outline" onClick={ () => setIsDialogOpen(false) }>Cancel</Button>
             <Button type="button" onClick={ handleSaveTemplate } disabled={ isSaving }>{ isSaving ? "Saving..." : "Save Template" }</Button>
           </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ isDeleteDialogOpen } onOpenChange={ setIsDeleteDialogOpen }>
+          <DialogContent className="border-[#c8d9f3] bg-[#f7fbff]">
+            <DialogHeader>
+              <DialogTitle className="text-[#203b66]">Delete Music Template</DialogTitle>
+              <DialogDescription className="text-[#4a6fae]">
+                { selectedTemplate
+                  ? `This permanently deletes "${ selectedTemplate.templateName }". Music posts already created from it are not affected.`
+                  : "Select a template to delete." }
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" className="border-[#c8d9f3] text-[#203b66]" onClick={ () => setIsDeleteDialogOpen(false) } disabled={ isDeleting }>
+                Cancel
+              </Button>
+              <Button type="button" className="bg-[#b3261e] text-white hover:bg-[#9a1f18]" onClick={ handleDeleteTemplate } disabled={ isDeleting || !canDeleteSelectedTemplate }>
+                <Trash2 className="mr-2 size-4" />
+                { isDeleting ? "Deleting..." : "Delete Template" }
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </section>

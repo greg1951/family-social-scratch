@@ -13,6 +13,7 @@ import { getMemberPageDetails } from '@/features/family/services/family-services
 import {
   addMusicComment,
   deleteMusic,
+  deleteMusicTemplate,
   getMusicDetail,
   saveMusic,
   saveMusicLyrics,
@@ -95,6 +96,7 @@ export async function saveMusicTemplateAction(input: SaveMusicTemplateInput) {
       familyId: memberDetails.familyId,
       memberId: memberDetails.memberId,
       isAdmin: memberDetails.isAdmin ?? false,
+      isFounder: memberDetails.isFounder ?? false,
     });
 
     if (result.success) {
@@ -108,6 +110,38 @@ export async function saveMusicTemplateAction(input: SaveMusicTemplateInput) {
     return {
       success: false as const,
       message: error instanceof Error ? error.message : 'Error saving music template',
+    };
+  }
+}
+
+export async function deleteMusicTemplateAction(input: { templateId: number }) {
+  try {
+    const memberDetails = await getMemberPageDetails();
+
+    if (!memberDetails.isLoggedIn) {
+      return {
+        success: false as const,
+        message: 'You must be signed in to manage music templates.',
+      };
+    }
+
+    const result = await deleteMusicTemplate(input.templateId, {
+      familyId: memberDetails.familyId,
+      memberId: memberDetails.memberId,
+      isFounder: memberDetails.isFounder ?? false,
+    });
+
+    if (result.success) {
+      revalidatePath('/music');
+      revalidatePath('/music/add-music');
+      revalidatePath('/music/templates');
+    }
+
+    return result;
+  } catch (error) {
+    return {
+      success: false as const,
+      message: error instanceof Error ? error.message : 'Error deleting music template',
     };
   }
 }

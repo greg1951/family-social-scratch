@@ -19,6 +19,7 @@ import {
   Minus,
   Plus,
   Save,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
   ArrowLeft,
@@ -28,7 +29,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveShowTemplateAction } from "@/app/(features)/(tv)/tv/actions";
+import { deleteShowTemplateAction, saveShowTemplateAction } from "@/app/(features)/(tv)/tv/actions";
 import { ShowTemplateRecord } from "@/components/db/types/shows";
 import {
   createEmptyTipTapDocument,
@@ -125,8 +126,10 @@ function TemplateViewer({ templateJson }: { templateJson: string }) {
 export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>(templates[0]?.id ?? 0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
@@ -230,25 +233,46 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
     });
   }
 
+  const canDeleteSelectedTemplate = Boolean(selectedTemplate?.canEdit && !selectedTemplate.isGlobalTemplate);
+
+  function handleDeleteTemplate() {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const templateId = selectedTemplate.id;
+
+    startDeleteTransition(async () => {
+      const result = await deleteShowTemplateAction({ templateId });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setIsDeleteDialogOpen(false);
+      setSelectedTemplateId(templates.find((template) => template.id !== templateId)?.id ?? 0);
+      router.refresh();
+    });
+  }
+
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
-              <div className="max-w-3xl">
-                <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">Family TV Room</p>
-                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Show Templates</h1>
-                {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#d9f5ff]">Create your own show templates in draft or published status. Draft templates stay private to management and do not appear in Add Show template selection.</p> */}
-              </div>
-
-              <div className="flex flex-wrap gap-3 lg:pb-1">
-                <Link href="/tv" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          <div className="space-y-4">
+            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">Family TV Room</p>
+            <div className="flex flex-wrap items-center justify-start gap-4">
+              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Show Templates</h1>
+              <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1">
+                <Link href="/tv" className="inline-flex shrink-0 items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <ArrowLeft className="mr-1.5 size-3.5" />
                   TV Home
                 </Link>
-                <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
-                <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+                <Button type="button" className="shrink-0 rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
+                <Button type="button" className="shrink-0 rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+                <Button type="button" className="shrink-0 rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-red-800/60 disabled:cursor-not-allowed disabled:opacity-50" onClick={ () => setIsDeleteDialogOpen(true) } disabled={ !canDeleteSelectedTemplate }><Trash2 className="size-4" />Delete</Button>
               </div>
             </div>
           </div>
@@ -282,7 +306,7 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
                         <p className="font-bold text-[#15384a]">{ template.templateName }</p>
                         <div className="mt-1 flex items-center gap-2">
                           { template.isGlobalTemplate ? (
-                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#f3ead9] text-[#7a5323]">
+                            <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#eaf5fb] text-[#1f6688]">
                               <Globe className="size-3.5" />
                             </span>
                           ) : (
@@ -487,6 +511,28 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
             >
               <Save className="mr-2 size-4" />
               { isSaving ? "Saving..." : dialogMode === "create" ? "Create Template" : "Update Template" }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteDialogOpen } onOpenChange={ setIsDeleteDialogOpen }>
+        <DialogContent className="border-[#c6dcec] bg-[#f5fbff]">
+          <DialogHeader>
+            <DialogTitle className="text-[#15384a]">Delete Show Template</DialogTitle>
+            <DialogDescription className="text-[#5f7987]">
+              { selectedTemplate
+                ? `This permanently deletes "${ selectedTemplate.templateName }". Shows already created from it are not affected.`
+                : "Select a template to delete." }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="border-[#c6dcec] text-[#15384a]" onClick={ () => setIsDeleteDialogOpen(false) } disabled={ isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" className="bg-[#b3261e] text-white hover:bg-[#9a1f18]" onClick={ handleDeleteTemplate } disabled={ isDeleting }>
+              <Trash2 className="mr-2 size-4" />
+              { isDeleting ? "Deleting..." : "Delete Template" }
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -23,6 +23,7 @@ import {
   Rows2,
   Save,
   Table2,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
   X,
@@ -33,7 +34,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveFoodiesTemplateAction } from "@/app/(features)/(foodies)/foodies/actions";
+import { deleteFoodiesTemplateAction, saveFoodiesTemplateAction } from "@/app/(features)/(foodies)/foodies/actions";
 import { FoodiesTemplateRecord } from "@/components/db/types/recipes";
 import {
   createEmptyTipTapDocument,
@@ -134,8 +135,10 @@ export function FoodiesTemplatePage({
 }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>(templates[0]?.id ?? 0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
@@ -239,6 +242,30 @@ export function FoodiesTemplatePage({
     });
   }
 
+  const canDeleteSelectedTemplate = Boolean(selectedTemplate?.canEdit && !selectedTemplate.isGlobalTemplate);
+
+  function handleDeleteTemplate() {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const templateId = selectedTemplate.id;
+
+    startDeleteTransition(async () => {
+      const result = await deleteFoodiesTemplateAction({ templateId });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setIsDeleteDialogOpen(false);
+      setSelectedTemplateId(templates.find((template) => template.id !== templateId)?.id ?? 0);
+      router.refresh();
+    });
+  }
+
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -275,6 +302,17 @@ export function FoodiesTemplatePage({
                     aria-label="Edit selected template"
                   >
                     <Edit3 className="size-4" />
+                  </Button>
+                </EditPostIcon>
+                <EditPostIcon tooltip="Delete Template" tooltipClassName="bg-[#2f4820] text-[#f1ffe4]">
+                  <Button
+                    type="button"
+                    className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-red-800/60 disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={ () => setIsDeleteDialogOpen(true) }
+                    disabled={ !canDeleteSelectedTemplate }
+                    aria-label="Delete selected template"
+                  >
+                    <Trash2 className="size-4" />
                   </Button>
                 </EditPostIcon>
               </div>
@@ -578,6 +616,28 @@ export function FoodiesTemplatePage({
             >
               <Save className="mr-2 size-4" />
               { isSaving ? "Saving..." : dialogMode === "create" ? "Create Template" : "Update Template" }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteDialogOpen } onOpenChange={ setIsDeleteDialogOpen }>
+        <DialogContent className="border-[#dbeacc] bg-[#f8fce9]">
+          <DialogHeader>
+            <DialogTitle className="text-[#2f4820]">Delete Recipe Template</DialogTitle>
+            <DialogDescription className="text-[#5f7a40]">
+              { selectedTemplate
+                ? `This permanently deletes "${ selectedTemplate.templateName }". Recipes already created from it are not affected.`
+                : "Select a template to delete." }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="border-[#cadfbb] text-[#2f4820]" onClick={ () => setIsDeleteDialogOpen(false) } disabled={ isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" className="bg-[#b3261e] text-white hover:bg-[#9a1f18]" onClick={ handleDeleteTemplate } disabled={ isDeleting || !canDeleteSelectedTemplate }>
+              <Trash2 className="mr-2 size-4" />
+              { isDeleting ? "Deleting..." : "Delete Template" }
             </Button>
           </DialogFooter>
         </DialogContent>

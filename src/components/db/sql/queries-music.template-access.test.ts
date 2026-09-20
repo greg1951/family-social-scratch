@@ -38,7 +38,7 @@ vi.mock("./queries-family-activity", () => ({
 }));
 vi.mock("./db-error-logger", () => ({ logDbQueryError: vi.fn() }));
 
-import { getMusicTemplateManagementData, saveMusic, saveMusicTemplate } from "./queries-music";
+import { deleteMusicTemplate, getMusicTemplateManagementData, saveMusic, saveMusicTemplate } from "./queries-music";
 
 runTemplateAccessContract({
   featureName: "Music",
@@ -46,6 +46,7 @@ runTemplateAccessContract({
   state,
   getManagementData: getMusicTemplateManagementData,
   saveTemplate: saveMusicTemplate,
+  deleteTemplate: deleteMusicTemplate,
   attemptForgedDraftSelection: async () => {
     state.selectQueue.push(
       [],

@@ -39,6 +39,7 @@ vi.mock("./queries-family-activity", () => ({
 vi.mock("./db-error-logger", () => ({ logDbQueryError: vi.fn() }));
 
 import {
+  deleteFoodiesTemplate,
   getFoodiesTemplateManagementData,
   saveFoodiesRecipe,
   saveFoodiesTemplate,
@@ -52,6 +53,7 @@ runTemplateAccessContract({
   state,
   getManagementData: getFoodiesTemplateManagementData,
   saveTemplate: saveFoodiesTemplate,
+  deleteTemplate: deleteFoodiesTemplate,
   attemptForgedDraftSelection: async () => {
     state.selectQueue.push(
       [],

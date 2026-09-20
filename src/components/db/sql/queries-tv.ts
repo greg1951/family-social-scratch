@@ -316,7 +316,8 @@ async function loadShowTemplates(
 async function loadShowTemplateManagementRecords(
   familyId: number,
   actorMemberId: number,
-  actorIsAdmin: boolean
+  actorIsAdmin: boolean,
+  actorIsFounder = false
 ): Promise<ShowTemplateRecord[]> {
   const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
 
@@ -369,7 +370,7 @@ async function loadShowTemplateManagementRecords(
   return visibleTemplateRows.map((row) => {
     const canEdit = row.isGlobalTemplate
       ? canManageGlobalTemplate
-      : row.memberId === actorMemberId;
+      : row.memberId === actorMemberId || actorIsFounder;
 
     return {
       id: row.id,
@@ -765,11 +766,12 @@ export async function getTvHomePageData(
 export async function getTvTemplateManagementData(
   familyId: number,
   memberId: number,
-  isAdmin: boolean
+  isAdmin: boolean,
+  isFounder = false
 ): Promise<TvTemplateManagementDataReturn> {
   try {
     const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
-    const templates = await loadShowTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
+    const templates = await loadShowTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate, isFounder);
 
     return {
       success: true,
@@ -1109,6 +1111,7 @@ export async function saveShowTemplate(
     familyId: number;
     memberId: number;
     isAdmin: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveShowTemplateReturn> {
   const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -1162,10 +1165,12 @@ export async function saveShowTemplate(
       };
     }
 
-    if (!existingTemplate.isGlobalTemplate && (existingTemplate.memberId !== actor.memberId || existingTemplate.familyId !== actor.familyId)) {
+    const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+    if (!existingTemplate.isGlobalTemplate && (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder)) {
       return {
         success: false,
-        message: "You can only edit templates you created.",
+        message: "Only the template owner or the family founder can edit this template.",
       };
     }
   }
@@ -1214,7 +1219,7 @@ export async function saveShowTemplate(
         })
         .returning();
 
-    const templates = await loadShowTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
+    const templates = await loadShowTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate, Boolean(actor.isFounder));
     const savedTemplateRecord = templates.find((template) => template.id === savedTemplate.id);
 
     if (!savedTemplateRecord) {
@@ -1235,6 +1240,58 @@ export async function saveShowTemplate(
       message: error instanceof Error
         ? `Failed to save template changes: ${error.message}`
         : "Failed to save template changes.",
+    };
+  }
+}
+
+export async function deleteShowTemplate(
+  templateId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const existingTemplate = await db
+    .select()
+    .from(showTemplate)
+    .where(eq(showTemplate.id, templateId))
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingTemplate) {
+    return {
+      success: false,
+      message: `No template was found for id: ${templateId}`,
+    };
+  }
+
+  if (existingTemplate.isGlobalTemplate) {
+    return {
+      success: false,
+      message: "Global templates cannot be deleted.",
+    };
+  }
+
+  const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+  if (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder) {
+    return {
+      success: false,
+      message: "Only the template owner or the family founder can delete this template.",
+    };
+  }
+
+  try {
+    await db.delete(showTemplate).where(eq(showTemplate.id, templateId));
+
+    return {
+      success: true,
+      message: `Template "${existingTemplate.templateName}" deleted.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting show template",
     };
   }
 }

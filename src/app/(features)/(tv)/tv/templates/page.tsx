@@ -14,7 +14,8 @@ export default async function TvTemplatesPage() {
   const templateData = await getTvTemplateManagementData(
     memberKeyDetails.familyId,
     memberKeyDetails.memberId,
-    memberKeyDetails.isAdmin ?? false
+    memberKeyDetails.isAdmin ?? false,
+    memberKeyDetails.isFounder ?? false
   );
 
   const templates = templateData.success ? templateData.templates : [];

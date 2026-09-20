@@ -38,7 +38,7 @@ vi.mock("./queries-family-activity", () => ({
 }));
 vi.mock("./db-error-logger", () => ({ logDbQueryError: vi.fn() }));
 
-import { getMovieTemplateManagementData, saveMovie, saveMovieTemplate } from "./queries-movies";
+import { deleteMovieTemplate, getMovieTemplateManagementData, saveMovie, saveMovieTemplate } from "./queries-movies";
 
 runTemplateAccessContract({
   featureName: "Movies",
@@ -46,6 +46,7 @@ runTemplateAccessContract({
   state,
   getManagementData: getMovieTemplateManagementData,
   saveTemplate: saveMovieTemplate,
+  deleteTemplate: deleteMovieTemplate,
   attemptForgedDraftSelection: async () => {
     state.selectQueue.push(
       [],

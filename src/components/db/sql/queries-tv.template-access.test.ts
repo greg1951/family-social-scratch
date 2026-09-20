@@ -38,7 +38,7 @@ vi.mock("./queries-family-activity", () => ({
 }));
 vi.mock("./db-error-logger", () => ({ logDbQueryError: vi.fn() }));
 
-import { getTvTemplateManagementData, saveShow, saveShowTemplate } from "./queries-tv";
+import { deleteShowTemplate, getTvTemplateManagementData, saveShow, saveShowTemplate } from "./queries-tv";
 
 runTemplateAccessContract({
   featureName: "TV",
@@ -46,6 +46,7 @@ runTemplateAccessContract({
   state,
   getManagementData: getTvTemplateManagementData,
   saveTemplate: saveShowTemplate,
+  deleteTemplate: deleteShowTemplate,
   attemptForgedDraftSelection: async () => {
     state.selectQueue.push(
       [],

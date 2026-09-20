@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { addShowComment, deleteShow, getShowDetail, saveShow, saveShowTemplate, toggleShowLike } from '@/components/db/sql/queries-tv';
+import { addShowComment, deleteShow, deleteShowTemplate, getShowDetail, saveShow, saveShowTemplate, toggleShowLike } from '@/components/db/sql/queries-tv';
 import { AddShowCommentInput, SaveShowInput, SaveShowTemplateInput, ToggleShowLikeInput } from '@/components/db/types/shows';
 
 export async function saveShowAction(input: SaveShowInput) {
@@ -44,6 +44,32 @@ export async function saveShowTemplateAction(input: SaveShowTemplateInput) {
     familyId: memberDetails.familyId,
     memberId: memberDetails.memberId,
     isAdmin: memberDetails.isAdmin ?? false,
+    isFounder: memberDetails.isFounder ?? false,
+  });
+
+  if (result.success) {
+    revalidatePath('/tv');
+    revalidatePath('/tv/add-show');
+    revalidatePath('/tv/templates');
+  }
+
+  return result;
+}
+
+export async function deleteShowTemplateAction(input: { templateId: number }) {
+  const memberDetails = await getMemberPageDetails();
+
+  if (!memberDetails.isLoggedIn) {
+    return {
+      success: false as const,
+      message: 'You must be signed in to manage show templates.',
+    };
+  }
+
+  const result = await deleteShowTemplate(input.templateId, {
+    familyId: memberDetails.familyId,
+    memberId: memberDetails.memberId,
+    isFounder: memberDetails.isFounder ?? false,
   });
 
   if (result.success) {

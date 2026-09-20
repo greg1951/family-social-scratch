@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 
 import { getMemberPageDetails } from '@/features/family/services/family-services';
-import { saveFoodiesRecipe, saveFoodiesTemplate, toggleRecipeLike, addRecipeComment, getFoodiesRecipeDetail, deleteRecipe } from '@/components/db/sql/queries-foodies';
+import { saveFoodiesRecipe, saveFoodiesTemplate, toggleRecipeLike, addRecipeComment, getFoodiesRecipeDetail, deleteRecipe, deleteFoodiesTemplate } from '@/components/db/sql/queries-foodies';
 import { SaveFoodiesRecipeInput, SaveFoodiesTemplateInput, ToggleRecipeLikeInput, AddRecipeCommentInput } from '@/components/db/types/recipes';
 import { withRequestCorrelation } from '@/components/db/sql/request-correlation';
 
@@ -50,6 +50,34 @@ export async function saveFoodiesTemplateAction(input: SaveFoodiesTemplateInput)
       familyId: memberDetails.familyId,
       memberId: memberDetails.memberId,
       isAdmin: memberDetails.isAdmin ?? false,
+      isFounder: memberDetails.isFounder ?? false,
+    });
+
+    if (result.success) {
+      revalidatePath('/foodies');
+      revalidatePath('/foodies/add-recipe');
+      revalidatePath('/foodies/templates');
+    }
+
+    return result;
+  });
+}
+
+export async function deleteFoodiesTemplateAction(input: { templateId: number }) {
+  return withRequestCorrelation(async () => {
+    const memberDetails = await getMemberPageDetails();
+
+    if (!memberDetails.isLoggedIn) {
+      return {
+        success: false as const,
+        message: 'You must be signed in to manage recipe templates.',
+      };
+    }
+
+    const result = await deleteFoodiesTemplate(input.templateId, {
+      familyId: memberDetails.familyId,
+      memberId: memberDetails.memberId,
+      isFounder: memberDetails.isFounder ?? false,
     });
 
     if (result.success) {

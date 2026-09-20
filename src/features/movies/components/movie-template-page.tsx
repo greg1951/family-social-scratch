@@ -19,6 +19,7 @@ import {
   ListOrdered,
   Minus,
   Plus,
+  Trash2,
   Underline as UnderlineIcon,
   Unlink,
 } from "lucide-react";
@@ -27,7 +28,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { saveMovieTemplateAction } from "@/app/(features)/(movies)/movies/actions";
+import { deleteMovieTemplateAction, saveMovieTemplateAction } from "@/app/(features)/(movies)/movies/actions";
 import { MovieTemplateRecord } from "@/components/db/types/movies";
 import {
   createEmptyTipTapDocument,
@@ -124,8 +125,10 @@ function TemplateViewer({ templateJson }: { templateJson: string }) {
 export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecord[] }) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
+  const [isDeleting, startDeleteTransition] = useTransition();
   const [selectedTemplateId, setSelectedTemplateId] = useState<number>(templates[0]?.id ?? 0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<DialogMode>("create");
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null);
   const [templateName, setTemplateName] = useState("");
@@ -224,6 +227,30 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
     });
   }
 
+  const canDeleteSelectedTemplate = Boolean(selectedTemplate?.canEdit && !selectedTemplate.isGlobalTemplate);
+
+  function handleDeleteTemplate() {
+    if (!selectedTemplate) {
+      return;
+    }
+
+    const templateId = selectedTemplate.id;
+
+    startDeleteTransition(async () => {
+      const result = await deleteMovieTemplateAction({ templateId });
+
+      if (!result.success) {
+        toast.error(result.message);
+        return;
+      }
+
+      toast.success(result.message);
+      setIsDeleteDialogOpen(false);
+      setSelectedTemplateId(templates.find((template) => template.id !== templateId)?.id ?? 0);
+      router.refresh();
+    });
+  }
+
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -243,6 +270,7 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
                 </Link>
                 <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
                 <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>
+                <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-red-800/60 disabled:cursor-not-allowed disabled:opacity-50" onClick={ () => setIsDeleteDialogOpen(true) } disabled={ !canDeleteSelectedTemplate }><Trash2 className="size-4" />Delete</Button>
               </div>
             </div>
           </div>
@@ -355,6 +383,28 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
           <DialogFooter>
             <Button type="button" variant="outline" onClick={ () => setIsDialogOpen(false) }>Cancel</Button>
             <Button type="button" onClick={ handleSaveTemplate } disabled={ isSaving }>{ isSaving ? "Saving..." : "Save Template" }</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={ isDeleteDialogOpen } onOpenChange={ setIsDeleteDialogOpen }>
+        <DialogContent className="border-[#f0d9c4] bg-[#fff8f2]">
+          <DialogHeader>
+            <DialogTitle className="text-[#5c2e1a]">Delete Movie Template</DialogTitle>
+            <DialogDescription className="text-[#8b5a3c]">
+              { selectedTemplate
+                ? `This permanently deletes "${ selectedTemplate.templateName }". Movies already created from it are not affected.`
+                : "Select a template to delete." }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" className="border-[#e8c4a0] text-[#5c2e1a]" onClick={ () => setIsDeleteDialogOpen(false) } disabled={ isDeleting }>
+              Cancel
+            </Button>
+            <Button type="button" className="bg-[#b3261e] text-white hover:bg-[#9a1f18]" onClick={ handleDeleteTemplate } disabled={ isDeleting || !canDeleteSelectedTemplate }>
+              <Trash2 className="mr-2 size-4" />
+              { isDeleting ? "Deleting..." : "Delete Template" }
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

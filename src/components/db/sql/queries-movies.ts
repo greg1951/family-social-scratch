@@ -316,7 +316,8 @@ async function loadMovieTemplates(
 async function loadMovieTemplateManagementRecords(
   familyId: number,
   actorMemberId: number,
-  actorIsAdmin: boolean
+  actorIsAdmin: boolean,
+  actorIsFounder = false
 ): Promise<MovieTemplateRecord[]> {
   const canManageGlobalTemplate = actorIsAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
 
@@ -370,7 +371,7 @@ async function loadMovieTemplateManagementRecords(
     const isFamilyGlobalTemplate = row.isGlobalTemplate && row.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEdit = isFamilyGlobalTemplate
       ? canManageGlobalTemplate
-      : row.memberId === actorMemberId;
+      : row.memberId === actorMemberId || actorIsFounder;
 
     return {
       id: row.id,
@@ -748,11 +749,12 @@ export async function getMoviesHomePageData(
 export async function getMovieTemplateManagementData(
   familyId: number,
   memberId: number,
-  isAdmin: boolean
+  isAdmin: boolean,
+  isFounder = false
 ): Promise<MovieTemplateManagementDataReturn> {
   try {
     const canManageGlobalTemplate = isAdmin && familyId === GLOBAL_TEMPLATE_FAMILY_ID;
-    const templates = await loadMovieTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate);
+    const templates = await loadMovieTemplateManagementRecords(familyId, memberId, canManageGlobalTemplate, isFounder);
 
     return {
       success: true,
@@ -1094,6 +1096,7 @@ export async function saveMovieTemplate(
     familyId: number;
     memberId: number;
     isAdmin: boolean;
+    isFounder?: boolean;
   }
 ): Promise<SaveMovieTemplateReturn> {
   const canManageGlobalTemplate = actor.isAdmin && actor.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
@@ -1143,12 +1146,12 @@ export async function saveMovieTemplate(
     const isFamilyGlobalTemplate = existingTemplate.isGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID;
     const canEditExisting = isFamilyGlobalTemplate
       ? canManageGlobalTemplate && existingTemplate.familyId === GLOBAL_TEMPLATE_FAMILY_ID
-      : existingTemplate.memberId === actor.memberId && existingTemplate.familyId === actor.familyId;
+      : (existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder)) && existingTemplate.familyId === actor.familyId;
 
     if (!canEditExisting) {
       return {
         success: false,
-        message: "You cannot edit this movie template.",
+        message: "Only the template owner or the family founder can edit this movie template.",
       };
     }
   }
@@ -1184,7 +1187,7 @@ export async function saveMovieTemplate(
       };
     }
 
-    const templates = await loadMovieTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate);
+    const templates = await loadMovieTemplateManagementRecords(actor.familyId, actor.memberId, canManageGlobalTemplate, Boolean(actor.isFounder));
     const savedTemplate = templates.find((template) => template.id === persistedTemplate.id);
 
     if (!savedTemplate) {
@@ -1203,6 +1206,58 @@ export async function saveMovieTemplate(
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving movie template",
+    };
+  }
+}
+
+export async function deleteMovieTemplate(
+  templateId: number,
+  actor: {
+    familyId: number;
+    memberId: number;
+    isFounder?: boolean;
+  }
+): Promise<{ success: false; message: string } | { success: true; message: string }> {
+  const existingTemplate = await db
+    .select()
+    .from(movieTemplate)
+    .where(eq(movieTemplate.id, templateId))
+    .then((rows) => rows[0] ?? null);
+
+  if (!existingTemplate) {
+    return {
+      success: false,
+      message: `No movie template was found for id: ${templateId}`,
+    };
+  }
+
+  if (existingTemplate.isGlobalTemplate) {
+    return {
+      success: false,
+      message: "Global templates cannot be deleted.",
+    };
+  }
+
+  const isOwnerOrFounder = existingTemplate.memberId === actor.memberId || Boolean(actor.isFounder);
+
+  if (existingTemplate.familyId !== actor.familyId || !isOwnerOrFounder) {
+    return {
+      success: false,
+      message: "Only the template owner or the family founder can delete this template.",
+    };
+  }
+
+  try {
+    await db.delete(movieTemplate).where(eq(movieTemplate.id, templateId));
+
+    return {
+      success: true,
+      message: `Template "${existingTemplate.templateName}" deleted.`,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : "Error deleting movie template",
     };
   }
 }

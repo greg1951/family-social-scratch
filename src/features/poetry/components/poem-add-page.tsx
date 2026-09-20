@@ -950,32 +950,6 @@ export function PoemAddPage({
             </div>
           </div>
         </div>
-
-        {/* Bottom Save / Cancel - Only show when not in founder moderating mode */ }
-        { !isFounderModerating && isEditMode && isOwner ? (
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={ () => router.push("/poetry") }
-              disabled={ isSaving }
-              className="rounded-full border-[#d7d0ea] text-[#6d5384]"
-            >
-              <X className="size-4" />
-              Cancel
-            </Button>
-
-            <Button
-              type="button"
-              onClick={ () => handleSave() }
-              disabled={ isSaving }
-              className="rounded-full bg-[#5a2f85] text-white hover:bg-[#47216b]"
-            >
-              <BookOpen className="size-4" />
-              { isSaving ? "Saving..." : "Save Poem" }
-            </Button>
-          </div>
-        ) : null }
       </div>
 
       <Dialog open={ isDeleteConfirmOpen } onOpenChange={ setIsDeleteConfirmOpen }>

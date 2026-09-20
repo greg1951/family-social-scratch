@@ -20,7 +20,8 @@ export default async function MusicTemplatesPage() {
     const templateData = await getMusicTemplateManagementData(
       memberKeyDetails.familyId,
       memberKeyDetails.memberId,
-      memberKeyDetails.isAdmin ?? false
+      memberKeyDetails.isAdmin ?? false,
+      memberKeyDetails.isFounder ?? false
     );
 
     templates = templateData.success ? templateData.templates : [];
