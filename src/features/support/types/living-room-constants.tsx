@@ -6,20 +6,26 @@ export const livingRoomFaqItems = [
     category: "Living Room",
     trigger: (
       <div>
-        <p className="text-base font-semibold">Exactly what is the living room? it looks like a mish-mash of blogs.</p>
-        <p className="text-sm text-slate-600">What do people do in the living room? They tell stories. They recount humorous things that have happened in the family, and those are the blogs that you see.</p>
+        <p className="text-base font-semibold">Exactly what is the Living Room? It looks like a blog site.</p>
+        <p className="text-sm text-slate-600 pb-2">Yes, what you see in the living room are blogs. 
+          As explained below, there are blogs in the <u>Living Room</u> as well as in the <u>Member Blogs</u> space.</p>
       </div>
     ),
     content: (
       <div className="grid md:grid-cols-1 text-base">
         <span>
-          <p className="text-base font-semibold">Yes, what you see in the living room are blogs. It&apos;s the My Family Social blogging feature.</p>
+          <p className="text-base font-semibold">In the <b>Living Room</b>, people share stories about the family.</p>
           <ul className="list-disc ml-6 mt-2 text-sm">
-            <li>The Living Room provides a number of <b>sample blogs</b>. Adding a cover image to your blog makes it more engaging.</li>
-            <li>Use the rich text editor to create an elegant write-up of the story that you want to relate your family.</li>
-            <p className="pt-2 pb-2 text-xs">When you publish your blog, it then becomes viewable to the family. </p>
-            <li>If you decide that you want to keep it private, don&apos;t publish it. You can still write and record your own blog entries but keep them private.</li>
-            <p className="text-sm">Explore the Terms Page, there&apos;s a lot of good information to help you write better reviews.</p>
+            <li className="pt-2 pb-2">The living room contains family member blogs that have been shared with the family.</li>
+            <li className="pt-2 pb-2">Blogs are only viewable in the <u>Living Room</u>. Blogs are written in the <u>Member Blogs</u> space and then shared.</li>
+            <li>Every member has a <u>private</u> member space where they can keep their own blogs.</li>
+            <p className="pt-2 pb-2 text-sm">That is the <b>My Blogs</b> button you see at the top of the page.</p>
+            <li className="pt-2 pb-2">When a blog is <b>published</b> in the member blogs, it then becomes <u>publicly</u> visible in the Living Room.</li>
+          </ul>
+          <p className="text-base font-semibold">Some important things to know about the <b>Member Blogs</b> space:</p>
+          <ul className="list-disc ml-6 mt-2 text-sm">
+            <li className="pt-2 pb-2">The Member Blogs space is private. <u>Only the logged in member can access it.</u></li>
+            <li>A member can keep their own private blogs, without ever sharing them. It can be your own private diary or journal site.</li>
           </ul>
         </span>
       </div>

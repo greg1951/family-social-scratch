@@ -35,6 +35,7 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
     player: [
       "If you have a preferred music account, such as Spotify or Apple Music, select your player to play music playlists.",
     ],
+    usage: ["User preferences"],
     feature: ["Choose which feature categories you want notifications for."],
     notification: [
       "The Activity Summary: Send me a weekly email summary of the family activyt.",
@@ -62,6 +63,11 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
     optionSeqNo: notification.optionSeqNo,
     isSelected: notification.isSelected,
   }));
+
+  const getCategoryHeading = (category: string) => (
+    sectionHeadingMap[category.trim().toLowerCase()]
+    ?? category.trim().replace(/\b\w/g, (character) => character.toUpperCase())
+  );
 
   const sectionCategories = Array.from(
     new Set(
@@ -129,14 +135,14 @@ export default function FamilyNotificationsForm({ notifications }: { notificatio
                 <div key={ category } className="rounded-xl border p-3">
                   <div className="mb-3 flex items-center gap-1.5">
                     <h3 className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#2f7a95]">
-                      { sectionHeadingMap[sectionConfigKey] ?? category }
+                      { getCategoryHeading(sectionConfigKey) }
                     </h3>
                     <HoverCard>
                       <HoverCardTrigger asChild>
                         <button
                           type="button"
                           className="inline-flex h-6 w-6 items-center justify-center rounded-full text-[#2f7a95] transition hover:bg-[#e8f6fb]"
-                          aria-label={ `About ${sectionHeadingMap[sectionConfigKey] ?? category}` }
+                          aria-label={ `About ${getCategoryHeading(sectionConfigKey)}` }
                         >
                           <CircleQuestionMark className="h-4 w-4" />
                         </button>

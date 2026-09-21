@@ -1,4 +1,4 @@
-export type BlogPostStatus = 'draft' | 'published' | 'archived';
+export type BlogPostStatus = 'draft' | 'published' | 'private' | 'archived';
 
 import type { DiscussionThreadSummary } from './discuss-threads';
 

@@ -103,7 +103,7 @@ function BlogDetailCoverImage({ src, alt }: { src: string | null; alt: string | 
   }
 
   return (
-    <div className="mt-4 overflow-hidden rounded-2xl border border-[#f3d0bf] bg-[#fffaf6] md:mt-0 md:flex-shrink-0 md:w-full lg:w-full">
+    <div className="mt-4 overflow-hidden rounded-2xl border border-[#f3d0bf] bg-[#fffaf6] md:mt-0 md:shrink-0 md:w-full lg:w-full">
       <Image
         src={ resolvedSrc }
         alt={ alt ?? "Blog cover image" }
@@ -120,10 +120,14 @@ export function BlogPostDetailPage({
   initialPost,
   memberId,
   isFounder,
+  backHref = "/blogs",
+  backLabel = "Back to Living Room",
 }: {
   initialPost: BlogPostDetail;
   memberId: number;
   isFounder?: boolean;
+  backHref?: string;
+  backLabel?: string;
 }) {
   const router = useRouter();
   const [post, setPost] = useState<BlogPostDetail>(initialPost);
@@ -203,7 +207,7 @@ export function BlogPostDetailPage({
       }
 
       toast.success(result.message);
-      router.push("/blogs");
+      router.push("/member-blogs");
       router.refresh();
     });
   }
@@ -218,9 +222,9 @@ export function BlogPostDetailPage({
               <h1 className="mt-2 text-3xl font-black tracking-tight text-[#7a3e3a]">{post.title}</h1>
               <div className="mt-3 flex justify-start">
                 <Button asChild variant="outline" className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]">
-                  <Link href="/blogs" className="inline-flex items-center gap-1.5">
+                  <Link href={ backHref } className="inline-flex items-center gap-1.5">
                     <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                    Back to Blogs
+                    {backLabel}
                   </Link>
                 </Button>
               </div>
@@ -228,7 +232,7 @@ export function BlogPostDetailPage({
             <div className="flex items-center gap-2">
               {canEdit ? (
                 <Button asChild variant="outline" className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]">
-                  <Link href={ `/blogs/edit/${post.id}` }>Edit</Link>
+                  <Link href={ `/member-blogs/edit/${post.id}` }>Edit</Link>
                 </Button>
               ) : null}
               {canDelete ? (

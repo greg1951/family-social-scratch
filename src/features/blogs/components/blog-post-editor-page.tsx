@@ -304,7 +304,7 @@ export function BlogPostEditorPage({
       }
 
       toast.success(result.message);
-      router.push("/blogs");
+      router.push("/member-blogs");
       router.refresh();
     });
   }
@@ -328,7 +328,7 @@ export function BlogPostEditorPage({
       }
 
       toast.success(result.message);
-      router.push("/blogs");
+      router.push("/member-blogs");
       router.refresh();
     });
   }
@@ -342,13 +342,46 @@ export function BlogPostEditorPage({
             <h1 className="mt-2 text-3xl font-black tracking-tight text-[#7a3e3a]">
               {isEditing ? "Edit blog post" : "Write a new blog post"}
             </h1>
-            <div className="mt-3 flex justify-start">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <Button asChild variant="outline" className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]">
-                <Link href="/blogs" className="inline-flex items-center gap-1.5">
+                <Link href="/member-blogs" className="inline-flex items-center gap-1.5">
                   <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-                  Back to Blogs
+                  Back to My Blogs
                 </Link>
               </Button>
+
+              <div className="flex flex-wrap items-center justify-end gap-2">
+              <Button
+                type="button"
+                onClick={ handleSave }
+                disabled={ isSaving || isDeleting || !canEdit }
+                className="rounded-full bg-[#b76d68] text-white hover:bg-[#9d5954]"
+              >
+                {isSaving ? "Saving..." : isEditing ? "Update post" : "Create post"}
+              </Button>
+              {isEditing ? (
+                <Button
+                  asChild
+                  type="button"
+                  variant="outline"
+                  className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]"
+                  disabled={ isSaving || isDeleting }
+                >
+                  <Link href="/member-blogs">Cancel</Link>
+                </Button>
+              ) : null}
+              {isEditing && canDelete ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={ handleDelete }
+                  disabled={ isSaving || isDeleting }
+                  className="rounded-full border-[#e3b7b7] text-[#8a3e3e] hover:bg-[#fff3f3]"
+                >
+                  {isDeleting ? "Deleting..." : "Delete post"}
+                </Button>
+              ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -417,8 +450,8 @@ export function BlogPostEditorPage({
               className="h-10 w-full rounded-md border border-[#f2c2ab] bg-white px-3 text-sm text-[#7a3e3a]"
             >
               <option value="draft">Draft</option>
+              <option value="private">Private</option>
               <option value="published">Published</option>
-              <option value="archived">Archived</option>
             </select>
           </div>
 
@@ -523,41 +556,9 @@ export function BlogPostEditorPage({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <Button
-              type="button"
-              onClick={ handleSave }
-              disabled={ isSaving || isDeleting || !canEdit }
-              className="rounded-full bg-[#b76d68] text-white hover:bg-[#9d5954]"
-            >
-              {isSaving ? "Saving..." : isEditing ? "Update post" : "Create post"}
-            </Button>
-            {isEditing ? (
-              <Button
-                asChild
-                type="button"
-                variant="outline"
-                className="rounded-full border-[#f2c2ab] text-[#8a4d45] hover:bg-[#fff3ea]"
-                disabled={ isSaving || isDeleting }
-              >
-                <Link href="/blogs">Cancel</Link>
-              </Button>
-            ) : null}
-            {isEditing && canDelete ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={ handleDelete }
-                disabled={ isSaving || isDeleting }
-                className="rounded-full border-[#e3b7b7] text-[#8a3e3e] hover:bg-[#fff3f3]"
-              >
-                {isDeleting ? "Deleting..." : "Delete post"}
-              </Button>
-            ) : null}
-            {!canEdit ? (
-              <p className="text-sm text-[#9f5b4f]">You are in read-only mode for this post.</p>
-            ) : null}
-          </div>
+          {!canEdit ? (
+            <p className="pt-2 text-sm text-[#9f5b4f]">You are in read-only mode for this post.</p>
+          ) : null}
         </div>
       </div>
     </section>

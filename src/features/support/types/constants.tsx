@@ -9,6 +9,7 @@ import { theKitchenFaqItems } from "./the-kitchen-constants";
 import { poetryNookFaqItems } from "./poetry-nook-constants";
 import { libraryFaqItems } from "./library-constants";
 import { livingRoomFaqItems } from "./living-room-constants";
+import { memberBlogsFaqItems } from "./member-blogs-constants";
 import { mailBoxFaqItems } from "./mail-box-constants";
 import { pictureHallwayFaqItems } from "./picture-hallway-constants";
 import { memberGalleryFaqItems } from "./member-gallery-constants";
@@ -23,6 +24,7 @@ export const featureFaqItems = [
   ...poetryNookFaqItems,
   ...libraryFaqItems,
   ...livingRoomFaqItems,
+  ...memberBlogsFaqItems,
   ...mailBoxFaqItems,
   ...pictureHallwayFaqItems,
   ...memberGalleryFaqItems,

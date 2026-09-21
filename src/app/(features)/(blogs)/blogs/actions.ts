@@ -38,6 +38,7 @@ export async function saveBlogPostAction(input: SaveBlogPostInput) {
 
     if (result.success) {
       revalidatePath('/blogs');
+      revalidatePath('/member-blogs');
       revalidatePath('/blogs/new');
       revalidatePath(`/blogs/edit/${ result.post.id }`);
       revalidatePath(`/blogs/${ result.post.slug }`);
@@ -118,6 +119,7 @@ export async function saveBlogMediaAction(input: SaveBlogMediaInput) {
 
     if (result.success) {
       revalidatePath('/blogs');
+      revalidatePath('/member-blogs');
       if (input.blogPostId) {
         revalidatePath(`/blogs/edit/${ input.blogPostId }`);
       }
@@ -146,6 +148,7 @@ export async function deleteBlogPostAction(input: { blogPostId: number }) {
 
     if (result.success) {
       revalidatePath('/blogs');
+      revalidatePath('/member-blogs');
     }
 
     return result;

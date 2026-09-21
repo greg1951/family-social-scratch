@@ -46,7 +46,7 @@ import { logDbQueryError } from './db-error-logger';
 import { normalizeYouTubeUrl } from '@/features/blogs/utils/youtube-url';
 
 const BLOG_FEATURE_NAME = 'Blogs';
-const BLOG_STATUS_OPTIONS = new Set<BlogPostStatus>(['draft', 'published', 'archived']);
+const BLOG_STATUS_OPTIONS = new Set<BlogPostStatus>(['draft', 'published', 'private']);
 const BLOG_LIKENESS_OPTIONS = new Set([-1, 1, 2]);
 
 function createMemberDisplayName(firstName?: string | null, lastName?: string | null) {
@@ -95,13 +95,22 @@ function canViewDraftPost(
   status: string,
   authorMemberId: number,
   viewerMemberId: number | undefined,
-  viewerIsFounder: boolean
+  viewerIsFounder: boolean,
+  publicOnly = false
 ) {
-  if (status !== 'draft') {
+  if (publicOnly) {
+    return status === 'published';
+  }
+
+  if (status === 'published') {
     return true;
   }
 
-  return authorMemberId === viewerMemberId || viewerIsFounder;
+  if (status === 'draft' || status === 'private') {
+    return authorMemberId === viewerMemberId || viewerIsFounder;
+  }
+
+  return true;
 }
 
 async function ensureUniqueSlug(familyId: number, baseSlug: string, excludePostId?: number) {
@@ -137,13 +146,31 @@ async function loadBlogHomePosts(
   options?: {
     postIds?: number[];
     viewerMemberId?: number;
+    publicOnly?: boolean;
+    memberScopedOnly?: boolean;
   }
 ): Promise<BlogHomePost[]> {
   const postIds = options?.postIds;
   const viewerMemberId = options?.viewerMemberId;
-  const whereClause = postIds && postIds.length > 0
-    ? and(eq(blogPost.familyId, familyId), inArray(blogPost.id, postIds))
-    : eq(blogPost.familyId, familyId);
+  const publicOnly = options?.publicOnly ?? false;
+  const memberScopedOnly = options?.memberScopedOnly ?? false;
+  const whereFilters = [eq(blogPost.familyId, familyId)];
+
+  if (postIds && postIds.length > 0) {
+    whereFilters.push(inArray(blogPost.id, postIds));
+  }
+
+  if (memberScopedOnly) {
+    if (viewerMemberId === undefined) {
+      return [];
+    }
+
+    whereFilters.push(eq(blogPost.authorMemberId, viewerMemberId));
+  }
+
+  const whereClause = whereFilters.length === 1
+    ? whereFilters[0]
+    : and(...whereFilters);
 
   const postRows = await db
     .select()
@@ -157,7 +184,7 @@ async function loadBlogHomePosts(
 
   const viewerIsFounder = await isViewerFounderForDrafts(familyId, viewerMemberId);
   const visiblePostRows = postRows.filter((postRow) =>
-    canViewDraftPost(postRow.status, postRow.authorMemberId, viewerMemberId, viewerIsFounder)
+    canViewDraftPost(postRow.status, postRow.authorMemberId, viewerMemberId, viewerIsFounder, publicOnly)
   );
 
   if (visiblePostRows.length === 0) {
@@ -481,13 +508,13 @@ function normalizeCommentContentJson(rawInput: string) {
   };
 }
 
-export async function getBlogsHomePageData(
+export async function getPublishedBlogsHomePageData(
   familyId: number,
   viewerMemberId?: number
 ): Promise<BlogsHomePageDataReturn> {
   try {
     const [posts, blogTags] = await Promise.all([
-      loadBlogHomePosts(familyId, { viewerMemberId }),
+      loadBlogHomePosts(familyId, { viewerMemberId, publicOnly: true }),
       loadBlogTagOptions(),
     ]);
 
@@ -497,12 +524,43 @@ export async function getBlogsHomePageData(
       blogTags,
     };
   } catch (error) {
-    logDbQueryError('blogs.getBlogsHomePageData', error, { familyId, viewerMemberId });
+    logDbQueryError('blogs.getPublishedBlogsHomePageData', error, { familyId, viewerMemberId });
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Failed to load blog home page data.',
+      message: error instanceof Error ? error.message : 'Failed to load published blog home page data.',
     };
   }
+}
+
+export async function getMemberBlogsHomePageData(
+  familyId: number,
+  viewerMemberId?: number
+): Promise<BlogsHomePageDataReturn> {
+  try {
+    const [posts, blogTags] = await Promise.all([
+      loadBlogHomePosts(familyId, { viewerMemberId, memberScopedOnly: true }),
+      loadBlogTagOptions(),
+    ]);
+
+    return {
+      success: true,
+      posts,
+      blogTags,
+    };
+  } catch (error) {
+    logDbQueryError('blogs.getMemberBlogsHomePageData', error, { familyId, viewerMemberId });
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to load member blog page data.',
+    };
+  }
+}
+
+export async function getBlogsHomePageData(
+  familyId: number,
+  viewerMemberId?: number
+): Promise<BlogsHomePageDataReturn> {
+  return getPublishedBlogsHomePageData(familyId, viewerMemberId);
 }
 
 export async function getBlogPostDetail(
