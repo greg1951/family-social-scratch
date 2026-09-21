@@ -755,7 +755,7 @@ export function TvHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#b9f1ff] sm:text-[0.72rem] sm:tracking-[0.34em]">
+              <p className="text-[1rem] font-bold uppercase tracking-[0.28em] text-[#b9f1ff]">
                 Family TV Room
               </p>
               <div className="mt-2 flex flex-wrap gap-2">

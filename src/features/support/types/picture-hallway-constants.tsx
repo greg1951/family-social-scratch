@@ -3,11 +3,11 @@ import { FileText } from "lucide-react";
 export const pictureHallwayFaqItems = [
   {
     value: "item-10",
-    category: "Picture Hallway",
+    category: "Family Gallery",
     trigger: (
       <div>
-        <p className="text-base font-semibold">I'm in the Family Photo Gallery but I don&apos;t see any way to upload pictures. How do I do this?</p>
-        <p className="text-sm text-slate-600">The Family Photo Gallery is designed for viewing shared albums. To upload pictures, go to <b>My Gallery</b>.</p>
+        <p className="text-base font-semibold">I'm in the Family Gallery but I don&apos;t see any way to upload pictures. How do I do this?</p>
+        <p className="text-sm text-slate-600">The Family Gallery is designed for viewing shared albums. To upload pictures, go to <b>My Gallery</b>.</p>
       </div>
     ),
     content: (

@@ -272,7 +272,7 @@ export function FoodiesTemplatePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(49,67,29,0.95),rgba(87,124,36,0.88)_56%,rgba(199,216,126,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(40,54,21,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl text-left">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
+              <p className="text-[0.90rem] font-bold uppercase tracking-[0.34em] text-[#e9ffd0]">
                 The Kitchen Templates
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-3">

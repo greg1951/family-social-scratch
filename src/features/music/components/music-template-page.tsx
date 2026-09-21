@@ -265,18 +265,16 @@ export function MusicTemplatePage({
         <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(44,94,173,0.96),rgba(38,81,149,0.9)_56%,rgba(26,58,110,0.86))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(15,36,74,0.8)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+            <div className="flex flex-col items-start gap-4">
               <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#dbe8ff]">Family Music Salon</p>
-              <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Music Templates</h1>
-              {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#eff5ff]">Create your own music templates in draft or published status. Draft templates stay out of the Add Music template selection list.</p> */}
+                <p className="text-[0.90rem] font-bold uppercase tracking-[0.34em]">Music Templates</p>
               </div>
 
-              <div className="flex flex-wrap gap-3 lg:pb-1">
+              <div className="flex flex-wrap items-center justify-start gap-3 lg:pb-1">
                 <div id="music-template-go-home">
                   <Link href="/music" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#eff5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                  <ArrowLeft className="mr-1.5 size-3.5" />
-                  Music Home
+                    <ArrowLeft className="mr-1.5 size-3.5" />
+                    Music Room
                   </Link>
                 </div>
                 <div id="music-template-create">
@@ -290,8 +288,8 @@ export function MusicTemplatePage({
                 </div>
               </div>
             </div>
-          <div id="music-available-templates"></div>
           </div>
+          <div id="music-available-templates"></div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">

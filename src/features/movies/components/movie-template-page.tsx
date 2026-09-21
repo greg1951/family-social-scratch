@@ -256,17 +256,15 @@ export function MovieTemplatePage({ templates }: { templates: MovieTemplateRecor
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(96,32,0,0.95),rgba(140,56,12,0.86)_56%,rgba(184,88,24,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(60,20,0,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:gap-6">
+            <div className="flex flex-col items-start gap-4">
               <div className="max-w-3xl">
-                <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Family Movie Theater</p>
-                <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Movie Templates</h1>
-                {/* <p className="mt-3 max-w-2xl text-sm leading-6 text-[#ffe8d1]">Create your own movie templates in draft or published status. Draft templates stay out of the Add Movie template selection list.</p> */}
+                <p className="text-[0.90rem] font-bold uppercase tracking-[0.34em] text-[#ffd9b5]">Movie Templates</p>
               </div>
 
-              <div className="flex flex-wrap gap-3 lg:pb-1">
+              <div className="flex flex-wrap items-center justify-start gap-3 lg:pb-1">
                 <Link href="/movies" className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ffe8d1] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <ArrowLeft className="mr-1.5 size-3.5" />
-                  Movie Home
+                  Movie Theater
                 </Link>
                 <Button type="button" className="rounded-full bg-white/20 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/30" onClick={ openCreateDialog }><Plus className="size-4" />Create</Button>
                 <Button type="button" className="rounded-full bg-white/10 px-5 text-xs font-bold uppercase tracking-[0.2em] text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50" onClick={ openEditDialog } disabled={ !selectedTemplate?.canEdit }><Edit3 className="size-4" />Edit</Button>

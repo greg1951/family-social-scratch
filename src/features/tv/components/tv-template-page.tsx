@@ -262,9 +262,8 @@ export function TvTemplatePage({ templates }: { templates: ShowTemplateRecord[] 
       <div className="mx-auto max-w-7xl space-y-6">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(11,47,66,0.95),rgba(21,98,123,0.86)_56%,rgba(106,177,198,0.78))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(8,34,50,0.95)] sm:px-8 lg:px-10">
           <div className="space-y-4">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">Family TV Room</p>
+            <p className="text-[0.90rem] font-bold uppercase tracking-[0.34em] text-[#b9f1ff]">TV Templates</p>
             <div className="flex flex-wrap items-center justify-start gap-4">
-              <h1 className="text-2xl font-black tracking-tight sm:text-3xl">Show Templates</h1>
               <div className="flex flex-nowrap gap-3 overflow-x-auto pb-1">
                 <Link href="/tv" className="inline-flex shrink-0 items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#d9f5ff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
                   <ArrowLeft className="mr-1.5 size-3.5" />

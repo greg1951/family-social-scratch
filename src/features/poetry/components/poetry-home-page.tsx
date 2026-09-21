@@ -654,7 +654,7 @@ export default function PoetryHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(57,27,88,0.96),rgba(104,53,148,0.88)_56%,rgba(195,150,110,0.84))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(46,18,70,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#f1deff] sm:text-[0.72rem] sm:tracking-[0.34em]">
+              <p className="text-[1rem] font-bold uppercase tracking-[0.28em] text-[#f1deff]">
                 Family Poetry Nook
               </p>
               <div className="mt-2 flex flex-wrap gap-2">

@@ -52,7 +52,7 @@ export default async function MainHeader({
                 { isFeatureEnabled("books") ? <NavBar isLoggedIn={ isLoggedIn } href="/books" src="/icons/book.png" title="Reading Room" /> : null }
                 { isFeatureEnabled("poetry") ? <NavBar isLoggedIn={ isLoggedIn } href="/poetry" src="/icons/poetry.png" title="Poetry Nook" /> : null }
                 { isFeatureEnabled("foodies") ? <NavBar isLoggedIn={ isLoggedIn } href="/foodies" src="/icons/food.png" title="The Kitchen" /> : null }
-                { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Picture Hallway" /> : null }
+                { isFeatureEnabled("gallery") ? <NavBar isLoggedIn={ isLoggedIn } href="/family-gallery" src="/icons/galleries.png" title="Family Gallery" /> : null }
                 { isFeatureEnabled("games") ? <NavBar isLoggedIn={ isLoggedIn } href="/games" src="/icons/games.png" title="Game Room" /> : null }
                 { isFeatureEnabled("threads") ? <NavBar isLoggedIn={ isLoggedIn } href="/threads" src="/icons/family.png" title="Mail Box" /> : null }
                 <MainDropMenu

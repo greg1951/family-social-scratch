@@ -55,7 +55,7 @@ export const RoomDefinitions: Record<FamilyFeatureKey, MainRoomDefinition> = {
   gallery: {
     featureKey: "gallery",
     href: "/family-gallery",
-    roomTitle: "Picture Hallway",
+    roomTitle: "Family Gallery",
     src: "/images/main/room-pictures-tablet.jpg",
     phoneSrc: "/images/main/room-pictures-phone.jpg",
     tabletSrc: "/images/main/room-pictures-tablet.jpg",

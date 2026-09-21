@@ -661,7 +661,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(82,126,53,0.9),rgba(138,186,86,0.82)_54%,rgba(228,245,190,0.85))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(56,84,35,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.28em] text-[#eefdd6] sm:text-[0.72rem] sm:tracking-[0.34em]">
+              <p className="text-[1rem] font-bold uppercase tracking-[0.28em] text-[#eefdd6]">
                 Family Gallery
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -680,12 +680,6 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                   My Gallery
                 </Link>
               </div>
-              {/* <h1 className="mt-3 text-base font-black leading-snug tracking-tight sm:mt-4 sm:text-3xl">
-                Explore albums shared by your family and friends.
-              </h1> */}
-              {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-sm">
-                Browse photo albums shared by family members. Then select an album to view the shared photos in the Photo Scroll Strip.
-              </p> */}
             </div>
           </div>
         </div>
@@ -736,7 +730,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                       <div className="mt-2 flex items-center gap-2">
                         <h2 className="text-2xl font-black tracking-tight text-[#355427]">Album Finder</h2>
                         <FeatureFaqHelp
-                          href="/feature-faq?category=Picture%20Hallway"
+                          href="/feature-faq?category=Family%20Gallery"
                           buttonClassName="h-4 w-4 md:h-7 md:w-7 border-[#c5dbb4] bg-gradient-to-b from-[#f8fdf3] to-[#e7f3db] text-[#4e7430] shadow-[0_8px_18px_rgba(78,116,48,0.18)] group-hover:shadow-[0_12px_26px_rgba(78,116,48,0.26)]"
                           iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4e7430]"
                           tooltipClassName="bg-[#355427] text-[#f4fee9]"

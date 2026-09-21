@@ -6,6 +6,7 @@ import {
   ChevronDown,
   ChevronUp,
   Edit3,
+  HouseHeart,
   Images,
   Plus,
   Share2,
@@ -2505,28 +2506,28 @@ export default function MemberGalleryHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(82,126,53,0.9),rgba(138,186,86,0.82)_54%,rgba(228,245,190,0.85))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(56,84,35,0.8)] sm:px-8 md:px-10">
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#eefdd6]">
-                Member Photo Gallery
+              <p className="text-[1rem] font-bold uppercase tracking-[0.28em] text-[#eefdd6]">
+                { member.firstName }&apos;s Private  Gallery
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
                 <Link
                   href="/"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
-                  <ArrowLeft className="mr-2 size-4" />
-                  Home
+                  <HouseHeart className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  Go Home
                 </Link>
                 <Link
                   href="/family-gallery"
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#f5ffe8] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
                 >
-                  <Camera className="mr-2 size-4" />
+                  <ArrowLeft className="mr-2 size-4" />
                   Family Gallery
                 </Link>
               </div>
-              <h3 className="mt-4 text-1xl font-black tracking-tight sm:text-3xl">
+              {/* <h3 className="mt-4 text-1xl font-black tracking-tight sm:text-2xl">
                 { member.firstName }&apos;s Private Photo and Album Workspace
-              </h3>
+              </h3> */}
               {/* <p className="mt-3 max-w-2xl text-sm leading-7 text-[#f0fde0] sm:text-base">
                 Upload photos, create albums, and prepare albums to share with your family. When you're ready, share them!
               </p> */}
