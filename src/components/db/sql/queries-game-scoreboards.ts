@@ -2,6 +2,7 @@
 
 import db from '@/components/db/drizzle';
 import { eq, and, asc, desc, ne } from 'drizzle-orm';
+import { logDbQueryError } from './db-error-logger';
 import { gameState, 
          gamePlayerState, 
          gameMetadata, 
@@ -837,6 +838,7 @@ export async function getGamesPageData(familyId: number): Promise<GamesPageDataR
     };
   }
   catch (error) {
+    logDbQueryError('gameScoreboards.getGamesPageData', error, { familyId });
     return {
       success: false,
       message: `Failed to load games page data: ${error instanceof Error ? error.message : 'unknown error'}`,

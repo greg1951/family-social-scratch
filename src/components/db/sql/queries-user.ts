@@ -4,6 +4,7 @@ import { count, eq, and, sql, desc } from 'drizzle-orm';
 import { user, user2faCode } from '../schema/family-social-schema-tables';
 import db from '@/components/db/drizzle';
 import { hashUserPassword } from "@/features/auth/services/hash";
+import { logDbQueryError } from './db-error-logger';
 import { ErrorReturnType, 
          UserPasswordReturnType, 
          GetFullUserCredsReturnType, 
@@ -69,12 +70,12 @@ export async function updateUserPassword(email: string, password: string)
         error: false,
       }      
       
-    } catch {
+    } catch (error) {
       returnedResult = {
         error: true,
         message: 'Failed to updated password'
       }      
-      console.error(returnedResult);
+      logDbQueryError('user.updateUserPassword', error, { email: normalizedEmail });
     }      
     return returnedResult;
 
@@ -128,7 +129,7 @@ export async function getFullUserCredsByEmail(email: string, family: string)
       }
   }
   catch (e: unknown) {
-    console.error("queries-user->getFullUserCredsByEmail->error: ", e);
+    logDbQueryError('user.getFullUserCredsByEmail', e, { email: normalizedEmail });
     return {
       success:false,
       message: 'Insert of user failed'
@@ -358,7 +359,7 @@ export async function upsertUser2faCode(args: UpsertUser2faCodeArgs): Promise<Er
     };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Unknown database error";
-    console.error("queries-user->upsertUser2faCode->error:", message);
+    logDbQueryError('user.upsertUser2faCode', error, { userId: args.userId });
 
     if (message.includes("relation \"family_schema.user_2fa_code\" does not exist")) {
       return {

@@ -118,6 +118,12 @@ export async function deleteMovie(
       message: "Movie deleted.",
     };
   } catch (error) {
+    logDbQueryError("movies.deleteMovie", error, {
+      movieId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting movie",
@@ -761,6 +767,7 @@ export async function getMovieTemplateManagementData(
       templates,
     };
   } catch (error) {
+    logDbQueryError("movies.getMovieTemplateManagementData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading movie templates",
@@ -937,7 +944,12 @@ export async function saveMovie(
         message: updatedMovie.status === "archived" ? "Movie archived." : "Movie unarchived.",
       };
     } catch (error) {
-      console.error("Error archiving movie:", error);
+      logDbQueryError("movies.saveMovie.archiveToggle", error, {
+        movieId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: "An error occurred while archiving the movie.",
@@ -1083,6 +1095,12 @@ export async function saveMovie(
       message: input.id ? "Movie updated." : "Movie added.",
     };
   } catch (error) {
+    logDbQueryError("movies.saveMovie", error, {
+      movieId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving movie",
@@ -1203,6 +1221,11 @@ export async function saveMovieTemplate(
       message: input.id ? "Movie template updated." : "Movie template added.",
     };
   } catch (error) {
+    logDbQueryError("movies.saveMovieTemplate", error, {
+      templateId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving movie template",
@@ -1255,6 +1278,11 @@ export async function deleteMovieTemplate(
       message: `Template "${existingTemplate.templateName}" deleted.`,
     };
   } catch (error) {
+    logDbQueryError("movies.deleteMovieTemplate", error, {
+      templateId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting movie template",
@@ -1282,6 +1310,7 @@ export async function getMovieDetail(
       movie: selectedMovie,
     };
   } catch (error) {
+    logDbQueryError("movies.getMovieDetail", error, { familyId, movieId, viewerMemberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading movie detail",
@@ -1354,6 +1383,12 @@ export async function toggleMovieLike(
       message: likenessDegree === -1 ? "Thumbs down saved." : likenessDegree === 1 ? "Thumbs up saved." : "Love saved.",
     };
   } catch (error) {
+    logDbQueryError("movies.toggleMovieLike", error, {
+      movieId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      likenessDegree,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving movie reaction",
@@ -1466,6 +1501,11 @@ export async function addMovieComment(
       message: "Movie comment added.",
     };
   } catch (error) {
+    logDbQueryError("movies.addMovieComment", error, {
+      movieId: input.movieId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving movie comment",

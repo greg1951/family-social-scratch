@@ -424,6 +424,12 @@ export async function deleteMusic(
       message: "Music deleted.",
     };
   } catch (error) {
+    logDbQueryError("music.deleteMusic", error, {
+      musicId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting music",
@@ -1127,6 +1133,7 @@ export async function getMusicTemplateManagementData(
       templates,
     };
   } catch (error) {
+    logDbQueryError("music.getMusicTemplateManagementData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading music templates",
@@ -1263,7 +1270,12 @@ export async function saveMusic(
         message: updatedMusic.status === "archived" ? "Music archived." : "Music unarchived.",
       };
     } catch (error) {
-      console.error("Error archiving music:", error);
+      logDbQueryError("music.saveMusic.archiveToggle", error, {
+        musicId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: "An error occurred while archiving the music.",
@@ -1453,6 +1465,12 @@ export async function saveMusic(
       message: input.id ? "Music updated." : "Music added.",
     };
   } catch (error) {
+    logDbQueryError("music.saveMusic", error, {
+      musicId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving music",
@@ -1573,6 +1591,11 @@ export async function saveMusicTemplate(
       message: input.id ? "Music template updated." : "Music template added.",
     };
   } catch (error) {
+    logDbQueryError("music.saveMusicTemplate", error, {
+      templateId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving music template",
@@ -1625,6 +1648,11 @@ export async function deleteMusicTemplate(
       message: `Template "${existingTemplate.templateName}" deleted.`,
     };
   } catch (error) {
+    logDbQueryError("music.deleteMusicTemplate", error, {
+      templateId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting music template",
@@ -1751,6 +1779,11 @@ export async function saveMusicLyrics(
       message: existingLyrics ? "Lyrics updated." : "Lyrics added.",
     };
   } catch (error) {
+    logDbQueryError("music.saveMusicLyrics", error, {
+      musicId: input.musicId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving lyrics",
@@ -1778,6 +1811,7 @@ export async function getMusicDetail(
       music: selectedMusic,
     };
   } catch (error) {
+    logDbQueryError("music.getMusicDetail", error, { familyId, musicId, viewerMemberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading music detail",
@@ -1850,6 +1884,12 @@ export async function toggleMusicLike(
       message: likenessDegree === -1 ? "Thumbs down saved." : likenessDegree === 1 ? "Thumbs up saved." : "Love saved.",
     };
   } catch (error) {
+    logDbQueryError("music.toggleMusicLike", error, {
+      musicId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      likenessDegree,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving music reaction",
@@ -1954,6 +1994,11 @@ export async function addMusicComment(
       message: "Music comment added.",
     };
   } catch (error) {
+    logDbQueryError("music.addMusicComment", error, {
+      musicId: input.musicId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving music comment",

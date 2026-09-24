@@ -12,6 +12,7 @@ import {
 import { serializedTipTapDocumentSchema } from "@/components/db/types/poem-term-validation";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { getVideoS3ClientContext } from "@/lib/video-s3-client-factory";
+import { logDbQueryError } from "./db-error-logger";
 
 const createVideoInputSchema = z.object({
   videoName: z.string().trim().min(2, "Video name must be at least 2 characters."),
@@ -389,7 +390,7 @@ export async function getVideoMaintenanceData(): Promise<VideoMaintenanceDataRes
       videos,
     };
   } catch (error) {
-    console.error("getVideoMaintenanceData failed", error);
+    logDbQueryError("videos.getVideoMaintenanceData", error);
     return {
       success: false,
       message: "Unable to load video maintenance data.",
@@ -491,7 +492,7 @@ export async function createVideoEntry(input: CreateVideoInput): Promise<CreateV
       console.error("createVideoEntry cleanup failed", cleanupError);
     }
 
-    console.error("createVideoEntry tag insert failed", error);
+    logDbQueryError("videos.createVideoEntry", error, { videoId: insertedVideo.id });
     return {
       success: false,
       message: "Video was uploaded but tags could not be saved. Please try again.",
@@ -661,11 +662,7 @@ export async function deleteVideoEntry(videoId: number): Promise<DeleteVideoResu
         })
       );
     } catch (error) {
-      console.error("deleteVideoEntry failed to delete S3 object", {
-        videoId,
-        objectKey,
-        errorMessage: error instanceof Error ? error.message : "Unknown error",
-      });
+      logDbQueryError("videos.deleteVideoEntry", error, { videoId, objectKey });
 
       return {
         success: false,

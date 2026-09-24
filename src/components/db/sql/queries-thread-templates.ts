@@ -1,6 +1,7 @@
 import db from "@/components/db/drizzle";
 import { threadTemplate } from "@/components/db/schema/global-schema-tables";
 import { eq, asc } from "drizzle-orm";
+import { logDbQueryError } from "./db-error-logger";
 import {
   ThreadTemplate,
   ThreadTemplateInput,
@@ -30,6 +31,7 @@ export async function getThreadTemplates(
       templates: result as ThreadTemplate[],
     };
   } catch (error) {
+    logDbQueryError("threadTemplates.getThreadTemplates", error, { category });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error fetching thread templates",
@@ -57,6 +59,7 @@ export async function getThreadTemplate(templateId: number): Promise<GetThreadTe
       template: result[0] as ThreadTemplate,
     };
   } catch (error) {
+    logDbQueryError("threadTemplates.getThreadTemplate", error, { templateId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error fetching thread template",
@@ -152,6 +155,7 @@ export async function saveThreadTemplate(
       };
     }
 
+    logDbQueryError("threadTemplates.saveThreadTemplate", error, { templateId: input.id });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving thread template",
@@ -178,6 +182,7 @@ export async function deleteThreadTemplate(templateId: number): Promise<DeleteTh
       message: "Template deleted successfully",
     };
   } catch (error) {
+    logDbQueryError("threadTemplates.deleteThreadTemplate", error, { templateId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting thread template",

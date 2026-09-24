@@ -354,6 +354,7 @@ export async function getPoemById(
 
     return { success: true, poem: foundPoem };
   } catch (error) {
+    logDbQueryError('poetry.getPoemById', error, { familyId, poemId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : `Error loading poem with id ${ poemId }`,
@@ -538,7 +539,12 @@ export async function savePoetryHomePoem(
         message: updatedPoem.status === 'archived' ? 'Poem archived.' : 'Poem unarchived.',
       };
     } catch (error) {
-      console.error('Error archiving poem:', error);
+      logDbQueryError('poetry.savePoetryHomePoem.archiveToggle', error, {
+        poemId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: 'An error occurred while archiving the poem.',
@@ -679,6 +685,12 @@ export async function savePoetryHomePoem(
 
     savedPoemId = savedPoemFact.id;
   } catch (error) {
+    logDbQueryError('poetry.savePoetryHomePoem', error, {
+      poemId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     if (createdPoemFactId) {
       try {
         await db
@@ -1386,6 +1398,12 @@ export async function deletePoem(
       message: "Poem deleted.",
     };
   } catch (error) {
+    logDbQueryError('poetry.deletePoem', error, {
+      poemId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting poem",

@@ -4,6 +4,7 @@ import { passwordReset } from '../schema/family-social-schema-tables';
 import db from '../drizzle';
 import { eq } from 'drizzle-orm';
 import { getEmailByUserId } from './queries-user';
+import { logDbQueryError } from './db-error-logger';
 import { InsertRecordType,
          InsertReturnType, 
          PasswordTokenRecordType,
@@ -38,6 +39,7 @@ export async function insertPasswordToken(arg: InsertRecordType)
       error: false
     }
   }catch (e:unknown) {
+      logDbQueryError('passwordReset.insertPasswordToken', e, { userId: arg.userId });
       return {
         error: true,
         message: "Unknow error occured in the passwordResetTokens table"

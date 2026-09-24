@@ -203,6 +203,7 @@ export async function getConvoPostReplies(conversationId:number)
       .where(eq(threadPostReply.conversationId, conversationId!));
   } catch (error) {
     if (!isMissingContentJsonColumnError(error)) {
+      logDbQueryError('threads.getConvoPostReplies', error, { conversationId });
       throw error;
     }
 
@@ -713,6 +714,10 @@ export async function createThreadConversationWithInitialPost(
       });
   } catch (error) {
     if (!isMissingContentJsonColumnError(error)) {
+      logDbQueryError('threads.createThreadConversationWithInitialPost', error, {
+        familyId: context.familyId,
+        memberId: context.senderMemberId,
+      });
       throw error;
     }
 
@@ -922,6 +927,7 @@ export async function getThreadConversationDetail(
       .orderBy(asc(threadPostReply.seqNo), asc(threadPostReply.createdAt));
   } catch (error) {
     if (!isMissingContentJsonColumnError(error)) {
+      logDbQueryError('threads.getThreadConversationDetail', error, { conversationId, familyId, memberId });
       throw error;
     }
 
@@ -1108,6 +1114,11 @@ export async function addThreadReply(
       });
   } catch (error) {
     if (!isMissingContentJsonColumnError(error)) {
+      logDbQueryError('threads.addThreadReply', error, {
+        conversationId: input.conversationId,
+        familyId: context.familyId,
+        memberId: context.memberId,
+      });
       throw error;
     }
 
@@ -1269,6 +1280,12 @@ export async function updateThreadReply(
       .where(eq(threadPostReply.id, input.postId));
   } catch (error) {
     if (!isMissingContentJsonColumnError(error)) {
+      logDbQueryError('threads.updateThreadReply', error, {
+        postId: input.postId,
+        conversationId: input.conversationId,
+        familyId: context.familyId,
+        memberId: context.memberId,
+      });
       throw error;
     }
 

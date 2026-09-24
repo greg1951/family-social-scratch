@@ -7,6 +7,7 @@ import {
 	createFamilyActivityRecord,
 	FAMILY_ACTIVITY_ACTION_TYPES,
 } from './queries-family-activity';
+import { logDbQueryError } from './db-error-logger';
 
 import {
 	blogPost,
@@ -554,8 +555,14 @@ export async function createDiscussionThreadWithInitialPost(
 				discussThreadId: insertedThread.id,
 				authorMemberId: actor.memberId,
 			});
-		} catch {
+		} catch (error) {
 			// Neon HTTP driver doesn't support transactions here; remove the orphaned thread on failure.
+			logDbQueryError('discussThreads.createDiscussionThreadWithInitialPost', error, {
+				familyId: actor.familyId,
+				memberId: actor.memberId,
+				targetType: input.targetType,
+				targetId: input.targetId,
+			});
 			await db.delete(discussThread).where(eq(discussThread.id, insertedThread.id));
 			return {
 				success: false,

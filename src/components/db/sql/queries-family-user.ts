@@ -11,6 +11,7 @@ import { InsertFamilyReturn,
          InsertUserReturn } from '../types/family-member';
 import { hashUserPassword } from '@/features/auth/services/hash';
 import { RegistrationMemberDetails } from '@/features/family/types/family-steps';
+import { logDbQueryError } from './db-error-logger';
 
 export async function getUserFamilyNameByEmail(email: string)
   : Promise<UserFamilyReturn> {
@@ -105,6 +106,7 @@ export async function insertMember(memberArg: RegistrationMemberDetails)
     };
 
     } catch (e: unknown) {
+      logDbQueryError('familyUser.insertMember', e, { familyId: memberArg.familyId });
       return {
         success: false,
         message: `Failed to insert member with name ${memberArg.firstName} ${memberArg.lastName}`,
@@ -139,7 +141,7 @@ export async function insertUser(userArg: InsertUserInput)
         createdAt: insertResult.createdAt as Date,
       }
     } catch (e: unknown) {
-        // console.error("Error inserting user");      
+        logDbQueryError('familyUser.insertUser', e, { memberId: userArg.memberId, familyId: userArg.familyId });
         return {
           success: false,
           message: `Failed to insert user with email ${userArg.email}`,

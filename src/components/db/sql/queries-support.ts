@@ -2,6 +2,7 @@ import type { JSONContent } from "@tiptap/core";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 
 import db from "@/components/db/drizzle";
+import { logDbQueryError } from "./db-error-logger";
 import {
 	member,
 	
@@ -316,7 +317,11 @@ export async function createSupportIssue(
 			console.error("createSupportIssue cleanup failed", cleanupError);
 		}
 
-		console.error("createSupportIssue follow-up insert failed", error);
+		logDbQueryError("support.createSupportIssue", error, {
+			familyId: context.familyId,
+			memberId: context.memberId,
+			issueId: createdIssue.id,
+		});
 
 		return {
 			success: false,

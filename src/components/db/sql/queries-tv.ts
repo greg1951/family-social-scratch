@@ -120,6 +120,12 @@ export async function deleteShow(
       message: "Show deleted.",
     };
   } catch (error) {
+    logDbQueryError("tv.deleteShow", error, {
+      showId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      isFounder: actor.isFounder ?? false,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting show",
@@ -778,6 +784,7 @@ export async function getTvTemplateManagementData(
       templates,
     };
   } catch (error) {
+    logDbQueryError("tv.getTvTemplateManagementData", error, { familyId, memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error loading TV templates",
@@ -954,7 +961,12 @@ export async function saveShow(
         message: updatedShow.status === "archived" ? "Show archived." : "Show unarchived.",
       };
     } catch (error) {
-      console.error("Error archiving show:", error);
+      logDbQueryError("tv.saveShow.archiveToggle", error, {
+        showId: input.id,
+        familyId: actor.familyId,
+        memberId: actor.memberId,
+        status: input.status,
+      });
       return {
         success: false,
         message: "An error occurred while archiving the show.",
@@ -1098,6 +1110,12 @@ export async function saveShow(
       message: input.id ? "Show updated." : "Show added.",
     };
   } catch (error) {
+    logDbQueryError("tv.saveShow", error, {
+      showId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      status: input.status,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error saving show",
@@ -1235,6 +1253,11 @@ export async function saveShowTemplate(
       message: `Template "${savedTemplateRecord.templateName}" saved successfully.`,
     };
   } catch (error) {
+    logDbQueryError("tv.saveShowTemplate", error, {
+      templateId: input.id,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error
@@ -1289,6 +1312,11 @@ export async function deleteShowTemplate(
       message: `Template "${existingTemplate.templateName}" deleted.`,
     };
   } catch (error) {
+    logDbQueryError("tv.deleteShowTemplate", error, {
+      templateId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Error deleting show template",
@@ -1316,6 +1344,7 @@ export async function getShowDetail(
       show: showDetail,
     };
   } catch (error) {
+    logDbQueryError("tv.getShowDetail", error, { familyId, showId, viewerMemberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to load show detail.",
@@ -1432,6 +1461,12 @@ export async function toggleShowLike(
       message: `Show ${actionText} successfully.`,
     };
   } catch (error) {
+    logDbQueryError("tv.toggleShowLike", error, {
+      showId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+      likenessDegree,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update show reaction.",
@@ -1549,6 +1584,11 @@ export async function addShowComment(
       message: "Comment posted successfully.",
     };
   } catch (error) {
+    logDbQueryError("tv.addShowComment", error, {
+      showId: input.showId,
+      familyId: actor.familyId,
+      memberId: actor.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to add comment.",

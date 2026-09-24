@@ -235,6 +235,7 @@ export async function getAlbumPhotos(
 
     return { success: true, photos };
   } catch (error) {
+    logDbQueryError("gallery.getAlbumPhotos", error, { albumId, viewerMemberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to load album photos",
@@ -313,6 +314,11 @@ export async function setGalleryPhotoReaction(
       viewerReaction: input.reactionType,
     };
   } catch (error) {
+    logDbQueryError("gallery.setGalleryPhotoReaction", error, {
+      albumPhotoId: input.albumPhotoId,
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to save reaction",
@@ -382,6 +388,11 @@ export async function addGalleryAlbumComment(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.addGalleryAlbumComment", error, {
+      albumId: input.albumId,
+      familyId: ctx.familyId,
+      memberId: ctx.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to save album comment",
@@ -470,6 +481,7 @@ export async function getMemberGalleryData(memberId: number): Promise<GetMemberG
 
     return { success: true, albums, unallocatedPhotos };
   } catch (error) {
+    logDbQueryError("gallery.getMemberGalleryData", error, { memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to load member gallery",
@@ -504,6 +516,7 @@ export async function saveGalleryPhoto(
 
     return { success: true, photo: photo as GalleryPhoto };
   } catch (error) {
+    logDbQueryError("gallery.saveGalleryPhoto", error, { memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to save photo",
@@ -546,6 +559,7 @@ export async function updateGalleryPhoto(
 
     return { success: true, photo: photo as GalleryPhoto };
   } catch (error) {
+    logDbQueryError("gallery.updateGalleryPhoto", error, { photoId: input.id, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update photo",
@@ -582,6 +596,7 @@ export async function deleteGalleryPhoto(
 
     return { success: true, removedCount: 1 };
   } catch (error) {
+    logDbQueryError("gallery.deleteGalleryPhoto", error, { photoId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to remove photo from queue",
@@ -627,6 +642,7 @@ export async function clearUnallocatedGalleryPhotos(
 
     return { success: true, removedCount: removablePhotoIds.length };
   } catch (error) {
+    logDbQueryError("gallery.clearUnallocatedGalleryPhotos", error, { memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to clear unallocated photos",
@@ -746,6 +762,7 @@ export async function createGalleryAlbum(
       },
     };
   } catch (error) {
+    logDbQueryError("gallery.createGalleryAlbum", error, { familyId: ctx.familyId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to create album",
@@ -805,6 +822,7 @@ export async function updateGalleryAlbum(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.updateGalleryAlbum", error, { albumId: input.id, familyId: ctx.familyId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update album",
@@ -823,6 +841,7 @@ export async function deleteGalleryAlbum(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.deleteGalleryAlbum", error, { albumId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to delete album",
@@ -863,6 +882,11 @@ export async function addPhotoToAlbum(
 
     return { success: true, albumPhotoId: albumPhoto.id, seqNo: albumPhoto.seqNo };
   } catch (error) {
+    logDbQueryError("gallery.addPhotoToAlbum", error, {
+      albumId: input.albumId,
+      photoId: input.photoId,
+      memberId: ctx.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to add photo to album",
@@ -893,6 +917,11 @@ export async function updateGalleryAlbumPhoto(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.updateGalleryAlbumPhoto", error, {
+      albumPhotoId: input.id,
+      albumId: input.albumId,
+      memberId: ctx.memberId,
+    });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to update album photo",
@@ -913,6 +942,7 @@ export async function removePhotoFromAlbum(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.removePhotoFromAlbum", error, { albumPhotoId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to remove photo from album",
@@ -942,6 +972,7 @@ export async function resequenceAlbumPhotos(
 
     return { success: true };
   } catch (error) {
+    logDbQueryError("gallery.resequenceAlbumPhotos", error, { albumId: input.albumId, memberId: ctx.memberId });
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to resequence photos",
