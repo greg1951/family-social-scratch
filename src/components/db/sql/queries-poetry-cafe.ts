@@ -1,5 +1,5 @@
 import db from '@/components/db/drizzle';
-import { and, asc, count, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import {
   member,
   discussThread,
@@ -10,7 +10,7 @@ import {
   poemLike,
   poemVerse,
 } from "../schema/family-social-schema-tables";
-import { poemTerm, poemCategoryReference, poemCategoryTagReference } from "../schema/global-schema-tables";
+import { poemCategoryReference, poemCategoryTagReference } from "../schema/global-schema-tables";
 import {
   createTextTipTapDocument,
   isTipTapDocumentEmpty,
@@ -21,19 +21,15 @@ import {
 } from '../types/poem-term-validation';
 import {
   AddPoemCommentReturn,
-  GetPoemTermReturn,
   GetPoetryHomePoemReturn,
   Poem,
   PoemsReturn,
   PoetryHomePageDataReturn,
   PoetryHomePoem,
   PoemTagOptionsReturn,
-  PoemTermsReturn,
   TogglePoemReactionReturn,
   SavePoetryHomePoemInput,
   SavePoetryHomePoemReturn,
-  SavePoemTermInput,
-  SavePoemTermReturn,
   PoemCategoryWithTagsReturn,
   SavePoemCategoryInput,  SavePoemCategoryReturn,
   SavePoemCategoryTagReferenceInput,
@@ -52,7 +48,6 @@ import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 import { logDbQueryError } from './db-error-logger';
 
-const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -1021,205 +1016,6 @@ export async function addPoemComment(
     poem: updatedPoem,
     message: `Your comment was added to "${ updatedPoem.poemTitle }".`,
   };
-}
-
-/*------------------ getPoemTerms ------------------ */
-export async function getPoemTerms()
-  : Promise<PoemTermsReturn> {
-  const result = await db
-    .select()
-      .from(poemTerm)
-      .orderBy(asc(poemTerm.term));
-
-  if (!result) {
-    return {
-      success: false,
-      message: "Error accessing poem terms",
-    };
-  };
-    
-  console.log('queries-poetry-cafe->getPoemTerms->result.length: ',result.length);
-  
-  if (result.length === 0) {
-    return {
-      success: false,
-      message: "No poem terms found",
-    }; 
-  };
-
-  const poemTerms = result.map((row) => ({
-    id: row.id,
-    term: row.term,
-    termJson: row.termJson,
-    status: row.status,
-    createdAt: row.createdAt as Date,
-  }));
-
-  console.log('queries-poetry-cafe->getPoemTerms->poemTerms.length: ',poemTerms.length);
-
-  return {
-    success: true,
-    poemTerms: poemTerms,
-    }
-  };
-
-export async function getPoemTermById(id: number)
-  : Promise<GetPoemTermReturn> {
-  const [result] = await db
-    .select()
-    .from(poemTerm)
-    .where(eq(poemTerm.id, id));
-
-  if (!result) {
-    return {
-      success: false,
-      message: `No poem term found for id: ${id}`,
-    };
-  }
-
-  return {
-    success: true,
-    poemTerm: {
-      id: result.id,
-      term: result.term,
-      termJson: result.termJson,
-      status: result.status,
-      createdAt: result.createdAt as Date,
-    },
-  };
-}
-
-export async function savePoemTerm(
-  input: SavePoemTermInput,
-  actor: { familyId: number; isAdmin: boolean }
-)
-  : Promise<SavePoemTermReturn> {
-  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
-    return {
-      success: false,
-      message: "Only the family 1 admin can maintain poem terms.",
-    };
-  }
-
-  const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
-
-  if (!parsedTermJson.success) {
-    return {
-      success: false,
-      message: parsedTermJson.message,
-    };
-  }
-
-  const termPayload = {
-    term: input.term.trim(),
-    termJson: serializeTipTapDocument(parsedTermJson.content),
-    status: input.status.trim(),
-  };
-
-  const duplicateConditions = input.id
-    ? and(ilike(poemTerm.term, termPayload.term), ne(poemTerm.id, input.id))
-    : ilike(poemTerm.term, termPayload.term);
-
-  const [existingTerm] = await db
-    .select({ id: poemTerm.id })
-    .from(poemTerm)
-    .where(duplicateConditions)
-    .limit(1);
-
-  if (existingTerm) {
-    return {
-      success: false,
-      message: `A term named "${ termPayload.term }" already exists. Term names must be unique.`,
-    };
-  }
-
-  if (input.id) {
-    const [result] = await db
-      .update(poemTerm)
-      .set(termPayload)
-      .where(eq(poemTerm.id, input.id))
-      .returning();
-
-    if (!result) {
-      return {
-        success: false,
-        message: `Failed to update poem term with id: ${input.id}`,
-      };
-    }
-
-    return {
-      success: true,
-      poemTerm: {
-        id: result.id,
-        term: result.term,
-        termJson: result.termJson,
-        status: result.status,
-        createdAt: result.createdAt as Date,
-      },
-    };
-  }
-
-  const [result] = await db
-    .insert(poemTerm)
-    .values(termPayload)
-    .returning();
-
-  if (!result) {
-    return {
-      success: false,
-      message: 'Failed to create poem term',
-    };
-  }
-
-  return {
-    success: true,
-    poemTerm: {
-      id: result.id,
-      term: result.term,
-      termJson: result.termJson,
-      status: result.status,
-      createdAt: result.createdAt as Date,
-    },
-  };
-}
-
-export async function deletePoemTerm(
-  id: number,
-  actor: { familyId: number; isAdmin: boolean }
-): Promise<{ success: false; message: string } | { success: true; message: string }> {
-  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
-    return {
-      success: false,
-      message: "Only the family 1 admin can maintain poem terms.",
-    };
-  }
-
-  const [existingTerm] = await db
-    .select({ id: poemTerm.id })
-    .from(poemTerm)
-    .where(eq(poemTerm.id, id))
-    .limit(1);
-
-  if (!existingTerm) {
-    return {
-      success: false,
-      message: `No poem term found for id: ${id}`,
-    };
-  }
-
-  try {
-    await db.delete(poemTerm).where(eq(poemTerm.id, id));
-
-    return {
-      success: true,
-      message: "Poem term deleted.",
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Error deleting poem term",
-    };
-  }
 }
 
 export async function getPoemCategoryWithTags()

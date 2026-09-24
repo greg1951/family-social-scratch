@@ -181,6 +181,8 @@ describe("MusicAddPage music type UI", () => {
           mediaUrl: "https://open.spotify.com/track/abc",
           mediaArtist: "Aster Lake",
           mediaCaption: "Late night drive",
+          mediaImageUrl: null,
+          useImageUrl: false,
           createdAt: new Date("2026-08-05T12:00:00.000Z"),
         },
       ],

@@ -144,42 +144,6 @@ export type GetPoetryHomePoemReturn =
       poem: PoetryHomePoem;
     };
 
-export interface PoemTerm {
-  id: number;
-  term: string;
-  termJson: string;
-  status: string;
-  createdAt: Date;
-}
-
-export interface SavePoemTermInput {
-  id?: number;
-  term: string;
-  termJson: string;
-  status: string;
-}
-
-export type SavePoemTermReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      poemTerm: PoemTerm;
-    };
-
-export type GetPoemTermReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      poemTerm: PoemTerm;
-    };
-
-export type PoemTermsReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      poemTerms: PoemTerm[];
-    };
-
 export interface PoemCategory {
   id: number;
   categoryName: string;

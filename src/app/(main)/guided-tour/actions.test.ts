@@ -101,7 +101,7 @@ describe("guided tour actions", () => {
     });
 
     const result = await applyGuidedTourProgressCommandAction({
-      progressId: 9,
+      memberTourProgressId: 9,
       command: "start_tour",
     });
 
@@ -125,13 +125,13 @@ describe("guided tour actions", () => {
     });
 
     await applyGuidedTourProgressCommandAction({
-      progressId: 9,
+      memberTourProgressId: 9,
       command: "complete_step",
       stepNo: 2,
     });
 
     expect(applyGuidedTourProgressCommandMock).toHaveBeenCalledWith({
-      progressId: 9,
+      memberTourProgressId: 9,
       command: "complete_step",
       stepNo: 2,
       memberId: 42,

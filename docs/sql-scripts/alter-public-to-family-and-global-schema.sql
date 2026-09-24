@@ -80,12 +80,10 @@ ALTER TABLE public.music_like SET SCHEMA family_schema;
 -- Global tables: public -> global_schema
 ALTER TABLE public.book_category_reference SET SCHEMA global_schema;
 ALTER TABLE public.book_category_tag_reference SET SCHEMA global_schema;
-ALTER TABLE public.book_term SET SCHEMA global_schema;
 ALTER TABLE public.movie_tag_reference SET SCHEMA global_schema;
 ALTER TABLE public.music_tag_reference SET SCHEMA global_schema;
 ALTER TABLE public.poem_category_reference SET SCHEMA global_schema;
 ALTER TABLE public.poem_category_tag_reference SET SCHEMA global_schema;
-ALTER TABLE public.poem_term SET SCHEMA global_schema;
 ALTER TABLE public.show_tag_reference SET SCHEMA global_schema;
 ALTER TABLE public.support_environment SET SCHEMA global_schema;
 ALTER TABLE public.support_family SET SCHEMA global_schema;

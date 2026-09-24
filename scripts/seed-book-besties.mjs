@@ -76,24 +76,6 @@ async function main() {
     { tagName: "Family Favorite", tagDesc: "Loved by multiple family members.", seqNo: 4 },
   ];
 
-  const termSeeds = [
-    {
-      term: "Narrator",
-      termJson: tiptapParagraph("The voice or character through which the story is told."),
-      status: "published",
-    },
-    {
-      term: "Theme",
-      termJson: tiptapParagraph("A central idea, message, or underlying meaning in a book."),
-      status: "published",
-    },
-    {
-      term: "Pacing",
-      termJson: tiptapParagraph("How quickly or slowly events unfold in the narrative."),
-      status: "draft",
-    },
-  ];
-
   const bookSeeds = [
     {
       title: "The Hobbit",
@@ -158,25 +140,6 @@ async function main() {
         await client.query(
           "insert into book_tag_reference (tag_name, tag_description, status, seq_no) values ($1, $2, 'active', $3)",
           [tag.tagName, tag.tagDesc, tag.seqNo]
-        );
-      }
-    }
-
-    for (const term of termSeeds) {
-      const existingTerm = await client.query(
-        "select id from book_term where term = $1 order by id asc limit 1",
-        [term.term]
-      );
-
-      if (existingTerm.rowCount && existingTerm.rows[0]?.id) {
-        await client.query(
-          "update book_term set term_json = $1, status = $2 where id = $3",
-          [term.termJson, term.status, existingTerm.rows[0].id]
-        );
-      } else {
-        await client.query(
-          "insert into book_term (term, term_json, status) values ($1, $2, $3)",
-          [term.term, term.termJson, term.status]
         );
       }
     }

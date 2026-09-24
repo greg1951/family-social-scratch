@@ -98,6 +98,7 @@ describe("Thread conversation detail UI regression", () => {
           recipientStateId: 201,
           readAt: null,
           archivedAt: null,
+          conversationArchivedAt: null,
           posts: [
             {
               id: 5001,
@@ -131,10 +132,13 @@ describe("Thread conversation detail UI regression", () => {
     expect(viewerConfig).toBeDefined();
     expect(hasTaskListAndTaskItemExtensions(viewerConfig?.extensions)).toBe(true);
 
-    const viewerContent = viewerConfig?.content as {
+    type TipTapNode = {
       type?: string;
-      content?: Array<{ type?: string; content?: Array<{ type?: string; content?: Array<{ text?: string }> }> }>;
+      text?: string;
+      content?: TipTapNode[];
     };
+
+    const viewerContent = viewerConfig?.content as TipTapNode;
 
     expect(viewerContent.type).toBe("doc");
     expect(viewerContent.content?.[0]?.type).toBe("taskList");

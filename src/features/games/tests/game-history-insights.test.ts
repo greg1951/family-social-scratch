@@ -156,7 +156,7 @@ describe("game-history-insights", () => {
       playerStats: [],
     };
 
-    const leaderboards = buildGameLeaderboards(rows, 10, "high", fallbackLeaderboards);
+    const leaderboards = buildGameLeaderboards(rows, 10, "high", false, fallbackLeaderboards);
 
     expect(leaderboards.highScore).toEqual({
       playerFirstName: "Alex",

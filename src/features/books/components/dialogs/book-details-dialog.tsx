@@ -3,7 +3,7 @@ import { EditorContent } from "@tiptap/react";
 import { Heart, MessageSquare, Save, Tags, ThumbsDown, ThumbsUp, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-
+import { BOOK_SOURCE_OPTIONS } from "@/features/books/types/constants";
 import TipTapCommentEditor from "@/components/common/tiptap-comment-editor";
 import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import type { BookTagOption } from "@/components/db/types/books";
@@ -59,14 +59,6 @@ type BookDialogSave = {
   onSave: () => void;
   onDelete?: () => void;
 };
-
-const BOOK_SOURCE_OPTIONS = [
-  { label: "Audible", value: "audible" },
-  { label: "Bookstore", value: "bookstore" },
-  { label: "Gift", value: "gift" },
-  { label: "Library", value: "library" },
-  { label: "Other", value: "other" },
-];
 
 type BookDetailsDialogProps = {
   bookDialog: ReturnType<typeof useBookDialog>;
@@ -265,17 +257,6 @@ export function BookDetailsDialog({
                   { bookDialog.bookDialogMode === "add" ? "Enter details for the new book submission." : "You are editing this book submission." }
                 </p>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={ bookDialog.handleCancelDialog }
-                    disabled={ bookDialog.isSaving }
-                    className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
-                  >
-                    <X className="size-4" />
-                    Cancel
-                  </Button>
-
                   { isEditing && canModerate ? (
                     <>
                       <Button
@@ -329,16 +310,31 @@ export function BookDetailsDialog({
                 <p className="text-xs uppercase tracking-[0.16em] text-[#5d8aa0]">
                   Added { formatCreatedAt(draft.createdAt) }
                 </p>
-              ) : !isFounderModerating ? (
-                <Button
-                  type="button"
-                  onClick={ save.onSave }
-                  disabled={ bookDialog.isSaving }
-                  className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
-                >
-                  <Save className="size-4" />
-                  { bookDialog.isSaving ? "Saving..." : "Save Book" }
-                </Button>
+              ) : null }
+              { bookDialog.bookDialogMode !== "view" ? (
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={ bookDialog.handleCancelDialog }
+                    disabled={ bookDialog.isSaving }
+                    className="rounded-full border-[#c8d7df] text-[#3d5c6d]"
+                  >
+                    <X className="size-4" />
+                    Cancel
+                  </Button>
+                  { !isFounderModerating ? (
+                    <Button
+                      type="button"
+                      onClick={ save.onSave }
+                      disabled={ bookDialog.isSaving }
+                      className="rounded-full bg-[#0f5c78] text-white hover:bg-[#0a4860]"
+                    >
+                      <Save className="size-4" />
+                      { bookDialog.isSaving ? "Saving..." : "Save Book" }
+                    </Button>
+                  ) : null }
+                </div>
               ) : null }
             </div>
 

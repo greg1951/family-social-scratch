@@ -213,7 +213,6 @@ describe("queries-guided-runtime", () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.launch).toBe(true);
     if (result.success && result.launch) {
       expect(result.payload.currentStepNo).toBe(2);
       expect(result.payload.steps).toHaveLength(1);

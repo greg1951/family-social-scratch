@@ -33,15 +33,6 @@ export const bookCategoryTagReference = globalSchema.table("book_category_tag_re
   bookCategoryId: integer("fk_book_category_id").notNull().references(() => bookCategoryReference.id, {onDelete: 'cascade'}),
 });
 
-export const bookTerm = globalSchema.table("book_term", {
-  id: serial("id").primaryKey(),
-  term: text("term").notNull().default(""),
-  termCategory: text("term_category").notNull().default("definition"),
-  termJson: text("term_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
 export const featureReference = globalSchema.table("feature_reference", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
@@ -151,15 +142,6 @@ export const poemCategoryTagReference = globalSchema.table("poem_category_tag_re
   tagJson: text("tag_json").notNull().default("{}"),
   updatedAt: timestamp("updated_at").defaultNow(),
   poemCategoryId: integer("fk_poem_category_id").notNull().references(() => poemCategoryReference.id, {onDelete: 'cascade'}),
-});
-
-export const poemTerm = globalSchema.table("poem_term", {
-  id: serial("id").primaryKey(),
-  term: text("term").notNull().default(""),
-  termCategory: text("term_category").notNull().default("definition"),
-  termJson: text("term_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const showTagReference = globalSchema.table("show_tag_reference", {

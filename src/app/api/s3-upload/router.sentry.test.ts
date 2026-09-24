@@ -21,6 +21,7 @@ import { getMemberPageDetails } from "@/features/family/services/family-services
 import { getS3ClientForFamily } from "@/lib/s3-client-factory";
 import { extractS3KeyFromValue } from "@/lib/s3-object-key";
 import { GET } from "@/app/api/s3-upload/router";
+import { S3Client } from "@aws-sdk/client-s3";
 
 describe("s3-upload API Sentry logging", () => {
   beforeEach(() => {
@@ -32,13 +33,19 @@ describe("s3-upload API Sentry logging", () => {
       isLoggedIn: true,
       familyId: 28,
       memberId: 4,
+      isFounder: false,
+      firstName: "Alex",
+      lastName: "Member",
+      email: "member@example.com",
+      familyName: "Rivera Family",
     });
 
     vi.mocked(extractS3KeyFromValue).mockReturnValue("members/avatar.png");
 
-    const send = vi.fn().mockRejectedValue(new Error("download failed"));
+    const client = new S3Client({ region: "us-east-1" });
+    vi.spyOn(client, "send").mockRejectedValue(new Error("download failed"));
     vi.mocked(getS3ClientForFamily).mockResolvedValue({
-      client: { send },
+      client,
       bucketName: "family-bucket",
       region: "us-east-1",
     });

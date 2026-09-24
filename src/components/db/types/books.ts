@@ -141,42 +141,6 @@ export type BooksReturn =
       books: Book[];
     };
 
-export interface BookTerm {
-  id: number;
-  term: string;
-  termJson: string;
-  status: string;
-  createdAt: Date;
-}
-
-export interface SaveBookTermInput {
-  id?: number;
-  term: string;
-  termJson: string;
-  status: string;
-}
-
-export type SaveBookTermReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      bookTerm: BookTerm;
-    };
-
-export type GetBookTermReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      bookTerm: BookTerm;
-    };
-
-export type BookTermsReturn =
-  | { success: false; message: string }
-  | {
-      success: true;
-      bookTerms: BookTerm[];
-    };
-
 export interface BookCategory {
   id: number;
   categoryName: string;

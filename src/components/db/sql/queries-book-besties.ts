@@ -1,7 +1,7 @@
 import db from '@/components/db/drizzle';
 import { and, asc, desc, eq, ilike, inArray, ne } from 'drizzle-orm';
 import { member, bookComment, book, bookCategoryTag as bookTag, bookLike, discussThread, pwaMutationRequest } from "../schema/family-social-schema-tables";
-import { bookCategoryTagReference as bookTagReference, bookTerm, bookCategoryReference, bookCategoryTagReference } from "../schema/global-schema-tables";
+import { bookCategoryTagReference as bookTagReference, bookCategoryReference, bookCategoryTagReference } from "../schema/global-schema-tables";
 import {
   AddBookCommentReturn,
   Book,
@@ -10,7 +10,6 @@ import {
   DeleteBookCategoryReturn,
   DeleteBookCategoryTagReferenceInput,
   DeleteBookCategoryTagReferenceReturn,
-  GetBookTermReturn,
   BookTagOptionsReturn,
   BooksHomeBook,
   BooksHomePageDataReturn,
@@ -19,9 +18,6 @@ import {
   SaveBookCategoryReturn,
   SaveBookCategoryTagReferenceInput,
   SaveBookCategoryTagReferenceReturn,
-  SaveBookTermInput,
-  SaveBookTermReturn,
-  BookTermsReturn,
   SaveBooksHomeBookInput,
   SaveBooksHomeBookReturn,
   ToggleBookReactionReturn,
@@ -41,9 +37,9 @@ import {
 import { getActiveClubSessionTargetIds, getFamilyClubs } from './queries-clubs';
 import { loadDiscussionThreadSummariesByTargetIds } from './queries-discuss-threads';
 import { logDbQueryError } from './db-error-logger';
+import { BOOK_SOURCE_OPTIONS } from '@/features/books/types/constants';
 
-const GLOBAL_CONTENT_OWNER_FAMILY_ID = 1;
-const BOOK_SOURCE_OPTIONS = new Set(['bookstore', 'library', 'audible', 'gift', 'other']);
+const BOOK_SOURCE_VALUES = new Set(BOOK_SOURCE_OPTIONS.map(({ value }) => value));
 
 function createSubmitterName(firstName?: string | null, lastName?: string | null) {
   const names = [firstName, lastName].filter(Boolean);
@@ -366,7 +362,7 @@ export async function saveBooksHomeBook(
     };
   }
 
-  if (!BOOK_SOURCE_OPTIONS.has(normalizedSource)) {
+  if (!BOOK_SOURCE_VALUES.has(normalizedSource)) {
     return {
       success: false,
       message: 'Select a valid book source before saving.',
@@ -1279,205 +1275,6 @@ export async function deleteBookCategory(
     success: true,
     message: `Deleted category "${ existingCategory.categoryName }".`,
   };
-}
-
-/*-------- getBookTerms ------------------ */
-export async function getBookTerms()
-  : Promise<BookTermsReturn> {
-  const result = await db
-    .select()
-      .from(bookTerm)
-      .orderBy(asc(bookTerm.term));
-
-  if (!result) {
-    return {
-      success: false,
-      message: "Error accessing book terms",
-    };
-  };
-  console.log('queries-book-besties->getBookTerms->result.length: ',result.length);
-  
-  if (result.length === 0) {
-    return {
-      success: false,
-      message: "No book terms found",
-    }; 
-  };
-
-  const bookTerms = result.map((row) => ({
-    id: row.id,
-    term: row.term,
-    termJson: row.termJson,
-    status: row.status,
-    createdAt: row.createdAt as Date,
-  }));
-
-  console.log('queries-book-besties->getBookTerms->bookTerms.length: ',bookTerms.length);
-
-  return {
-    success: true,
-    bookTerms: bookTerms,
-    }
-  };
-
-export async function getBookTermById(id: number)
-  : Promise<GetBookTermReturn> {
-  const [result] = await db
-    .select()
-    .from(bookTerm)
-    .where(eq(bookTerm.id, id));
-
-  if (!result) {
-    return {
-      success: false,
-      message: `No book term found for id: ${id}`,
-    };
-  }
-
-  return {
-    success: true,
-    bookTerm: {
-      id: result.id,
-      term: result.term,
-      termJson: result.termJson,
-      status: result.status,
-      createdAt: result.createdAt as Date,
-    },
-  };
-}
-
-export async function saveBookTerm(
-  input: SaveBookTermInput,
-  actor: { familyId: number; isAdmin: boolean }
-)
-  : Promise<SaveBookTermReturn> {
-  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
-    return {
-      success: false,
-      message: "Only the family 1 admin can maintain book terms.",
-    };
-  }
-
-  const parsedTermJson = parseSerializedTipTapDocument(input.termJson.trim());
-
-  if (!parsedTermJson.success) {
-    return {
-      success: false,
-      message: parsedTermJson.message,
-    };
-  }
-
-  const termPayload = {
-    term: input.term.trim(),
-    termJson: serializeTipTapDocument(parsedTermJson.content),
-    status: input.status.trim(),
-  };
-
-  const duplicateConditions = input.id
-    ? and(ilike(bookTerm.term, termPayload.term), ne(bookTerm.id, input.id))
-    : ilike(bookTerm.term, termPayload.term);
-
-  const [existingTerm] = await db
-    .select({ id: bookTerm.id })
-    .from(bookTerm)
-    .where(duplicateConditions)
-    .limit(1);
-
-  if (existingTerm) {
-    return {
-      success: false,
-      message: `A term named "${ termPayload.term }" already exists. Term names must be unique.`,
-    };
-  }
-
-  if (input.id) {
-    const [result] = await db
-      .update(bookTerm)
-      .set(termPayload)
-      .where(eq(bookTerm.id, input.id))
-      .returning();
-
-    if (!result) {
-      return {
-        success: false,
-        message: `Failed to update book term with id: ${input.id}`,
-      };
-    }
-
-    return {
-      success: true,
-      bookTerm: {
-        id: result.id,
-        term: result.term,
-        termJson: result.termJson,
-        status: result.status,
-        createdAt: result.createdAt as Date,
-      },
-    };
-  }
-
-  const [result] = await db
-    .insert(bookTerm)
-    .values(termPayload)
-    .returning();
-
-  if (!result) {
-    return {
-      success: false,
-      message: 'Failed to create book term',
-    };
-  }
-
-  return {
-    success: true,
-    bookTerm: {
-      id: result.id,
-      term: result.term,
-      termJson: result.termJson,
-      status: result.status,
-      createdAt: result.createdAt as Date,
-    },
-  };
-}
-
-export async function deleteBookTerm(
-  id: number,
-  actor: { familyId: number; isAdmin: boolean }
-): Promise<{ success: false; message: string } | { success: true; message: string }> {
-  if (!(actor.familyId === GLOBAL_CONTENT_OWNER_FAMILY_ID && actor.isAdmin)) {
-    return {
-      success: false,
-      message: "Only the family 1 admin can maintain book terms.",
-    };
-  }
-
-  const [existingTerm] = await db
-    .select({ id: bookTerm.id })
-    .from(bookTerm)
-    .where(eq(bookTerm.id, id))
-    .limit(1);
-
-  if (!existingTerm) {
-    return {
-      success: false,
-      message: `No book term found for id: ${id}`,
-    };
-  }
-
-  try {
-    await db.delete(bookTerm).where(eq(bookTerm.id, id));
-
-    return {
-      success: true,
-      message: "Book term deleted.",
-    };
-  } catch (error) {
-    logDbQueryError('books.deleteBookTerm', error, { id, familyId: actor.familyId });
-    return {
-      success: false,
-      message: error instanceof Error ? error.message : "Error deleting book term",
-    };
-  }
 }
 
 export async function deleteBook(

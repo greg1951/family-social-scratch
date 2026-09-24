@@ -1,13 +1,12 @@
 # BOOK BACKGROUND
 
-- There are six poem tables (book, book_comment, book_term, book_tag_reference, book_tag, book_like) defined in the "src/components/db/schema/family-social-schema-tables.ts" file. 
-- Database queries for book and book_term have been written and reside in the "src/components/db/sql/queries-book-besties.ts" file.
+- The book tables are defined in the "src/components/db/schema/family-social-schema-tables.ts" file.
 - The book schema is nearly identical to the poem schema, except that the poem schema has a poem_verse table and there is no counterpart for that in the book schema.
 
 - The "src/app/(features)/(book)/book/page.tsx" file references a "book" object that contains an array of book table rows. The member details are also retrieved and passed to the "BookHomePage. 
 - The "BookHomePage" component placeholder resides in "src/features/book/components/book-home-page.tsx" file.
 - There is currently no data in the book table. 
-- The "bookTermsPage" component placeholder resides in the "src/features/book/components/book-terms-home-page.tsx" file.
+- The book tags and definitions directory resides in the "src/features/books/components/book-terms-home-page.tsx" file.
 
 # OBJECTIVE
 

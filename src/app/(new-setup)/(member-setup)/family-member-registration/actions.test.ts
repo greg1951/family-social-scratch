@@ -90,6 +90,7 @@ describe("notifyFounderOfNewMemberRegistration", () => {
         memberId: 12,
         familyId: 44,
         familyName: "Rivera Family",
+        status: "active",
         firstName: "Taylor",
         lastName: "Founder",
         email: "founder@example.com",
