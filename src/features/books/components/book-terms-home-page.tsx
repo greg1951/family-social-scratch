@@ -3,7 +3,7 @@
 import LinkExtension from "@tiptap/extension-link";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
-import { BookText, PenSquare, Plus, Search, X } from "lucide-react";
+import { ArrowLeft, BookText, Library, PenSquare, Plus, Search, Tag, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -12,7 +12,7 @@ import {
   parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
-import { BookTerm } from "@/components/db/types/books";
+import { BookCategoryWithTags } from "@/components/db/types/books";
 import {
   Accordion,
   AccordionContent,
@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 // import FeatureFaqHelp from "@/components/common/feature-faq-help";
 
 type BookTermsHomePageProps = {
-  bookTerms: BookTerm[];
+  bookCategories: BookCategoryWithTags[];
   isAdmin: boolean;
 };
 
@@ -88,12 +88,31 @@ function BookTermPreview({ termJson, expanded = false }: { termJson?: string; ex
   );
 }
 
-export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps) {
+export function BookTermsHomePage({ bookCategories, isAdmin }: BookTermsHomePageProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [openCategoryValues, setOpenCategoryValues] = useState<string[]>([]);
 
-  const filteredTerms = bookTerms.filter((term) =>
-    term.term.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredCategories = bookCategories
+    .map((categoryEntry) => ({
+      ...categoryEntry,
+      tags: normalizedSearchQuery
+        ? categoryEntry.tags.filter((tag) => tag.tagName.toLowerCase().includes(normalizedSearchQuery))
+        : categoryEntry.tags,
+    }))
+    .filter((categoryEntry) => categoryEntry.tags.length > 0);
+
+  const hasAnyTags = bookCategories.some((categoryEntry) => categoryEntry.tags.length > 0);
+
+  const searchMatchedCategoryValues = normalizedSearchQuery
+    ? filteredCategories.map((categoryEntry) => `category-${ categoryEntry.category.id }`)
+    : [];
+
+  // Force-expand any category with a search match while preserving manually opened categories.
+  const displayedOpenCategoryValues = normalizedSearchQuery
+    ? Array.from(new Set([...openCategoryValues, ...searchMatchedCategoryValues]))
+    : openCategoryValues;
 
   return (
     <section className="font-app w-full px-4 pb-10 pt-6 sm:px-6 lg:px-8">
@@ -101,14 +120,15 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-6 py-8 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 lg:px-10">
           <div className="flex flex-col gap-5">
             <div className="max-w-3xl">
-              <p className="text-[0.72rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
-                Book Terms
+              <p className="text-[1rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
+                Library Tags & Terms
               </p>
               <Link
                 href="/books"
                 className="mt-3 inline-flex items-center rounded-full border border-white/35 bg-white/15 px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
               >
-                Back to Library
+                <ArrowLeft className="mr-1.5 size-3.5" />
+                Library Home
               </Link>
               {/* <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-3xl">
                 Browse the Book Terms below.
@@ -132,13 +152,13 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
               /> */}
               { isAdmin ? (
                   <Button type="button" variant="outline" asChild className="h-8 shrink-0 whitespace-nowrap rounded-full border-[#9dd8f0] bg-[#f4fcff] px-3 text-xs font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746]">
-                    <Link href="/book-terms/manage"><Plus className="size-3.5" />Add Term</Link>
+                    <Link href="/add-book-tags"><Plus className="size-3.5" />Manage Terms</Link>
                   </Button>
               ) : null }
             </div>
           </div>
 
-          { bookTerms.length === 0 ? (
+          { !hasAnyTags ? (
             <div className="px-5 py-5 sm:px-6">
               <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
                 <BookText className="mx-auto mb-3 size-10 text-[#6f9cb0]" />
@@ -152,7 +172,7 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6f9cb0]" />
                   <Input
-                    type="search"
+                    type="text"
                     placeholder="Search terms..."
                     value={ searchQuery }
                     onChange={ (e) => setSearchQuery(e.target.value) }
@@ -171,36 +191,68 @@ export function BookTermsHomePage({ bookTerms, isAdmin }: BookTermsHomePageProps
                 </div>
               </div>
 
-              { filteredTerms.length === 0 ? (
+              { filteredCategories.length === 0 ? (
                 <div className="rounded-[1.5rem] border border-dashed border-[#c8d7df] bg-[#f8fcff] px-6 py-10 text-center text-[#51707e]">
                   <p className="text-sm">No terms match your search.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                  { filteredTerms.map((term) => (
-                    <article key={ term.id } className="rounded-2xl border border-[#d9e5ea] bg-white p-4 shadow-sm">
-                      <div className="mb-3 flex items-start justify-between gap-2">
-                        <p className="text-base font-bold text-[#183746]">{ term.term }</p>
-                        { isAdmin ? (
-                          <Button type="button" variant="outline" asChild className="h-7 rounded-full border-[#9dd8f0] bg-[#f4fcff] px-2 text-[0.65rem] font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746]">
-                            <Link href={ `/book-terms/manage?id=${ term.id }` }><PenSquare className="size-3" />Edit</Link>
-                          </Button>
-                        ) : null }
-                      </div>
+                <Accordion
+                  type="multiple"
+                  value={ displayedOpenCategoryValues }
+                  onValueChange={ setOpenCategoryValues }
+                  className="space-y-3"
+                >
+                  { filteredCategories.map((categoryEntry) => (
+                    <AccordionItem
+                      key={ categoryEntry.category.id }
+                      value={ `category-${ categoryEntry.category.id }` }
+                      className="overflow-hidden rounded-2xl border border-[#d9e5ea] bg-[#f8fcff] px-4"
+                    >
+                      <AccordionTrigger className="py-3 hover:no-underline">
+                        <div className="flex items-start gap-2 text-left">
+                          { categoryEntry.category.categoryName.trim().toLowerCase() === "terms" ? (
+                            <Library className="mt-1 size-5 shrink-0 text-[#3d819b]" />
+                          ) : (
+                            <Tag className="mt-1 size-5 shrink-0 text-[#3d819b]" />
+                          ) }
+                          <div>
+                            <h3 className="text-lg font-black tracking-tight text-[#183746]">{ categoryEntry.category.categoryName }</h3>
+                            { categoryEntry.category.categoryDesc?.trim() ? (
+                              <p className="mt-1 text-sm font-normal text-[#51707e]">{ categoryEntry.category.categoryDesc }</p>
+                            ) : null }
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="pb-4">
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                          { categoryEntry.tags.map((tag) => (
+                            <article key={ tag.id } className="rounded-2xl border border-[#d9e5ea] bg-white p-4 shadow-sm">
+                              <div className="mb-3 flex items-start justify-between gap-2">
+                                <p className="text-base font-bold text-[#183746]">{ tag.tagName }</p>
+                                { isAdmin ? (
+                                  <Button type="button" variant="outline" asChild className="h-7 rounded-full border-[#9dd8f0] bg-[#f4fcff] px-2 text-[0.65rem] font-semibold text-[#183746] hover:bg-[#d9f2ff] hover:text-[#183746]">
+                                    <Link href="/add-book-tags"><PenSquare className="size-3" />Edit</Link>
+                                  </Button>
+                                ) : null }
+                              </div>
 
-                      <Accordion type="single" collapsible>
-                        <AccordionItem value={ `term-${ term.id }` } className="border-b-0">
-                          <AccordionTrigger className="py-2 text-sm font-semibold text-[#3d819b] hover:no-underline">
-                            Definition
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <BookTermPreview termJson={ term.termJson } expanded />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    </article>
+                              <Accordion type="single" collapsible>
+                                <AccordionItem value={ `term-${ tag.id }` } className="border-b-0">
+                                  <AccordionTrigger className="py-2 text-sm font-semibold text-[#3d819b] hover:no-underline">
+                                    Definition
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <BookTermPreview termJson={ tag.tagJson } expanded />
+                                  </AccordionContent>
+                                </AccordionItem>
+                              </Accordion>
+                            </article>
+                          )) }
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   )) }
-                </div>
+                </Accordion>
               ) }
             </div>
           ) }

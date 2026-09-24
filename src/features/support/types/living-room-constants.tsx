@@ -32,4 +32,28 @@ export const livingRoomFaqItems = [
     ),
     icon: FileText,
   },
+  {
+    value: "item-20",
+    category: "Living Room",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Can you provide some guidelines on how to write a good blog for the family?</p>
+        <p className="text-sm text-slate-600 pb-2">General guidelines are provided below.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">Although you are sharing stories with family and friends, remember to keep it respectful and considerate.</p>
+          <ul className="list-disc ml-6 mt-2 text-sm">
+            <li className="pt-2 pb-2">Write like you are talking over coffee. You don&apos;t need to explaining who &quot;Aunt Sarah&quot; or &quot;Pumpkin the dog&quot; are.</li>
+            <li className="pt-2 pb-2">The blog title should be an attention grabber.</li>
+            <li>Assume that kids may read your blogs, so be careful with language.</li>
+            <li className="pt-2 pb-2">Clear relationship anecdotes with your spouse before publishing. Never vent marital stress publicly.</li>
+          </ul>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
 ];

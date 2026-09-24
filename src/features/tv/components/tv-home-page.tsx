@@ -122,6 +122,14 @@ function getShowDocument(showJson?: string): JSONContent {
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
+function getShowTagNames(show: TvShow) {
+  return [
+    ...(show.tagNamesByType.genre ?? []),
+    ...(show.tagNamesByType.adjective ?? []),
+    ...(show.tagNamesByType.channel ?? []),
+  ].filter((tagName, index, tagNames) => tagNames.indexOf(tagName) === index);
+}
+
 function ShowViewer({ showJson }: { showJson?: string }) {
   const viewer = useEditor({
     editable: false,
@@ -993,6 +1001,21 @@ export function TvHomePage({
                       <p><span className="font-semibold text-[#15384a]">Years:</span> { selectedShowBasic.showFirstYear } - { selectedShowBasic.showLastYear }</p>
                       <p><span className="font-semibold text-[#15384a]">Seasons:</span> { selectedShowBasic.seasonCount }</p>
                     </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#45829a]">Tags</p>
+                    { getShowTagNames(selectedShowBasic).length > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-sm text-[#3f6576]">
+                        { getShowTagNames(selectedShowBasic).map((tagName) => (
+                          <span key={ tagName } className="rounded-full bg-[#e3f1f8] px-2.5 py-1 text-xs font-semibold text-[#1a6a8a]">
+                            { tagName }
+                          </span>
+                        )) }
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-[#5f7987]">No tags added.</p>
+                    ) }
                   </div>
 
                   <div className="rounded-2xl border border-[#c6dcec] bg-white p-4">

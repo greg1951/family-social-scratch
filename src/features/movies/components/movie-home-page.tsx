@@ -118,6 +118,14 @@ function getMovieDocument(movieJson?: string): JSONContent {
   return parsed.success ? parsed.content : createEmptyTipTapDocument();
 }
 
+function getMovieTagNames(movie: MovieRecord) {
+  return [
+    ...(movie.tagNamesByType.genre ?? []),
+    ...(movie.tagNamesByType.adjective ?? []),
+    ...(movie.tagNamesByType.channel ?? []),
+  ].filter((tagName, index, tagNames) => tagNames.indexOf(tagName) === index);
+}
+
 function MovieViewer({ movieJson }: { movieJson?: string }) {
   const viewer = useEditor({
     editable: false,
@@ -774,6 +782,21 @@ export function MovieHomePage({
                     </div>
                   ) : null }
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Details</p><div className="mt-2 space-y-1.5 text-sm leading-5 text-[#734f3a]"><p><span className="font-semibold text-[#5c2e1a]">Submitter:</span> { selectedMovieBasic.submitterName }</p><p><span className="font-semibold text-[#5c2e1a]">Updated:</span> { formatDate(selectedMovieBasic.updatedAt) }</p><p><span className="font-semibold text-[#5c2e1a]">Debut Year:</span> { selectedMovieBasic.movieDebutYear }</p><p><span className="font-semibold text-[#5c2e1a]">Channel:</span> { selectedMovieBasic.tagNamesByType.channel?.[0] ?? "Unknown" }</p></div></div>
+
+                  <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4">
+                    <p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Tags</p>
+                    { getMovieTagNames(selectedMovieBasic).length > 0 ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-sm text-[#734f3a]">
+                        { getMovieTagNames(selectedMovieBasic).map((tagName) => (
+                          <span key={ tagName } className="rounded-full bg-[#fde7d5] px-2.5 py-1 text-xs font-semibold text-[#7b3306]">
+                            { tagName }
+                          </span>
+                        )) }
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-sm text-[#8b5a3c]">No tags added.</p>
+                    ) }
+                  </div>
                   <div className="rounded-2xl border border-[#f0d9c4] bg-white p-4"><p className="text-[0.68rem] font-bold uppercase tracking-[0.24em] text-[#a85a3a]">Reactions</p><div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" onClick={ () => handleToggleLike(-1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#6d5c52] text-white hover:bg-[#554940]" aria-label="Add thumbs down"><ThumbsDown className={ `size-4 ${ selectedMovieDetail?.likenessDegree === -1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(1) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#b8581a] text-white hover:bg-[#964815]" aria-label="Add thumbs up"><ThumbsUp className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 1 ? "fill-white" : "" }` } /></Button><Button type="button" onClick={ () => handleToggleLike(2) } disabled={ !selectedMovieBasic || isEngaging || !canReactToSelectedMovie } className="rounded-full bg-[#cf3f7f] text-white hover:bg-[#aa3368]" aria-label="Add love"><Heart className={ `size-4 ${ selectedMovieDetail?.likenessDegree === 2 ? "fill-white" : "" }` } /></Button>{ !canReactToSelectedMovie ? <p className="text-xs text-[#8b5a3c]">You cannot react to your own movie. Ask another family member to rate it.</p> : null }</div><div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold text-[#734f3a]"><ReactionMemberHoverCard icon={ <ThumbsDown className="size-4 text-[#6d5c52]" /> } count={ selectedMovieDetail?.noRatingCount ?? selectedMovieBasic.noRatingCount ?? 0 } memberNames={ selectedMovieDetail?.noRatingMemberNames ?? [] } triggerClassName="bg-[#f7f0eb]" emptyLabel="Family members who disliked this movie" /><ReactionMemberHoverCard icon={ <ThumbsUp className="size-4 text-[#b8581a]" /> } count={ selectedMovieDetail?.thumbsUpCount ?? selectedMovieBasic.thumbsUpCount ?? 0 } memberNames={ selectedMovieDetail?.thumbsUpMemberNames ?? [] } triggerClassName="bg-[#fff1e8]" textClassName="text-[#8a5a22]" emptyLabel="Family members who liked this movie" /><ReactionMemberHoverCard icon={ <Heart className="size-4 fill-[#cf3f7f] text-[#cf3f7f]" /> } count={ selectedMovieDetail?.loveCount ?? selectedMovieBasic.loveCount ?? 0 } memberNames={ selectedMovieDetail?.loveMemberNames ?? [] } triggerClassName="bg-[#fff0f7]" textClassName="text-[#8f2f58]" emptyLabel="Family members who loved this movie" /><span className="inline-flex items-center gap-2 rounded-full bg-[#fff1e8] px-3 py-0.5"><MessageSquareText className="size-4 text-[#b8581a]" /><span className="pointer-events-none select-none">{ selectedMovieDetail?.commentCount ?? selectedMovieBasic.commentCount ?? 0 }</span></span></div></div>
                 </div>
               </div>

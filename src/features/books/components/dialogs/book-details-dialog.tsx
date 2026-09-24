@@ -9,7 +9,6 @@ import TiptapRenderer from "@/components/discuss/tiptap-renderer";
 import type { BookTagOption } from "@/components/db/types/books";
 import {
   isSerializedTipTapDocumentEmpty,
-  parseSerializedTipTapDocument,
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import {
@@ -37,7 +36,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import { RichTextField } from "@/features/books/components/book-rich-text-field";
 import { useBookDialog } from "@/features/books/hooks/use-book-dialog";
@@ -120,35 +118,6 @@ function ReactionMemberHoverCard({
   );
 }
 
-function extractTipTapText(content: unknown): string {
-  const parsed = extractTipTapTextFromNode(content);
-
-  return parsed.replace(/\s+/g, " ").trim();
-}
-
-function extractTipTapTextFromNode(node: unknown): string {
-  if (!node || typeof node !== "object") {
-    return "";
-  }
-
-  const candidate = node as {
-    text?: string;
-    content?: unknown[];
-  };
-
-  let text = "";
-
-  if (typeof candidate.text === "string") {
-    text += candidate.text;
-  }
-
-  if (Array.isArray(candidate.content)) {
-    text += candidate.content.map((childNode) => extractTipTapTextFromNode(childNode)).join(" ");
-  }
-
-  return text;
-}
-
 export function BookDetailsDialog({
   bookDialog,
   linkDialog,
@@ -182,6 +151,10 @@ export function BookDetailsDialog({
       return categories;
     }
 
+    if (tagOption.categoryName?.trim().toLowerCase() === "terms") {
+      return categories;
+    }
+
     const existingCategory = categories.get(tagOption.bookCategoryId) ?? {
       categoryId: tagOption.bookCategoryId,
       categoryName: tagOption.categoryName?.trim() || `Category ${ tagOption.bookCategoryId }`,
@@ -200,18 +173,6 @@ export function BookDetailsDialog({
       tags: [...groupedCategory.tags].sort((leftTag, rightTag) => leftTag.tagName.localeCompare(rightTag.tagName)),
     }))
     .sort((leftCategory, rightCategory) => leftCategory.categoryName.localeCompare(rightCategory.categoryName));
-
-  function getTagDescriptionText(tagJson?: string | null) {
-    const parsedTagJson = parseSerializedTipTapDocument(tagJson ?? undefined);
-
-    if (!parsedTagJson.success) {
-      return "No tag description available.";
-    }
-
-    const tagDescriptionText = extractTipTapText(parsedTagJson.content);
-
-    return tagDescriptionText || "No tag description available.";
-  }
 
   const discussionThreadsSection = (
     <div className="space-y-3 rounded-[1.4rem] border border-[#d9e5ea] bg-[#fbfeff] p-4">
@@ -578,11 +539,9 @@ export function BookDetailsDialog({
                                           View tag description
                                         </AccordionTrigger>
                                         <AccordionContent className="pb-0">
-                                          <Textarea
-                                            readOnly
-                                            value={ getTagDescriptionText(tagOption.tagJson) }
-                                            className="min-h-24 border-[#c8d7df] bg-[#f5fbfe] text-xs leading-5 text-[#355161]"
-                                          />
+                                          <div className="min-h-14 rounded-xl border border-[#c8d7df] bg-[#f5fbfe] px-3 py-2 text-xs leading-5 text-[#355161]">
+                                            <TiptapRenderer contentJson={ tagOption.tagJson ?? "" } />
+                                          </div>
                                         </AccordionContent>
                                       </AccordionItem>
                                     </Accordion>

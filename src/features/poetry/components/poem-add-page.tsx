@@ -61,7 +61,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 
 type PoemDraft = {
@@ -94,6 +93,47 @@ function getEditorDocument(value?: string): JSONContent {
   }
 
   return createEmptyTipTapDocument();
+}
+
+function TagDescriptionPreview({ tagJson }: { tagJson?: string | null }) {
+  const parsedTagJson = parseSerializedTipTapDocument(tagJson ?? undefined);
+  const previewContent = parsedTagJson.success ? parsedTagJson.content : createEmptyTipTapDocument();
+  const hasContent = parsedTagJson.success && !isSerializedTipTapDocumentEmpty(serializeTipTapDocument(previewContent));
+
+  const previewEditor = useEditor({
+    editable: false,
+    extensions: [
+      StarterKit,
+      Underline,
+      LinkExtension.configure({ openOnClick: true }),
+    ],
+    content: previewContent,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "tiptap text-xs leading-5 text-[#5d426f] focus:outline-none",
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!previewEditor) {
+      return;
+    }
+
+    previewEditor.commands.setContent(previewContent);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [previewEditor, tagJson]);
+
+  return (
+    <div className="min-h-14 rounded-xl border border-[#d7d0ea] bg-[#faf7ff] px-3 py-2 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 [&_.tiptap_ol]:list-decimal [&_.tiptap_ol]:pl-5 [&_.tiptap_li]:my-1">
+      { hasContent ? (
+        <EditorContent editor={ previewEditor } />
+      ) : (
+        <p className="text-xs text-[#7a5f91]">No tag description available.</p>
+      ) }
+    </div>
+  );
 }
 
 function ToolbarButton({ label, active = false, disabled = false, onClick, children }: ToolbarButtonProps) {
@@ -313,35 +353,6 @@ function handleLinePreservingPaste(view: EditorView, event: ClipboardEvent) {
   return true;
 }
 
-function extractTipTapText(content: unknown): string {
-  const parsed = extractTipTapTextFromNode(content);
-
-  return parsed.replace(/\s+/g, " ").trim();
-}
-
-function extractTipTapTextFromNode(node: unknown): string {
-  if (!node || typeof node !== "object") {
-    return "";
-  }
-
-  const candidate = node as {
-    text?: string;
-    content?: unknown[];
-  };
-
-  let text = "";
-
-  if (typeof candidate.text === "string") {
-    text += candidate.text;
-  }
-
-  if (Array.isArray(candidate.content)) {
-    text += candidate.content.map((childNode) => extractTipTapTextFromNode(childNode)).join(" ");
-  }
-
-  return text;
-}
-
 function createEmptyDraft(member: MemberKeyDetails): PoemDraft {
   return {
     id: 0,
@@ -403,6 +414,10 @@ export function PoemAddPage({
 
     for (const tagOption of activePoemTags) {
       if (!tagOption.poemCategoryId) {
+        continue;
+      }
+
+      if (tagOption.categoryName?.trim().toLowerCase() === "terms") {
         continue;
       }
 
@@ -514,18 +529,6 @@ export function PoemAddPage({
 
       return currentDraft;
     });
-  }
-
-  function getTagDescriptionText(tagJson?: string | null) {
-    const parsedTagJson = parseSerializedTipTapDocument(tagJson ?? undefined);
-
-    if (!parsedTagJson.success) {
-      return "No tag description available.";
-    }
-
-    const tagDescriptionText = extractTipTapText(parsedTagJson.content);
-
-    return tagDescriptionText || "No tag description available.";
   }
 
   function handleSave(overrideDraft?: PoemDraft) {
@@ -929,11 +932,7 @@ export function PoemAddPage({
                                         View tag description
                                       </AccordionTrigger>
                                       <AccordionContent className="pb-0">
-                                        <Textarea
-                                          readOnly
-                                          value={ getTagDescriptionText(tagOption.tagJson) }
-                                          className="min-h-28 border-[#d7d0ea] bg-[#faf7ff] text-xs leading-5 text-[#5d426f]"
-                                        />
+                                        <TagDescriptionPreview tagJson={ tagOption.tagJson } />
                                       </AccordionContent>
                                     </AccordionItem>
                                   </Accordion>

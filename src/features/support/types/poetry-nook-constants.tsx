@@ -48,12 +48,12 @@ export const poetryNookFaqItems = [
     content: (
       <div className="grid md:grid-cols-1 text-base pb-2 pt-2">
         <span>
-          <p className="text-base font-semibold">Visit the Poetry Terms page for poetry definitions and explanations.</p>
+          <p className="text-base font-semibold">Visit the Poetry Tags & Terms page for poetry definitions and explanations.</p>
           <p className="text-sm text-slate-600">My Family Social provides a dictionary of poetry terms to help define terms you may see in the poetry submissions.</p>
           <ol className="list-decimal ml-6 mt-2 text-sm pb-2 pt-2">
-            <li>Select the <b>Poetry Terms</b> button in the <b>Poetry Nook</b> heading.</li>
-            <li>A term search field is provided or scroll the list to find a term.</li>
-            <li>Selecting the term will display its definition and explanation.</li>
+            <li>Select the Poetry <b>Tags & Terms</b> button in the <b>Poetry Nook</b> heading.</li>
+            <li>A <b>term search finder</b> is provided to help you find a term.</li>
+            <li>The page contains a list of <b>Tags</b> definition used when submitting a poem review.</li>
           </ol>
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-220 h-55 md:w-270 md:h-60"
@@ -71,7 +71,7 @@ export const poetryNookFaqItems = [
     category: "Poetry Nook",
     trigger: (
       <div>
-        <p className="text-base font-semibold">I have a long poem I'd like to submit. How difficult will it be to post it?</p>
+        <p className="text-base font-semibold">I have a long poem I&apos;d like to submit. How difficult will it be to post it?</p>
         <p className="text-xs text-slate-600">Can you cut and paste?</p>
       </div>
     ),

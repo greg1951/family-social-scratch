@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getMemberPageDetails } from "@/features/family/services/family-services";
-import { getPoemTerms } from "@/components/db/sql/queries-poetry-cafe";
+import { getPoemCategoryWithTags } from "@/components/db/sql/queries-poetry-cafe";
 import { PoemTermsHomePage } from "@/features/poetry/components/poem-terms-home-page";
 
 export default async function PoemTermsPage() {
@@ -10,14 +10,14 @@ export default async function PoemTermsPage() {
     redirect("/");
   }
 
-  const poemTermsResult = await getPoemTerms();
+  const poemCategoryWithTagsResult = await getPoemCategoryWithTags();
 
-  const poemTerms = poemTermsResult.success ? poemTermsResult.poemTerms : [];
+  const poemCategories = poemCategoryWithTagsResult.success ? poemCategoryWithTagsResult.categories : [];
   const canManageTerms = (memberKeyDetails.isAdmin ?? false) && memberKeyDetails.familyId === 1;
 
   return (
     <PoemTermsHomePage
-      poemTerms={ poemTerms }
+      poemCategories={ poemCategories }
       isAdmin={ canManageTerms }
     />
   );

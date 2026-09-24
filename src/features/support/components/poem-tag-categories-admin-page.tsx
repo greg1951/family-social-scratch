@@ -38,6 +38,12 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -400,7 +406,16 @@ export function PoemTagCategoriesAdminPage({ categories }: { categories: PoemCat
                             </Button>
                           </div>
                         </div>
-                        <TagPreview tagJson={ tag.tagJson } />
+                        <Accordion type="single" collapsible>
+                          <AccordionItem value={ `tag-${ tag.id }` } className="border-0">
+                            <AccordionTrigger className="py-1 text-xs text-[#5a5a63] hover:no-underline">
+                              View tag description
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <TagPreview tagJson={ tag.tagJson } />
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                       </div>
                     ))
                   ) }

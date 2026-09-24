@@ -566,7 +566,7 @@ export default function BooksHomePage({
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(9,56,82,0.96),rgba(30,115,142,0.9)_52%,rgba(217,171,103,0.82))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(6,34,52,0.95)] sm:px-8 sm:py-8 lg:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
             <div className="max-w-4xl">
-              <p className="text-[0.90rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
+              <p className="text-[1rem] font-bold uppercase tracking-[0.34em] text-[#d9f3ff]">
                 Family Library
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -582,7 +582,7 @@ export default function BooksHomePage({
                   className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
                 >
                   <LibraryBig className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
-                  Terms
+                  Tags & Terms
                 </Link>
                   <Link
                     href="/add-club?from=books"

@@ -37,40 +37,6 @@ export const movieReviewsFaqItems = [
     icon: FileText,
   },
   {
-    value: "item-10",
-    category: "Movie Reviews",
-    trigger: (
-      <div>
-        <p className="text-base font-semibold">What&apos;s the general layout of the Movie Theater home page?</p>
-        <p className="text-xs text-slate-600">The <i>Movie Theater</i>, <i>Music Salon</i>, and <i>The Kitchen</i> layouts are similar in behavior.</p>
-      </div>
-    ),
-    content: (
-      <div className="grid md:grid-cols-1 text-base">
-        <span>
-          <div className="flex justify-center pb-4">
-            <img
-              src="/images/support/faq-tv-home.jpg"
-              alt="Movie Theater Home"
-              style={ { maxWidth: '900px', maxHeight: '800px', marginTop: 12, borderRadius: 8 } }
-            />
-
-          </div>
-          <p className="text-base font-semibold">The Movie Theater home page let&apos;s you find shows that have been reviewed by others in the family.</p>
-          <ol className="list-decimal ml-6 mt-2 text-sm">
-            <li>The <b>Show Finder</b> let&apos;s you type in a name, a genre, a family member.</li>
-            <li>When you find what you&apos;re looking for you can select it and see <b>View the Show</b>.</li>
-            <li>In the <b>Show Type</b> selector you can toggle between the <b>Latest TV Shows</b> or the <b>Top Rated TV Shows</b>. </li>
-            <li>The <b>TV Picks</b> gallery lets you scroll through the latest or highest rated shows at a glance.</li>
-            <li>The <b>Show Reactions</b> allow you to like or love a show and post your own comment about it.</li>
-          </ol>
-          <p className="pt-2"></p>
-        </span>
-      </div>
-    ),
-    icon: FileText,
-  },
-  {
     value: "item-20",
     category: "Movie Reviews",
     trigger: (
@@ -117,7 +83,7 @@ export const movieReviewsFaqItems = [
     trigger: (
       <div>
         <p className="text-base font-semibold">Why do Movie and TV show image uploads require special handling?</p>
-        <p className="text-xs text-slate-600">Images must be properly credited to comply with Fair Use guidelines in copyright laws.</p>
+        <p className="text-xs text-slate-600">Use the Movie Database <u>Find Image</u> feature instead uploading TV or movie images. However, if you still want to upload an image, then read on.</p>
       </div>
     ),
     content: (
@@ -127,7 +93,8 @@ export const movieReviewsFaqItems = [
           <ol className="list-decimal ml-6 mt-2 text-sm">
             <li>Google is just a search engine and it will return wonderful images but they are <u>licensed</u>.</li>
             <li>In My Family Social they are used not for commercial purposes but for reviews and discussion. This means they must be credited to comply with <u>Fair Use guidelines</u>.</li>
-            <li>Fair Use image attribution requires a <b>Title</b> and a <b>Source</b>.</li>
+            <li>Fair Use image attribution requires a <b>Title</b> and a <b>Source</b>&nbsp;
+            (See Screenshot below).</li>
             <pre className="pt-2 pb-2">
               <code>
                 Title: [Source Name] | Source: [image URL]
@@ -139,7 +106,36 @@ export const movieReviewsFaqItems = [
           </ol>
           <div className="flex justify-center pt-2 pb-2">
             <img className="aspect-auto object-cover w-150 h-85 md:w-220 md:h-120"
-              src="/images/support/faq-tv-image-credit.jpg"
+              src="/images/support/faq-movie-upload-credits.jpg"
+              alt="Movie Image Credit"
+            />
+          </div>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-31",
+    category: "Movie Reviews",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">What is the <b>Find Image</b> option that I see when adding a movie review?</p>
+        <p className="text-xs text-slate-600">instead of manually uploading an image and providing image accreditation, always use this option when adding a movie review.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">When you enter the movie name, the option to find a movie database image will appear.</p>
+          <ol className="list-decimal ml-6 mt-2 text-sm">
+            <li>Leave the option checked. The image will appear <u>after</u> you save your new movie review.</li>
+            <li>The <b>Find Image</b> will locate a TV show or movie image for you and populate the image credits, so you do not have to do this.</li>
+            <li>Using this option means there is nothing for you to upload or credits to provide.</li>
+          </ol>
+          <div className="flex justify-center pt-2 pb-2">
+            <img className="aspect-auto object-cover w-150 h-85 md:w-220 md:h-120"
+              src="/images/support/faq-movie-find-image-option.jpg"
               alt="TV Show Image Credit"
             />
           </div>
