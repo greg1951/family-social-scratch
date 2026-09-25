@@ -1,7 +1,7 @@
 const CACHE_VERSION = "v1";
 const PRECACHE_NAME = `family-social-precache-${CACHE_VERSION}`;
 const OFFLINE_URL = "/offline";
-const PRECACHE_URLS = [OFFLINE_URL, "/images/family-social-logo-transparent.png"];
+const PRECACHE_URLS = [OFFLINE_URL, "/images/pwa-phone-logo-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

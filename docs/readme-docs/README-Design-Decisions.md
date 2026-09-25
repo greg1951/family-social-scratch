@@ -613,7 +613,7 @@ The book form (title, author, year, language, analysis, tags) is meaningfully si
 - `next.config.ts`: Headers for /sw.js and /manifest.webmanifest with no-cache behavior.
 
 ## PWA UI Components
-- `src/components/pwa/pwa-register.tsx`: Registers service worker in secure contexts and supports staged enablement via NEXT_PUBLIC_PWA_ENABLED.
+- `src/components/pwa/pwa-register.tsx`: Registers the service worker in secure production contexts by default. Set NEXT_PUBLIC_PWA_ENABLED=false at build time to disable it.
 - `src/components/pwa/install-prompt.tsx`: Handles beforeinstallprompt flow and iOS install guidance UI.
 - `src/components/pwa/sync-status-banner.tsx`: Shows online or offline state, queue count, and manual Sync now action.
 - `src/app/(family)/layout.tsx`: Renders InstallPrompt and SyncStatusBanner in the family shell.

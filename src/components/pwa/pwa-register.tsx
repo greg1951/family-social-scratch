@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const IS_PWA_ENABLED = process.env.NEXT_PUBLIC_PWA_ENABLED === "true";
+const IS_PWA_ENABLED = process.env.NEXT_PUBLIC_PWA_ENABLED !== "false";
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export default function PwaRegister() {

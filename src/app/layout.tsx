@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     statusBarStyle: "default",
   },
   icons: {
-    icon: "/images/family-social-logo-transparent.png",
-    apple: "/images/family-social-logo-transparent.png",
+    icon: "/images/pwa-phone-logo-192.png",
+    apple: "/images/pwa-phone-logo-192.png",
   },
 };
 
