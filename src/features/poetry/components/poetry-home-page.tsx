@@ -888,40 +888,32 @@ export default function PoetryHomePage({
                   <div className="mt-3 max-h-120 overflow-auto rounded-[1.2rem] border border-[#d7d0ea] bg-[#f8f3ff] p-2">
                     <div className="grid gap-3 lg:grid-cols-2">
                       <div className="overflow-hidden rounded-3xl border border-[#d7d0ea] bg-white">
-                        <div className="flex">
-                          <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-sm text-[#8b69ab]">
-                            { verseColumnOneLines.map((_, index) => (
-                              <div key={ index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                        <div className="py-4">
+                          { verseColumnOneLines.map((line, index) => (
+                            <div key={ `left-${index + 1}` } className="flex min-h-6">
+                              <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] text-center text-sm leading-6 tabular-nums text-[#8b69ab]">
                                 { index + 1 }
                               </div>
-                            )) }
-                          </div>
-                          <div className="min-w-0 flex-1 px-4 py-4">
-                            { verseColumnOneLines.map((line, index) => (
-                              <div key={ `left-${index + 1}` } className="min-h-6 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
+                              <div className="min-w-0 flex-1 px-4 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
                                 { line || "\u00A0" }
                               </div>
-                            )) }
-                          </div>
+                            </div>
+                          )) }
                         </div>
                       </div>
 
                       <div className="overflow-hidden rounded-3xl border border-[#d7d0ea] bg-white">
-                        <div className="flex">
-                          <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-sm text-[#8b69ab]">
-                            { verseColumnTwoLines.map((_, index) => (
-                              <div key={ verseSplitIndex + index + 1 } className="min-h-6 text-center leading-6 tabular-nums">
+                        <div className="py-4">
+                          { verseColumnTwoLines.map((line, index) => (
+                            <div key={ `right-${verseSplitIndex + index + 1}` } className="flex min-h-6">
+                              <div className="w-12 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] text-center text-sm leading-6 tabular-nums text-[#8b69ab]">
                                 { verseSplitIndex + index + 1 }
                               </div>
-                            )) }
-                          </div>
-                          <div className="min-w-0 flex-1 px-4 py-4">
-                            { verseColumnTwoLines.map((line, index) => (
-                              <div key={ `right-${verseSplitIndex + index + 1}` } className="min-h-6 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
+                              <div className="min-w-0 flex-1 px-4 text-sm leading-6 text-[#43245d] whitespace-pre-wrap wrap-break-word">
                                 { line || "\u00A0" }
                               </div>
-                            )) }
-                          </div>
+                            </div>
+                          )) }
                         </div>
                       </div>
                     </div>
@@ -929,14 +921,7 @@ export default function PoetryHomePage({
                 ) : (
                   <div className="mt-3 overflow-hidden rounded-[1.2rem] border border-[#d7d0ea] bg-white">
                     <div className="flex max-h-120 overflow-auto">
-                      <div className="w-11 shrink-0 border-r border-[#e6deef] bg-[#faf7ff] py-4 text-base text-[#8b69ab]">
-                        { Array.from({ length: Math.max(verseLineCount ?? 1, 1) }, (_, index) => (
-                          <div key={ index + 1 } className="h-5 text-center leading-5 tabular-nums">
-                            { index + 1 }
-                          </div>
-                        )) }
-                      </div>
-                      <div className="min-w-0 flex-1 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-[#43245d] [&_.tiptap]:leading-6 [&_.tiptap]:outline-none [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#cfbbe3] [&_.tiptap_blockquote]:pl-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5">
+                      <div className="min-w-0 flex-1 [&_.tiptap]:px-4 [&_.tiptap]:py-4 [&_.tiptap]:text-[#43245d] [&_.tiptap]:leading-6 [&_.tiptap]:outline-none [&_.tiptap_blockquote]:border-l-4 [&_.tiptap_blockquote]:border-[#cfbbe3] [&_.tiptap_blockquote]:pl-4 [&_.tiptap_ul]:list-disc [&_.tiptap_ul]:pl-5 poem-verse-numbered">
                         <EditorContent editor={ verseViewer } />
                       </div>
                     </div>

@@ -180,6 +180,31 @@
   }
 }
 
+.poem-verse-numbered .tiptap {
+  counter-reset: poem-verse-line;
+}
+
+.poem-verse-numbered .tiptap p {
+  position: relative;
+  min-height: 1.5rem;
+  padding-left: 3rem;
+  line-height: 1.5rem;
+  counter-increment: poem-verse-line;
+}
+
+.poem-verse-numbered .tiptap p::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2.5rem;
+  color: #8b69ab;
+  content: counter(poem-verse-line);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5rem;
+  text-align: center;
+}
+
 .toaster[data-sonner-toaster] {
   top: 50%;
   left: 50%;
