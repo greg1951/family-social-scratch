@@ -2,7 +2,7 @@ import { FileText } from "lucide-react";
 
 export const memberProfileFaqItems = [
   {
-    value: "item-10",
+    value: "item-01",
     category: "Member Profile",
     trigger: (
       <div>
@@ -26,6 +26,28 @@ export const memberProfileFaqItems = [
             <li>The <b>My Family</b> tab will show you the names of the members of the family. There&apos;s also a form where you can suggest to the family founder the names of other family members or friends that you would like to add to the family.</li>
             <li>In the <b>My Activity</b> tab, you can see metrics on how other people react to your posts and your activity on other members&apos; posts in the family.</li>
           </ol>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
+    value: "item-02",
+    category: "Member Profile",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Does My Family Social provide a desktop app?</p>
+        <p className="text-xs text-slate-600"> Yes. See the <b>video</b> entitled &quot;My Family Social Desktop App&quot; for how to install it.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold"> Watch the video that explains My Family&apos;s Social&apos;s progressive interface and the steps to install it.</p>
+          <ul className="list-disc ml-6 mt-2 text-sm pt-2 pb-2">
+            <li>It is installed from your browser, not the App Store.</li>
+            <li>This means you always have the latest version of My Family Social.</li>
+          </ul>
         </span>
       </div>
     ),

@@ -3,6 +3,28 @@ import { FileText, Info } from "lucide-react";
 export function founderFaqItems(setupStartUrl: string) {
   return [
   {
+    value: "item-02",
+    category: "Desktop App",
+    trigger: (
+      <div>
+        <p className="text-base font-semibold">Does My Family Social provide a desktop app?</p>
+        <p className="text-xs text-slate-600"> Yes. See the <b>video</b> entitled &quot;How to install the desktop App&quot; for the instructions.</p>
+      </div>
+    ),
+    content: (
+      <div className="grid md:grid-cols-1 text-base">
+        <span>
+          <p className="text-base font-semibold">The video that explains the My Family&apos;s Social&apos;s <i>progressive interface</i> and installation.</p>
+          <ul className="list-disc ml-6 mt-2 text-sm pt-2 pb-2">
+            <li>It is installed from your browser, not the App Store.</li>
+            <li>It means you always have the latest version of My Family Social.</li>
+          </ul>
+        </span>
+      </div>
+    ),
+    icon: FileText,
+  },
+  {
     value: "item-10",
     category: "Start a Family",
     trigger: (

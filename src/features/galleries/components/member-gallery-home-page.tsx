@@ -534,6 +534,10 @@ function PhotoScrollStrip({
 
 // ── Album list item ───────────────────────────────────────────────────────────
 
+function formatAlbumUpdatedAtShort(date: Date) {
+  return new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).format(new Date(date));
+}
+
 function AlbumListItem({
   album,
   isSelected,
@@ -558,7 +562,7 @@ function AlbumListItem({
   return (
     <div
       title={ [
-        `Updated ${ new Intl.DateTimeFormat("en-US", { month: "2-digit", day: "2-digit", year: "2-digit" }).format(new Date(album.updatedAt)) }`,
+        `Updated ${ formatAlbumUpdatedAtShort(album.updatedAt) }`,
       ].filter(Boolean).join("\n") }
       className={ [
         "rounded-xl border p-2 transition-all duration-200",
@@ -567,30 +571,31 @@ function AlbumListItem({
           : "border-[#dbe9cf] bg-white",
       ].join(" ") }
     >
-      <button type="button" className="w-full text-left" onClick={ onSelect }>
-        <div className="flex items-start gap-2">
-          { album.coverPhotoUrl ? (
-            <div className="size-9 flex-none overflow-hidden rounded-md border border-[#deebd3] bg-[#eff7e6]">
+      <button type="button" className="w-full text-left" onClick={ onSelect } onDoubleClick={ onEdit }>
+        <div className="overflow-hidden rounded-xl border border-[#deebd3] bg-[#eff7e6]">
+          <div className="aspect-16/10 w-full overflow-hidden">
+            { album.coverPhotoUrl ? (
               <GalleryImage
                 src={ album.coverPhotoUrl }
                 alt={ album.albumName }
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
               />
-            </div>
-          ) : (
-            <div className="flex size-9 flex-none items-center justify-center rounded-md border border-[#deebd3] bg-[#eff7e6]">
-              <Images className="size-4 text-[#9cb88a]" />
-            </div>
-          ) }
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5">
-              <p className="truncate text-[13px] font-semibold text-[#355427]">{ album.albumName }</p>
-              { album.isShared && (
-                <Share2 className="size-3 shrink-0 text-[#6f9960]" aria-label="Shared" />
-              ) }
-            </div>
-            <p className="mt-0.5 text-[10px] text-[#88a272]">{ album.photoCount }p</p>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center">
+                <Images className="size-8 text-[#9cb88a]" />
+              </div>
+            ) }
           </div>
+        </div>
+        <div className="mt-2 space-y-1 px-1">
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-[13px] font-semibold leading-snug text-[#355427]">{ album.albumName }</p>
+            { album.isShared && (
+              <Share2 className="size-3 shrink-0 text-[#6f9960]" aria-label="Shared" />
+            ) }
+          </div>
+          <p className="text-[11px] text-[#6d8b58]">{ formatAlbumUpdatedAtShort(album.updatedAt) }</p>
+          <p className="text-[10px] text-[#88a272]">{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</p>
         </div>
       </button>
 

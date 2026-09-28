@@ -5,7 +5,7 @@ import Underline from "@tiptap/extension-underline";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Bold, Heading3, Italic, Link2, Loader2, Plus, Underline as UnderlineIcon, Unlink, Upload, Video } from "lucide-react";
+import { ArrowLeft, Bold, Check, Heading3, Italic, Link2, Loader2, Plus, Underline as UnderlineIcon, Unlink, Upload, Video, X } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -342,8 +342,20 @@ export default function AddVideosForm() {
             }
 
             if (current.selectedTagIds.length >= 3) {
-                toast.error("You can only select up to 3 tags.");
-                return current;
+                const category = tagOptions.find((option) => option.id === tagId)?.category;
+                const sameCategoryTagId = current.selectedTagIds.find(
+                    (id) => tagOptions.find((option) => option.id === id)?.category === category,
+                );
+
+                if (sameCategoryTagId === undefined) {
+                    toast.error("You can only select up to 3 tags. Remove one first.");
+                    return current;
+                }
+
+                return {
+                    ...current,
+                    selectedTagIds: current.selectedTagIds.map((id) => (id === sameCategoryTagId ? tagId : id)),
+                };
             }
 
             return {
@@ -750,6 +762,26 @@ export default function AddVideosForm() {
                                         <p className="text-xs font-semibold text-[#5a7886]">
                                             Selected: {formState.selectedTagIds.length} / 3 (min 2) | Available in video_tag_reference: {tagOptions.length}
                                         </p>
+                                        {formState.selectedTagIds.length > 0 && (
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                {formState.selectedTagIds.map((tagId) => {
+                                                    const option = tagOptions.find((item) => item.id === tagId);
+                                                    return (
+                                                        <button
+                                                            key={`selected-${tagId}`}
+                                                            type="button"
+                                                            onClick={() => toggleTag(tagId)}
+                                                            disabled={isSubmitting}
+                                                            aria-label={`Remove tag ${option?.tagName ?? tagId}`}
+                                                            className="inline-flex items-center gap-1 rounded-full border border-[#1f6789] bg-[#1f6789] px-3 py-1 text-xs font-semibold text-white hover:brightness-110"
+                                                        >
+                                                            {option ? `${option.category}: ${option.tagName}` : `Tag #${tagId}`}
+                                                            <X className="h-3 w-3" />
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                         <div className="mt-3 space-y-3">
                                             {groupedTagOptions.map((group) => (
                                                 <div key={group.category}>
@@ -764,12 +796,14 @@ export default function AddVideosForm() {
                                                                     type="button"
                                                                     onClick={() => toggleTag(option.id)}
                                                                     disabled={isSubmitting}
-                                                                    className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                                                    aria-pressed={checked}
+                                                                    className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
                                                                         checked
-                                                                            ? "border-[#1f6789] bg-[#e2f4fe] text-[#0f4a65]"
+                                                                            ? "border-[#1f6789] bg-[#1f6789] text-white"
                                                                             : "border-[#cadbe3] bg-white text-[#3f6172] hover:bg-[#f1f8fc]"
                                                                     }`}
                                                                 >
+                                                                    {checked && <Check className="h-3 w-3" />}
                                                                     {tagLabel}
                                                                 </button>
                                                             );

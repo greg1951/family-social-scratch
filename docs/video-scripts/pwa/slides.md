@@ -22,7 +22,7 @@ Hello, I'm Greg Hughlett of *My Family Social*. In this video, we will discuss d
     <CTL-Shift: Resume>
 ```
 
-My Family Social was built from the ground up as a Progressive Web App, with a responsive interface, what we call a **progressive interface**. 
+My Family Social was built from the ground up as a Progressive Web App, with a responsive interface, what we call our **progressive interface**. 
 
 In this video, I'll explain what that means, but I'll also explain how to install My Family Social on whatever device you're running. 
 
@@ -30,23 +30,27 @@ In this video, I'll explain what that means, but I'll also explain how to instal
 
 - A progressive interface means the website will adapts its pages to run optimally on whatever device it's running on. It could be a desktop computer, or a tablet, or a phone.
 
-- I myself prefer to run on a tablet or a desktop computer, but there are times when I'm in the kitchen, making a recipe from My Family Social recipe, using my phone to easily follow the recipe on My Family Social.  
+- I myself prefer to run on a tablet or a desktop computer, but there are times when I'm in the kitchen, following a recipe from the My Family Social kitchen and I'm using my phone to easily browse the recipe.  
 
 ### Bullet 2
 
 My Family Social website is deployed as a Progressive Web App.
 
-- A Progressive Web App is a website that looks and acts like a mobile or desktop app.
+- A Progressive Web App is a website deployment that enables the application to run on a mobile device.
 
-- It's not an app you download from the Google or Apple Store, but instead installs directly from your browser your device. You then have a desktop app that you can run rather than opening up your browser.   
+- It's not an app you download from the Google or Apple Store, but instead, it installs directly from the browser to your device. 
 
-- Once installed on your device it has the advantage of having access to pictures on your phone, for example. 
+- You then have a desktop app that you can run, rather than opening my Family Social in your browser.   
 
-- It's fast and responsive.
+- Once installed on your device it has the advantage of having access to your device. Maybe you just took some pictures on your phone and you want to share them with your family in My Family Social. 
+
+- By the way, it's also very fast and responsive. 
 
 ### Bullet 3
 
-- Best of all, the app is always up to date so you don't have Download any updates from an app store.
+- The installation of the My Family Social progressive web app is done from the browser and not the App Store.
+
+- The app is always up to date, so you don't have download any fix updates from an app store.
 
 ## Installation
 
@@ -65,13 +69,28 @@ Instructions to address installing the My Family Social web app depend on whethe
 
 The Chrome installation is a one click. However, the Apple installation using Safari requires several steps.  
 
+**A bit of trivia**: what percentage of the world market does Google Chrome have versus Apple Safari? 
+
+According to Google's Gemini AI, Chrome has approximately 3.5 billion users worldwide (or 70% market share), while Apple Safari has a smaller number, 1 billion worldwide users (or 18% market share). 
+
+I'm not sure unbiased those statistics are, given that Google's Gemini AI provided the data. 
+
 ### Chrome install slide 
- 
-- Launch My Family Social in the Chrome browser. 
-- In the browser URL field, you'll see an icon on the right: the My Family Social install. 
-- Simply click on that icon to install it on your desktop. 
-- As soon as you do that, it will open the My Family Social application. 
-- Going forward you need only double-click the my Family Social desktop icon app to login. 
+I should clarify that there's really nothing being **installed** to Chrome or Safari. What it's really doing is adding an app to your desktop that will open my Family Social.
+
+- Open Chrome and launch My Family Social. Wait for it to respond. 
+
+**build block number 2** 
+
+- In the browser URL field, you'll see an icon on the right side, if you hover over it, it'll say "Install My Family Social" 
+
+- **Step #1** is to click on that icon to install it on your desktop. 
+
+- As soon as you do that, it will open a popup to add the My Family Social application (**step #2**) to add the app your desktop. 
+
+**Show build block number 2** 
+
+- Going forward you need only double-click the my Family Social desktop app to open the app in its own frame. 
 
 ### Safari install slide
 Regarding Safari, there's good and bad news. 
@@ -88,7 +107,7 @@ Regarding Safari, there's good and bad news.
 
 **Transition Safari on MacOS block**
 The best that you can do with MacOS is to create a website shortcut. There is no desktop app sharing.
- 
+
 - In Safari open My Family Social on the Mac Desktop.  
 - Create a Safari desktop link by dragging the URL to your desktop. 
 - Use the button to launch the My Family Social app.

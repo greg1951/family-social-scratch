@@ -42,6 +42,7 @@ export interface SharedAlbumListItem {
   updatedAt: Date;
   memberId: number;
   memberName: string;
+  memberImageUrl: string | null;
   photoCount: number;
   commentCount: number;
   comments: GalleryAlbumCommentItem[];

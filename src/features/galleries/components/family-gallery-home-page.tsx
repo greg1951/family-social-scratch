@@ -1,6 +1,6 @@
 "use client";
 
-import { Camera, Heart, HouseHeart, Images, MessageSquareText, Search, ThumbsUp, User, X } from "lucide-react";
+import { Camera, Heart, HouseHeart, Images, MessageSquareText, ThumbsUp, User } from "lucide-react";
 import Link from "next/link";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,16 @@ import {
   setGalleryPhotoReactionAction,
 } from "@/app/(features)/(galleries)/gallery/actions";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
+import EditPostIcon from "@/components/common/edit-post-icon";
+import MemberAvatar from "@/components/common/member-avatar";
+import {
+  FilterSidebar,
+  FilterSidebarGroup,
+  FilterSidebarProvider,
+  FilterSidebarSearch,
+  FilterSidebarTrigger,
+  type FilterSidebarPalette,
+} from "@/components/common/filter-sidebar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -323,6 +333,27 @@ function toDateInputValue(date: Date) {
   return `${ year }-${ month }-${ day }`;
 }
 
+const galleryFilterPalette: FilterSidebarPalette = {
+  sidebarBackground: "#f8fdf3",
+  sidebarForeground: "#355427",
+  sidebarBorder: "#d6e8c6",
+  label: "#6f8f5d",
+  muted: "#6f8f5d",
+  inputBorder: "#cee1bc",
+  inputText: "#355427",
+  chipBorder: "#cee1bc",
+  chipText: "#355427",
+  chipHoverBackground: "#f2fae8",
+  checkBorder: "#a7cc84",
+  checkboxText: "#557044",
+  accent: "#5e8a39",
+  accentHoverBackground: "#4e7430",
+  triggerBorder: "#c5dbb4",
+  triggerBackground: "#f8fdf3",
+  triggerText: "#4e7430",
+  triggerHoverBackground: "#e7f3db",
+};
+
 function AlbumFinder({
   albums,
   selectedAlbumId,
@@ -332,93 +363,16 @@ function AlbumFinder({
   selectedAlbumId: number | null;
   onSelectAlbum: (album: SharedAlbumListItem) => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [startDate, setStartDate] = useState(() => {
-    const today = new Date();
-    const threeMonthsAgo = new Date(today);
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    return toDateInputValue(threeMonthsAgo);
-  });
-  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
-
-  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
-  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
-
-  const filtered = albums.filter((album) => {
-    const updatedAt = new Date(album.updatedAt);
-
-    if (startDateValue && updatedAt < startDateValue) {
-      return false;
-    }
-
-    if (endDateValue && updatedAt > endDateValue) {
-      return false;
-    }
-
-    if (!query.trim()) return true;
-    const q = query.toLowerCase();
-    return (
-      album.albumName.toLowerCase().includes(q) ||
-      album.memberName.toLowerCase().includes(q)
-    );
-  });
-
   return (
     <div className="flex h-full flex-col gap-3">
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#80a066]" />
-        <Input
-          value={ query }
-          onChange={ (e) => setQuery(e.target.value) }
-          placeholder="Search by caption or member name…"
-          className="h-10 rounded-full border-[#cee1bc] bg-white pl-10 pr-9 text-sm text-[#355427]"
-        />
-        { query && (
-          <button
-            type="button"
-            onClick={ () => setQuery("") }
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#89a273] transition hover:text-[#5b7549]"
-          >
-            <X className="size-3.5" />
-          </button>
-        ) }
-      </div>
-
-      <div className="flex flex-row flex-nowrap items-end gap-2">
-        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
-          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
-            Start Date
-          </label>
-          <Input
-            type="date"
-            value={ startDate }
-            max={ endDate || undefined }
-            onChange={ (e) => setStartDate(e.target.value) }
-            className="h-9 rounded-xl border-[#cee1bc] bg-white px-2 text-xs text-[#355427]"
-          />
-        </div>
-        <div className="min-w-0 w-[calc(50%-0.25rem)] space-y-1">
-          <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#6f8f5d]">
-            End Date
-          </label>
-          <Input
-            type="date"
-            value={ endDate }
-            min={ startDate || undefined }
-            onChange={ (e) => setEndDate(e.target.value) }
-            className="h-9 rounded-xl border-[#cee1bc] bg-white px-2 text-xs text-[#355427]"
-          />
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto pr-0.5">
-        { filtered.length === 0 ? (
+        { albums.length === 0 ? (
           <div className="flex items-center justify-center rounded-2xl border border-dashed border-[#d6e8c4] bg-[#f8fdf3] py-9">
             <p className="text-sm text-[#86a072]">No shared albums found</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-3">
-            { filtered.map((album) => (
+            { albums.map((album) => (
               <button
                 key={ album.id }
                 type="button"
@@ -434,36 +388,40 @@ function AlbumFinder({
                     : "border-[#dbe9cf] bg-white",
                 ].join(" ") }
               >
-                <div className="flex items-start gap-2">
-                  { album.coverPhotoUrl ? (
-                    <div className="size-9 flex-none overflow-hidden rounded-md border border-[#deebd3] bg-[#eff7e6]">
+                <div className="overflow-hidden rounded-xl border border-[#deebd3] bg-[#eff7e6]">
+                  <div className="aspect-16/10 w-full overflow-hidden">
+                    { album.coverPhotoUrl ? (
                       <GalleryImage
                         src={ album.coverPhotoUrl }
                         alt={ album.albumName }
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                       />
-                    </div>
-                  ) : (
-                    <div className="flex size-9 flex-none items-center justify-center rounded-md border border-[#deebd3] bg-[#eff7e6]">
-                      <Images className="size-4.5 text-[#9cb88a]" />
-                    </div>
-                  ) }
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-[#355427]">{ album.albumName }</p>
-                    <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#6d8b58]">
-                      <User className="size-3 shrink-0" />
-                      <span className="truncate">{ album.memberName }</span>
-                    </div>
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] text-[#88a272]">
-                      <span>{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</span>
-                      <span>·</span>
-                      <span className="inline-flex items-center gap-1">
-                        <MessageSquareText className="size-3" />
-                        { album.commentCount }
-                      </span>
-                      <span>·</span>
-                      <span>{ formatUpdatedAtShort(album.updatedAt) }</span>
-                    </div>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Images className="size-8 text-[#9cb88a]" />
+                      </div>
+                    ) }
+                  </div>
+                </div>
+                <div className="mt-2 space-y-1 px-1 pb-0.5">
+                  <p className="truncate text-[13px] font-semibold leading-snug text-[#355427]">{ album.albumName }</p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-[#6d8b58]">
+                    <span className="inline-flex" title={ album.memberName }>
+                      <MemberAvatar
+                        imageUrl={ album.memberImageUrl }
+                        firstName={ album.memberName }
+                        sizeClassName="h-[26px] w-[26px]"
+                      />
+                    </span>
+                    <span className="whitespace-nowrap">{ formatUpdatedAtShort(album.updatedAt) }</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] text-[#88a272]">
+                    <span>{ album.photoCount } photo{ album.photoCount !== 1 ? "s" : "" }</span>
+                    <span>·</span>
+                    <span className="inline-flex items-center gap-1">
+                      <MessageSquareText className="size-3" />
+                      { album.commentCount }
+                    </span>
                   </div>
                 </div>
               </button>
@@ -489,6 +447,36 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isSavingComment, setIsSavingComment] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const today = new Date();
+    const threeMonthsAgo = new Date(today);
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    return toDateInputValue(threeMonthsAgo);
+  });
+  const [endDate, setEndDate] = useState(() => toDateInputValue(new Date()));
+
+  const startDateValue = startDate ? new Date(`${ startDate }T00:00:00`) : null;
+  const endDateValue = endDate ? new Date(`${ endDate }T23:59:59.999`) : null;
+
+  const filteredAlbums = localAlbums.filter((album) => {
+    const updatedAt = new Date(album.updatedAt);
+
+    if (startDateValue && updatedAt < startDateValue) {
+      return false;
+    }
+
+    if (endDateValue && updatedAt > endDateValue) {
+      return false;
+    }
+
+    if (!searchValue.trim()) return true;
+    const q = searchValue.toLowerCase();
+    return (
+      album.albumName.toLowerCase().includes(q) ||
+      album.memberName.toLowerCase().includes(q)
+    );
+  });
 
   useEffect(() => {
     const flushQueuedGalleryComments = async () => {
@@ -656,7 +644,39 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
   }
 
   return (
-    <section className="font-app w-full px-4 pb-8 pt-4 sm:px-6 md:px-8">
+    <FilterSidebarProvider palette={ galleryFilterPalette }>
+      <FilterSidebar title="Album Filters">
+        <FilterSidebarSearch
+          value={ searchValue }
+          onChange={ setSearchValue }
+          placeholder="Search by caption or member name…"
+          ariaLabel="Search albums"
+        />
+        <FilterSidebarGroup label="Date Range" className="space-y-2 text-(--ffs-muted)">
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-(--ffs-muted)">Start Date</label>
+            <Input
+              type="date"
+              value={ startDate }
+              max={ endDate || undefined }
+              onChange={ (e) => setStartDate(e.target.value) }
+              className="h-8 rounded-xl border-(--ffs-input-border) bg-white px-2 text-[11px] text-(--ffs-input-text) sm:h-9 sm:text-xs"
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[10px] font-semibold uppercase tracking-[0.15em] text-(--ffs-muted)">End Date</label>
+            <Input
+              type="date"
+              value={ endDate }
+              min={ startDate || undefined }
+              onChange={ (e) => setEndDate(e.target.value) }
+              className="h-8 rounded-xl border-(--ffs-input-border) bg-white px-2 text-[11px] text-(--ffs-input-text) sm:h-9 sm:text-xs"
+            />
+          </div>
+        </FilterSidebarGroup>
+      </FilterSidebar>
+
+      <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-4 sm:px-6 md:px-8">
       <div className="mx-auto max-w-7xl space-y-5">
         <div className="overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(82,126,53,0.9),rgba(138,186,86,0.82)_54%,rgba(228,245,190,0.85))] px-4 py-5 text-white shadow-[0_28px_80px_-40px_rgba(56,84,35,0.8)] sm:px-8 sm:py-8 md:px-10">
           <div className="flex flex-col gap-3 sm:gap-5">
@@ -735,6 +755,9 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
                           iconClassName="h-3 w-3 md:h-4 md:w-4 text-[#4e7430]"
                           tooltipClassName="bg-[#355427] text-[#f4fee9]"
                         />
+                        <EditPostIcon tooltip="Filter Albums" tooltipClassName="bg-[#355427] text-[#f4fee9]">
+                          <FilterSidebarTrigger ariaLabel="Toggle album filters" />
+                        </EditPostIcon>
                       </div>
                       {/* <p className="mt-2 text-sm leading-6 text-[#6f8f5d]">
                       Search all shared albums by caption, album details, or family member name.
@@ -743,7 +766,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
 
                     <div className="px-4 py-4 sm:px-6 sm:py-5 md:h-[calc(68vh-7.5rem)] xl:h-[calc(76vh-7.5rem)]">
                       <AlbumFinder
-                        albums={ localAlbums }
+                        albums={ filteredAlbums }
                         selectedAlbumId={ selectedAlbum?.id ?? null }
                         onSelectAlbum={ handleSelectAlbum }
                       />
@@ -814,6 +837,7 @@ export default function FamilyGalleryHomePage({ sharedAlbums, member: _member }:
           ) }
         </main>
       </div>
-    </section>
+      </section>
+    </FilterSidebarProvider>
   );
 }

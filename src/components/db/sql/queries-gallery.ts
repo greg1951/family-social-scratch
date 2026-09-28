@@ -68,6 +68,7 @@ export async function getFamilyGalleryData(familyId: number): Promise<GetFamilyG
         memberId: galleryAlbum.memberId,
         firstName: member.firstName,
         lastName: member.lastName,
+        memberImageUrl: member.memberImageUrl,
       })
       .from(galleryAlbum)
       .innerJoin(member, eq(galleryAlbum.memberId, member.id))
@@ -120,6 +121,7 @@ export async function getFamilyGalleryData(familyId: number): Promise<GetFamilyG
           updatedAt: album.updatedAt ?? new Date(),
           memberId: album.memberId,
           memberName: buildMemberName(album.firstName, album.lastName),
+          memberImageUrl: album.memberImageUrl ?? null,
           photoCount: countRows.length,
           commentCount: comments.length,
           comments,
