@@ -3,6 +3,7 @@
   - [Family Social Schema](#family-social-schema)
   - [Family Social Queries](#family-social-queries)
   - [The Drizzle Push](#the-drizzle-push)
+  - [The Drizzle generate](#the-drizzle-generate)
 - [State Management](#state-management)
 - [Typescript](#typescript)
 - [Discriminated Unions](#discriminated-unions)
@@ -83,6 +84,13 @@ As there two separate schemas, there are two separate schema files. As shown bel
 
 - **family_schema**: `npx drizzle-kit push --config=./drizzle-family.config.ts`
 - **global_schema**: `npx drizzle-kit push --config=./drizzle-global.config.ts`
+
+## The Drizzle generate
+
+The `generate` command will create DDL for a schemas, and the output will be written to the `drizzle` directory. To generate **all** of the DDL for the schema, delete the subdirectories inside the drizzle directory. If not empty, it will attempt to generate a snapshot. 
+
+- **family_schema**: `npx drizzle-kit generate --config=./drizzle-family.config.ts`
+- **global_schema**: `npx drizzle-kit generate --config=./drizzle-global.config.ts`
 
 # State Management
 

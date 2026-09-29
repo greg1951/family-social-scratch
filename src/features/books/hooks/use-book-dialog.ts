@@ -125,6 +125,8 @@ export function createEmptyDraft(member: MemberKeyDetails): BookDraft {
 
 type UseBookDialogParams = {
   initialDraft: BookDraft;
+  initialDialogMode?: BookDialogMode;
+  initialIsDialogOpen?: boolean;
   member: MemberKeyDetails;
   selectedBook: BookDraft | null;
   canEditSelected: boolean;
@@ -133,6 +135,8 @@ type UseBookDialogParams = {
 
 export function useBookDialog({
   initialDraft,
+  initialDialogMode = "view",
+  initialIsDialogOpen = false,
   member,
   selectedBook,
   canEditSelected,
@@ -140,8 +144,8 @@ export function useBookDialog({
 }: UseBookDialogParams) {
   const router = useRouter();
   const [isSaving, startSaveTransition] = useTransition();
-  const [isBookDialogOpen, setIsBookDialogOpen] = useState(false);
-  const [bookDialogMode, setBookDialogMode] = useState<BookDialogMode>("view");
+  const [isBookDialogOpen, setIsBookDialogOpen] = useState(initialIsDialogOpen);
+  const [bookDialogMode, setBookDialogMode] = useState<BookDialogMode>(initialDialogMode);
   const [savePhase, setSavePhase] = useState<SavePhase>("idle");
   const [draft, setDraft] = useState<BookDraft>(initialDraft);
 

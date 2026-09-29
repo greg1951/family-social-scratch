@@ -11,8 +11,10 @@ import {
   HouseHeart,
   LibraryBig,
   MessageSquare,
+  NotebookPen,
   PenSquare,
   Plus,
+  Search,
   ThumbsDown,
   ThumbsUp,
   UsersRound,
@@ -37,7 +39,9 @@ import {
   serializeTipTapDocument,
 } from "@/components/db/types/poem-term-validation";
 import { BookTagOption, BooksHomeBook } from "@/components/db/types/books";
+import type { BiblioMemberOption, BookReviewPrefill } from "@/components/db/types/book-biblio";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { MemberKeyDetails } from "@/features/family/types/family-steps";
 import FeatureFaqHelp from "@/components/common/feature-faq-help";
 import EditPostIcon from "@/components/common/edit-post-icon";
@@ -112,17 +116,22 @@ export default function BooksHomePage({
   books,
   member,
   bookTags = [],
+  biblioMembers = [],
+  reviewPrefill = null,
   loadError = null,
 }: {
   books: BooksHomeBook[];
   member: MemberKeyDetails;
   bookTags?: BookTagOption[];
+  biblioMembers?: BiblioMemberOption[];
+  reviewPrefill?: BookReviewPrefill | null;
   loadError?: string | null;
 }) {
   const router = useRouter();
   const previousBooksRef = useRef(books);
   const [isEngaging, startEngageTransition] = useTransition();
   const [isDeleting, startDeleteTransition] = useTransition();
+  const [biblioSearchValue, setBiblioSearchValue] = useState("");
   const [bookItems, setBookItems] = useState(() => books.map((bookRecord) => createDraftFromBook(bookRecord, member)));
   const [selectedBookId, setSelectedBookId] = useState<number | null>(books.find((bookRecord) => bookRecord.status === "published")?.id ?? books[0]?.id ?? null);
   const [pendingSelectedBookId, setPendingSelectedBookId] = useState<number | null>(null);
@@ -148,12 +157,24 @@ export default function BooksHomePage({
   const startDateValue = isDateRangeScope && appliedStartDate ? new Date(`${ appliedStartDate }T00:00:00`) : null;
   const endDateValue = isDateRangeScope && appliedEndDate ? new Date(`${ appliedEndDate }T23:59:59.999`) : null;
   const initialDraft = useMemo(() => {
+    if (reviewPrefill) {
+      return {
+        ...createEmptyDraft(member),
+        bookTitle: reviewPrefill.bookTitle,
+        authorName: reviewPrefill.authorName,
+        bookSeriesName: reviewPrefill.bookSeriesName,
+        bookYear: reviewPrefill.bookYear ? String(reviewPrefill.bookYear) : "",
+        analysisJson: reviewPrefill.analysisJson,
+        selectedTagIds: reviewPrefill.selectedTagIds,
+      };
+    }
+
     if (books[0]) {
       return createDraftFromBook(books[0], member);
     }
 
     return createEmptyDraft(member);
-  }, [books, member]);
+  }, [books, member, reviewPrefill]);
 
   const selectedBook = bookItems.find((bookItem) => bookItem.id === selectedBookId) ?? null;
   const canEditSelected = selectedBook
@@ -162,12 +183,18 @@ export default function BooksHomePage({
 
   const bookDialog = useBookDialog({
     initialDraft,
+    initialDialogMode: reviewPrefill ? "add" : "view",
+    initialIsDialogOpen: Boolean(reviewPrefill),
     member,
     selectedBook,
     canEditSelected,
     onBookSaved(savedBook) {
       setPendingSelectedBookId(savedBook.id);
       setSelectedBookId(savedBook.id);
+
+      if (reviewPrefill) {
+        router.replace("/books");
+      }
     },
   });
 
@@ -559,6 +586,41 @@ export default function BooksHomePage({
           <FilterSidebarCheckbox checked={ filterWithClubSessions } onChange={ setFilterWithClubSessions }>Clubs Only</FilterSidebarCheckbox>
           <FilterSidebarCheckbox checked={ expandBookCards } onChange={ setExpandBookCards }>Expand Book Cards</FilterSidebarCheckbox>
         </FilterSidebarGroup>
+        <FilterSidebarGroup label="Family Bibliographies" className="space-y-3">
+          <select
+            aria-label="Open a family member's bibliography"
+            value=""
+            disabled={ biblioMembers.length === 0 }
+            onChange={ (event) => {
+              if (event.target.value) {
+                router.push(`/member-books/${ event.target.value }`);
+              }
+            } }
+            className="h-9 w-full rounded-full border border-(--ffs-input-border) bg-white px-3 text-xs text-(--ffs-input-text) shadow-sm disabled:opacity-60 sm:h-10 sm:text-sm"
+          >
+            <option value="">
+              { biblioMembers.length === 0 ? "No family bibliographies yet" : "Select a family member..." }
+            </option>
+            { biblioMembers.map((biblioMember) => (
+              <option key={ biblioMember.memberId } value={ String(biblioMember.memberId) }>
+                { biblioMember.firstName } { biblioMember.lastName } ({ biblioMember.entryCount })
+              </option>
+            )) }
+          </select>
+
+          <form action="/member-books/search" className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-(--ffs-muted)" />
+            <Input
+              name="q"
+              type="search"
+              value={ biblioSearchValue }
+              onChange={ (event) => setBiblioSearchValue(event.target.value) }
+              placeholder="Book title or author"
+              aria-label="Search family bibliographies"
+              className="h-9 w-full rounded-full border-(--ffs-input-border) bg-white pl-10 pr-3 text-xs text-(--ffs-input-text) shadow-sm sm:h-10 sm:text-sm"
+            />
+          </form>
+        </FilterSidebarGroup>
       </FilterSidebar>
 
       <section className="font-app min-w-0 flex-1 px-4 pb-8 pt-4 sm:px-6 lg:px-8">
@@ -576,6 +638,13 @@ export default function BooksHomePage({
                 >
                   <HouseHeart className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
                   Go Home
+                </Link>
+                <Link
+                  href="/member-books"
+                  className="inline-flex items-center rounded-full border border-white/35 bg-white/15 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ecfaff] transition hover:bg-white/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]"
+                >
+                  <NotebookPen className="mr-1.5 size-3.5 sm:mr-2 sm:size-4" />
+                  My Books
                 </Link>
                 <Link
                   href="/book-terms"
@@ -684,7 +753,7 @@ export default function BooksHomePage({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 xl:grid-cols-4">
                   { filteredBooks.map((bookItem) => {
                     const isSelected = bookItem.id === selectedBookId;
                     const isAwaitingServerSync = pendingSelectedBookId === bookItem.id && bookDialog.savePhase === "saving";
@@ -695,7 +764,7 @@ export default function BooksHomePage({
                         type="button"
                         onClick={ () => handleSelectBook(bookItem.id) }
                         onDoubleClick={ () => handleOpenBookFromCard(bookItem.id) }
-                        className={ `grid w-55 md:w-55 lg:w-75 gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
+                        className={ `grid min-w-0 w-full gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3d819b] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#3d819b] bg-[linear-gradient(135deg,rgba(231,247,255,0.95),rgba(248,252,255,0.95))] shadow-[0_18px_45px_-35px_rgba(9,56,82,0.7)]"
                           : "border-[#deeaef] bg-white hover:border-[#a6c6d3] hover:bg-[#fbfdff]"
                           }` }

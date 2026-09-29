@@ -21,6 +21,8 @@ export {
   blogLikeness,
   blogMedia,
   book,
+  bookBiblio,
+  bookBiblioTag,
   bookLike,
   bookComment,
   bookCategoryTag,

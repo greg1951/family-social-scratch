@@ -106,43 +106,6 @@ export const passwordReset = familySchema.table("password_reset", {
   index('reset_token_idx').on(table.token),
 ]);
 
-export const family = familySchema.table("family", {
-  id: serial("id").primaryKey(),
-  name: text("family_name").notNull().unique(),
-  status: text("status").notNull().default("trial"),
-  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '28 days'`),
-  createdAt: timestamp("created_at").defaultNow(),
-});
-
-export const familyInvitation = familySchema.table("family_invitation", {
-  id: serial("id").primaryKey(),
-  email: text("invited_email").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  status: text("status").notNull().default("invited"),
-  expirationDate: timestamp("expiration_date").notNull().default(sql`CURRENT_DATE + INTERVAL '7 days'`),
-  secret: text("secret"),
-  inviteToken: text("invite_token"),
-  inviteFounderMessage: text("invite_founder_message"),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-  createdAt: timestamp("created_at").defaultNow(),
-  statusUpdate: timestamp("status_update"),
-}, (table) => [
-  index('invite_email_idx').on(table.email),
-  index('invite_token_idx').on(table.inviteToken),
-]);
-
-export const familyFeatureConfig = familySchema.table("family_feature_config", {
-  id: serial("id").primaryKey(),
-  isSelected: boolean("is_selected").notNull().default(false),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-  featureId: integer("fk_feature_id").notNull().references(() => featureReference.id, {onDelete: 'cascade'}),
-  updatedAt: timestamp("updated_at").defaultNow(),
-}, (table) => [
-  index('family_feature_config_family_id_idx').on(table.familyId),
-  index('family_feature_config_feature_id_idx').on(table.featureId),
-]);
-
 export const familyActivity = familySchema.table("family_activity", {
   id: serial("id").primaryKey(),
   actionType: text("action_type").notNull(),
@@ -172,39 +135,6 @@ export const pwaMutationRequest = familySchema.table("pwa_mutation_request", {
   index('pwa_mutation_request_member_id_idx').on(table.memberId),
 ]);
 
-export const familyS3Credentials = familySchema.table("family_s3_credentials", {
-  id: serial("id").primaryKey(),
-  encryptedAccessKey: text("encrypted_access_key").notNull(),
-  encryptedSecretKey: text("encrypted_secret_key").notNull(),
-  bucketName: text("bucket_name").notNull(),
-  region: text("region").notNull().default("us-east-2"),  
-  isActive: boolean("is_active").notNull().default(true),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-}, (table) => [
-  index('family_s3_credentials_family_id_idx').on(table.familyId),
-  index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
-]);
-
-export const member = familySchema.table("member", {
-  id: serial("id").primaryKey(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  nickName: text("nick_name").notNull().default(""),
-  email: text("email").notNull(),
-  birthday: text("birthday").notNull().default("01/01/1970"),
-  cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),
-  familyId: integer("fk_family_id").notNull().references(() => family.id),
-  status: text("status").notNull().default("active"),
-  memberImageUrl: text("member_image_url"),
-  isFounder: boolean("is_family_founder").notNull().default(false),
-  isGuest: boolean("is_guest").notNull().default(false),
-  isAdmin: boolean("is_admin").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
-}, (table) => [
-  index('member_email_idx').on(table.email),
-]);
-
 export const memberOption = familySchema.table("member_option", {
   id: serial("id").primaryKey(),
   memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
@@ -212,7 +142,184 @@ export const memberOption = familySchema.table("member_option", {
   isSelected: boolean("is_selected").notNull().default(false),
 });
 
-/*------------------------------- Club Schema ------------------------------ */
+export const blogPost = familySchema.table("blog_post", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull(),
+  excerpt: text("excerpt").notNull().default(""),
+  contentJson: text("content_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  coverImageS3Key: text("cover_image_s3_key"),
+  coverImageAlt: text("cover_image_alt"),
+  videoUrl: text("video_url"),
+  videoMinutes: integer("video_minutes").notNull().default(0),
+  allowComments: boolean("allow_comments").notNull().default(true),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_post_family_created_idx").on(table.familyId, table.createdAt),
+    index("blog_post_family_status_created_idx").on(table.familyId, table.status, table.createdAt),
+    index("blog_post_author_created_idx").on(table.authorMemberId, table.createdAt),
+    unique("blog_post_family_slug_uq").on(table.familyId, table.slug),
+  ]
+);
+
+export const blogPostTag = familySchema.table("blog_post_tag", {
+  id: serial("id").primaryKey(),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  blogTagId: integer("fk_blog_tag_id").notNull().references(() => blogTagReference.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_post_tag_post_id_idx").on(table.blogPostId),
+    index("blog_post_tag_tag_id_idx").on(table.blogTagId),
+    unique("blog_post_tag_post_tag_uq").on(table.blogPostId, table.blogTagId),
+  ]
+);
+
+export const blogComment = familySchema.table("blog_comment", {
+  id: serial("id").primaryKey(),
+  contentJson: text("content_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  softDeletedAt: timestamp("soft_deleted_at"),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_comment_post_id_idx").on(table.blogPostId),
+    index("blog_comment_member_id_idx").on(table.memberId),
+  ]
+);
+
+export const blogLikeness = familySchema.table("blog_likeness", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  createdAt: timestamp("created_at").defaultNow(),
+  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_likeness_post_id_idx").on(table.blogPostId),
+    index("blog_likeness_member_id_idx").on(table.memberId),
+    unique("blog_likeness_post_member_uq").on(table.blogPostId, table.memberId),
+  ]
+);
+
+export const blogMedia = familySchema.table("blog_media", {
+  id: serial("id").primaryKey(),
+  s3ObjectKey: text("s3_object_key").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSizeBytes: integer("file_size_bytes").notNull().default(0),
+  width: integer("width"),
+  height: integer("height"),
+  altText: text("alt_text"),
+  caption: text("caption"),
+  createdAt: timestamp("created_at").defaultNow(),
+  blogPostId: integer("fk_blog_post_id").references(() => blogPost.id, { onDelete: "cascade" }),
+  uploadMemberId: integer("fk_upload_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+},
+  (table) => [
+    index("blog_media_post_id_idx").on(table.blogPostId),
+    index("blog_media_uploader_id_idx").on(table.uploadMemberId),
+    index("blog_media_family_id_idx").on(table.familyId),
+  ]
+);
+
+export const book = familySchema.table("book", {
+  id: serial("id").primaryKey(),
+  bookTitle: text("book_title").notNull().unique(),
+  authorName: text("author_name").notNull().default("anonymous"),
+  bookLanguage: text("book_language").notNull().default("english"),
+  bookYear: integer("book_year").notNull().default(0),
+  bookSeriesName: text("book_series_name"),
+  bookSource: text("book_source").notNull().default("bookstore"),
+  status: text("status").notNull().default("published"),
+  createdAt: timestamp("created_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_member_id_idx').on(table.memberId),
+    index('book_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const bookBiblio = familySchema.table("book_biblio", {
+  id: serial("id").primaryKey(),
+  bookTitle: text("book_title").notNull(),
+  authorName: text("author_name").notNull().default("anonymous"),
+  bookSeriesName: text("book_series_name"),
+  status: text("status").notNull().default("private"),
+  summaryJson: text("summary_json").notNull().default("{}"),
+  commentsJson: text("comment_json").notNull().default("{}"),
+  publishedYear: integer("published_year").notNull().default(0),
+  readYear: integer("read_year").notNull().default(0),
+  rating: integer("rating").notNull().default(0), // Rating out of 5; 0 means not rated yet
+  updatedAt: timestamp("updated_at").defaultNow(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_biblio_family_id_idx').on(table.familyId),
+    index('book_biblio_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const bookBiblioTag = familySchema.table("book_biblio_tag", {
+  id: serial("id").primaryKey(),
+  biblioId: integer("fk_biblio_id").notNull().references(() => bookBiblio.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => bookCategoryTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_biblio_biblio_id_idx').on(table.biblioId),
+    index('book_biblio_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const bookComment = familySchema.table("book_comment", {
+  id: serial("id").primaryKey(),
+  isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_comment_book_id_idx').on(table.bookId),
+    index('book_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const bookCategoryTag = familySchema.table("book_category_tag", {
+  id: serial("id").primaryKey(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
+  tagReferenceId: integer("fk_tag_id").notNull().references(() => bookCategoryTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('book_category_tag_book_id_idx').on(table.bookId),
+    index('book_category_tag_reference_id_idx').on(table.tagReferenceId),
+  ]
+);
+
+export const bookLike = familySchema.table("book_like", {
+  id: serial("id").primaryKey(),
+  bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("book_like_book_id_idx").on(table.bookId),
+    index("book_like_member_id_idx").on(table.memberId),
+    unique("book_like_member_id_uq").on(table.bookId, table.memberId),
+  ]
+);
+
 export const club = familySchema.table("club", {
   id: serial("id").primaryKey(),
   status: text("status").notNull().default("active"),
@@ -303,268 +410,75 @@ export const discussLike = familySchema.table("discuss_like", {
   ]
 );
 
-export const blogPost = familySchema.table("blog_post", {
+export const family = familySchema.table("family", {
   id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  slug: text("slug").notNull(),
-  excerpt: text("excerpt").notNull().default(""),
-  contentJson: text("content_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  publishedAt: timestamp("published_at"),
+  name: text("family_name").notNull().unique(),
+  status: text("status").notNull().default("trial"),
+  expirationDate: timestamp("expiration_date").default(sql`CURRENT_DATE + INTERVAL '28 days'`),
   createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  coverImageS3Key: text("cover_image_s3_key"),
-  coverImageAlt: text("cover_image_alt"),
-  videoUrl: text("video_url"),
-  videoMinutes: integer("video_minutes").notNull().default(0),
-  allowComments: boolean("allow_comments").notNull().default(true),
-  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
-},
-  (table) => [
-    index("blog_post_family_created_idx").on(table.familyId, table.createdAt),
-    index("blog_post_family_status_created_idx").on(table.familyId, table.status, table.createdAt),
-    index("blog_post_author_created_idx").on(table.authorMemberId, table.createdAt),
-    unique("blog_post_family_slug_uq").on(table.familyId, table.slug),
-  ]
-);
-
-export const blogPostTag = familySchema.table("blog_post_tag", {
-  id: serial("id").primaryKey(),
-  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
-  blogTagId: integer("fk_blog_tag_id").notNull().references(() => blogTagReference.id, { onDelete: "cascade" }),
-},
-  (table) => [
-    index("blog_post_tag_post_id_idx").on(table.blogPostId),
-    index("blog_post_tag_tag_id_idx").on(table.blogTagId),
-    unique("blog_post_tag_post_tag_uq").on(table.blogPostId, table.blogTagId),
-  ]
-);
-
-export const blogComment = familySchema.table("blog_comment", {
-  id: serial("id").primaryKey(),
-  contentJson: text("content_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  softDeletedAt: timestamp("soft_deleted_at"),
-  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
-},
-  (table) => [
-    index("blog_comment_post_id_idx").on(table.blogPostId),
-    index("blog_comment_member_id_idx").on(table.memberId),
-  ]
-);
-
-export const blogLikeness = familySchema.table("blog_likeness", {
-  id: serial("id").primaryKey(),
-  likenessDegree: integer("likeness_degree").notNull().default(-1),
-  createdAt: timestamp("created_at").defaultNow(),
-  blogPostId: integer("fk_blog_post_id").notNull().references(() => blogPost.id, { onDelete: "cascade" }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
-},
-  (table) => [
-    index("blog_likeness_post_id_idx").on(table.blogPostId),
-    index("blog_likeness_member_id_idx").on(table.memberId),
-    unique("blog_likeness_post_member_uq").on(table.blogPostId, table.memberId),
-  ]
-);
-
-export const blogMedia = familySchema.table("blog_media", {
-  id: serial("id").primaryKey(),
-  s3ObjectKey: text("s3_object_key").notNull(),
-  mimeType: text("mime_type").notNull(),
-  fileSizeBytes: integer("file_size_bytes").notNull().default(0),
-  width: integer("width"),
-  height: integer("height"),
-  altText: text("alt_text"),
-  caption: text("caption"),
-  createdAt: timestamp("created_at").defaultNow(),
-  blogPostId: integer("fk_blog_post_id").references(() => blogPost.id, { onDelete: "cascade" }),
-  uploadMemberId: integer("fk_upload_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
-},
-  (table) => [
-    index("blog_media_post_id_idx").on(table.blogPostId),
-    index("blog_media_uploader_id_idx").on(table.uploadMemberId),
-    index("blog_media_family_id_idx").on(table.familyId),
-  ]
-);
-
-export const guidedMemberTourProgress = familySchema.table("guided_member_tour_progress", {
-  id: serial("id").primaryKey(),
-  versionMajor: integer("version_major").notNull().default(1),
-  versionMinor: integer("version_minor").notNull().default(0),
-  versionPatch: integer("version_patch").notNull().default(0),
-  status: text("status").notNull().default("not_started"),
-  currentStepNo: integer("current_step_no").notNull().default(1),
-  startedAt: timestamp("started_at"),
-  lastSeenAt: timestamp("last_seen_at"),
-  completedAt: timestamp("completed_at"),
-  skippedAt: timestamp("skipped_at"),
-  dismissedAt: timestamp("dismissed_at"),
-  neverShowAgain: boolean("never_show_again").notNull().default(false),
-  restartCount: integer("restart_count").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
-  tourId: integer("fk_tour_id").notNull().references(() => guidedTourReference.id, { onDelete: "cascade" }),
-},
-(table) => [
-  index("member_tour_progress_member_status_updated_idx").on(table.memberId, table.status, table.updatedAt),
-  index("member_tour_progress_family_member_idx").on(table.familyId, table.memberId),
-  unique("member_tour_progress_member_family_tour_version_uq").on(
-    table.memberId,
-    table.familyId,
-    table.tourId,
-    table.versionMajor,
-    table.versionMinor,
-    table.versionPatch,
-  ),
-]);
-
-export const guidedMemberTourStepProgress = familySchema.table("guided_member_tour_step_progress", {
-  id: serial("id").primaryKey(),
-  stepNo: integer("step_no").notNull(),
-  status: text("status").notNull().default("not_started"),
-  viewedAt: timestamp("viewed_at"),
-  completedAt: timestamp("completed_at"),
-  skippedAt: timestamp("skipped_at"),
-  timeSpentMs: integer("time_spent_ms").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  memberTourProgressId: integer("fk_member_tour_progress_id").notNull().references(() => guidedMemberTourProgress.id, { onDelete: "cascade" }),
-  stepId: integer("fk_step_id").notNull().references(() => guidedTourStepReference.id, { onDelete: "cascade" }),
-},
-(table) => [
-  index("member_tour_step_progress_member_progress_status_idx").on(table.memberTourProgressId, table.status),
-  index("member_tour_step_progress_step_no_idx").on(table.stepNo),
-  unique("member_tour_step_progress_member_progress_step_uq").on(table.memberTourProgressId, table.stepId),
-]);
-
-export const threadVisibility = pgEnum('visibility', ['public', 'private']);
-export const conversationStatus = pgEnum('status', ['active', 'archived', 'closed']);
-export const postReplyType = pgEnum('type', ['post', 'reply']);
-export const deliveryType = pgEnum('delivery_type', ['threads', 'email', 'sms']);
-export const tagName = pgEnum('tag_name', [
-  'tv', 'movie', 'music', 'books', 'poetry', 'recipe', 'games', 
-  'founder', 'member', 'admin', 'suggestion', 'bug', 'question', 'other',
-]);
-
-export const threadTagReference = familySchema.table("thread_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull(),
-  tagDesc: text("tag_description"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow(),  
 });
 
-
-export const threadConversationTag = familySchema.table("thread_conversation_tag", {
+export const familyInvitation = familySchema.table("family_invitation", {
   id: serial("id").primaryKey(),
-  tagId: integer("fk_tag_id").notNull().references(() => threadTagReference.id, {onDelete: 'cascade'}),
-  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
-]);
-
-export const threadConversation = familySchema.table("thread_conversation", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  visibility: text("visibility").notNull().default("private"),
-  status: text("status").notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at"),
-  subject: text("subject"),
-  primaryCategory: text("primary_category"),
-  closedAt: timestamp("closed_at"),
-  archivedAt: timestamp("archived_at"),
-  archiveBatchId: integer("archive_batch_id"),
-  archiveObjectKey: text("archive_object_key"),
-  senderMemberId: integer("fk_sender_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  email: text("invited_email").notNull(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  status: text("status").notNull().default("invited"),
+  expirationDate: timestamp("expiration_date").notNull().default(sql`CURRENT_DATE + INTERVAL '7 days'`),
+  secret: text("secret"),
+  inviteToken: text("invite_token"),
+  inviteFounderMessage: text("invite_founder_message"),
   familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('thread_conversation_family_created_idx').on(table.familyId, table.createdAt),
-    index('thread_conversation_family_status_created_idx').on(table.familyId, table.status, table.createdAt),
-    index('thread_conversation_sender_created_idx').on(table.senderMemberId, table.createdAt),
-]);
-
-export const threadPostReply = familySchema.table("thread_post_reply", {
-  id: serial("id").primaryKey(),
-  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
-  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  type: text("type").notNull().default("post"),
-  content: text("content").notNull(),
-  contentJson: text("content_json").notNull().default("{}"),
-  seqNo: integer("seq_no").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
-  softDeletedAt: timestamp("soft_deleted_at"),
-  parentPostId: integer("parent_post_id"),
-  rootPostId: integer("root_post_id"),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.parentPostId],
-      foreignColumns: [table.id],
-      name: "thread_post_reply_parent_post_fkey",
-    }),
-    foreignKey({
-      columns: [table.rootPostId],
-      foreignColumns: [table.id],
-      name: "thread_post_reply_root_post_fkey",
-    }),
-    index('thread_post_reply_conversation_seq_idx').on(table.conversationId, table.seqNo),
-    index('thread_post_reply_conversation_created_idx').on(table.conversationId, table.createdAt),
-    index('thread_post_reply_parent_post_idx').on(table.parentPostId),
-    index('thread_post_reply_author_created_idx').on(table.authorMemberId, table.createdAt),
-    unique('thread_post_reply_conversation_seq_uq').on(table.conversationId, table.seqNo),
+  statusUpdate: timestamp("status_update"),
+}, (table) => [
+  index('invite_email_idx').on(table.email),
+  index('invite_token_idx').on(table.inviteToken),
 ]);
 
-export const threadPostAttachment = familySchema.table("thread_post_attachment", {
+export const familyFeatureConfig = familySchema.table("family_feature_config", {
   id: serial("id").primaryKey(),
-  postId: integer("fk_post_id").notNull().references(() => threadPostReply.id, { onDelete: 'cascade' }),
-  attachmentType: text("attachment_type").notNull().default("image"),
-  s3ObjectKey: text("s3_object_key").notNull(),
-  displayUrl: text("display_url"),
-  fileName: text("file_name"),
-  fileSizeBytes: integer("file_size_bytes"),
-  mimeType: text("mime_type"),
-  createdAt: timestamp("created_at").defaultNow(),
-},
-  (table) => [
-    index('thread_post_attachment_post_idx').on(table.postId),
-    index('thread_post_attachment_object_key_idx').on(table.s3ObjectKey),
+  isSelected: boolean("is_selected").notNull().default(false),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  featureId: integer("fk_feature_id").notNull().references(() => featureReference.id, {onDelete: 'cascade'}),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index('family_feature_config_family_id_idx').on(table.familyId),
+  index('family_feature_config_feature_id_idx').on(table.featureId),
 ]);
 
-export const threadRecipientState = familySchema.table("thread_recipient_state", {
+export const familyS3Credentials = familySchema.table("family_s3_credentials", {
   id: serial("id").primaryKey(),
-  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
-  recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  deliveryType: text("delivery_type").notNull().default("threads"),
-  readAt: timestamp("read_at"),
-  answeredAt: timestamp("answered_at"),
-  archivedAt: timestamp("archived_at"),
-  archiveBatchId: integer("archive_batch_id"),
-  archiveObjectKey: text("archive_object_key"),
-  createdAt: timestamp("created_at").defaultNow(),
-  lastViewedPostId: integer("last_viewed_post_id"),
-},
-  (table) => [
-    foreignKey({
-      columns: [table.lastViewedPostId],
-      foreignColumns: [table.id],
-      name: "thread_recipient_state_last_viewed_post_fkey",
-    }),
-    index('thread_recipient_state_conversation_recipient_idx').on(table.conversationId, table.recipientMemberId),
-    index('thread_recipient_state_conversation_created_idx').on(table.conversationId, table.createdAt),
-    index('thread_recipient_state_recipient_read_archive_idx').on(table.recipientMemberId, table.readAt, table.archivedAt),
-    unique('thread_recipient_state_conversation_recipient_uq').on(table.conversationId, table.recipientMemberId),
+  encryptedAccessKey: text("encrypted_access_key").notNull(),
+  encryptedSecretKey: text("encrypted_secret_key").notNull(),
+  bucketName: text("bucket_name").notNull(),
+  region: text("region").notNull().default("us-east-2"),  
+  isActive: boolean("is_active").notNull().default(true),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+}, (table) => [
+  index('family_s3_credentials_family_id_idx').on(table.familyId),
+  index('family_s3_active_credential_idx').on(table.familyId, table.isActive),
 ]);
 
+export const member = familySchema.table("member", {
+  id: serial("id").primaryKey(),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  nickName: text("nick_name").notNull().default(""),
+  email: text("email").notNull(),
+  birthday: text("birthday").notNull().default("01/01/1970"),
+  cellPhone: text("cell_phone").notNull().default("(000) 000-0000"),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+  status: text("status").notNull().default("active"),
+  memberImageUrl: text("member_image_url"),
+  isFounder: boolean("is_family_founder").notNull().default(false),
+  isGuest: boolean("is_guest").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index('member_email_idx').on(table.email),
+]);
 
 export const galleryPhoto = familySchema.table("gallery_photo", {
   id: serial("id").primaryKey(),
@@ -690,303 +604,57 @@ export const gamePlayerRound = familySchema.table("game_player_round", {
     index('game_player_round_game_player_id_idx').on(table.gamePlayerId),
     index('game_player_round_game_id_idx').on(table.gameId),
 ]);
-
-export const poem = familySchema.table("poem", {
+export const guidedMemberTourProgress = familySchema.table("guided_member_tour_progress", {
   id: serial("id").primaryKey(),
-  poemTitle: text("poem_title").notNull().unique(),
-  poetName: text("poet_name").notNull().default("Anonymous"),
-  poemSource: text("poem_source").notNull().default("Unknown"),
-  poemYear: integer("poem_year").notNull().default(0),
-  status: text("status").notNull().default("published"),
+  versionMajor: integer("version_major").notNull().default(1),
+  versionMinor: integer("version_minor").notNull().default(0),
+  versionPatch: integer("version_patch").notNull().default(0),
+  status: text("status").notNull().default("not_started"),
+  currentStepNo: integer("current_step_no").notNull().default(1),
+  startedAt: timestamp("started_at"),
+  lastSeenAt: timestamp("last_seen_at"),
+  completedAt: timestamp("completed_at"),
+  skippedAt: timestamp("skipped_at"),
+  dismissedAt: timestamp("dismissed_at"),
+  neverShowAgain: boolean("never_show_again").notNull().default(false),
+  restartCount: integer("restart_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id),
-},
-  (table) => [
-    index('poem_member_id_idx').on(table.memberId),
-    index('poem_family_id_idx').on(table.familyId),
-  ]
-);
-
-export const poemVerse = familySchema.table("poem_verse", {
-  id: serial("id").primaryKey(),
-  verseJson: text("verse_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('poem_verse_poem_id_idx').on(table.poemId),
-  ]
-);
-
-export const poemComment = familySchema.table("poem_comment", {
-  id: serial("id").primaryKey(),
-  isPoemAnalysis: boolean("is_poem_analysis").notNull().default(false),
-  commentJson: text("comment_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  poemVerseId: integer("fk_poem_verse_id").notNull().references(() => poemVerse.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('poem_comment_poem_verse_id_idx').on(table.poemVerseId),
-    index('poem_comment_member_id_idx').on(table.memberId),
-  ]
-);
-
-
-export const poemCategoryTag = familySchema.table("poem_category_tag", {
-  id: serial("id").primaryKey(),
-  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
-  tagReferenceId: integer("fk_tag_id").notNull().references(() => poemCategoryTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('poem_category_tag_poem_id_idx').on(table.poemId),
-    index('poem_category_tag_reference_id_idx').on(table.tagReferenceId),
-  ]
-);
-
-export const poemLike = familySchema.table("poem_like", {
-  id: serial("id").primaryKey(),
-  poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
-  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
-  createdAt: timestamp("created_at").defaultNow(),
-},
-  (table) => [
-    index("poem_like_poem_id_idx").on(table.poemId),
-    index("poem_like_member_id_idx").on(table.memberId),
-    unique("poem_like_poem_member_id_uq").on(table.poemId, table.memberId),
-  ]
-);
-
-export const book = familySchema.table("book", {
-  id: serial("id").primaryKey(),
-  bookTitle: text("book_title").notNull().unique(),
-  authorName: text("author_name").notNull().default("anonymous"),
-  bookLanguage: text("book_language").notNull().default("english"),
-  bookYear: integer("book_year").notNull().default(0),
-  bookSeriesName: text("book_series_name"),
-  bookSource: text("book_source").notNull().default("bookstore"),
-  status: text("status").notNull().default("published"),
-  createdAt: timestamp("created_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('book_member_id_idx').on(table.memberId),
-    index('book_family_id_idx').on(table.familyId),
-  ]
-);
-
-export const bookComment = familySchema.table("book_comment", {
-  id: serial("id").primaryKey(),
-  isBookAnalysis: boolean("is_book_analysis").notNull().default(false),
-  commentJson: text("comment_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('book_comment_book_id_idx').on(table.bookId),
-    index('book_comment_member_id_idx').on(table.memberId),
-  ]
-);
-
-
-export const bookCategoryTag = familySchema.table("book_category_tag", {
-  id: serial("id").primaryKey(),
-  bookId: integer("fk_book_id").notNull().references(() => book.id, {onDelete: 'cascade'}),
-  tagReferenceId: integer("fk_tag_id").notNull().references(() => bookCategoryTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('book_category_tag_book_id_idx').on(table.bookId),
-    index('book_category_tag_reference_id_idx').on(table.tagReferenceId),
-  ]
-);
-
-export const bookLike = familySchema.table("book_like", {
-  id: serial("id").primaryKey(),
-  bookId: integer("fk_book_id").notNull().references(() => book.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
-  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
-  createdAt: timestamp("created_at").defaultNow(),
-},
-  (table) => [
-    index("book_like_book_id_idx").on(table.bookId),
-    index("book_like_member_id_idx").on(table.memberId),
-    unique("book_like_member_id_uq").on(table.bookId, table.memberId),
-  ]
-);
-
-export const recipe = familySchema.table("recipe", {
-  id: serial("id").primaryKey(),
-  recipeTitle: text("recipe_title").notNull().unique(),
-  recipeShortSummary: text("recipe_short_summary").notNull().default(""),
-  recipeJson: text("recipe_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  recipeImageUrl: text("recipe_image_url"),
-  prepTimeMins: integer("prep_time_minutes").notNull().default(0),
-  cookTimeMins: integer("cook_time_minutes").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-  templateId: integer("fk_template_id").references(() => recipeTemplate.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: "cascade" }),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, { onDelete: "cascade" }),
+  tourId: integer("fk_tour_id").notNull().references(() => guidedTourReference.id, { onDelete: "cascade" }),
 },
-  (table) => [
-    index('recipe_member_id_idx').on(table.memberId),
-    index('recipe_family_id_idx').on(table.familyId),
-    index('recipe_template_id_idx').on(table.templateId),
-  ]
-);
+(table) => [
+  index("member_tour_progress_member_status_updated_idx").on(table.memberId, table.status, table.updatedAt),
+  index("member_tour_progress_family_member_idx").on(table.familyId, table.memberId),
+  unique("member_tour_progress_member_family_tour_version_uq").on(
+    table.memberId,
+    table.familyId,
+    table.tourId,
+    table.versionMajor,
+    table.versionMinor,
+    table.versionPatch,
+  ),
+]);
 
-export const recipeComment = familySchema.table("recipe_comment", {
+export const guidedMemberTourStepProgress = familySchema.table("guided_member_tour_step_progress", {
   id: serial("id").primaryKey(),
-  isRecipeProTip: boolean("is_recipe_pro_tip").notNull().default(false),
-  commentJson: text("comment_json").notNull().default("{}"),
+  stepNo: integer("step_no").notNull(),
+  status: text("status").notNull().default("not_started"),
+  viewedAt: timestamp("viewed_at"),
+  completedAt: timestamp("completed_at"),
+  skippedAt: timestamp("skipped_at"),
+  timeSpentMs: integer("time_spent_ms").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
-  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('recipe_comment_recipe_id_idx').on(table.recipeId),
-    index('recipe_comment_member_id_idx').on(table.memberId),
-  ]
-);
-
-export const recipeTemplate = familySchema.table("recipe_template", {
-  id: serial("id").primaryKey(),
-  templateName: text("template_name").notNull().default("").unique(),
-  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
-  templateJson: text("template_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
   updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'cascade'}),
+  memberTourProgressId: integer("fk_member_tour_progress_id").notNull().references(() => guidedMemberTourProgress.id, { onDelete: "cascade" }),
+  stepId: integer("fk_step_id").notNull().references(() => guidedTourStepReference.id, { onDelete: "cascade" }),
 },
-  (table) => [
-    index('recipe_template_member_id_idx').on(table.memberId),
-    index('recipe_template_family_id_idx').on(table.familyId),
-    unique('recipe_template_family_id_name_uq').on(table.familyId, table.templateName),
-  ]
-);
-
-export const recipeTagReference = familySchema.table("recipe_tag_reference", {
-  id: serial("id").primaryKey(),
-  tagName: text("tag_name").notNull().default(""),
-  tagDesc: text("tag_description"),
-  tagType: text("tag_type").notNull().default("global"),
-  status: text("status").notNull().default("active"),
-  seqNo: integer("seq_no").notNull().default(1),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const recipeTag = familySchema.table("recipe_tag", {
-  id: serial("id").primaryKey(),
-  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('recipe_tag_recipe_id_idx').on(table.recipeId),
-    index('recipe_tag_tag_id_idx').on(table.tagId),
-  ]
-);
-
-export const recipeLike = familySchema.table("recipe_like", {
-  id: serial("id").primaryKey(),
-  likenessDegree: integer("likeness_degree").notNull().default(-1),
-  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
-  updatedAt: timestamp("updated_at").defaultNow(),
-},
-  (table) => [
-    index("recipe_like_recipe_id_idx").on(table.recipeId),
-    index("recipe_like_member_id_idx").on(table.memberId),
-  ]
-);
-
-export const recipeTerm = familySchema.table("recipe_term", {
-  id: serial("id").primaryKey(),
-  term: text("term").notNull().default(""),
-  termJson: text("term_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-export const show = familySchema.table("show", {
-  id: serial("id").primaryKey(),
-  showTitle: text("show_title").notNull().unique(),
-  showImageCredit: text("show_image_credit").notNull().default(""),
-  showJson: text("show_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  showImageUrl: text("show_image_url"),
-  showSiteUrl: text("show_site_url"),
-  showSiteBackground: text("show_site_background").notNull().default("#000000"),
-  showFirstYear: integer("show_first_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
-  showLastYear: integer("show_last_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
-  seasonCount: integer("season_count").notNull().default(0),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('show_member_id_idx').on(table.memberId),
-    index('show_family_id_idx').on(table.familyId),
-  ]
-);
-
-export const showComment = familySchema.table("show_comment", {
-  id: serial("id").primaryKey(),
-  isShowReviewer: boolean("is_show_reviewer").notNull().default(false),
-  commentJson: text("comment_json").notNull().default("{}"),
-  createdAt: timestamp("created_at").defaultNow(),
-  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('show_comment_show_id_idx').on(table.showId),
-    index('show_comment_member_id_idx').on(table.memberId),
-  ]
-);
-
-export const showTemplate = familySchema.table("show_template", {
-  id: serial("id").primaryKey(),
-  templateName: text("template_name").notNull().default(""),
-  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
-  templateJson: text("template_json").notNull().default("{}"),
-  status: text("status").notNull().default("draft"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
-  familyId: integer("fk_family_id"),
-},
-  (table) => [
-    index('show_template_member_id_idx').on(table.memberId),
-    index('show_template_family_id_idx').on(table.familyId),
-  ]
-);
-
-export const showTag = familySchema.table("show_tag", {
-  id: serial("id").primaryKey(),
-  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
-  tagId: integer("fk_tag_id").notNull().references(() => showTagReference.id, {onDelete: 'cascade'}),
-},
-  (table) => [
-    index('show_tag_show_id_idx').on(table.showId),
-    index('show_tag_tag_id_idx').on(table.tagId),
-  ]
-);
-
-export const showLike = familySchema.table("show_like", {
-  id: serial("id").primaryKey(),
-  likenessDegree: integer("likeness_degree").notNull().default(-1),
-  showId: integer("fk_show_id").notNull().references(() => show.id, { onDelete: 'cascade' }),
-  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
-  updatedAt: timestamp("updated_at").defaultNow(),
-},
-  (table) => [
-    index("show_like_show_id_idx").on(table.showId),
-    index("show_like_member_id_idx").on(table.memberId),
-  ]
-);
+(table) => [
+  index("member_tour_step_progress_member_progress_status_idx").on(table.memberTourProgressId, table.status),
+  index("member_tour_step_progress_step_no_idx").on(table.stepNo),
+  unique("member_tour_step_progress_member_progress_step_uq").on(table.memberTourProgressId, table.stepId),
+]);
 
 export const movie = familySchema.table("movie", {
   id: serial("id").primaryKey(),
@@ -1169,3 +837,364 @@ export const musicLike = familySchema.table("music_like", {
     index("music_like_member_id_idx").on(table.memberId),
   ]
 );
+
+
+export const threadVisibility = pgEnum('visibility', ['public', 'private']);
+export const conversationStatus = pgEnum('status', ['active', 'archived', 'closed']);
+export const postReplyType = pgEnum('type', ['post', 'reply']);
+export const deliveryType = pgEnum('delivery_type', ['threads', 'email', 'sms']);
+export const tagName = pgEnum('tag_name', [
+  'tv', 'movie', 'music', 'books', 'poetry', 'recipe', 'games', 
+  'founder', 'member', 'admin', 'suggestion', 'bug', 'question', 'other',
+]);
+
+
+export const poem = familySchema.table("poem", {
+  id: serial("id").primaryKey(),
+  poemTitle: text("poem_title").notNull().unique(),
+  poetName: text("poet_name").notNull().default("Anonymous"),
+  poemSource: text("poem_source").notNull().default("Unknown"),
+  poemYear: integer("poem_year").notNull().default(0),
+  status: text("status").notNull().default("published"),
+  createdAt: timestamp("created_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id),
+},
+  (table) => [
+    index('poem_member_id_idx').on(table.memberId),
+    index('poem_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const poemVerse = familySchema.table("poem_verse", {
+  id: serial("id").primaryKey(),
+  verseJson: text("verse_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_verse_poem_id_idx').on(table.poemId),
+  ]
+);
+
+export const poemComment = familySchema.table("poem_comment", {
+  id: serial("id").primaryKey(),
+  isPoemAnalysis: boolean("is_poem_analysis").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  poemVerseId: integer("fk_poem_verse_id").notNull().references(() => poemVerse.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_comment_poem_verse_id_idx').on(table.poemVerseId),
+    index('poem_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+
+export const poemCategoryTag = familySchema.table("poem_category_tag", {
+  id: serial("id").primaryKey(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, {onDelete: 'cascade'}),
+  tagReferenceId: integer("fk_tag_id").notNull().references(() => poemCategoryTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('poem_category_tag_poem_id_idx').on(table.poemId),
+    index('poem_category_tag_reference_id_idx').on(table.tagReferenceId),
+  ]
+);
+
+export const poemLike = familySchema.table("poem_like", {
+  id: serial("id").primaryKey(),
+  poemId: integer("fk_poem_id").notNull().references(() => poem.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  reactionType: integer("reaction_type").notNull().default(1), // -1 = dislike, 1 = like, 2 = love
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index("poem_like_poem_id_idx").on(table.poemId),
+    index("poem_like_member_id_idx").on(table.memberId),
+    unique("poem_like_poem_member_id_uq").on(table.poemId, table.memberId),
+  ]
+);
+
+export const recipe = familySchema.table("recipe", {
+  id: serial("id").primaryKey(),
+  recipeTitle: text("recipe_title").notNull().unique(),
+  recipeShortSummary: text("recipe_short_summary").notNull().default(""),
+  recipeJson: text("recipe_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  recipeImageUrl: text("recipe_image_url"),
+  prepTimeMins: integer("prep_time_minutes").notNull().default(0),
+  cookTimeMins: integer("cook_time_minutes").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+  templateId: integer("fk_template_id").references(() => recipeTemplate.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('recipe_member_id_idx').on(table.memberId),
+    index('recipe_family_id_idx').on(table.familyId),
+    index('recipe_template_id_idx').on(table.templateId),
+  ]
+);
+
+export const recipeComment = familySchema.table("recipe_comment", {
+  id: serial("id").primaryKey(),
+  isRecipeProTip: boolean("is_recipe_pro_tip").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('recipe_comment_recipe_id_idx').on(table.recipeId),
+    index('recipe_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const recipeTemplate = familySchema.table("recipe_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default("").unique(),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").references(() => family.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('recipe_template_member_id_idx').on(table.memberId),
+    index('recipe_template_family_id_idx').on(table.familyId),
+    unique('recipe_template_family_id_name_uq').on(table.familyId, table.templateName),
+  ]
+);
+
+export const recipeTagReference = familySchema.table("recipe_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull().default(""),
+  tagDesc: text("tag_description"),
+  tagType: text("tag_type").notNull().default("global"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const recipeTag = familySchema.table("recipe_tag", {
+  id: serial("id").primaryKey(),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => recipeTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('recipe_tag_recipe_id_idx').on(table.recipeId),
+    index('recipe_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const recipeLike = familySchema.table("recipe_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  recipeId: integer("fk_recipe_id").notNull().references(() => recipe.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("recipe_like_recipe_id_idx").on(table.recipeId),
+    index("recipe_like_member_id_idx").on(table.memberId),
+  ]
+);
+
+export const recipeTerm = familySchema.table("recipe_term", {
+  id: serial("id").primaryKey(),
+  term: text("term").notNull().default(""),
+  termJson: text("term_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const show = familySchema.table("show", {
+  id: serial("id").primaryKey(),
+  showTitle: text("show_title").notNull().unique(),
+  showImageCredit: text("show_image_credit").notNull().default(""),
+  showJson: text("show_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  showImageUrl: text("show_image_url"),
+  showSiteUrl: text("show_site_url"),
+  showSiteBackground: text("show_site_background").notNull().default("#000000"),
+  showFirstYear: integer("show_first_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  showLastYear: integer("show_last_year").notNull().default(sql`EXTRACT(YEAR FROM CURRENT_DATE)`),
+  seasonCount: integer("season_count").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('show_member_id_idx').on(table.memberId),
+    index('show_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const showComment = familySchema.table("show_comment", {
+  id: serial("id").primaryKey(),
+  isShowReviewer: boolean("is_show_reviewer").notNull().default(false),
+  commentJson: text("comment_json").notNull().default("{}"),
+  createdAt: timestamp("created_at").defaultNow(),
+  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('show_comment_show_id_idx').on(table.showId),
+    index('show_comment_member_id_idx').on(table.memberId),
+  ]
+);
+
+export const showTemplate = familySchema.table("show_template", {
+  id: serial("id").primaryKey(),
+  templateName: text("template_name").notNull().default(""),
+  isGlobalTemplate: boolean("is_global_template").notNull().default(false),
+  templateJson: text("template_json").notNull().default("{}"),
+  status: text("status").notNull().default("draft"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  memberId: integer("fk_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id"),
+},
+  (table) => [
+    index('show_template_member_id_idx').on(table.memberId),
+    index('show_template_family_id_idx').on(table.familyId),
+  ]
+);
+
+export const showTag = familySchema.table("show_tag", {
+  id: serial("id").primaryKey(),
+  showId: integer("fk_show_id").notNull().references(() => show.id, {onDelete: 'cascade'}),
+  tagId: integer("fk_tag_id").notNull().references(() => showTagReference.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('show_tag_show_id_idx').on(table.showId),
+    index('show_tag_tag_id_idx').on(table.tagId),
+  ]
+);
+
+export const showLike = familySchema.table("show_like", {
+  id: serial("id").primaryKey(),
+  likenessDegree: integer("likeness_degree").notNull().default(-1),
+  showId: integer("fk_show_id").notNull().references(() => show.id, { onDelete: 'cascade' }),
+  memberId: integer("fk_member_id").notNull().references(() => member.id, { onDelete: 'cascade' }),
+  updatedAt: timestamp("updated_at").defaultNow(),
+},
+  (table) => [
+    index("show_like_show_id_idx").on(table.showId),
+    index("show_like_member_id_idx").on(table.memberId),
+  ]
+);
+
+export const threadTagReference = familySchema.table("thread_tag_reference", {
+  id: serial("id").primaryKey(),
+  tagName: text("tag_name").notNull(),
+  tagDesc: text("tag_description"),
+  status: text("status").notNull().default("active"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),  
+});
+
+export const threadConversationTag = familySchema.table("thread_conversation_tag", {
+  id: serial("id").primaryKey(),
+  tagId: integer("fk_tag_id").notNull().references(() => threadTagReference.id, {onDelete: 'cascade'}),
+  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('thread_conversation_tag_idx').on(table.conversationId, table.tagId),
+]);
+
+export const threadConversation = familySchema.table("thread_conversation", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  visibility: text("visibility").notNull().default("private"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  subject: text("subject"),
+  primaryCategory: text("primary_category"),
+  closedAt: timestamp("closed_at"),
+  archivedAt: timestamp("archived_at"),
+  archiveBatchId: integer("archive_batch_id"),
+  archiveObjectKey: text("archive_object_key"),
+  senderMemberId: integer("fk_sender_member_id").references(() => member.id, {onDelete: 'cascade'}),
+  familyId: integer("fk_family_id").notNull().references(() => family.id, {onDelete: 'cascade'}),
+},
+  (table) => [
+    index('thread_conversation_family_created_idx').on(table.familyId, table.createdAt),
+    index('thread_conversation_family_status_created_idx').on(table.familyId, table.status, table.createdAt),
+    index('thread_conversation_sender_created_idx').on(table.senderMemberId, table.createdAt),
+]);
+
+export const threadPostReply = familySchema.table("thread_post_reply", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
+  authorMemberId: integer("fk_author_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  type: text("type").notNull().default("post"),
+  content: text("content").notNull(),
+  contentJson: text("content_json").notNull().default("{}"),
+  seqNo: integer("seq_no").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow(),
+  softDeletedAt: timestamp("soft_deleted_at"),
+  parentPostId: integer("parent_post_id"),
+  rootPostId: integer("root_post_id"),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.parentPostId],
+      foreignColumns: [table.id],
+      name: "thread_post_reply_parent_post_fkey",
+    }),
+    foreignKey({
+      columns: [table.rootPostId],
+      foreignColumns: [table.id],
+      name: "thread_post_reply_root_post_fkey",
+    }),
+    index('thread_post_reply_conversation_seq_idx').on(table.conversationId, table.seqNo),
+    index('thread_post_reply_conversation_created_idx').on(table.conversationId, table.createdAt),
+    index('thread_post_reply_parent_post_idx').on(table.parentPostId),
+    index('thread_post_reply_author_created_idx').on(table.authorMemberId, table.createdAt),
+    unique('thread_post_reply_conversation_seq_uq').on(table.conversationId, table.seqNo),
+]);
+
+export const threadPostAttachment = familySchema.table("thread_post_attachment", {
+  id: serial("id").primaryKey(),
+  postId: integer("fk_post_id").notNull().references(() => threadPostReply.id, { onDelete: 'cascade' }),
+  attachmentType: text("attachment_type").notNull().default("image"),
+  s3ObjectKey: text("s3_object_key").notNull(),
+  displayUrl: text("display_url"),
+  fileName: text("file_name"),
+  fileSizeBytes: integer("file_size_bytes"),
+  mimeType: text("mime_type"),
+  createdAt: timestamp("created_at").defaultNow(),
+},
+  (table) => [
+    index('thread_post_attachment_post_idx').on(table.postId),
+    index('thread_post_attachment_object_key_idx').on(table.s3ObjectKey),
+]);
+
+export const threadRecipientState = familySchema.table("thread_recipient_state", {
+  id: serial("id").primaryKey(),
+  conversationId: integer("fk_conversation_id").notNull().references(() => threadConversation.id, {onDelete: 'cascade'}),
+  recipientMemberId: integer("fk_recipient_member_id").notNull().references(() => member.id, {onDelete: 'cascade'}),
+  deliveryType: text("delivery_type").notNull().default("threads"),
+  readAt: timestamp("read_at"),
+  answeredAt: timestamp("answered_at"),
+  archivedAt: timestamp("archived_at"),
+  archiveBatchId: integer("archive_batch_id"),
+  archiveObjectKey: text("archive_object_key"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastViewedPostId: integer("last_viewed_post_id"),
+},
+  (table) => [
+    foreignKey({
+      columns: [table.lastViewedPostId],
+      foreignColumns: [table.id],
+      name: "thread_recipient_state_last_viewed_post_fkey",
+    }),
+    index('thread_recipient_state_conversation_recipient_idx').on(table.conversationId, table.recipientMemberId),
+    index('thread_recipient_state_conversation_created_idx').on(table.conversationId, table.createdAt),
+    index('thread_recipient_state_recipient_read_archive_idx').on(table.recipientMemberId, table.readAt, table.archivedAt),
+    unique('thread_recipient_state_conversation_recipient_uq').on(table.conversationId, table.recipientMemberId),
+]);

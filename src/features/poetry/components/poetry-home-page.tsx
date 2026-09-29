@@ -763,7 +763,7 @@ export default function PoetryHomePage({
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-1.5 md:grid-cols-3 xl:grid-cols-4">
                   { filteredPoems.map((poemItem) => {
                     const isSelected = poemItem.id === selectedPoemId;
 
@@ -773,7 +773,7 @@ export default function PoetryHomePage({
                         type="button"
                         onClick={ () => handleSelectPoem(poemItem.id) }
                         onDoubleClick={ () => handleOpenPoemFromCard(poemItem.id) }
-                        className={ `grid w-55 md:w-55 lg:w-75 gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
+                        className={ `grid min-w-0 w-full gap-2 rounded-[1.4rem] border px-2 py-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8c62b5] sm:gap-3 sm:px-4 sm:py-4 ${ isSelected
                           ? "border-[#8c62b5] bg-[linear-gradient(135deg,rgba(244,236,255,0.95),rgba(252,248,255,0.95))] shadow-[0_18px_45px_-35px_rgba(80,40,120,0.7)]"
                           : "border-[#e6deef] bg-white hover:border-[#c7b2db] hover:bg-[#fcfaff]"
                           }` }
