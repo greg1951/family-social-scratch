@@ -166,19 +166,74 @@ function buildPlaybackUrl(value: string | null) {
     return `/api/video-s3-upload?key=${encodeURIComponent(value)}`;
 }
 
-function sortVideosByNameThenSeqNo(items: VideoListItem[]) {
+function sortVideosByFaqSeqThenSeqNo(items: VideoListItem[]) {
     return [...items].sort((left, right) => {
         if (left.faqPageSeqNo !== right.faqPageSeqNo) {
             return left.faqPageSeqNo - right.faqPageSeqNo;
         }
 
-        const nameCompare = left.videoName.localeCompare(right.videoName, undefined, { sensitivity: "base" });
-        if (nameCompare !== 0) {
-            return nameCompare;
+        if (left.seqNo !== right.seqNo) {
+            return left.seqNo - right.seqNo;
         }
 
-        return left.seqNo - right.seqNo;
+        return left.id - right.id;
     });
+}
+
+type VideoGroup = {
+    key: string;
+    label: string;
+    items: VideoListItem[];
+};
+
+function groupVideosByAudienceFocusFeature(items: VideoListItem[], tagOptions: VideoTagOption[]): VideoGroup[] {
+    const tagSeqById = new Map(tagOptions.map((tag) => [tag.id, tag.seqNo]));
+    const findTag = (videoItem: VideoListItem, category: string) =>
+        videoItem.tags.find((tag) => tag.category.trim().toLowerCase() === category) ?? null;
+    const tagRank = (tag: VideoListItem["tags"][number] | null) =>
+        tag ? (tagSeqById.get(tag.id) ?? Number.MAX_SAFE_INTEGER - 1) : Number.MAX_SAFE_INTEGER;
+
+    const groups = new Map<string, VideoGroup & { ranks: number[] }>();
+
+    for (const videoItem of items) {
+        const audience = findTag(videoItem, "audience");
+        const focus = findTag(videoItem, "focus");
+        const feature = findTag(videoItem, "feature");
+        const key = [audience?.id ?? "none", focus?.id ?? "none", feature?.id ?? "none"].join("|");
+
+        let group = groups.get(key);
+        if (!group) {
+            const labelParts = [
+                `Audience: ${audience?.tagName ?? "None"}`,
+                `Focus: ${focus?.tagName ?? "None"}`,
+            ];
+            if (feature) {
+                labelParts.push(`Feature: ${feature.tagName}`);
+            }
+
+            group = {
+                key,
+                label: labelParts.join(" | "),
+                items: [],
+                ranks: [tagRank(audience), tagRank(focus), tagRank(feature)],
+            };
+            groups.set(key, group);
+        }
+
+        group.items.push(videoItem);
+    }
+
+    return Array.from(groups.values())
+        .sort((left, right) => {
+            for (let index = 0; index < left.ranks.length; index += 1) {
+                if (left.ranks[index] !== right.ranks[index]) {
+                    return left.ranks[index] - right.ranks[index];
+                }
+            }
+
+            return left.label.localeCompare(right.label);
+        })
+        .map(({ key, label, items: groupItems }) => ({ key, label, items: sortVideosByFaqSeqThenSeqNo(groupItems) }));
 }
 
 export default function AddVideosForm() {
@@ -228,6 +283,8 @@ export default function AddVideosForm() {
         },
     });
 
+    const videoGroups = useMemo(() => groupVideosByAudienceFocusFeature(videos, tagOptions), [videos, tagOptions]);
+
     const groupedTagOptions = useMemo(() => {
         const map = new Map<string, VideoTagOption[]>();
 
@@ -264,7 +321,7 @@ export default function AddVideosForm() {
             return;
         }
 
-        setVideos(sortVideosByNameThenSeqNo(result.videos));
+        setVideos(sortVideosByFaqSeqThenSeqNo(result.videos));
         setTagOptions(result.tagOptions);
         setIsLoading(false);
     }
@@ -471,7 +528,7 @@ export default function AddVideosForm() {
                 }
 
                 setVideos((current) =>
-                    sortVideosByNameThenSeqNo(
+                    sortVideosByFaqSeqThenSeqNo(
                         current.map((videoItem) =>
                             videoItem.id === editingVideoId ? updateResult.updatedVideo : videoItem,
                         ),
@@ -523,7 +580,7 @@ export default function AddVideosForm() {
                     throw new Error(saveResult.message ?? "Unable to create video entry.");
                 }
 
-                setVideos((current) => sortVideosByNameThenSeqNo([saveResult.createdVideo, ...current]));
+                setVideos((current) => sortVideosByFaqSeqThenSeqNo([saveResult.createdVideo, ...current]));
                 toast.success(saveResult.message);
             }
 
@@ -885,7 +942,12 @@ export default function AddVideosForm() {
                 ) : (
                     <>
                         <div className="space-y-3 md:hidden">
-                            {videos.map((videoItem) => {
+                            {videoGroups.map((group) => (
+                            <div key={group.key} className="space-y-3">
+                            <h3 className="rounded-xl bg-[#eaf3f7] px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#2b5366]">
+                                {group.label}
+                            </h3>
+                            {group.items.map((videoItem) => {
                                 const playbackUrl = buildPlaybackUrl(videoItem.videoUrl);
 
                                 return (
@@ -948,15 +1010,17 @@ export default function AddVideosForm() {
                                     </article>
                                 );
                             })}
+                            </div>
+                            ))}
                         </div>
 
                         <div className="hidden overflow-x-auto rounded-2xl border border-[#dbe6eb] md:block">
                         <table className="min-w-full divide-y divide-[#dbe6eb] bg-white text-sm">
                             <thead className="bg-[#f5fafc] text-left text-xs uppercase tracking-[0.14em] text-[#52707f]">
                                 <tr>
-                                    <th className="px-4 py-3">Name</th>
                                     <th className="px-4 py-3">FAQ Seq</th>
                                     <th className="px-4 py-3">Seq</th>
+                                    <th className="px-4 py-3">Name</th>
                                     <th className="px-4 py-3">Caption</th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3">Duration</th>
@@ -967,14 +1031,20 @@ export default function AddVideosForm() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[#eef4f7] text-[#234556]">
-                                {videos.map((videoItem) => {
+                                {videoGroups.flatMap((group) => [
+                                    <tr key={`group-${group.key}`} className="bg-[#eaf3f7]">
+                                        <td colSpan={10} className="px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-[#2b5366]">
+                                            {group.label}
+                                        </td>
+                                    </tr>,
+                                    ...group.items.map((videoItem) => {
                                     const playbackUrl = buildPlaybackUrl(videoItem.videoUrl);
 
                                     return (
                                         <tr key={videoItem.id}>
-                                            <td className="px-4 py-3 font-semibold">{videoItem.videoName}</td>
                                             <td className="px-4 py-3">{videoItem.faqPageSeqNo}</td>
                                             <td className="px-4 py-3">{videoItem.seqNo}</td>
+                                            <td className="px-4 py-3 font-semibold">{videoItem.videoName}</td>
                                             <td className="px-4 py-3">{videoItem.caption}</td>
                                             <td className="px-4 py-3">{videoItem.status}</td>
                                             <td className="px-4 py-3">{videoItem.durationMinutes} min</td>
@@ -1031,7 +1101,8 @@ export default function AddVideosForm() {
                                             </td>
                                         </tr>
                                     );
-                                })}
+                                    }),
+                                ])}
                             </tbody>
                         </table>
                         </div>

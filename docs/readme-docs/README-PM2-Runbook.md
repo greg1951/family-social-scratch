@@ -20,7 +20,10 @@
   - [Crashing PM2 Woker(s)](#crashing-pm2-wokers)
   - [Getting PM2 Error Logs](#getting-pm2-error-logs)
   - [The pm2-ec2-user.service Service](#the-pm2-ec2-userservice-service)
-- [Out of Space on EC2](#out-of-space-on-ec2)
+- [EC2 runtime issues](#ec2-runtime-issues)
+  - [Out of Space on EC2](#out-of-space-on-ec2)
+  - [The `npm run build` Hangs](#the-npm-run-build-hangs)
+  - [Create a swap file](#create-a-swap-file)
 - [Schema Versioning Strategy](#schema-versioning-strategy)
   - [Recommended approach](#recommended-approach)
   - [Versioning policy](#versioning-policy)
@@ -28,6 +31,7 @@
   - [Startup compatibility check](#startup-compatibility-check)
   - [Safe deployment sequence](#safe-deployment-sequence)
   - [Practical Next Actions](#practical-next-actions)
+  - [npm ci Sequence](#npm-ci-sequence)
 
 # Overview
 
@@ -324,7 +328,9 @@ If you changed ecosystem.config.cjs, run:
 ```
 If systemd starts with pm2-runtime start ecosystem.config.cjs, restarting the service is usually enough to re-read it.
 
-# Out of Space on EC2
+# EC2 runtime issues 
+
+## Out of Space on EC2
 
 1) Confirm space and inode pressure
 
@@ -352,6 +358,31 @@ If systemd starts with pm2-runtime start ecosystem.config.cjs, restarting the se
 
 6) Build again: `npm run build`
 
+## The `npm run build` Hangs
+
+While running with an EC2 t3.medium instance, which has 4 GB of RAM. The issue is that, without stopping the current running app, there's not enough memory to run the `npm build`. I'll look into a T3.large EC2 instance type, which effectively doubles my monthly cost. 
+
+However, stopping the current running server and then running the build is the viable approach. 
+
+```bash
+    pkill -f "next build"
+    sudo systemctl stop pm2-ec2-user.service
+    rm -rf .next
+    npm run build
+    sudo systemctl start pm2-ec2-user.service
+```
+
+## Create a swap file
+To avoid stopping the app, as suggested in the previous section, a swap file can be created that would be used by the build. This will result in a slower build, but it shouldn't hang due to the memory issue. 
+
+```bash
+    sudo dd if=/dev/zero of=/swapfile bs=1M count=4096
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile
+    sudo swapon /swapfile
+    echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
+    free -h
+```
 
 # Schema Versioning Strategy
 

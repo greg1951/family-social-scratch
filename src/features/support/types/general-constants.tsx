@@ -1,10 +1,12 @@
 import { FileText } from "lucide-react";
 
-export function generalFaqItems(setupStartUrl: string) {
+export function generalFaqItems(setupStartUrl: string, authUrl: string) {
+  const appUrl = (path: string) => (authUrl ? new URL(path, authUrl).toString() : path);
+
   return [
     {
       value: "item-20",
-      category: "Start a Family",
+      category: "General Help",
       trigger: (
         <div>
           <p className="text-base font-semibold">How do I create a family in My Family Social?</p>
@@ -40,7 +42,7 @@ export function generalFaqItems(setupStartUrl: string) {
     },
     {
       value: "item-30",
-      category: "My Family Social",
+      category: "General Help",
       trigger: (
         <div>
           <p className="text-base font-semibold">What does the My Family Social Registration form look like?</p>
@@ -72,7 +74,7 @@ export function generalFaqItems(setupStartUrl: string) {
     },
     {
       value: "item-40",
-      category: "Account Access",
+      category: "General Help",
       trigger: (
         <div>
           <p className="text-base font-semibold">After I register in the family, how do I login?</p>
@@ -94,13 +96,13 @@ export function generalFaqItems(setupStartUrl: string) {
               <p> Refer to your registration confirmation email if needed.</p>
             </span>
             <p style={ { marginTop: 8 } }>
-              <a href="https://kbgfamilysocial.com/login" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Access the login page here!</a>
+              <a href={ appUrl("/login") } target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Access the login page here!</a>
             </p>
 
           </span>
           <div className="flex items-center justify-center mt-4">
             <img
-              src="images/support/faq-login-form-fields.png"
+              src="images/support/faq-login-form-fields.jpg"
               alt="Login fields screenshot"
               style={ { maxWidth: '300px', marginTop: 12, borderRadius: 8 } }
             />
@@ -111,7 +113,7 @@ export function generalFaqItems(setupStartUrl: string) {
     },
     {
       value: "item-50",
-      category: "Account Access",
+      category: "General Help",
       trigger: (
         <div>
           <p className="text-base font-semibold">How do I reset my password?</p>
@@ -130,7 +132,7 @@ export function generalFaqItems(setupStartUrl: string) {
             <span className="flex flex-col items-start gap-2 mt-4">
               <p>You will receive a link to reset your password on the My Family Social site. The link expires in 1 hour, so check your email promptly.</p>
               <p style={ { marginTop: 8 } }>
-                <a href="https://kbgfamilysocial.com/password-reset" target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Reset your password</a>
+                <a href={ appUrl("/password-reset") } target="_blank" rel="noopener noreferrer" className="text-blue-700 underline">Reset your password</a>
               </p>
             </span>
 
@@ -146,7 +148,7 @@ export function generalFaqItems(setupStartUrl: string) {
     },
     {
       value: "item-60",
-      category: "Account Profile",
+      category: "General Help",
       trigger: (
         <div>
           <p className="text-base font-semibold">I&apos;ve signed in! Now what?</p>
@@ -166,7 +168,7 @@ export function generalFaqItems(setupStartUrl: string) {
             <p>On the My Family Social main page header, select the <b>Settings</b> option and follow the steps below.</p>
             <ol className="list-decimal ml-6 mt-2 py-2">
               <li>In Settings, select the <b>My Account</b> option.</li>
-              <li>In My Account header, click on the <b>Upload Profile Image</b> option.</li>
+              <li>In My Account header, click on the <b>Upload Mugshot</b> option.</li>
               <li>Upload a good mugshot of yourself. Follow the recommended guidelines for image size and format.</li>
               <li>Once uploaded <b>Go Back</b> to My Account add <u>optional</u> info, like <i>cell number</i>, <i>nick name</i>, and your <i>birthday</i>.</li>
               <li>Open the <b>My Settings</b> tab and select which My Family Social features you would like to be notified when someone posts or interacts with your content.</li>
