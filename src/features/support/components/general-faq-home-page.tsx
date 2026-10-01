@@ -58,7 +58,7 @@ function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "tiptap min-h-[8rem] text-[#12384e] focus:outline-none",
+        class: "tiptap text-[#12384e] focus:outline-none",
       },
     },
   });
@@ -80,8 +80,8 @@ function VideoJsonViewer({ videoJson }: { videoJson?: string }) {
 
 
 // --- State for category selection ---
-export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: FaqVideoItem[]; setupStartUrl: string }) {
-  const faqItems = useMemo(() => generalFaqItems(setupStartUrl), [setupStartUrl]);
+export function GeneralFaqHomePage({ faqVideos, setupStartUrl, authUrl }: { faqVideos: FaqVideoItem[]; setupStartUrl: string; authUrl: string }) {
+  const faqItems = useMemo(() => generalFaqItems(setupStartUrl, authUrl), [setupStartUrl, authUrl]);
 
   const [selectedCategory, setSelectedCategory] = useState("");
   const isHydrated = useIsHydrated();
@@ -126,7 +126,7 @@ export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: Fa
           <section className="rounded-[1.8rem] border border-[#d8e8ed] bg-white p-5 shadow-[0_18px_50px_-36px_rgba(7,63,72,0.55)] sm:p-6">
             <div className="mb-4">
               <h2 className="text-lg font-bold tracking-tight text-[#164657]">Video Help</h2>
-              <p className="text-sm text-[#4a6d79]">Watch short walkthroughs grouped by video name, caption, and sequence.</p>
+              <p className="text-sm text-[#4a6d79]">Watch short walkthroughs grouped by topic and sequence.</p>
             </div>
 
             { faqVideos.length === 0 ? (
@@ -148,19 +148,16 @@ export function GeneralFaqHomePage({ faqVideos, setupStartUrl }: { faqVideos: Fa
                     <AccordionContent>
                       <div className="space-y-3 text-sm text-[#305867]">
                         <VideoJsonViewer videoJson={videoItem.videoJson} />
-                        <details className="rounded-xl border border-[#cfe0e8] bg-white/80 p-3">
-                          <summary className="cursor-pointer text-sm font-semibold text-[#164657]">Preview Video</summary>
-                          <div className="mt-3 overflow-hidden rounded-lg border border-[#d8e8ed] bg-black">
-                            <video
-                              controls
-                              preload="metadata"
-                              className="h-auto w-full"
-                              src={videoItem.playbackUrl}
-                            >
-                              Your browser does not support the video tag.
-                            </video>
-                          </div>
-                        </details>
+                        <div className="overflow-hidden rounded-lg border border-[#d8e8ed] bg-black">
+                          <video
+                            controls
+                            preload="metadata"
+                            className="h-auto w-full"
+                            src={videoItem.playbackUrl}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>

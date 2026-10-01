@@ -49,7 +49,7 @@ export function FounderFaqHomePage({ faqVideos = [] }: { faqVideos?: FaqVideoIte
           <section className="rounded-[1.8rem] border border-[#d8e8ed] bg-white p-5 shadow-[0_18px_50px_-36px_rgba(7,63,72,0.55)] sm:p-6">
             <div className="mb-4">
               <h2 className="text-lg font-bold tracking-tight text-[#164657]">Video Help</h2>
-              <p className="text-sm text-[#4a6d79]">Watch short walkthroughs grouped by video name, caption, and sequence.</p>
+              <p className="text-sm text-[#4a6d79]">Watch short walkthroughs grouped by topic and sequence.</p>
             </div>
 
             { faqVideos.length === 0 ? (

@@ -8,6 +8,6 @@ export default async function FAQPage() {
     : "/family-setup-home";
 
   return (
-    <GeneralFaqHomePage faqVideos={faqVideos} setupStartUrl={setupStartUrl} />
+    <GeneralFaqHomePage faqVideos={faqVideos} setupStartUrl={setupStartUrl} authUrl={process.env.AUTH_URL ?? ""} />
   );
 }

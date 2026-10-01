@@ -167,7 +167,7 @@ export async function getPublishedFaqVideos(): Promise<FaqVideoItem[]> {
     })
     .from(video)
     .where(and(eq(video.status, "published"), inArray(video.id, qualifiedVideoIds)))
-    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
+    .orderBy(asc(video.faqPageSeqNo), asc(video.seqNo), asc(video.id));
 
   return rows
     .map((row) => {
@@ -225,7 +225,7 @@ export async function getPublishedAccountFaqVideos(audience: string, featureName
       ilike(focusTagReference.category, "focus"),
       ilike(focusTagReference.tagName, focus),
     ))
-    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
+    .orderBy(asc(video.faqPageSeqNo), asc(video.seqNo), asc(video.id));
 
   return rows
     .map((row) => {
@@ -283,7 +283,7 @@ export async function getPublishedFeatureFaqVideos(featureName?: string): Promis
       eq(detailTagReference.category, "Focus"),
       eq(detailTagReference.tagName, "Detailed"),
     ))
-    .orderBy(asc(video.faqPageSeqNo), asc(video.videoName), asc(video.seqNo), asc(video.id));
+    .orderBy(asc(video.faqPageSeqNo), asc(video.seqNo), asc(video.id));
 
   const formattedRows = rows
     .map((row) => {
