@@ -592,7 +592,7 @@ export function PoemAddPage({
         return;
       }
 
-      toast.success(result.message);
+      toast.success(result.message, { duration: 2000 });
       router.push("/poetry");
     });
   }

@@ -24,6 +24,9 @@
   - [Out of Space on EC2](#out-of-space-on-ec2)
   - [The `npm run build` Hangs](#the-npm-run-build-hangs)
   - [Create a swap file](#create-a-swap-file)
+  - [Expanding the EC2 volume](#expanding-the-ec2-volume)
+    - [In AWS/EC2](#in-awsec2)
+    - [In EC2 instance](#in-ec2-instance)
 - [Schema Versioning Strategy](#schema-versioning-strategy)
   - [Recommended approach](#recommended-approach)
   - [Versioning policy](#versioning-policy)
@@ -383,6 +386,32 @@ To avoid stopping the app, as suggested in the previous section, a swap file can
     echo '/swapfile swap swap defaults 0 0' | sudo tee -a /etc/fstab
     free -h
 ```
+
+## Expanding the EC2 volume 
+The t3.medium EC2 instance type defaults to a 8 GB volume. For safe measures, I'm increasing it to a 20 GB volume.
+
+Modify the EBS volume size (no downtime required):
+
+### In AWS/EC2
+1. Go to EC2 → Volumes → vol-048eb4fbeb77d76bd 
+2. Select the volume → Actions → Modify Volume
+3. Enter the new size (e.g., 20 GB, 50 GB)
+4. Click Modify — AWS will expand the volume while the instance keeps running
+5. Monitor the status to make sure it finished the expansion. 
+ 
+### In EC2 instance
+```bash
+    # Check current disk usage
+    df -h
+
+    # Grow the partition (for xvda1 on Amazon Linux / Ubuntu)
+    sudo growpart /dev/xvda 1
+
+    # XFS (Amazon Linux 2023)
+    sudo xfs_growfs /
+
+```
+
 
 # Schema Versioning Strategy
 
